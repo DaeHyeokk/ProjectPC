@@ -6,12 +6,12 @@
 #include "Engine/DataTable.h"
 
 
-bool UPCShopManager::GetUnitDataByUnitName(FName RowName, FPCShopUnitData& OutUnitData)
+bool UPCShopManager::GetUnitDataByRowName(FName RowName, FPCShopUnitData& OutUnitData)
 {
-	if (!UnitDataTable) return false;
+	if (!ShopUnitDataTable) return false;
 
 	// DataTable에서 해당 이름의 행 검색
-	if (FPCShopUnitData* FoundData = UnitDataTable->FindRow<FPCShopUnitData>(RowName, TEXT("UPCShopManager::GetUnitDataByUnitName Called")))
+	if (FPCShopUnitData* FoundData = ShopUnitDataTable->FindRow<FPCShopUnitData>(RowName, TEXT("UPCShopManager::GetUnitDataByUnitName Called")))
 	{
 		OutUnitData = *FoundData;
 		return true;

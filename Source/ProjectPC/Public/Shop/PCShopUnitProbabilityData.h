@@ -4,32 +4,32 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "PCShopUnitData.generated.h"
+#include "PCShopUnitProbabilityData.generated.h"
 
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct PROJECTPC_API FPCShopUnitData : public FTableRowBase
+struct PROJECTPC_API FPCShopUnitProbabilityData : public FTableRowBase
 {
 	GENERATED_BODY()
-	
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UnitName;
+	uint8 PlayerLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 UnitCost;
+	float Cost1Probability;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UnitClass;
+	float Cost2Probability;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UnitOrigin;
+	float Cost3Probability;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* UnitTexture;
+	float Cost4Probability;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 UnitCount;
+	float Cost5Probability;
 };

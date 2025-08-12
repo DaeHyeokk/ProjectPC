@@ -18,10 +18,14 @@ class PROJECTPC_API UPCShopManager : public UActorComponent
 protected:
 	// 유닛 데이터가 저장된 DataTable 가져옴
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DataTable")
-	UDataTable* UnitDataTable;
+	UDataTable* ShopUnitDataTable;
+
+	// 유닛 확률 데이터가 저장된 DataTable 가져옴
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DataTable")
+	UDataTable* ShopUnitProbabilityDataTable;
 
 public:
 	// Row네임을 통해 해당 UnitData를 찾아서 아웃파라미터로 넘기고, bool값 리턴
 	UFUNCTION(BlueprintCallable, Category = "DataTable")
-	bool GetUnitDataByUnitName(FName RowName, FPCShopUnitData& OutUnitData);
+	bool GetUnitDataByRowName(FName RowName, FPCShopUnitData& OutUnitData);
 };
