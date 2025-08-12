@@ -1,0 +1,63 @@
+##########################
+# Unreal Engine
+##########################
+# 빌드 관련
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+Content/CustomAsset/
+
+
+
+# 프로젝트 설정 자동 생성 파일
+*.VC.db
+*.sln
+*.opensdf
+*.suo
+*.log
+
+# UBT(언리얼 빌드툴) 생성
+*.generated.cpp
+*.generated.h
+
+##########################
+# Rider (JetBrains)
+##########################
+.idea/
+*.iml
+.idea_modules/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/shelf/
+.idea/**/dictionaries/
+Plugins/Developer/RiderLink/
+
+# Rider Index/Cache
+.idea/**/caches/
+.idea/**/index/
+.idea/**/modules.xml
+.idea/**/vcs.xml
+*.DotSettings.user
+
+##########################
+# OS/IDE 일반
+##########################
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# 기타
+*.obj
+*.pdb
+*.ipch
+*.tmp
+*.bak
+*.cache
+*.vs/
+.vscode/
