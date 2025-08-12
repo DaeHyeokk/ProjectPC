@@ -13,8 +13,12 @@ UCLASS()
 class PROJECTPC_API APCCombatGameState : public AGameStateBase
 {
 	GENERATED_BODY()
+
+public:
+	APCCombatGameState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ShopManager")
+	class UPCShopManager* ShopManager;
 	
 	
 };

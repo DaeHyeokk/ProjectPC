@@ -3,6 +3,11 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "Shop/PCShopManager.h"
 
 
-
+APCCombatGameState::APCCombatGameState(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	ShopManager = CreateDefaultSubobject<UPCShopManager>(TEXT("ShopManager"));
+}
