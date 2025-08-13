@@ -6,6 +6,8 @@
 #include "GameFramework/GameStateBase.h"
 #include "PCCombatGameState.generated.h"
 
+enum class EPCShopRequestTypes : uint8;
+
 /**
  * 
  */
@@ -20,5 +22,5 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ShopManager")
 	class UPCShopManager* ShopManager;
 	
-	
+	void ShopRequest(EPCShopRequestTypes RequestType, uint8& PlayerLevel, int32& PlayerGold, uint8 SlotIndex = 0, FName UnitName = "None", uint8 UnitStarCount = 0);
 };

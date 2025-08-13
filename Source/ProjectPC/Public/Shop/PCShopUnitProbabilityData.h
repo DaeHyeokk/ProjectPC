@@ -19,17 +19,17 @@ public:
 	uint8 PlayerLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Cost1Probability;
+	float Probability_Cost1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Cost2Probability;
+	float Probability_Cost2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Cost3Probability;
+	float Probability_Cost3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Cost4Probability;
+	float Probability_Cost4;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Cost5Probability;
+	float Probability_Cost5;
 };

@@ -4,5 +4,7 @@
 #include "UI/Shop/PCShopWidget.h"
 
 
-
-
+UPCShopWidget::UPCShopWidget(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}

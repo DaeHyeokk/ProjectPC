@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "PCCombatPlayerState.generated.h"
+#include "PCPlayerState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API APCCombatPlayerState : public APlayerState
+class PROJECTPC_API APCPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
