@@ -13,10 +13,14 @@ UCLASS()
 class PROJECTPC_API UPCShopWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
 public:
 	UPCShopWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+protected:
+	virtual bool Initialize() override;
 	
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<class UUserWidget> UnitSlotWidgetClass;
 
@@ -35,4 +39,16 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
+
+private:
+	UFUNCTION()
+	void OnClickedBuyXP();
+	UFUNCTION()
+	void OnClickedReroll();
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void OpenMenu();
+	UFUNCTION(BlueprintCallable)
+	void CloseMenu();
 };

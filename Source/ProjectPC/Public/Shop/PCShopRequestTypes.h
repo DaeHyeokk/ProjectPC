@@ -11,6 +11,7 @@
 UENUM(BlueprintType)
 enum class EPCShopRequestTypes : uint8
 {
+	None UMETA(DisplayName = "None"),
 	UpdateSlot UMETA(DisplayName = "UpdateSlot"),
 	BuyUnit UMETA(DisplayName = "BuyUnit"),
 	BuyXP UMETA(DisplayName = "BuyXP"),
