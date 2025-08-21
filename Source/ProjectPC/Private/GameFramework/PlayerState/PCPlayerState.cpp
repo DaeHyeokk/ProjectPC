@@ -5,7 +5,7 @@
 
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-
+#include "Net/UnrealNetwork.h"
 
 APCPlayerState::APCPlayerState()
 {
@@ -35,4 +35,14 @@ void APCPlayerState::BeginPlay()
 UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
 {
 	return PlayerAbilitySystemComponent; 
+}
+
+void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APCPlayerState, bIsReady);
+	DOREPLIFETIME(APCPlayerState, LocalUserId);
+	DOREPLIFETIME(APCPlayerState, bIsLeader);
+	DOREPLIFETIME(APCPlayerState, SeatIndex);
+	DOREPLIFETIME(APCPlayerState, bIdentified);
 }

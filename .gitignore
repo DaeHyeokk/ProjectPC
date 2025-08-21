@@ -62,3 +62,9 @@ desktop.ini
 *.vs/
 .vscode/
 
+# ParagonProps 폴더 무시
+/Content/ParagonProps/
+
+# SkyTown 폴더 무시
+/Content/SkyTown/
+

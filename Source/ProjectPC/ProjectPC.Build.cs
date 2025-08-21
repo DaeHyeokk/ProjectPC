@@ -7,17 +7,6 @@ public class ProjectPC : ModuleRules
 	public ProjectPC(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-
-		PublicIncludePaths.AddRange(new string[]
-		{
-			"ProjectPC"
-		});
-		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-
-		PublicDependencyModuleNames.AddRange(new string[] { "GameplayTags", "GameplayTasks", "GameplayAbilities"  });
-		PublicDependencyModuleNames.AddRange(new string[] { "NavigationSystem", "AIModule"  });
-
 	
 		PublicDependencyModuleNames.AddRange(new string[] 
 		{ 
@@ -27,22 +16,7 @@ public class ProjectPC : ModuleRules
 			"AIModule", "NavigationSystem"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[]
-		{
-			"Slate", "SlateCore"
-		});
-	
-		PublicDependencyModuleNames.AddRange(new string[] 
-		{ 
-			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", 
-			"GameplayAbilities", "GameplayTags", "GameplayTasks",
-			"UMG", "Niagara", "NiagaraCore",
-			"AIModule", "NavigationSystem"
-		});
-		PrivateDependencyModuleNames.AddRange(new string[]
-		{
-			"Slate", "SlateCore"
-		});
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
