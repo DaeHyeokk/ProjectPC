@@ -48,11 +48,12 @@ protected:
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
+/*
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "AbilitySystem")
 	class UPCPlayerAbilitySystemComponent* PlayerAbilitySystemComponent;
 
 	UPROPERTY()
 	class UPCPlayerAttributeSet* PlayerAttributeSet;
+	*/
 };

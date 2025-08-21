@@ -9,9 +9,9 @@
 
 APCPlayerState::APCPlayerState()
 {
-	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
-	PlayerAttributeSet = CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
-	PlayerAbilitySystemComponent->AddAttributeSetSubobject(PlayerAttributeSet);
+	//PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
+	//PlayerAttributeSet = CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
+	//PlayerAbilitySystemComponent->AddAttributeSetSubobject(PlayerAttributeSet);
 }
 
 void APCPlayerState::BeginPlay()
@@ -20,23 +20,29 @@ void APCPlayerState::BeginPlay()
 
 	if (HasAuthority())
 	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
-		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
-		PlayerAbilitySystemComponent->ApplyInitializedEffects();
+		//PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
+		//PlayerAbilitySystemComponent->ApplyInitializedAbilities();
+		//PlayerAbilitySystemComponent->ApplyInitializedEffects();
 		UE_LOG(LogTemp, Warning, TEXT("GAS ServerSide Init"));
 	}
 	else
 	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
+		//PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 		UE_LOG(LogTemp, Warning, TEXT("GAS ClientSide Init"));
 	}
 }
 
 UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
 {
-	return PlayerAbilitySystemComponent; 
+	return nullptr;
 }
 
+/*
+UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
+{
+	return PlayerAbilitySystemComponent; 
+}
+*/
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
