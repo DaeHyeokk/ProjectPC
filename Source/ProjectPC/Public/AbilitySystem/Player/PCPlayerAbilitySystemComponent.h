@@ -16,7 +16,7 @@ class PROJECTPC_API UPCPlayerAbilitySystemComponent : public UAbilitySystemCompo
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset")
-	class UPCDataAsset_PlayerAbilities* PlayerAbilities;
+	class UPCDataAsset_PlayerAbilities* PlayerAbilityData;
 
 public:
 	// Initial GE 적용

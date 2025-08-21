@@ -23,5 +23,11 @@ public:
 	class UInputMappingContext* BasicInputMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* IA_SetDestination;
+	class UInputAction* SetDestination;
+	
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input)
+    class UNiagaraSystem* FXCursor;
+	
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input)
+    float ShortPressThreshold;
 };

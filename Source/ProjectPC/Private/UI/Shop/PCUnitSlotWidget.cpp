@@ -11,7 +11,7 @@ bool UPCUnitSlotWidget::Initialize()
 	bool SuperSuccess = Super::Initialize();
 	if (!SuperSuccess) return false;
 
-	if (Btn_UnitSlot == nullptr) return false;
+	if (!Btn_UnitSlot) return false;
 	Btn_UnitSlot->OnClicked.AddDynamic(this, &UPCUnitSlotWidget::OnClickedUnitSlot);
 
 	return true;

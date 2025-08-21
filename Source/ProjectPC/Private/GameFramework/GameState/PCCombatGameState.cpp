@@ -16,11 +16,11 @@ void APCCombatGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ShopUnitDataTable == nullptr) return;
-	if (ShopUnitProbabilityDataTable == nullptr) return;
-
-	LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
-	LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
+	if (ShopUnitDataTable && ShopUnitProbabilityDataTable)
+	{
+		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
+		LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
+	}
 }
 
 // void APCCombatGameState::Server_ShopRequest(EPCShopRequestTypes RequestType)

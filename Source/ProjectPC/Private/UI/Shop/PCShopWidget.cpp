@@ -16,9 +16,9 @@ bool UPCShopWidget::Initialize()
 	bool SuperSuccess = Super::Initialize();
 	if (!SuperSuccess) return false;
 
-	if (Btn_BuyXP == nullptr) return false;
+	if (!Btn_BuyXP) return false;
 	Btn_BuyXP->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedBuyXP);
-	if (Btn_Reroll == nullptr) return false;
+	if (!Btn_Reroll) return false;
 	Btn_Reroll->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedReroll);
 
 	return true;
