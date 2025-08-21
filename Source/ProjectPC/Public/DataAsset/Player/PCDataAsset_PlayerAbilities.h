@@ -1,0 +1,30 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
+#include "Shop/PCShopRequestTypes.h"
+#include "PCDataAsset_PlayerAbilities.generated.h"
+
+class UGameplayEffect;
+class UGameplayAbility;
+
+/**
+ * 
+ */
+UCLASS()
+class PROJECTPC_API UPCDataAsset_PlayerAbilities : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	TArray<TSubclassOf<UGameplayEffect>> InitializedEffects;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GA")
+	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GA")
+	TMap<EPCShopRequestTypes, TSubclassOf<UGameplayAbility>> ShopAbility;
+};
