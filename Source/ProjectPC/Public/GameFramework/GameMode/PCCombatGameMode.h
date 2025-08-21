@@ -9,12 +9,29 @@
 /**
  * 
  */
+
+class APCPlayerState;
+
+UENUM(BlueprintType)
+enum class ECombatPhase : uint8
+{
+	None,
+	Carousel,
+	ToSeats,
+	PlayerCombating,
+	CreepCombating
+};
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnPhaseChanged, ECombatPhase, NewPhase);
+
 UCLASS()
 class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
 	
-	
+public:
+	virtual void PostSeamlessTravel() override;
 	
 	
 };

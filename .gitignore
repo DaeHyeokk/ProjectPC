@@ -61,3 +61,12 @@ desktop.ini
 *.cache
 *.vs/
 .vscode/
+
+# ParagonProps 폴더 무시
+/Content/ParagonProps/
+
+# SkyTown 폴더 무시
+/Content/SkyTown/
+
+# TopDown 폴더 무시
+/Content/TopDown
