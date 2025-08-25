@@ -4,18 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PCCarouseRing.generated.h"
+#include "PCCarouselRing.generated.h"
 
+class UCameraComponent;
+class USpringArmComponent;
 class URotatingMovementComponent;
 
 UCLASS()
-class PROJECTPC_API APCCarouseRing : public AActor
+class PROJECTPC_API APCCarouselRing : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	
-	APCCarouseRing();
+	APCCarouselRing();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
+	FName RingName;
 
 	// 슬롯 / 지오메트리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
@@ -62,9 +67,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Carousel")
 	void SetRotationActive(bool bOn);
 
+	// 중앙 카메라
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	bool bCameraInheritActorRotation = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta=(ClampMin = "100.0"))
+	float CameraArmLength = 2000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	FVector CameraArmLocalLocation = FVector(0,0,1400);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	FRotator CameraArmLocalRotation = FRotator(-55,0,0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta=(ClampMin="5.0", ClampMax="120.0"))
+	float CameraFov = 55.f;
+
 	// 슬롯 변환(월드)
 	UFUNCTION(BlueprintCallable, Category = "Ring")
 	FTransform GetSlotTransformWorld(int32 Index) const;
+
+	// 중앙 카메라로 보기
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void ApplyCentralView(APlayerController* PlayerController, float BlendTime = 0.4f);
 
 protected:
 
@@ -75,6 +100,13 @@ protected:
 
 	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<AActor>> SpawnedPickupActors;
+
+	// 카메라 구성요소
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	USpringArmComponent* SpringArm = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UCameraComponent* CarouselCamera = nullptr;
 
 #if WITH_EDITOR
 public:

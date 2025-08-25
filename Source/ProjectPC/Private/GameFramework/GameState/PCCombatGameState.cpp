@@ -3,6 +3,7 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -21,6 +22,28 @@ void APCCombatGameState::BeginPlay()
 		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
 		LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
 	}
+}
+
+FString APCCombatGameState::GetStageRoundLabel() const
+{
+	return FString::Printf(TEXT("%d-%d"), StageIdx+1, RoundIdx+1);
+}
+
+float APCCombatGameState::GetRemainingSeconds() const
+{
+	return FMath::Max(0.f, StageEndTime_Server - GetServerWorldTimeSeconds());
+}
+
+void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APCCombatGameState, FloatIndex);
+	DOREPLIFETIME(APCCombatGameState, StageIdx);
+	DOREPLIFETIME(APCCombatGameState, RoundIdx);
+	DOREPLIFETIME(APCCombatGameState, StepIdxInRound);
+	DOREPLIFETIME(APCCombatGameState, CurrentStage);
+	DOREPLIFETIME(APCCombatGameState, StageDuration);
+	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 }
 
 // void APCCombatGameState::Server_ShopRequest(EPCShopRequestTypes RequestType)

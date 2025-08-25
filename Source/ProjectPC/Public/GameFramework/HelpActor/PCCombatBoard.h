@@ -30,7 +30,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
 	int32 BoardSeatIndex = 0;
 
-	// SeatAnchor 소켓 부모를 에이터에서 지정
+	// SeatAnchor 소켓 부모를 에디터에서 지정
 	UPROPERTY(EditAnywhere, Category = "Seat")
 	FComponentReference PlayerSeatParent;
 

@@ -3,6 +3,7 @@
 
 #include "Controller/Player/PCPlayerController.h"
 
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
@@ -10,6 +11,8 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "Kismet/GameplayStatics.h"
 
 APCPlayerController::APCPlayerController()
 {
@@ -76,4 +79,38 @@ void APCPlayerController::OnSetDestinationReleased()
 	}
 
 	FollowTime = 0.f;
+}
+
+void APCPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
+{
+	TArray<AActor*> Boards;
+	UGameplayStatics::GetAllActorsOfClass(this, APCCombatBoard::StaticClass(), Boards);
+	for (AActor* Actor : Boards)
+	{
+		if (auto* CombatBoards = Cast<APCCombatBoard>(Actor))
+		{
+			if (CombatBoards->BoardSeatIndex == BoardIndex)
+			{
+				CombatBoards->ApplyLocalBottomView(this, BoardIndex, BlendTime);
+				return;
+			}
+		}
+	}
+}
+
+void APCPlayerController::ClientCameraSetByActorName_Implementation(FName ActorName, float BlendTime)
+{
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		if (It->GetFName() == ActorName || It->GetActorLabel().Equals(ActorName.ToString()))
+		{
+			SetViewTargetWithBlend(*It, BlendTime);
+			return;
+		}
+	}
+}
+
+void APCPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
+	float Seconds)
+{
 }
