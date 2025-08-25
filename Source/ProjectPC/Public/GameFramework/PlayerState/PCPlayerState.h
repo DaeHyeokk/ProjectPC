@@ -15,10 +15,13 @@ class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemI
 {
 	GENERATED_BODY()
 
-	// 닉네임 관련
 public:
 	APCPlayerState();
+	
+protected:
+	virtual void BeginPlay() override;
 
+public:
 	// 로그인 ID (클라가 제출 → 서버가 확정/복제)
 	UPROPERTY(ReplicatedUsing=OnRep_LocalUserId, BlueprintReadOnly)
 	FString LocalUserId;
@@ -43,17 +46,17 @@ public:
 	UFUNCTION() void OnRep_bIsReady()    {}
 	UFUNCTION() void OnRep_SeatIndex()   {}
 
-protected:
-	virtual void BeginPlay() override;
+#pragma region AbilitySystem
 	
-public:
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-/*
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "AbilitySystem")
 	class UPCPlayerAbilitySystemComponent* PlayerAbilitySystemComponent;
 
 	UPROPERTY()
 	class UPCPlayerAttributeSet* PlayerAttributeSet;
-	*/
+	
+public:
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+#pragma endregion AbilitySystem
 };

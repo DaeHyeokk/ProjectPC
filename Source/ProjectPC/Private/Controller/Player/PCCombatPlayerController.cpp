@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Controller/Player/PCPlayerController.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputSubsystems.h"
@@ -11,7 +11,7 @@
 
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 
-APCPlayerController::APCPlayerController()
+APCCombatPlayerController::APCCombatPlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
@@ -19,7 +19,7 @@ APCPlayerController::APCPlayerController()
 	FollowTime = 0.f;
 }
 
-void APCPlayerController::SetupInputComponent()
+void APCCombatPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
@@ -31,14 +31,14 @@ void APCPlayerController::SetupInputComponent()
 	// InputComponent는 Actor.h에서 선언됨
 	if (auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Started, this, &APCPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCPlayerController::OnSetDestinationReleased);
+		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Started, this, &APCCombatPlayerController::OnInputStarted);
+		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCCombatPlayerController::OnSetDestinationTriggered);
+		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
+		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
 	}
 }
 
-void APCPlayerController::OnInputStarted()
+void APCCombatPlayerController::OnInputStarted()
 {
 	FHitResult Hit;
 	if (bool bHitSucceeded = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
@@ -48,7 +48,7 @@ void APCPlayerController::OnInputStarted()
 	}
 }
 
-void APCPlayerController::OnSetDestinationTriggered()
+void APCCombatPlayerController::OnSetDestinationTriggered()
 {
 	if (const UWorld* World = GetWorld())
 	{
@@ -68,7 +68,7 @@ void APCPlayerController::OnSetDestinationTriggered()
 	}
 }
 
-void APCPlayerController::OnSetDestinationReleased()
+void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold)
 	{
