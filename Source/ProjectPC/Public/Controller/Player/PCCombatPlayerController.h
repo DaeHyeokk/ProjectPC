@@ -5,18 +5,20 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/DataAsset/PCStageData.h"
-#include "PCPlayerController.generated.h"
+#include "PCCombatPlayerController.generated.h"
+
+
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API APCPlayerController : public APlayerController
+class PROJECTPC_API APCCombatPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-	APCPlayerController();
+	APCCombatPlayerController();
 	
 protected:
 	virtual void SetupInputComponent() override;

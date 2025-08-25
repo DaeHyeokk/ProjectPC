@@ -9,7 +9,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
-#include "Controller/Player/LobbyPlayerController.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "UI/Lobby/PlayerDataWidget.h"
@@ -360,7 +360,7 @@ void ULobbyMenuWidget::PlaceWidgetAt(int32 VisualIndex, UPlayerDataWidget* DataW
 
 void ULobbyMenuWidget::OnClicked_ToggleReady()
 {
-	ALobbyPlayerController* PC = GetOwningPlayer<ALobbyPlayerController>();
+	APCLobbyPlayerController* PC = GetOwningPlayer<APCLobbyPlayerController>();
 	if (!PC) { UE_LOG(LogTemp, Warning, TEXT("ToggleReady: OwningPlayer nullptr")); return; }
 	if (!PC->IsLocalController()) { UE_LOG(LogTemp, Warning, TEXT("ToggleReady: not local controller")); return; }
 
@@ -374,7 +374,7 @@ void ULobbyMenuWidget::OnClicked_ToggleReady()
 void ULobbyMenuWidget::OnClicked_Start()
 {
 	if (!IsLeaderLocal()) return;
-	if (ALobbyPlayerController* LobbyPlayerController = GetOwningPlayer<ALobbyPlayerController>())
+	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
 		LobbyPlayerController->ServerRequestStart();
 	}
