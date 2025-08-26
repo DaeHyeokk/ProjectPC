@@ -81,7 +81,7 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
-void APCPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
+void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
 {
 	TArray<AActor*> Boards;
 	UGameplayStatics::GetAllActorsOfClass(this, APCCombatBoard::StaticClass(), Boards);
@@ -98,7 +98,7 @@ void APCPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float
 	}
 }
 
-void APCPlayerController::ClientCameraSetByActorName_Implementation(FName ActorName, float BlendTime)
+void APCCombatPlayerController::ClientCameraSetByActorName_Implementation(FName ActorName, float BlendTime)
 {
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
 	{
@@ -110,7 +110,7 @@ void APCPlayerController::ClientCameraSetByActorName_Implementation(FName ActorN
 	}
 }
 
-void APCPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
+void APCCombatPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
 	float Seconds)
 {
 }

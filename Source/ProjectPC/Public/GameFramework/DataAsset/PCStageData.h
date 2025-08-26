@@ -94,7 +94,7 @@ public:
 	float GetRoundDuration(const FRoundStep& RoundStep) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Schedule")
-	void BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32> RoundIdx, TArray<int32>& StepIdxInRound) const;
+	void BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32>& RoundIdx, TArray<int32>& StepIdxInRound) const;
 	
 	UFUNCTION(BlueprintPure, Category = "UI")
 	FString MakeStageRoundLabel(int32 FloatIndex, const TArray<int32>& StageIdx, const TArray<int32>& RoundIdx) const;
