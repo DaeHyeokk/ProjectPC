@@ -88,7 +88,4 @@ private:
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
 	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
-	
-	
-	
 };
