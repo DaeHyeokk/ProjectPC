@@ -12,7 +12,7 @@
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "SubSystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 

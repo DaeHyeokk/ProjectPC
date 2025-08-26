@@ -10,10 +10,6 @@ void UPCPlayerAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 	
-	if (OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner()))
-	{
-		// OwnerMovementComponent = OwnerCharacter->GetCharacterMovement();
-	}
 }
 
 void UPCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

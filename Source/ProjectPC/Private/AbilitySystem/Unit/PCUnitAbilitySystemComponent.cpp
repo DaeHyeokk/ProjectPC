@@ -6,7 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
-#include "SubSystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
 
 void UPCUnitAbilitySystemComponent::InitGAS()
 {
@@ -114,11 +114,13 @@ bool UPCUnitAbilitySystemComponent::TryGrantUnitTypeTag()
 	// 태그 중복 부여 방지
 	if (HasMatchingGameplayTag(UnitCharacter->GetUnitTypeTag()))
 		return true;
-	
-	if (const TSubclassOf<UGameplayEffect> UnitTypeGE = UnitData->GetGrantUnitTypeGEClass(UnitCharacter->GetUnitTypeTag()))
+
+	const UGameInstance* GI = GetWorld()->GetGameInstance();
+	UPCUnitGERegistrySubsystem* UnitGERegistrySubSystem = GI->GetSubsystem<UPCUnitGERegistrySubsystem>();
+	if (const UGameplayEffect* UnitTypeGE = UnitGERegistrySubSystem->GetGrantUnitTypeGE_CDO(UnitCharacter->GetUnitTypeTag()))
 	{
 		ApplyGameplayEffectToSelf(
-			(*UnitTypeGE)->GetDefaultObject<UGameplayEffect>(),
+			UnitTypeGE,
 			1.f,
 			MakeEffectContext());
 

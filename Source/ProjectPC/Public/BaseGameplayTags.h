@@ -62,6 +62,8 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_InitDefaultStat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Hero)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Creep)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_CurrentHealthChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_MaxHealthChange)

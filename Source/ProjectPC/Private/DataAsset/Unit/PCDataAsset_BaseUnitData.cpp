@@ -50,11 +50,6 @@ void UPCDataAsset_BaseUnitData::FillStartupAbilities(TArray<TSubclassOf<UGamepla
 	AppendValidUnique(EventAbilities);
 }
 
-TSubclassOf<UGameplayEffect> UPCDataAsset_BaseUnitData::GetInitGEClass() const
-{
-	return InitGEClass;
-}
-
 TSubclassOf<UGameplayEffect> UPCDataAsset_BaseUnitData::GetGrantUnitTypeGEClass(FGameplayTag UnitTypeTag) const
 {
 	const TSubclassOf<UGameplayEffect>* UnitTypeGE = GrantUnitTypeGEClassMap.Find(UnitTypeTag);

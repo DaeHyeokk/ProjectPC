@@ -61,6 +61,8 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_InitDefaultStat, "GE.Class.InitDefaultStat")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange, "GE.Class.HealthChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange, "GE.Class.ManaChange")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Hero, "GE.Class.GrantUnitTypeTag.Hero")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Creep, "GE.Class.GrantUnitTypeTag.Creep")
 
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_CurrentHealthChange, "GE.Caller.CurrentHealthChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_MaxHealthChange, "GE.Caller.MaxHealthChange")

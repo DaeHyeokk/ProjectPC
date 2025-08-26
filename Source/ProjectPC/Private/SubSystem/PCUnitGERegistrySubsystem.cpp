@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SubSystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
 
+#include "BaseGameplayTags.h"
 #include "Engine/AssetManager.h"
 
 
@@ -63,5 +64,16 @@ UGameplayEffect* UPCUnitGERegistrySubsystem::GetGE_CDO(const FGameplayTag& GECla
 	if (UClass* C = GetGEClass(GEClassKey))
 		return C->GetDefaultObject<UGameplayEffect>();
 
+	return nullptr;
+}
+
+UGameplayEffect* UPCUnitGERegistrySubsystem::GetGrantUnitTypeGE_CDO(const FGameplayTag& UnitTypeTag)
+{
+	if (UnitTypeTag == UnitGameplayTags::Unit_Type_Hero)
+		return GetGE_CDO(GameplayEffectTags::GE_Class_GrantUnitTypeTag_Hero);
+
+	if (UnitTypeTag == UnitGameplayTags::Unit_Type_Creep)
+		return GetGE_CDO(GameplayEffectTags::GE_Class_GrantUnitTypeTag_Creep);
+	
 	return nullptr;
 }
