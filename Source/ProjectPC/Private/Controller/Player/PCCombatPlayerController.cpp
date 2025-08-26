@@ -66,6 +66,10 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 
 	if (APawn* ControlledPawn = GetPawn())
 	{
+		if (FollowTime > PlayerInputData->ShortPressThreshold)
+		{
+			StopMovement();
+		}
 		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
 		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
 	}
@@ -77,7 +81,7 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
 	}
-
+	
 	FollowTime = 0.f;
 }
 

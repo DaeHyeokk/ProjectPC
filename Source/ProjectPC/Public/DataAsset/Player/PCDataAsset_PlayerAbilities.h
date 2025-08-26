@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "Shop/PCShopRequestTypes.h"
 #include "PCDataAsset_PlayerAbilities.generated.h"
 
 class UGameplayEffect;
@@ -26,5 +26,5 @@ public:
 	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GA")
-	TMap<EPCShopRequestTypes, TSubclassOf<UGameplayAbility>> ShopAbility;
+	TMap<FGameplayTag, TSubclassOf<UGameplayAbility>> ShopAbility;
 };

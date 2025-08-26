@@ -46,30 +46,6 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 }
 
-// void APCCombatGameState::Server_ShopRequest(EPCShopRequestTypes RequestType)
-// {
-// 	switch (RequestType)
-// 	{
-// 	case EPCShopRequestTypes::UpdateSlot:
-// 		ShopManager->UpdateShopSlots(PlayerLevel);
-// 		break;
-// 	case EPCShopRequestTypes::BuyUnit:
-// 		ShopManager->BuyUnit(SlotIndex, PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::BuyXP:
-// 		ShopManager->BuyXP(PlayerLevel, PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::Reroll:
-// 		ShopManager->Reroll(PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::SellUnit:
-// 		ShopManager->SellUnit(UnitName, UnitStarCount, PlayerGold);
-// 		break;
-// 	default:
-// 		break;
-// 	}
-// }
-
 TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
 {
 	return ShopUnitDataList;

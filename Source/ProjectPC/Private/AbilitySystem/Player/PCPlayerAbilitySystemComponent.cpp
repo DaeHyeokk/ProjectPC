@@ -24,7 +24,6 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedEffects()
 
 void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 {
-	return;
 	// GetOwner()가 유효하지 않거나, 서버가 아니라면 return
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
@@ -35,9 +34,9 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 		GiveAbilityAndActivateOnce(Spec, nullptr);
 	}
 
-	for (const TPair<EPCShopRequestTypes, TSubclassOf<UGameplayAbility>>& SAClass : PlayerAbilityData->ShopAbility)
+	for (const TPair<FGameplayTag, TSubclassOf<UGameplayAbility>>& SAClass : PlayerAbilityData->ShopAbility)
 	{
 		// 어빌리티 부여만 (인자 값을 상수 참조로 받으므로 임시 객체 가능)
-		GiveAbility(FGameplayAbilitySpec(SAClass.Value, 0, static_cast<int32>(SAClass.Key), nullptr));
+		GiveAbility(FGameplayAbilitySpec(SAClass.Value, 0, -1, nullptr));
 	}
 }

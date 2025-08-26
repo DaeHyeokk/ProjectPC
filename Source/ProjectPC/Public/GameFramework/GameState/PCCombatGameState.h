@@ -9,8 +9,6 @@
 #include "Shop/PCShopUnitProbabilityData.h"
 #include "PCCombatGameState.generated.h"
 
-enum class EPCShopRequestTypes : uint8;
-
 /**
  * 
  */
