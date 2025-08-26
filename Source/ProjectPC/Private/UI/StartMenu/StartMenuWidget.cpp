@@ -5,7 +5,7 @@
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
 #include "Components/Button.h"
-#include "Controller/Player/LobbyPlayerController.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "UI/StartMenu/RegisterWidget.h"
 
@@ -97,7 +97,7 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 		return;
 	}
 
-	if (ALobbyPlayerController* LobbyPlayerController = GetOwningPlayer<ALobbyPlayerController>())
+	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
 		const ENetMode NetMode = LobbyPlayerController->GetNetMode();
 		if (NetMode == NM_Client || NetMode == NM_ListenServer)
@@ -173,7 +173,7 @@ void UStartMenuWidget::ConnectToServer(const FString& Address)
 {
 	if (APlayerController* PlayerController = GetOwningPlayer())
 	{
-		if (ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(PlayerController))
+		if (APCLobbyPlayerController* LobbyPlayerController = Cast<APCLobbyPlayerController>(PlayerController))
 		{
 			LobbyPlayerController->RequestConnectToServer(Address);
 		}

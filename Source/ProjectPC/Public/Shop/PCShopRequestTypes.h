@@ -17,4 +17,5 @@ enum class EPCShopRequestTypes : uint8
 	BuyXP UMETA(DisplayName = "BuyXP"),
 	Reroll UMETA(DisplayName = "Reroll"),
 	SellUnit UMETA(DisplayName = "SellUnit"),
+	LockShop UMETA(DisplayName = "LockShop"),
 };

@@ -24,6 +24,7 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedEffects()
 
 void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 {
+	return;
 	// GetOwner()가 유효하지 않거나, 서버가 아니라면 return
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 

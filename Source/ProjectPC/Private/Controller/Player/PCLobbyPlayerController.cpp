@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Controller/Player/LobbyPlayerController.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
@@ -12,7 +12,7 @@
 #include "UI/StartMenu/StartMenuWidget.h"
 
 
-void ALobbyPlayerController::ServerSubmitIdentity_Implementation(const FString& DisplayName)
+void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString& DisplayName)
 {
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{
@@ -38,7 +38,7 @@ void ALobbyPlayerController::ServerSubmitIdentity_Implementation(const FString& 
 	}
 }
 
-void ALobbyPlayerController::ServerSetReady_Implementation(bool bNewReady)
+void APCLobbyPlayerController::ServerSetReady_Implementation(bool bNewReady)
 {
 	if (auto* PS = GetPlayerState<APCPlayerState>())
 	{
@@ -48,7 +48,7 @@ void ALobbyPlayerController::ServerSetReady_Implementation(bool bNewReady)
 	}
 }
 
-void ALobbyPlayerController::ServerRequestStart_Implementation()
+void APCLobbyPlayerController::ServerRequestStart_Implementation()
 {
 	APCLobbyGameMode* GM = GetWorld() ? GetWorld()->GetAuthGameMode<APCLobbyGameMode>() : nullptr;
 	if (!GM)
@@ -68,7 +68,7 @@ void ALobbyPlayerController::ServerRequestStart_Implementation()
 }
 
 
-void ALobbyPlayerController::BeginPlay()
+void APCLobbyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	RefreshUIForMap();
@@ -76,7 +76,7 @@ void ALobbyPlayerController::BeginPlay()
 	
 }
 
-void ALobbyPlayerController::BeginPlayingState()
+void APCLobbyPlayerController::BeginPlayingState()
 {
 	Super::BeginPlayingState();
 	RefreshUIForMap();
@@ -88,7 +88,7 @@ void ALobbyPlayerController::BeginPlayingState()
 	}
 }
 
-void ALobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void APCLobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	if (StartMenuWidget)
@@ -103,14 +103,14 @@ void ALobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void ALobbyPlayerController::RequestConnectToServer(const FString& Address)
+void APCLobbyPlayerController::RequestConnectToServer(const FString& Address)
 {
 	HideStartWidget();
 	bPendingLobbyUI = true;
 	SetLobbyUI();
 }
 
-void ALobbyPlayerController::RefreshUIForMap()
+void APCLobbyPlayerController::RefreshUIForMap()
 {
 	if (!IsLocalController()) return;
 
@@ -121,7 +121,7 @@ void ALobbyPlayerController::RefreshUIForMap()
 	}	
 }
 
-void ALobbyPlayerController::SetLobbyUI()
+void APCLobbyPlayerController::SetLobbyUI()
 {
 	if (!IsLocalController()) return;
 	
@@ -132,12 +132,12 @@ void ALobbyPlayerController::SetLobbyUI()
 	}
 }
 
-void ALobbyPlayerController::ClientRejectIdentity_Implementation(const FString& Reason)
+void APCLobbyPlayerController::ClientRejectIdentity_Implementation(const FString& Reason)
 {
 	ClientMessage(Reason);
 }
 
-void ALobbyPlayerController::ServerNotifyLobbyUIShown_Implementation()
+void APCLobbyPlayerController::ServerNotifyLobbyUIShown_Implementation()
 {
 	if (APCLobbyGameMode* GameMode = GetWorld() ? GetWorld()->GetAuthGameMode<APCLobbyGameMode>() : nullptr)
 	{
@@ -145,7 +145,7 @@ void ALobbyPlayerController::ServerNotifyLobbyUIShown_Implementation()
 	}
 }
 
-void ALobbyPlayerController::ApplyUIOnly(UUserWidget* FocusWidget)
+void APCLobbyPlayerController::ApplyUIOnly(UUserWidget* FocusWidget)
 {
 	if (!IsLocalController()) return;
 
@@ -162,7 +162,7 @@ void ALobbyPlayerController::ApplyUIOnly(UUserWidget* FocusWidget)
 	
 }
 
-void ALobbyPlayerController::ShowStartWidget()
+void APCLobbyPlayerController::ShowStartWidget()
 {
 	if (!StartMenuWidgetClass) return;
 	if (!StartMenuWidget)
@@ -176,13 +176,13 @@ void ALobbyPlayerController::ShowStartWidget()
 	ApplyUIOnly(StartMenuWidget);
 }
 
-void ALobbyPlayerController::HideStartWidget()
+void APCLobbyPlayerController::HideStartWidget()
 {
 	if (StartMenuWidget)
 		StartMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void ALobbyPlayerController::ShowLobbyMenuWidget()
+void APCLobbyPlayerController::ShowLobbyMenuWidget()
 {
 	if (!LobbyMenuWidget && LobbyMenuWidgetClass)
 	{
@@ -198,20 +198,20 @@ void ALobbyPlayerController::ShowLobbyMenuWidget()
 		ServerNotifyLobbyUIShown();
 }
 
-void ALobbyPlayerController::HideLobbyMenuWidget()
+void APCLobbyPlayerController::HideLobbyMenuWidget()
 {
 	if (LobbyMenuWidget)
 		LobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
-bool ALobbyPlayerController::IsOnStartLobbyMap() const
+bool APCLobbyPlayerController::IsOnStartLobbyMap() const
 {
 	const FString Full = UGameplayStatics::GetCurrentLevelName(GetWorld(), true);
 	const FName ShortName = FName(*FPackageName::GetShortName(Full));
 	return ShortName == StartLobbyMapName;
 }
 
-bool ALobbyPlayerController::IsConnectedToServer() const
+bool APCLobbyPlayerController::IsConnectedToServer() const
 {
 	const ENetMode NetMode = GetNetMode();
 	return (NetMode == NM_Client || NetMode == NM_ListenServer);

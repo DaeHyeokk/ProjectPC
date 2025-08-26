@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "LobbyPlayerController.generated.h"
+#include "PCLobbyPlayerController.generated.h"
 
 class UStartMenuWidget;
 class ULobbyMenuWidget;
@@ -12,7 +12,7 @@ class ULobbyMenuWidget;
  * 
  */
 UCLASS()
-class PROJECTPC_API ALobbyPlayerController : public APlayerController
+class PROJECTPC_API APCLobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -74,7 +74,4 @@ private:
 	bool IsConnectedToServer() const;
 
 	bool bPendingLobbyUI = false;
-	
-	
-	
 };

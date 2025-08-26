@@ -3,7 +3,7 @@
 
 #include "GameFramework/GameState/PCLobbyGameState.h"
 
-#include "Controller/Player/LobbyPlayerController.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 

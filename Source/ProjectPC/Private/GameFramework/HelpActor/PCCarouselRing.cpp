@@ -1,27 +1,51 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameFramework/HelpActor/PCCarouseRing.h"
+#include "GameFramework/HelpActor/PCCarouselRing.h"
 
+#include "Camera/CameraComponent.h"
 #include "GameFramework/RotatingMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 // Sets default values
-APCCarouseRing::APCCarouseRing()
+APCCarouselRing::APCCarouselRing()
 {
  	
 	PrimaryActorTick.bCanEverTick = false;
 
+	// 루트
+	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
+
 	RotatingMovement = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingMovement"));
 	RotatingMovement->RotationRate = FRotator(0.f, RotationRateYawDeg, 0.f);
 	RotatingMovement->bRotationInLocalSpace = false;
+
+	// 카메라
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(Root);
+	SpringArm->bDoCollisionTest = false;
+	SpringArm->TargetArmLength = CameraArmLength;
+	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
+	SpringArm->SetRelativeRotation(CameraArmLocalRotation);
+
+	SpringArm->bInheritPitch = bCameraInheritActorRotation;
+	SpringArm->bInheritYaw = bCameraInheritActorRotation;
+	SpringArm->bInheritRoll = bCameraInheritActorRotation;
+
+	CarouselCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("CarouselCamera"));
+	CarouselCamera->SetupAttachment(SpringArm);
+	CarouselCamera->FieldOfView = CameraFov;
 
 	bReplicates = true;
 	SetReplicateMovement(true);
 
 }
 
-void APCCarouseRing::BeginPlay()
+void APCCarouselRing::BeginPlay()
 {
 	Super::BeginPlay();
 	RotatingMovement->RotationRate.Yaw = RotationRateYawDeg;
@@ -32,18 +56,26 @@ void APCCarouseRing::BeginPlay()
 		SpawnPickUps();
 		SetRotationActive(bRotate);
 	}
-	
+
+	// 카메라 파라미터 반영(에디터에서 바꾼 값 유지)
+	SpringArm->TargetArmLength = CameraArmLength;
+	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
+	SpringArm->SetRelativeRotation(CameraArmLocalRotation);
+	SpringArm->bInheritPitch = bCameraInheritActorRotation;
+	SpringArm->bInheritYaw   = bCameraInheritActorRotation;
+	SpringArm->bInheritRoll  = bCameraInheritActorRotation;
+	CarouselCamera->FieldOfView = CameraFov;
 }
 
 
-void APCCarouseRing::SetRotationActive(bool bOn)
+void APCCarouselRing::SetRotationActive(bool bOn)
 {
 	bRotate = bOn;
 	if (RotatingMovement)
 		RotatingMovement->SetActive(bRotate);
 }
 
-void APCCarouseRing::SpawnPickUps()
+void APCCarouselRing::SpawnPickUps()
 {
 	if (!HasAuthority() || !PickupClass)
 		return;
@@ -58,7 +90,7 @@ void APCCarouseRing::SpawnPickUps()
 	}
 }
 
-void APCCarouseRing::ClearPickUps()
+void APCCarouselRing::ClearPickUps()
 {
 	if (!HasAuthority())
 		return;
@@ -73,7 +105,7 @@ void APCCarouseRing::ClearPickUps()
 }
 
 
-FTransform APCCarouseRing::GetSlotTransformWorld(int32 Index) const
+FTransform APCCarouselRing::GetSlotTransformWorld(int32 Index) const
 {
 	const int32 SlotNum = FMath::Max(1, NumSlots);
 	const float Step = 360.f / SlotNum;
@@ -91,9 +123,16 @@ FTransform APCCarouseRing::GetSlotTransformWorld(int32 Index) const
 	return FTransform(Rotation, WorldPosition, FVector::OneVector);
 }
 
+void APCCarouselRing::ApplyCentralView(APlayerController* PlayerController, float BlendTime)
+{
+	if (!PlayerController)
+		return;
+	PlayerController->SetViewTargetWithBlend(this, BlendTime);
+}
+
 
 #if WITH_EDITOR
-void APCCarouseRing::OnConstruction(const FTransform& transform)
+void APCCarouselRing::OnConstruction(const FTransform& transform)
 {
 	if (!bDrawDebug)
 		return;

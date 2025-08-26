@@ -5,7 +5,7 @@
 
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
-#include "Controller/Player/LobbyPlayerController.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 
 
@@ -31,7 +31,7 @@ void URegisterWidget::OnClicked_Submit()
 	
 	if(bSubmitToServerOnClose)
 	{
-		if (ALobbyPlayerController* LobbyPlayerController = GetOwningPlayer<ALobbyPlayerController>())
+		if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 		{
 			const ENetMode NetMode = LobbyPlayerController->GetNetMode();
 			if (NetMode == NM_Client || NetMode == NM_ListenServer)
