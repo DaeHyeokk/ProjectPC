@@ -75,7 +75,7 @@ public:
 	float CameraArmLength = 2000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FVector CameraArmLocalLocation = FVector(0,0,1400);
+	FVector CameraArmLocalLocation = FVector(0,0,1200);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	FRotator CameraArmLocalRotation = FRotator(-55,0,0);

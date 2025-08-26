@@ -31,7 +31,7 @@ public:
 	
 	// Stage 데이터
 	UPROPERTY(EditDefaultsOnly, Category = "Schedule")
-	UPCStageData* StageData = nullptr;
+	UPCStageData* StageData;
 
 	// 중앙집결 링
 	UPROPERTY(EditInstanceOnly, Category = "Refs")
@@ -59,7 +59,7 @@ private:
 	TArray<int32> FlatStageIdx;
 	TArray<int32> FlatRoundIdx;
 	TArray<int32> FlatStepIdxInRound;
-	int32 Cursor = -1;
+	int32 Cursor = 1;
 
 	FTimerHandle RoundTimer;
 	

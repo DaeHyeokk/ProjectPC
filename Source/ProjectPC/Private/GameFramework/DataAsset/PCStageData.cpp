@@ -23,7 +23,7 @@ float UPCStageData::GetRoundDuration(const FRoundStep& RoundStep) const
 	return (RoundStep.DurationOverride > 0.f) ? RoundStep.DurationOverride : GetDefaultDuration(RoundStep.StageType);
 }
 
-void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32> RoundIdx,
+void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32>& RoundIdx,
 	TArray<int32>& StepIdxInRound) const
 {
 	RoundsStep.Reset();
@@ -31,13 +31,13 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
 	RoundIdx.Reset();
 	StepIdxInRound.Reset();
 
-	for (int32 SIdx = 0; SIdx<StageIdx.Num(); ++SIdx)
+	for (int32 SIdx = 0; SIdx < Stages.Num(); ++SIdx)
 	{
 		const FStageSpec& Stage = Stages[SIdx];
-		for (int32 RIdx = 0; RIdx<Stage.Rounds.Num(); ++RIdx)
+		for (int32 RIdx = 0; RIdx < Stage.Rounds.Num(); ++RIdx)
 		{
 			const FRoundSpec& Round = Stage.Rounds[RIdx];
-			for (int32 k = 0; k<Round.Steps.Num(); ++k)
+			for (int32 k = 0; k < Round.Steps.Num(); ++k)
 			{
 				RoundsStep.Add(Round.Steps[k]);
 				StageIdx.Add(SIdx);

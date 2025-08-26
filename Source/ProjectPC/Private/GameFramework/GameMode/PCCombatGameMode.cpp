@@ -5,7 +5,7 @@
 
 #include "EngineUtils.h"
 #include "INodeAndChannelMappings.h"
-#include "Controller/Player/PCPlayerController.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -17,7 +17,7 @@
 APCCombatGameMode::APCCombatGameMode()
 {
 	GameStateClass = APCCombatGameState::StaticClass();
-	PlayerControllerClass = APCPlayerController::StaticClass();
+	PlayerControllerClass = APCCombatPlayerController::StaticClass();
 }
 
 void APCCombatGameMode::BeginPlay()
@@ -63,7 +63,7 @@ void APCCombatGameMode::BuildStageData()
 	FlatRoundSteps.Reset();
 	FlatStageIdx.Reset();
 	FlatRoundIdx.Reset();
-	FlatRoundSteps.Reset();
+	FlatStepIdxInRound.Reset();
 
 	if (!StageData)
 	{
@@ -139,9 +139,9 @@ void APCCombatGameMode::Step_Start()
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		if (auto* PlayerController = Cast<APCPlayerController>(*It))
+		if (auto* PlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			PlayerController->ClientCameraSetByActorName(TEXT("CarouseRing"), CentralCameraBlend);
+			PlayerController->ClientCameraSetByActorName(TEXT("CarouselRing"), CentralCameraBlend);
 		}
 	}
 }
@@ -169,7 +169,7 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		auto* PCPlayerController = Cast<APCPlayerController>(*It);
+		auto* PCPlayerController = Cast<APCCombatPlayerController>(*It);
 		if (!PCPlayerController) continue;
 
 		if (auto* PlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
@@ -180,10 +180,7 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 				const FTransform Transform = CarouseRing->GetSlotTransformWorld(Seat);
 				Pawn->TeleportTo(Transform.GetLocation(), Pawn->GetActorRotation(), false, true);
 			}
-		}
-
-		PCPlayerController->ClientCameraSetByActorName(CarouseRing->RingName, CentralCameraBlend);
-		
+		}		
 	}
 }
 
@@ -193,7 +190,7 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 		return;
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		auto* PlayerController = Cast<APCPlayerController>(*It);
+		auto* PlayerController = Cast<APCCombatPlayerController>(*It);
 		if (!PlayerController) continue;
 
 		auto* PlayerState = PlayerController->GetPlayerState<APCPlayerState>();
@@ -223,7 +220,7 @@ int32 APCCombatGameMode::ResolveBoardIndex(const APCPlayerState* PlayerState) co
 void APCCombatGameMode::BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds)
 {
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		if (auto* PlayerController = Cast<APCPlayerController>(*It))
+		if (auto* PlayerController = Cast<APCCombatPlayerController>(*It))
 			PlayerController->ClientStageChanged(Stage, StageName, Seconds);
 }
 

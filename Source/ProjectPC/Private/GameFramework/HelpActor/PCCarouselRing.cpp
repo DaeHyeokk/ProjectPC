@@ -16,13 +16,17 @@ APCCarouselRing::APCCarouselRing()
  	
 	PrimaryActorTick.bCanEverTick = false;
 
+	// 루트
+	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	SetRootComponent(Root);
+
 	RotatingMovement = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingMovement"));
 	RotatingMovement->RotationRate = FRotator(0.f, RotationRateYawDeg, 0.f);
 	RotatingMovement->bRotationInLocalSpace = false;
 
 	// 카메라
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->SetupAttachment(Root);
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->TargetArmLength = CameraArmLength;
 	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
