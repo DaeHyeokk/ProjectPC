@@ -6,6 +6,7 @@
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "PCHeroUnitCharacter.generated.h"
 
+class UPCDataAsset_HeroUnitData;
 class UPCHeroUnitAbilitySystemComponent;
 /**
  * 
@@ -26,6 +27,7 @@ public:
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
+	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
 	virtual bool HasLevelSystem() const override { return true; }
@@ -33,10 +35,19 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void LevelUp();
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTag GetJobSynergyTag() const;
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTag GetSpeciesSynergyTag() const;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
+
+	UPROPERTY(EditAnywhere, Category="Data")
+	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_HeroLevel, meta=(ExposeOnSpawn=true), Category="Data")
 	int32 HeroLevel = 1;

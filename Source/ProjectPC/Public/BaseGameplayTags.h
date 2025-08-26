@@ -36,6 +36,27 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
 }
 
+namespace SynergyGameplayTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Human)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Demon)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Imperial)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Robot)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Cyborg)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Beast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Undead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Species_Darkness)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Marksman)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Mechanic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_BladeMaster)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Knight)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Mage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Guardian)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Assassin)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Synergy_Job_Bruiser)
+}
+
 namespace GameplayEffectTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_InitDefaultStat)

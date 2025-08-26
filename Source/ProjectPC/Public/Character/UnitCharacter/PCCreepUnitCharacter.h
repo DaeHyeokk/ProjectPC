@@ -6,6 +6,7 @@
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "PCCreepUnitCharacter.generated.h"
 
+class UPCDataAsset_CreepUnitData;
 /**
  * 
  */
@@ -16,7 +17,10 @@ class PROJECTPC_API APCCreepUnitCharacter : public APCBaseUnitCharacter
 	
 public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
+	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
-	
+protected:
+	UPROPERTY(EditAnywhere, Category="Data")
+	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 };

@@ -35,6 +35,27 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Ultimate, "Unit.Action.Attack.Ultimate")
 }
 
+namespace SynergyGameplayTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Human, "Synergy.Species.Human")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Demon, "Synergy.Species.Demon")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Imperial, "Synergy.Species.Imperial")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Robot, "Synergy.Species.Robot")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Cyborg, "Synergy.Species.Cyborg")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Beast, "Synergy.Species.Beast")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Undead, "Synergy.Species.Undead")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Species_Darkness, "Synergy.Species.Darkness")
+	
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Marksman, "Synergy.Job.Marksman")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Mechanic, "Synergy.Job.Mechanic")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_BladeMaster, "Synergy.Job.BladeMaster")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Knight, "Synergy.Job.Knight")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Mage, "Synergy.Job.Mage")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Guardian, "Synergy.Job.Guardian")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Assassin, "Synergy.Job.Assassin")
+	UE_DEFINE_GAMEPLAY_TAG(Synergy_Job_Bruiser, "Synergy.Job.Bruiser")
+}
+
 namespace GameplayEffectTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_InitDefaultStat, "GE.Class.InitDefaultStat")

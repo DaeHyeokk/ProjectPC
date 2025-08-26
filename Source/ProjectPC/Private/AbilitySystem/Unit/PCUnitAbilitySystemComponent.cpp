@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
+#include "SubSystem/PCUnitGERegistrySubsystem.h"
 
 void UPCUnitAbilitySystemComponent::InitGAS()
 {
@@ -34,17 +35,24 @@ void UPCUnitAbilitySystemComponent::ApplyInitStatSet()
 		return;
 	
 	const UPCDataAsset_BaseUnitData* UnitData = UnitCharacter->GetUnitDataAsset();
+
 	
 	// 유닛 기본 스탯을 부여하기 전에 유닛의 Type 태그를 먼저 부여함 (유닛 Type에 따라 부여하는 속성이 다르기 때문)
 	if (!UnitData || !TryGrantUnitTypeTag())
 		return;
-
+	
 	int32 UnitLevel = UnitCharacter->HasLevelSystem() ? UnitCharacter->GetUnitLevel() : 1;
 	
 	TMap<FGameplayTag, float> StatMap;
 	UnitData->FillInitStatMap(UnitLevel, StatMap);
+	
+	const UGameInstance* GI = GetWorld()->GetGameInstance();
+	UPCUnitGERegistrySubsystem* UnitGERegistrySubsystem = GI ? GI->GetSubsystem<UPCUnitGERegistrySubsystem>() : nullptr;
+	if (!UnitGERegistrySubsystem)
+		return;
 
-	if (const TSubclassOf<UGameplayEffect> InitGEClass = UnitData->GetInitGEClass())
+	const FGameplayTag InitGEClassTag = GameplayEffectTags::GE_Class_InitDefaultStat;
+	if (const TSubclassOf<UGameplayEffect> InitGEClass = UnitGERegistrySubsystem->GetGEClass(InitGEClassTag))
 	{
 		const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(InitGEClass, UnitLevel, MakeEffectContext());
 
@@ -65,7 +73,7 @@ void UPCUnitAbilitySystemComponent::ApplyInitStatSet()
 
 void UPCUnitAbilitySystemComponent::GrantStartupAbilities()
 {
-	// GA 부여는 서버에서만 실행
+	// GA 능력 부여는 서버에서만 실행
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 		return;
 	

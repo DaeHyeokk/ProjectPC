@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -46,6 +47,11 @@ UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemCompone
 	return HeroUnitAbilitySystemComponent;
 }
 
+const UPCDataAsset_BaseUnitData* APCHeroUnitCharacter::GetUnitDataAsset() const
+{
+	return HeroUnitDataAsset;
+}
+
 FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const
 {
 	return UnitGameplayTags::Unit_Type_Hero;
@@ -58,6 +64,22 @@ void APCHeroUnitCharacter::LevelUp()
 
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
+}
+
+FGameplayTag APCHeroUnitCharacter::GetJobSynergyTag() const
+{
+	if (!HeroUnitDataAsset)
+		return FGameplayTag::EmptyTag;
+
+	return HeroUnitDataAsset->GetJobSynergyTag();
+}
+
+FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
+{
+	if (!HeroUnitDataAsset)
+		return FGameplayTag::EmptyTag;
+
+	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
 void APCHeroUnitCharacter::OnRep_HeroLevel()

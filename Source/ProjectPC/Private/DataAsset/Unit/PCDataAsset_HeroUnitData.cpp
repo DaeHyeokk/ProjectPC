@@ -41,3 +41,13 @@ void UPCDataAsset_HeroUnitData::FillStartupUltimateAbilities(TArray<TSubclassOf<
 		}
 	}
 }
+
+FGameplayTag UPCDataAsset_HeroUnitData::GetJobSynergyTag() const
+{
+	return SynergyTagConfig.JobSynergyTag;
+}
+
+FGameplayTag UPCDataAsset_HeroUnitData::GetSpeciesSynergyTag() const
+{
+	return SynergyTagConfig.SpeciesSynergyTag;
+}

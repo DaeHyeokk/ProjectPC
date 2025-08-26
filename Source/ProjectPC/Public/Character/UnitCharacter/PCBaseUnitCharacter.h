@@ -23,7 +23,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	const UPCUnitAttributeSet* GetUnitAttributeSet() const;
-	const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
+	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 	
 	virtual bool HasLevelSystem() const { return false; };
@@ -32,9 +32,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-
-	UPROPERTY(EditAnywhere, Category="Data")
-	TObjectPtr<UPCDataAsset_BaseUnitData> BaseUnitDataAsset;
 	
 	void InitAbilitySystem();
 };

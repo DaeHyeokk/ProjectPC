@@ -8,6 +8,18 @@
 #include "PCDataAsset_HeroUnitData.generated.h"
 
 USTRUCT(BlueprintType)
+struct FHeroSynergyTagConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(Categories="Synergy.Job"))
+	FGameplayTag JobSynergyTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(Categories="Synergy.Species"))
+	FGameplayTag SpeciesSynergyTag;
+};
+
+USTRUCT(BlueprintType)
 struct FHeroScalableStatConfig
 {
 	GENERATED_BODY()
@@ -15,7 +27,7 @@ struct FHeroScalableStatConfig
 	FHeroScalableStatConfig() : StatValue(0.f) {}
 	FHeroScalableStatConfig(const FGameplayTag InStatTag) : StatTag(InStatTag), StatValue(0.f) {}
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Unit.Stat"))
 	FGameplayTag StatTag;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -34,6 +46,8 @@ public:
 	UPCDataAsset_HeroUnitData();
 	virtual void FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const override;
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
+	FGameplayTag GetJobSynergyTag() const;
+	FGameplayTag GetSpeciesSynergyTag() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Scalable")
@@ -45,4 +59,7 @@ protected:
 	// 마나가 가득 찼을 때 사용하는 궁극기 능력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> UltimateAttackAbilities;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Synergy")
+	FHeroSynergyTagConfig SynergyTagConfig;
 };

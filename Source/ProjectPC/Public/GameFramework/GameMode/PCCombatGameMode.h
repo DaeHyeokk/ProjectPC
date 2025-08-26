@@ -10,6 +10,7 @@
  * 
  */
 
+class UPCDataAsset_UnitGEDictionary;
 class APCPlayerState;
 
 UENUM(BlueprintType)
@@ -33,5 +34,9 @@ class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 public:
 	virtual void PostSeamlessTravel() override;
 	
+protected:
+	virtual void BeginPlay() override;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
+	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
 };

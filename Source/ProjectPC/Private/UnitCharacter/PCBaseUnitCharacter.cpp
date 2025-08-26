@@ -52,7 +52,7 @@ const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
 {
-	return BaseUnitDataAsset;
+	return nullptr;
 }
 
 FGameplayTag APCBaseUnitCharacter::GetUnitTypeTag() const
@@ -70,6 +70,8 @@ void APCBaseUnitCharacter::BeginPlay()
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
+	//InitAbilitySystem();
 }
 
 void APCBaseUnitCharacter::InitAbilitySystem()
