@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/DataAsset/PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
-
 /**
  * 
  */
@@ -36,4 +36,18 @@ private:
 	void OnSetDestinationReleased();
 
 #pragma endregion Move
+
+	// 게임 카메라 세팅
+public:
+	// 서버->클라 : 내 자리 인덱스로 카메라 세팅
+	UFUNCTION(Client, Reliable)
+	void ClientCameraSet(int32 BoardIndex, float BlendTime);
+
+	// 서버->클라 : 임의 액터로 포커스 (회전초밥 등 사용)
+	UFUNCTION(Client, Reliable)
+	void ClientCameraSetByActorName(FName ActorName, float BlendTime);
+
+	// 서버->클라 : 페이즈 변경 알림
+	UFUNCTION(Client, Reliable)
+	void ClientStageChanged(EPCStageType NewStage, const FString& StageRoundName, float Seconds);
 };
