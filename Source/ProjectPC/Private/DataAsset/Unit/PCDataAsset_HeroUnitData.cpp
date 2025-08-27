@@ -33,13 +33,10 @@ void UPCDataAsset_HeroUnitData::FillInitStatMap(int32 Level, TMap<FGameplayTag, 
 
 void UPCDataAsset_HeroUnitData::FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const
 {
-	for (const TSubclassOf<UGameplayAbility>& GAClass : UltimateAttackAbilities)
-	{
-		if (*GAClass)
+		if (UltimateAttackAbility)
 		{
-			OutAbilities.AddUnique(GAClass);
+			OutAbilities.AddUnique(UltimateAttackAbility);
 		}
-	}
 }
 
 FGameplayTag UPCDataAsset_HeroUnitData::GetJobSynergyTag() const

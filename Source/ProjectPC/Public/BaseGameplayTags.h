@@ -34,6 +34,9 @@ namespace UnitGameplayTags
 	// ==== Unit Action Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
+
+	// ==== Unit Anim Montage Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
 }
 
 namespace SynergyGameplayTags

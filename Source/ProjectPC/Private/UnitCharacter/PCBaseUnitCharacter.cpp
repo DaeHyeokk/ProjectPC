@@ -5,6 +5,8 @@
 
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
+#include "Animation/Unit/PCUnitAnimInstance.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -45,9 +47,8 @@ UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemCompone
 
 const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
 {
-	//return Cast<UPCUnitAttributeSet>(UnitAbilitySystemComponent->GetAttributeSet(UPCUnitAttributeSet::StaticClass()));
+	return Cast<UPCUnitAttributeSet>(GetUnitAbilitySystemComponent()->GetAttributeSet(UPCUnitAttributeSet::StaticClass()));
 	//return GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
-	return nullptr;
 }
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
@@ -65,6 +66,7 @@ void APCBaseUnitCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	InitAbilitySystem();
+	SetAnimSetData();
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -84,5 +86,21 @@ void APCBaseUnitCharacter::InitAbilitySystem()
 		{
 			GetUnitAbilitySystemComponent()->InitGAS();
 		}
+	}
+}
+
+void APCBaseUnitCharacter::SetAnimSetData() const
+{
+	const UPCDataAsset_BaseUnitData* UnitData = GetUnitDataAsset();
+	if (UPCDataAsset_UnitAnimSet* UnitAnimSet = UnitData ? UnitData->GetAnimData() : nullptr)
+	{
+		if (UPCUnitAnimInstance* UnitAnimInstance =	Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
+		{
+			UnitAnimInstance->SetAnimSet(UnitAnimSet);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnitAnimSet Nullptr"));
 	}
 }

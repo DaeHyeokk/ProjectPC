@@ -56,6 +56,7 @@ void UPCUnitAnimInstance::SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet)
 void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 {
 	MovementBS = AnimSet->LocomotionSet.MovementBS.LoadSynchronous();
+	Idle = AnimSet->LocomotionSet.Idle.LoadSynchronous();
 	JumpStart = AnimSet->LocomotionSet.JumpStart.LoadSynchronous();
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();

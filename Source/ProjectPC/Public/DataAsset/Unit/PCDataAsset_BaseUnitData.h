@@ -8,6 +8,7 @@
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_BaseUnitData.generated.h"
 
+class UPCDataAsset_UnitAnimSet;
 class UAbilitySystemComponent;
 class UPCUnitAbilitySystemComponent;
 class UGameplayEffect;
@@ -44,9 +45,9 @@ public:
 	
 	UFUNCTION()
 	virtual void FillStartupAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
-	
-	TSubclassOf<UGameplayEffect> GetInitGEClass() const;
-	TSubclassOf<UGameplayEffect> GetGrantUnitTypeGEClass(FGameplayTag UnitTypeTag) const;
+
+	UFUNCTION()
+	UPCDataAsset_UnitAnimSet* GetAnimData() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")
@@ -72,10 +73,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> EventAbilities;
 
-	// ==== 임시 Test용 속성 / 추후에 UnitGERegistrySubsystem Class 내로 옮겨져야함 ====
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|GameplayEffects")
-	TSubclassOf<UGameplayEffect> InitGEClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|GameplayEffects")
-	TMap<FGameplayTag, TSubclassOf<UGameplayEffect>> GrantUnitTypeGEClassMap;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animations")
+	TObjectPtr<UPCDataAsset_UnitAnimSet> AnimData;
 };

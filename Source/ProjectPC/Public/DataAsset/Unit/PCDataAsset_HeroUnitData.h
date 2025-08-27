@@ -58,7 +58,7 @@ protected:
 
 	// 마나가 가득 찼을 때 사용하는 궁극기 능력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> UltimateAttackAbilities;
+	TSubclassOf<UGameplayAbility> UltimateAttackAbility;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Synergy")
 	FHeroSynergyTagConfig SynergyTagConfig;
