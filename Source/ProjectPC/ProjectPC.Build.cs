@@ -13,7 +13,8 @@ public class ProjectPC : ModuleRules
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", 
 			"GameplayAbilities", "GameplayTags", "GameplayTasks",
 			"UMG", "Niagara", "NiagaraCore",
-			"AIModule", "NavigationSystem"
+			"AIModule", "NavigationSystem",
+			"AnimGraphRuntime"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
