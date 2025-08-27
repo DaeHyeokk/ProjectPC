@@ -20,11 +20,11 @@ class PROJECTPC_API UPCDataAsset_PlayerAbilities : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "GE")
-	TArray<TSubclassOf<UGameplayEffect>> InitializedEffects;
+	TSubclassOf<UGameplayEffect> InitializedEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	TMap<FGameplayTag, float> InitializedEffectCallerValues;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GA")
-	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;
-
-	UPROPERTY(EditDefaultsOnly, Category = "GA")
-	TMap<FGameplayTag, TSubclassOf<UGameplayAbility>> ShopAbility;
+	TMap<FGameplayTag, TSubclassOf<UGameplayAbility>> InitializedAbilities;
 };

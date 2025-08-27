@@ -51,4 +51,6 @@ public:
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)
 	void CloseMenu();
+	UFUNCTION(BlueprintCallable)
+	void SetupShopSlots();
 };

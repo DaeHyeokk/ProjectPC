@@ -4,6 +4,11 @@
 #include "UI/Shop/PCShopWidget.h"
 
 #include "Components/Button.h"
+#include "Components/HorizontalBox.h"
+
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Shop/PCShopManager.h"
+#include "UI/Shop/PCUnitSlotWidget.h"
 
 
 UPCShopWidget::UPCShopWidget(const FObjectInitializer& ObjectInitializer)
@@ -42,4 +47,24 @@ void UPCShopWidget::OpenMenu()
 void UPCShopWidget::CloseMenu()
 {
 	this->RemoveFromParent();
+}
+
+void UPCShopWidget::SetupShopSlots()
+{
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+	if (!ShopBox) return;
+
+	auto ShopSlots = GS->ShopManager->GetShopSlots();
+	ShopBox->ClearChildren();
+
+	for (const FPCShopUnitData& UnitData : ShopSlots)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnitName : %s"), *UnitData.UnitName.ToString());
+		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
+		if (!UnitSlotWidget) return;
+		
+		UnitSlotWidget->Setup(UnitData);
+		ShopBox->AddChild(UnitSlotWidget);
+	}
 }

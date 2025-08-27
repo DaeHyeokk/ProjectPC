@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Shop/PCShopUnitData.h"
-#include "Shop/PCShopUnitProbabilityData.h"
 #include "PCShopManager.generated.h"
 
 /**
@@ -20,9 +19,12 @@ private:
 	TArray<FPCShopUnitData> ShopSlots;
 	
 public:
-	void UpdateShopSlots(uint8 PlayerLevel);
-	void BuyUnit(uint8 SlotIndex, int32& PlayerGold);
-	void BuyXP(uint8& PlayerLevel, int32& PlayerGold);
-	void Reroll(int32& PlayerGold);
-	void SellUnit(FName UnitName, uint8 UnitStarCount, int32& PlayerGold);
+	void SetupShopSlots(const TArray<FPCShopUnitData>& NewShopSlots);
+	const TArray<FPCShopUnitData>& GetShopSlots();
+	
+	void BuyXP();
+	void BuyUnit();
+	void SellUnit();
+	void ShopRefresh();
+	void ShopLock();
 };

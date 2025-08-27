@@ -6,22 +6,37 @@
 #include "Engine/DataTable.h"
 
 
-void UPCShopManager::UpdateShopSlots(uint8 PlayerLevel)
+void UPCShopManager::SetupShopSlots(const TArray<FPCShopUnitData>& NewShopSlots)
+{
+	ShopSlots = NewShopSlots;
+
+	for (const FPCShopUnitData& ShopSlot : NewShopSlots)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, UnitCost : %d"), *ShopSlot.UnitName.ToString(), ShopSlot.UnitCost);
+	}
+}
+
+const TArray<FPCShopUnitData>& UPCShopManager::GetShopSlots()
+{
+	return ShopSlots;
+}
+
+void UPCShopManager::BuyXP()
 {
 }
 
-void UPCShopManager::BuyUnit(uint8 SlotIndex, int32& PlayerGold)
+void UPCShopManager::BuyUnit()
 {
 }
 
-void UPCShopManager::BuyXP(uint8& PlayerLevel, int32& PlayerGold)
+void UPCShopManager::SellUnit()
 {
 }
 
-void UPCShopManager::Reroll(int32& PlayerGold)
+void UPCShopManager::ShopRefresh()
 {
 }
 
-void UPCShopManager::SellUnit(FName UnitName, uint8 UnitStarCount, int32& PlayerGold)
+void UPCShopManager::ShopLock()
 {
 }

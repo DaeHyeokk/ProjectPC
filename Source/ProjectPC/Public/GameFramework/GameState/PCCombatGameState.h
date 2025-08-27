@@ -7,6 +7,7 @@
 #include "GameFramework/DataAsset/PCStageData.h"
 #include "Shop/PCShopUnitData.h"
 #include "Shop/PCShopUnitProbabilityData.h"
+#include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
 
 /**
@@ -22,9 +23,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-
-
+	
 	// 전체 게임 로직 관련 코드
 public:
 
@@ -63,15 +62,11 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-
+#pragma region Shop
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ShopManager")
 	class UPCShopManager* ShopManager;
-	
-	//void Server_ShopRequest(EPCShopRequestTypes RequestType);
-
-#pragma region DataTable
 
 protected:
 	// 유닛 데이터가 저장된 DataTable 가져옴
@@ -81,11 +76,16 @@ protected:
 	// 유닛 확률 데이터가 저장된 DataTable 가져옴
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitProbabilityDataTable;
+
+	// 유닛 판매 가격 데이터가 저장된 DataTable 가져옴
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* ShopUnitSellingPriceDataTable;
 	
 private:
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
 	TArray<FPCShopUnitData> ShopUnitDataList;
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
+	TMap<TPair<uint8, uint8>, uint8> ShopUnitSellingPriceDataMap;
 
 	template<typename T>
 	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
@@ -107,9 +107,33 @@ private:
 		}
 	}
 
+	template<typename T>
+	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<uint8, uint8>, uint8>& OutMap, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutMap.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				// Key는 (UnitCost, UnitLevel), 값은 UnitSellingPrice
+				TPair<uint8, uint8> Key(Row->UnitCost, Row->UnitLevel);
+				OutMap.Add(Key, Row->UnitSellingPrice);
+			}
+		}
+	}
+
 public:
 	TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
+	const TMap<TPair<uint8, uint8>, uint8>& GetShopUnitSellingPriceDataMap();
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateShopSlots();
 	
-#pragma endregion DataTable
+#pragma endregion Shop
 };
