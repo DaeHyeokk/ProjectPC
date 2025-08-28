@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PCGameplayAbility_ShopRequest.h"
+#include "Abilities/GameplayAbility.h"
 #include "PCGameplayAbility_ShopLock.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UPCGameplayAbility_ShopLock : public UPCGameplayAbility_ShopRequest
+class PROJECTPC_API UPCGameplayAbility_ShopLock : public UGameplayAbility
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+public:
+	UPCGameplayAbility_ShopLock();
 };

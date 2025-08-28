@@ -20,7 +20,7 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedEffects()
 	if (!EffectSpecHandle.IsValid()) return;
 	
 	// 자기 자신에게 GE 적용
-	for (const TPair<FGameplayTag, float>& InitialValue : PlayerAbilityData->InitializedEffectCallerValues)
+	for (const auto& InitialValue : PlayerAbilityData->InitializedEffectCallerValues)
 	{
 		EffectSpecHandle.Data->SetSetByCallerMagnitude(InitialValue.Key, InitialValue.Value);
 	}
@@ -33,9 +33,9 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 	// GetOwner()가 유효하지 않거나, 서버가 아니라면 return
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
-	for (const TPair<FGameplayTag, TSubclassOf<UGameplayAbility>>& InitialGAClass : PlayerAbilityData->InitializedAbilities)
+	for (const auto& InitialGAClass : PlayerAbilityData->InitializedAbilities)
 	{
-		// 어빌리티 부여만 (인자 값을 상수 참조로 받으므로 임시 객체 가능)
-		GiveAbility(FGameplayAbilitySpec(InitialGAClass.Value, 0, INDEX_NONE, nullptr));
+		auto AbilitySpec = FGameplayAbilitySpec(InitialGAClass, 0, INDEX_NONE, nullptr);
+		GiveAbility(AbilitySpec);
 	}
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/DataAsset/PCStageData.h"
 #include "Shop/PCShopUnitData.h"
@@ -19,10 +20,12 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
-	APCCombatGameState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	APCCombatGameState();
 
 protected:
 	virtual void BeginPlay() override;
+
+#pragma region GameLogic
 	
 	// 전체 게임 로직 관련 코드
 public:
@@ -62,22 +65,27 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+#pragma endregion GameLogic
+	
 #pragma region Shop
 	
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ShopManager")
+private:
+	UPROPERTY()
 	class UPCShopManager* ShopManager;
 
+public:
+	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
+
 protected:
-	// 유닛 데이터가 저장된 DataTable 가져옴
+	// 유닛 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitDataTable;
 
-	// 유닛 확률 데이터가 저장된 DataTable 가져옴
+	// 유닛 확률 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitProbabilityDataTable;
 
-	// 유닛 판매 가격 데이터가 저장된 DataTable 가져옴
+	// 유닛 판매 가격 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitSellingPriceDataTable;
 	
@@ -87,6 +95,7 @@ private:
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
 	TMap<TPair<uint8, uint8>, uint8> ShopUnitSellingPriceDataMap;
 
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
 	template<typename T>
 	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
 	{
@@ -107,6 +116,7 @@ private:
 		}
 	}
 
+	// DataTable을 읽어 아웃파라미터로 TMap에 값을 넘기는 템플릿 함수
 	template<typename T>
 	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<uint8, uint8>, uint8>& OutMap, const FString& Context)
 	{
@@ -126,14 +136,12 @@ private:
 			}
 		}
 	}
-
+	
 public:
 	TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<uint8, uint8>, uint8>& GetShopUnitSellingPriceDataMap();
-
-	UFUNCTION(BlueprintCallable)
-	void UpdateShopSlots();
+	TArray<float> GetCostProbabilities();
 	
 #pragma endregion Shop
 };

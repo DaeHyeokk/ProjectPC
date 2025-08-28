@@ -14,9 +14,6 @@ class PROJECTPC_API UPCShopWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-public:
-	UPCShopWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
 protected:
 	virtual bool Initialize() override;
 	
@@ -36,9 +33,21 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* GoldBalance;
-
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
+
+	// Cost Probability
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost1;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost2;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost3;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost4;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost5;
 
 private:
 	UFUNCTION()
@@ -53,4 +62,6 @@ public:
 	void CloseMenu();
 	UFUNCTION(BlueprintCallable)
 	void SetupShopSlots();
+
+	
 };

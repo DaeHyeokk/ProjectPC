@@ -23,12 +23,10 @@ void APCPlayerState::BeginPlay()
 		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
 		PlayerAbilitySystemComponent->ApplyInitializedEffects();
-		UE_LOG(LogTemp, Warning, TEXT("GAS ServerSide Init"));
 	}
 	else
 	{
 		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
-		UE_LOG(LogTemp, Warning, TEXT("GAS ClientSide Init"));
 	}
 }
 

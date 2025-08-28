@@ -3,6 +3,10 @@
 
 #include "AbilitySystem/Player/GA/PCGameplayAbility_ShopLock.h"
 
+#include "BaseGameplayTags.h"
 
 
-
+UPCGameplayAbility_ShopLock::UPCGameplayAbility_ShopLock()
+{
+	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_ShopLock);
+}

@@ -3,16 +3,19 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 
+#include "AbilitySystemComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/Shop/PCShopWidget.h"
 
 APCCombatPlayerController::APCCombatPlayerController()
 {
@@ -83,6 +86,33 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	}
 	
 	FollowTime = 0.f;
+}
+
+void APCCombatPlayerController::LoadShopWidget()
+{
+	if (IsLocalController())
+	{
+		if (!ShopWidgetClass) return;
+	
+		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
+		if (!ShopWidget) return;
+
+		ShopWidget->OpenMenu();
+	}
+}
+
+void APCCombatPlayerController::ShopRequest_ShopRefresh()
+{
+	if (IsLocalController())
+	{
+		if (auto PS = GetPlayerState<APCPlayerState>())
+		{
+			if (auto ASC = PS->GetAbilitySystemComponent())
+			{
+				ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
+			}
+		}
+	}
 }
 
 void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
