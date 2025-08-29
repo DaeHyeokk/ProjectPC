@@ -11,9 +11,9 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
-
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
@@ -22,6 +22,7 @@
 APCCombatPlayerController::APCCombatPlayerController()
 {
 	bShowMouseCursor = true;
+	bAutoManageActiveCameraTarget = false;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
@@ -148,15 +149,11 @@ void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex,
 	}
 }
 
-void APCCombatPlayerController::ClientCameraSetByActorName_Implementation(FName ActorName, float BlendTime)
+void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, float BlendTime)
 {
-	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	if (APCCarouselRing* PCCarouselRing = Cast<APCCarouselRing>(CarouselRing))
 	{
-		if (It->GetFName() == ActorName || It->GetActorLabel().Equals(ActorName.ToString()))
-		{
-			SetViewTargetWithBlend(*It, BlendTime);
-			return;
-		}
+		PCCarouselRing->ApplyCentralView(this, BlendTime);
 	}
 }
 

@@ -27,8 +27,6 @@ class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 
 public:
 	APCCombatGameMode();
-
-	virtual void PostSeamlessTravel() override;
 	
 	// Stage 데이터
 	UPROPERTY(EditDefaultsOnly, Category = "Schedule")
@@ -36,7 +34,7 @@ public:
 
 	// 중앙집결 링
 	UPROPERTY(EditInstanceOnly, Category = "Refs")
-	APCCarouselRing* CarouseRing = nullptr;
+	APCCarouselRing* CarouselRing = nullptr;
 
 	// 보드 래퍼런스
 	UPROPERTY(VisibleInstanceOnly, Category = "Refs")
@@ -53,6 +51,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void PostSeamlessTravel() override;
+
+	// 좌석배정 유틸함수
+	void AssignSeatInitial(bool bForceReassign);
+	void AssignSeatIfNeeded(class APCPlayerState* PCPlayerState);
+	int32 GetTotalSeatSlots() const;
+	int32 FindNextFreeSeat(int32 TotalSeats) const;
 
 private:
 	// 데이터 평탄화
@@ -60,9 +65,11 @@ private:
 	TArray<int32> FlatStageIdx;
 	TArray<int32> FlatRoundIdx;
 	TArray<int32> FlatStepIdxInRound;
-	int32 Cursor = 1;
+	int32 Cursor = -1;
 
 	FTimerHandle RoundTimer;
+	FTimerHandle CameraSetupTimer;
+	FTimerHandle WaitAllPlayerController;
 	
 private:
 	void BuildHelperActor();
@@ -81,14 +88,15 @@ private:
 	void Step_Carousel();
 
 	// 공동 유틸 함수
+	void TryPlacePlayersAfterTravel();
 	void PlaceAllPlayersOnCarousel();
 	void MovePlayersToBoardsAndCameraSet();
+	void SetCarouselCameraForAllPlayers();
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;
+	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
 	APCCombatGameState* GetCombatGameState() const { return GetGameState<APCCombatGameState>(); }
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
-
-	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")

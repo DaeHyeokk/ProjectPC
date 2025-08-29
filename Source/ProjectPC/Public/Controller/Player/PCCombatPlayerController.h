@@ -7,6 +7,9 @@
 #include "GameFramework/DataAsset/PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
 
+
+struct FGameplayTag;
+class APCCarouselRing;
 /**
  * 
  */
@@ -65,7 +68,7 @@ public:
 
 	// 서버->클라 : 임의 액터로 포커스 (회전초밥 등 사용)
 	UFUNCTION(Client, Reliable)
-	void ClientCameraSetByActorName(FName ActorName, float BlendTime);
+	void ClientCameraSetCarousel(APCCarouselRing* CarouselRing, float BlendTime);
 
 	// 서버->클라 : 페이즈 변경 알림
 	UFUNCTION(Client, Reliable)

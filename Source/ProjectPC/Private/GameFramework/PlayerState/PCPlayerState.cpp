@@ -9,6 +9,7 @@
 
 APCPlayerState::APCPlayerState()
 {
+	bReplicates = true;
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
 	PlayerAttributeSet = CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
 	PlayerAbilitySystemComponent->AddAttributeSetSubobject(PlayerAttributeSet);
@@ -28,6 +29,68 @@ void APCPlayerState::BeginPlay()
 	{
 		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
+}
+
+
+void APCPlayerState::SetFieldUnit(FGameplayTag UnitID, int UnitLevel, int32 TileIndex)
+{
+	if (!HasAuthority())
+		return;
+	bool bFound = false;
+	for (auto& FieldUnitData : FieldUnit)
+	{
+		if (FieldUnitData.TileIndex == TileIndex)
+		{
+			FieldUnitData.UnitID = UnitID;
+			FieldUnitData.TeamID = TeamID;
+			FieldUnitData.UnitLevel = UnitLevel;
+			bFound = true;
+			break;
+		}
+	}
+	if (!bFound)
+		FieldUnit.Add(FUnitDataInBoard(UnitID, UnitLevel, TileIndex, TeamID));
+
+	OnBoardUpdated.Broadcast();
+}
+
+void APCPlayerState::RemoveFieldAt(int32 TileIndex)
+{
+	if (!HasAuthority())
+		return;
+	FieldUnit.RemoveAll([&](const FUnitDataInBoard& FieldUnitData){return FieldUnitData.TileIndex == TileIndex;});
+	OnBoardUpdated.Broadcast();
+}
+
+void APCPlayerState::SetBenchUnit(FGameplayTag UnitID, int UnitLevel, int32 BenchIndex)
+{
+	if (!HasAuthority())
+		return;
+	bool bFound = false;
+	for (FUnitDataInBoard& BenchUnitData : BenchUnit)
+	{
+		BenchUnitData.UnitID = UnitID;
+		BenchUnitData.TeamID = TeamID;
+		BenchUnitData.UnitLevel = UnitLevel;
+		bFound = true;
+		break;
+	}
+	if (!bFound)
+		BenchUnit.Add(FUnitDataInBoard(UnitID, UnitLevel, BenchIndex, BenchIndex));
+	OnBoardUpdated.Broadcast();
+}
+
+void APCPlayerState::RemoveBench(int32 BenchIndex)
+{
+	if (!HasAuthority())
+		return;
+	BenchUnit.RemoveAll([&](const FUnitDataInBoard& BenchUnitData){return BenchUnitData.TileIndex == BenchIndex;});
+	OnBoardUpdated.Broadcast();
+}
+
+void APCPlayerState::OnRep_UnitData()
+{
+	OnBoardUpdated.Broadcast();
 }
 
 UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
@@ -58,5 +121,8 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIsLeader);
 	DOREPLIFETIME(APCPlayerState, SeatIndex);
 	DOREPLIFETIME(APCPlayerState, bIdentified);
+	DOREPLIFETIME(APCPlayerState, FieldUnit);
+	DOREPLIFETIME(APCPlayerState, BenchUnit);
+	DOREPLIFETIME(APCPlayerState, TeamID);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 }
