@@ -54,35 +54,39 @@ void UPCUnitAttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeDa
 
 void UPCUnitAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, MaxHealth, OldMaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("Client OnRep_MaxHealth: Old=%.1f New=%.1f"),
+	OldMaxHealth.GetCurrentValue(), MaxHealth.GetCurrentValue());
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, MaxHealth, OldMaxHealth);
 }
 
 void UPCUnitAttributeSet::OnRep_CurrentHealth(const FGameplayAttributeData& OldCurrentHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, CurrentHealth, OldCurrentHealth);
+	UE_LOG(LogTemp, Warning, TEXT("Client OnRep_CurrentHealth: Old=%.1f New=%.1f"),
+OldCurrentHealth.GetCurrentValue(), CurrentHealth.GetCurrentValue());
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, CurrentHealth, OldCurrentHealth);
 }
 
 void UPCUnitAttributeSet::OnRep_BaseDamage(const FGameplayAttributeData& OldBaseDamage)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, BaseDamage, OldBaseDamage);
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, BaseDamage, OldBaseDamage);
 }
 
 void UPCUnitAttributeSet::OnRep_AttackRange(const FGameplayAttributeData& OldAttackRange)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackRange, OldAttackRange);
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackRange, OldAttackRange);
 }
 
 void UPCUnitAttributeSet::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackSpeed, OldAttackSpeed);
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackSpeed, OldAttackSpeed);
 }
 
 void UPCUnitAttributeSet::OnRep_PhysicalDefense(const FGameplayAttributeData& OldPhysicalDefense)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, PhysicalDefense, OldPhysicalDefense);
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, PhysicalDefense, OldPhysicalDefense);
 }
 
 void UPCUnitAttributeSet::OnRep_MagicDefense(const FGameplayAttributeData& OldMagicDefense)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, MagicDefense, OldMagicDefense);
+	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, MagicDefense, OldMagicDefense);
 }

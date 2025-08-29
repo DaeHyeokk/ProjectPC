@@ -6,6 +6,7 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
+#include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -33,6 +34,13 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
+
+	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
+	StatusBarComp->SetupAttachment(GetMesh(), StatusBarSocketName);
+	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
+	StatusBarComp->SetDrawSize({300.f, 100.f});
+	StatusBarComp->SetPivot({0.5f, 1.f});
+	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
 }
 
 UAbilitySystemComponent* APCBaseUnitCharacter::GetAbilitySystemComponent() const
@@ -51,6 +59,11 @@ const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
 	//return GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
 }
 
+UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAnimData() : nullptr;
+}
+
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
 {
 	return nullptr;
@@ -67,6 +80,18 @@ void APCBaseUnitCharacter::BeginPlay()
 
 	InitAbilitySystem();
 	SetAnimSetData();
+
+	if (const auto StatusBarClass = GetStatusBarClass())
+	{
+		StatusBarComp->SetWidgetClass(StatusBarClass);
+		ReAttachStatusBarToSocket();
+		
+		if (UUserWidget* W = StatusBarComp->GetUserWidgetObject())
+		{
+			InitStatusBarWidget(W);
+		}
+	}
+	
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -74,6 +99,30 @@ void APCBaseUnitCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	//InitAbilitySystem();
+}
+
+void APCBaseUnitCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	ReAttachStatusBarToSocket();
+}
+
+void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
+{
+	// 하위 클래스에서 오버라이드 해서 구현
+}
+
+void APCBaseUnitCharacter::ReAttachStatusBarToSocket() const
+{
+	if (USkeletalMeshComponent* SkeMesh = GetMesh())
+	{
+		if (SkeMesh->DoesSocketExist(StatusBarSocketName))
+		{
+			StatusBarComp->AttachToComponent(
+				SkeMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				StatusBarSocketName);
+		}
+	}
 }
 
 void APCBaseUnitCharacter::InitAbilitySystem()

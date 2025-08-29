@@ -7,7 +7,7 @@
 #include "PCUnitHealthProgressBar.generated.h"
 
 struct FUnitTickStyle;
-class PCSUnitProgressBar;
+class PCSUnitHealthProgressBar;
 /**
  * 
  */
@@ -53,14 +53,14 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Unit Health Bar")
 	void SetValues(float InCurrent, float InMax);
-
+	
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
 	virtual void SynchronizeProperties() override;
 
 private:
-	TSharedPtr<PCSUnitProgressBar> UnitProgressSlate;
+	TSharedPtr<PCSUnitHealthProgressBar> UnitProgressSlate;
 
 	TOptional<float> GetOptionalPercent() const { return TOptional<float>(GetPercent()); }
 	float GetMaxValueAttr() const { return MaxValue; }

@@ -8,6 +8,7 @@
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "PCBaseUnitCharacter.generated.h"
 
+class UWidgetComponent;
 class UGameplayAbility;
 class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
@@ -23,6 +24,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	const UPCUnitAttributeSet* GetUnitAttributeSet() const;
+	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 	
@@ -32,7 +34,19 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+	
+	virtual TSubclassOf<UUserWidget> GetStatusBarClass() const { return nullptr; }
+	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
+	void ReAttachStatusBarToSocket() const;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UWidgetComponent> StatusBarComp;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
+	FName StatusBarSocketName = TEXT("HealthBar");
+	
 private:
 	void InitAbilitySystem();
 	void SetAnimSetData() const;

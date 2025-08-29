@@ -9,6 +9,7 @@
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCUnitAnimInstance.generated.h"
 
+class APCBaseUnitCharacter;
 class UCharacterMovementComponent;
 class UPCDataAsset_UnitAnimSet;
 /**
@@ -26,10 +27,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="AnimSet")
 	void SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet);
-
-	UFUNCTION(BlueprintCallable, Category="AnimSet")
-	UAnimMontage* GetMontageByTag(FGameplayTag MontageTag);
-
+	
 	UPROPERTY(BlueprintReadOnly, Category="Movement")
 	float Speed = 0.f;
 
@@ -44,13 +42,16 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="AnimSlot")
 	bool bFullBody = false;
+
+	UFUNCTION(BlueprintCallable)
+	void PlayLevelStartMontage();
 	
 protected:
-	virtual void NativeInitializeAnimation() override;
+	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
-	TWeakObjectPtr<ACharacter> CachedCharacter;
+	TWeakObjectPtr<APCBaseUnitCharacter> CachedUnitCharacter;
 	TWeakObjectPtr<UCharacterMovementComponent> CachedMovementComp;
 
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
@@ -73,9 +74,8 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> JumpRecovery;
-	
-	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
-	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
 
 	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
+
+	bool bPlayStartAnim = false;
 };

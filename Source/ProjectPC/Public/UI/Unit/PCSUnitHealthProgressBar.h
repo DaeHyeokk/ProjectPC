@@ -13,10 +13,10 @@ struct FUnitTickStyle
 	FMargin Pad = FMargin(2.f);
 };
 
-class PCSUnitProgressBar : public SProgressBar
+class PCSUnitHealthProgressBar : public SProgressBar
 {
 public:
-	SLATE_BEGIN_ARGS(PCSUnitProgressBar)
+	SLATE_BEGIN_ARGS(PCSUnitHealthProgressBar)
 		: _Percent(TOptional<float>(0.f)), _MaxValue(1.f) {}
 		SLATE_ATTRIBUTE(TOptional<float>, Percent)
 		SLATE_ATTRIBUTE(float, MaxValue)

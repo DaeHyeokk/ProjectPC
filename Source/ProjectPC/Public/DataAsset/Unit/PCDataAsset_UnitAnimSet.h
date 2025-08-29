@@ -45,5 +45,5 @@ public:
 	FUnitLocomotionSet LocomotionSet;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
-	TMap<FGameplayTag, TSoftObjectPtr<UAnimMontage>> MontageByTagMap;
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
 };

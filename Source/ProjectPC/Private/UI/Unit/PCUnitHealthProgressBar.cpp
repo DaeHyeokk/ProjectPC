@@ -3,7 +3,7 @@
 
 #include "UI/Unit/PCUnitHealthProgressBar.h"
 
-#include "UI/Unit/PCSUnitProgressBar.h"
+#include "UI/Unit/PCSUnitHealthProgressBar.h"
 
 
 void UPCUnitHealthProgressBar::SetValues(float InCurrent, float InMax)
@@ -18,10 +18,10 @@ TSharedRef<SWidget> UPCUnitHealthProgressBar::RebuildWidget()
 {
 	Super::RebuildWidget();
 
-	FUnitTickStyle Style;
+	const FUnitTickStyle Style;
 
 	UnitProgressSlate =
-		SNew(PCSUnitProgressBar)
+		SNew(PCSUnitHealthProgressBar)
 		.Percent(TAttribute<TOptional<float>>::Create(
 			TAttribute<TOptional<float>>::FGetter::CreateUObject(this, &ThisClass::GetOptionalPercent)))
 		.MaxValue(TAttribute<float>::Create(

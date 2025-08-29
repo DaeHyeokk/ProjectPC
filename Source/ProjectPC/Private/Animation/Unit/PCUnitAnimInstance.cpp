@@ -3,24 +3,31 @@
 
 #include "Animation/Unit/PCUnitAnimInstance.h"
 
-#include "GameFramework/Character.h"
+#include "BaseGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
+#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 
-
-void UPCUnitAnimInstance::NativeInitializeAnimation()
+void UPCUnitAnimInstance::PlayLevelStartMontage()
 {
-	Super::NativeInitializeAnimation();
+	UAnimMontage* LevelStart = CurrentAnimSet ? CurrentAnimSet->MontageByTagMap.FindRef(UnitGameplayTags::Unit_Montage_LevelStart) : nullptr;
+	if (!LevelStart)
+		return;
 
-	CachedCharacter = Cast<ACharacter>(TryGetPawnOwner());
-	if (CachedCharacter.IsValid())
-	{
-		CachedMovementComp = CachedCharacter->GetCharacterMovement();
-	}
+	Montage_Play(LevelStart, 1.f);
+}
 
-	if (DefaultAnimSet)
+void UPCUnitAnimInstance::NativeBeginPlay()
+{
+	Super::NativeBeginPlay();
+	
+	CachedUnitCharacter = Cast<APCBaseUnitCharacter>(TryGetPawnOwner());
+	if (CachedUnitCharacter.IsValid())
 	{
-		SetAnimSet(DefaultAnimSet);
+		CachedMovementComp = CachedUnitCharacter->GetCharacterMovement();
+		SetAnimSet(CachedUnitCharacter->GetUnitAnimSetDataAsset());
+
+		PlayLevelStartMontage();
 	}
 }
 
@@ -28,19 +35,22 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!CachedCharacter.IsValid())
+	if (!CachedUnitCharacter.IsValid())
 	{
-		CachedCharacter = Cast<ACharacter>(TryGetPawnOwner());
-		if (CachedCharacter.IsValid())
-			CachedMovementComp = CachedCharacter->GetCharacterMovement();
+		CachedUnitCharacter = Cast<APCBaseUnitCharacter>(TryGetPawnOwner());
+		if (CachedUnitCharacter.IsValid())
+		{
+			CachedMovementComp = CachedUnitCharacter->GetCharacterMovement();
+			SetAnimSet(CachedUnitCharacter->GetUnitAnimSetDataAsset());
+		}
 	}
-	if (!CachedCharacter.IsValid() || !CachedMovementComp.IsValid())
+	if (!CachedUnitCharacter.IsValid() || !CachedMovementComp.IsValid())
 		return;
 
-	Speed = CachedCharacter->GetVelocity().Size2D();
+	Speed = CachedUnitCharacter->GetVelocity().Size2D();
 	bIsFalling = CachedMovementComp->IsFalling();
-	bIsAccelerating = CachedCharacter->GetVelocity().SizeSquared2D() > 0.1f;
-	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedCharacter->GetVelocity(), CachedCharacter->GetActorRotation());
+	bIsAccelerating = CachedUnitCharacter->GetVelocity().SizeSquared2D() > 0.1f;
+	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedUnitCharacter->GetVelocity(), CachedUnitCharacter->GetActorRotation());
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
 }
 
@@ -61,23 +71,15 @@ void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();
 	JumpRecovery = AnimSet->LocomotionSet.JumpRecovery.LoadSynchronous();
-	
+
+	/*
 	MontageByTagMap.Empty();
 	for (const auto& KeyValuePair : AnimSet->MontageByTagMap)
 	{
-		if (UAnimMontage* Montage = KeyValuePair.Value.LoadSynchronous())
+		if (UAnimMontage* Montage = KeyValuePair.Value)
 		{
 			MontageByTagMap.Add(KeyValuePair.Key, Montage);
 		}
 	}
-}
-
-UAnimMontage* UPCUnitAnimInstance::GetMontageByTag(FGameplayTag MontageTag)
-{
-	if (const TObjectPtr<UAnimMontage>* Found = MontageByTagMap.Find(MontageTag))
-	{
-		return Found->Get();
-	}
-
-	return nullptr;
+	*/
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "PCHeroUnitCharacter.generated.h"
 
 class UPCDataAsset_HeroUnitData;
@@ -21,7 +22,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -33,9 +34,14 @@ public:
 	virtual bool HasLevelSystem() const override { return true; }
 	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 
+	virtual TSubclassOf<UUserWidget> GetStatusBarClass() const override { return HeroStatusBarClass; }
+	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	
 	UFUNCTION(BlueprintCallable)
 	void LevelUp();
 
+	void UpdateStatusBarUI() const;
+	
 	UFUNCTION(BlueprintCallable)
 	FGameplayTag GetJobSynergyTag() const;
 
@@ -48,6 +54,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
+
+	UPROPERTY(EditAnywhere, Category="Data")
+	TSubclassOf<UPCHeroStatusBarWidget> HeroStatusBarClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_HeroLevel, meta=(ExposeOnSpawn=true), Category="Data")
 	int32 HeroLevel = 1;

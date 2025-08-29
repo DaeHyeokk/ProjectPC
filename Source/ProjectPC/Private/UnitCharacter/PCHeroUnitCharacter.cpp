@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "Net/UnrealNetwork.h"
 
@@ -59,11 +60,23 @@ FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const
 
 void APCHeroUnitCharacter::LevelUp()
 {
-	if (!HeroUnitAbilitySystemComponent)
+	// LevelUp은 서버권한
+	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
 
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
+	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	if (GetNetMode() == NM_ListenServer)
+		UpdateStatusBarUI();
+}
+
+void APCHeroUnitCharacter::UpdateStatusBarUI() const
+{
+	if (UPCHeroStatusBarWidget* StatusBar = Cast<UPCHeroStatusBarWidget>(StatusBarComp->GetUserWidgetObject()))
+	{
+		StatusBar->SetVariantByLevel(HeroLevel);
+	}
 }
 
 FGameplayTag APCHeroUnitCharacter::GetJobSynergyTag() const
@@ -84,5 +97,24 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 
 void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
-	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트
+	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
+	UpdateStatusBarUI();
+}
+
+void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
+{
+	// 데디서버거나 StatusBar Class가 없으면 실행하지 않음, HasAuthority() 안쓰는 이유: Listen Server 환경 고려
+	if (GetNetMode() == NM_DedicatedServer || !HeroStatusBarClass)
+		return;
+
+	if (UPCHeroStatusBarWidget* StatusBar = Cast<UPCHeroStatusBarWidget>(StatusBarWidget))
+	{
+		StatusBar->InitWithASC(GetUnitAbilitySystemComponent(),
+			UPCHeroUnitAttributeSet::GetCurrentHealthAttribute(),
+			UPCHeroUnitAttributeSet::GetMaxHealthAttribute(),
+			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
+			UPCHeroUnitAttributeSet::GetMaxManaAttribute(),
+			HeroLevel);
+	}
+	
 }
