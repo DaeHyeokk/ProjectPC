@@ -35,6 +35,21 @@ UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
 	return PlayerAbilitySystemComponent; 
 }
 
+void APCPlayerState::OnRep_ShopSlots()
+{
+	OnShopSlotsUpdated.Broadcast();
+}
+
+void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
+{
+	ShopSlots = NewSlots;
+}
+
+const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
+{
+	return ShopSlots;
+}
+
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -43,4 +58,5 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIsLeader);
 	DOREPLIFETIME(APCPlayerState, SeatIndex);
 	DOREPLIFETIME(APCPlayerState, bIdentified);
+	DOREPLIFETIME(APCPlayerState, ShopSlots);
 }

@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
 
@@ -26,7 +27,17 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
-	Img_UnitThumbnail->SetBrushFromTexture(UnitData.UnitTexture);
+
+	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+	{
+		UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject());
+		if (Texture)
+		{
+			Img_UnitThumbnail->SetBrushFromTexture(Texture);
+		}
+	});
 	
 	UTexture2D* BorderTexture = nullptr;
 	switch (UnitData.UnitCost)
@@ -51,7 +62,9 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 	}
 
 	if (BorderTexture)
+	{
 		Img_CostBorder->SetBrushFromTexture(BorderTexture);
+	}
 }
 
 void UPCUnitSlotWidget::OnClickedUnitSlot()

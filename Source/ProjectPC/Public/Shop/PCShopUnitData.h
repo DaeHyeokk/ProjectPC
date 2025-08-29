@@ -29,7 +29,7 @@ public:
 	FName UnitOrigin;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTexture2D* UnitTexture;
+	TSoftObjectPtr<UTexture2D> UnitTexture;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 UnitCount;

@@ -9,7 +9,7 @@
 #include "Controller/Player/PCCombatPlayerController.h"
 
 #include "GameFramework/GameState/PCCombatGameState.h"
-#include "Shop/PCShopManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "UI/Shop/PCUnitSlotWidget.h"
 
 
@@ -34,13 +34,23 @@ void UPCShopWidget::OnClickedReroll()
 	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
 	{
 		PC->ShopRequest_ShopRefresh();
-		SetupShopSlots();
 	}
+}
+
+void UPCShopWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
+{
+	if (!NewPlayerState) return;
+
+	NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
+	{
+		SetupShopSlots();
+	});
+	
+	SetupShopSlots();
 }
 
 void UPCShopWidget::OpenMenu()
 {
-	SetupShopSlots();
 	this->AddToViewport();
 }
 
@@ -53,11 +63,14 @@ void UPCShopWidget::SetupShopSlots()
 {
 	if (!ShopBox) return;
 	ShopBox->ClearChildren();
+
+	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
+	if (!PS) return;
 	
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS) return;
 	
-	const auto& ShopSlots = GS->GetShopManager()->GetShopSlots();
+	const auto& ShopSlots = PS->GetShopSlots();
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
 	for (const FPCShopUnitData& UnitData : ShopSlots)

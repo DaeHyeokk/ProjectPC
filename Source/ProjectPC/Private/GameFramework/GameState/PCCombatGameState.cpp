@@ -23,7 +23,29 @@ void APCCombatGameState::BeginPlay()
 		LoadDataTableToMap<FPCShopUnitSellingPriceData>(ShopUnitSellingPriceDataTable, ShopUnitSellingPriceDataMap, TEXT("Loading Shop Unit Selling Price Data"));
 	}
 
-	ShopManager->UpdateShopSlots();
+	for (auto Unit : ShopUnitDataList)
+	{
+		switch (Unit.UnitCost)
+		{
+		case 1:
+			ShopUnitDataList_Cost1.Add(Unit);
+			break;
+		case 2:
+			ShopUnitDataList_Cost2.Add(Unit);
+			break;
+		case 3:
+			ShopUnitDataList_Cost3.Add(Unit);
+			break;
+		case 4:
+			ShopUnitDataList_Cost4.Add(Unit);
+			break;
+		case 5:
+			ShopUnitDataList_Cost5.Add(Unit);
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 FString APCCombatGameState::GetStageRoundLabel() const
@@ -48,7 +70,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 }
 
-TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
+const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
 {
 	return ShopUnitDataList;
 }
@@ -82,4 +104,26 @@ TArray<float> APCCombatGameState::GetCostProbabilities()
 	};
 
 	return CostProbabilities;
+}
+
+TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cost)
+{
+	switch (Cost)
+	{
+	case 1:
+		return ShopUnitDataList_Cost1;
+	case 2:
+		return ShopUnitDataList_Cost2;
+	case 3:
+		return ShopUnitDataList_Cost3;
+	case 4:
+		return ShopUnitDataList_Cost4;
+	case 5:
+		return ShopUnitDataList_Cost5;
+	default:
+		break;
+	}
+
+	// Cost값이 1-5의 값이 아니면, 전체 배열 반환
+	return ShopUnitDataList;
 }

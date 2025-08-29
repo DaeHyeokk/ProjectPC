@@ -13,8 +13,10 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Shop/PCShopManager.h"
 #include "UI/Shop/PCShopWidget.h"
 
 APCCombatPlayerController::APCCombatPlayerController()
@@ -97,6 +99,15 @@ void APCCombatPlayerController::LoadShopWidget()
 		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget) return;
 
+		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			if (auto PS = GetPlayerState<APCPlayerState>())
+			{
+				GS->GetShopManager()->UpdateShopSlots(PS);
+			}
+		}
+		
+		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
 		ShopWidget->OpenMenu();
 	}
 }
@@ -105,12 +116,17 @@ void APCCombatPlayerController::ShopRequest_ShopRefresh()
 {
 	if (IsLocalController())
 	{
-		if (auto PS = GetPlayerState<APCPlayerState>())
+		Server_ShopRefresh();
+	}
+}
+
+void APCCombatPlayerController::Server_ShopRefresh_Implementation()
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			if (auto ASC = PS->GetAbilitySystemComponent())
-			{
-				ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
-			}
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
 		}
 	}
 }

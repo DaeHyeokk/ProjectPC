@@ -52,6 +52,9 @@ public:
 
 	void ShopRequest_ShopRefresh();
 
+	UFUNCTION(Server, Reliable)
+	void Server_ShopRefresh();
+
 #pragma endregion Shop
 
 	// 게임 카메라 세팅

@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -18,7 +19,6 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
                                                      const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                                      const FGameplayEventData* TriggerEventData)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Active Ability"));
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	if (!ActorInfo->IsNetAuthority())
 	{
@@ -26,8 +26,13 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
-	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	GS->GetShopManager()->UpdateShopSlots();
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+		{
+			GS->GetShopManager()->UpdateShopSlots(PS);
+		}
+	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }

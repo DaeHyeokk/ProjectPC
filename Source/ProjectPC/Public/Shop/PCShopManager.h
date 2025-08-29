@@ -16,12 +16,12 @@ class PROJECTPC_API UPCShopManager : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
-	TArray<FPCShopUnitData> ShopSlots;
+private:
+	uint8 NumSlots = 5;
 
-	void UpdateShopSlots();
-	
-	const TArray<FPCShopUnitData>& GetShopSlots();
+public:
+	void UpdateShopSlots(class APCPlayerState* TargetPlayer);
+	void ReturnUnitsToShop(class APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots);
 	
 	void BuyXP();
 	void BuyUnit();
@@ -50,3 +50,4 @@ private:
 		return Items.Last();
 	}
 };
+

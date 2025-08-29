@@ -22,18 +22,15 @@ public:
 	TSubclassOf<class UUserWidget> UnitSlotWidgetClass;
 
 protected:
+	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UHorizontalBox* ShopBox;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* Btn_BuyXP;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* Btn_Reroll;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* GoldBalance;
-	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
 
@@ -56,6 +53,7 @@ private:
 	void OnClickedReroll();
 
 public:
+	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)

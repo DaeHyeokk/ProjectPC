@@ -95,6 +95,12 @@ private:
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
 	TMap<TPair<uint8, uint8>, uint8> ShopUnitSellingPriceDataMap;
 
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost3;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost4;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
+
 	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
 	template<typename T>
 	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
@@ -138,10 +144,11 @@ private:
 	}
 	
 public:
-	TArray<FPCShopUnitData>& GetShopUnitDataList();
+	const TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<uint8, uint8>, uint8>& GetShopUnitSellingPriceDataMap();
 	TArray<float> GetCostProbabilities();
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(uint8 Cost);
 	
 #pragma endregion Shop
 };
