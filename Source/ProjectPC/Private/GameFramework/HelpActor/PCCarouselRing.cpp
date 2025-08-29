@@ -51,11 +51,11 @@ void APCCarouselRing::BeginPlay()
 	RotatingMovement->RotationRate.Yaw = RotationRateYawDeg;
 	RotatingMovement->SetActive(bRotate);
 
-	if (HasAuthority() && PickupClass && NumPickups > 0)
-	{
-		SpawnPickUps();
-		SetRotationActive(bRotate);
-	}
+	// if (HasAuthority() && PickupClass && NumPickups > 0)
+	// {
+	// 	SpawnPickUps();
+	// 	SetRotationActive(bRotate);
+	// }
 
 	// 카메라 파라미터 반영(에디터에서 바꾼 값 유지)
 	SpringArm->TargetArmLength = CameraArmLength;
