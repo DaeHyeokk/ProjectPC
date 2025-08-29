@@ -27,9 +27,15 @@ private:
 	// class UCharacterMovementComponent* OwnerMovementComponent;
 
 	float Speed;
-	bool bIsEmoting;
+	// bool bIsEmoting;
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
-	FORCEINLINE bool IsEmoting() const { return bIsEmoting; }
+	FORCEINLINE float GetSpeed() const { return Speed; }
+	
+	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
+    FORCEINLINE bool IsMoving() const { return Speed != 0; }
+	
+	// UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
+	// FORCEINLINE bool IsEmoting() const { return bIsEmoting; }
 };

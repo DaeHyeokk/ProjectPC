@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PCShopRequestTypes.h"
 #include "UObject/Interface.h"
 #include "PCShopInterface.generated.h"
 
@@ -22,7 +21,4 @@ class PROJECTPC_API IPCShopInterface
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
-// public:
-// 	UFUNCTION(BlueprintCallable, Server, Reliable)
-// 	virtual void Server_ShopRequest(EPCShopRequestTypes RequestType) = 0;
 };

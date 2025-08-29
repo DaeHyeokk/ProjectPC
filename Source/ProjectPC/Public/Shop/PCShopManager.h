@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Shop/PCShopUnitData.h"
-#include "Shop/PCShopUnitProbabilityData.h"
 #include "PCShopManager.generated.h"
+
 
 /**
  * 
@@ -17,12 +17,37 @@ class PROJECTPC_API UPCShopManager : public UActorComponent
 	GENERATED_BODY()
 
 private:
-	TArray<FPCShopUnitData> ShopSlots;
-	
+	uint8 NumSlots = 5;
+
 public:
-	void UpdateShopSlots(uint8 PlayerLevel);
-	void BuyUnit(uint8 SlotIndex, int32& PlayerGold);
-	void BuyXP(uint8& PlayerLevel, int32& PlayerGold);
-	void Reroll(int32& PlayerGold);
-	void SellUnit(FName UnitName, uint8 UnitStarCount, int32& PlayerGold);
+	void UpdateShopSlots(class APCPlayerState* TargetPlayer);
+	void ReturnUnitsToShop(class APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots);
+	
+	void BuyXP();
+	void BuyUnit();
+	void SellUnit();
+	void ShopLock();
+
+private:
+	// 누적합을 통한 확률 구현
+	template<typename T>
+	const T& WeightedRandomSelect(const TArray<T>& Items, T MinValue, T MaxValue, int32& Index)
+	{
+		T RandomValue = FMath::RandRange(MinValue, MaxValue);
+		T PrefixSum = MinValue;
+
+		for (const auto& Item : Items)
+		{
+			PrefixSum += Item;
+			if (RandomValue < PrefixSum)
+			{
+				return Item;
+			}
+
+			++Index;
+		}
+
+		return Items.Last();
+	}
 };
+

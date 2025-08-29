@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "Shop/PCShopRequestTypes.h"
 #include "PCDataAsset_PlayerInput.generated.h"
 
 /**
@@ -17,7 +17,7 @@ class PROJECTPC_API UPCDataAsset_PlayerInput : public UDataAsset
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TMap<EPCShopRequestTypes, class UInputAction*> GameplayAbilityInputActions;
+	TMap<FGameplayTag, class UInputAction*> GameplayAbilityInputActions;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* BasicInputMappingContext;
@@ -25,9 +25,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputAction* SetDestination;
 	
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     class UNiagaraSystem* FXCursor;
 	
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     float ShortPressThreshold;
 };

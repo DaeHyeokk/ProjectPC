@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/DataAsset/PCStageData.h"
 #include "Shop/PCShopUnitData.h"
 #include "Shop/PCShopUnitProbabilityData.h"
+#include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
-
-enum class EPCShopRequestTypes : uint8;
 
 /**
  * 
@@ -20,13 +20,13 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
-	APCCombatGameState(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	APCCombatGameState();
 
 protected:
 	virtual void BeginPlay() override;
 
-
-
+#pragma region GameLogic
+	
 	// 전체 게임 로직 관련 코드
 public:
 
@@ -65,30 +65,43 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-
+#pragma endregion GameLogic
 	
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ShopManager")
+#pragma region Shop
+	
+private:
+	UPROPERTY()
 	class UPCShopManager* ShopManager;
-	
-	//void Server_ShopRequest(EPCShopRequestTypes RequestType);
 
-#pragma region DataTable
+public:
+	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
 
 protected:
-	// 유닛 데이터가 저장된 DataTable 가져옴
+	// 유닛 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitDataTable;
 
-	// 유닛 확률 데이터가 저장된 DataTable 가져옴
+	// 유닛 확률 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable")
 	UDataTable* ShopUnitProbabilityDataTable;
+
+	// 유닛 판매 가격 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* ShopUnitSellingPriceDataTable;
 	
 private:
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
 	TArray<FPCShopUnitData> ShopUnitDataList;
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
+	TMap<TPair<uint8, uint8>, uint8> ShopUnitSellingPriceDataMap;
 
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost3;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost4;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
+
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
 	template<typename T>
 	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
 	{
@@ -109,9 +122,33 @@ private:
 		}
 	}
 
-public:
-	TArray<FPCShopUnitData>& GetShopUnitDataList();
-	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
+	// DataTable을 읽어 아웃파라미터로 TMap에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<uint8, uint8>, uint8>& OutMap, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutMap.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				// Key는 (UnitCost, UnitLevel), 값은 UnitSellingPrice
+				TPair<uint8, uint8> Key(Row->UnitCost, Row->UnitLevel);
+				OutMap.Add(Key, Row->UnitSellingPrice);
+			}
+		}
+	}
 	
-#pragma endregion DataTable
+public:
+	const TArray<FPCShopUnitData>& GetShopUnitDataList();
+	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
+	const TMap<TPair<uint8, uint8>, uint8>& GetShopUnitSellingPriceDataMap();
+	TArray<float> GetCostProbabilities();
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(uint8 Cost);
+	
+#pragma endregion Shop
 };

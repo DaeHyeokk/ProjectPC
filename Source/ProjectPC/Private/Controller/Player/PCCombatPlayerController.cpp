@@ -3,16 +3,21 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 
+#include "AbilitySystemComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Shop/PCShopManager.h"
+#include "UI/Shop/PCShopWidget.h"
 
 APCCombatPlayerController::APCCombatPlayerController()
 {
@@ -66,6 +71,10 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 
 	if (APawn* ControlledPawn = GetPawn())
 	{
+		if (FollowTime > PlayerInputData->ShortPressThreshold)
+		{
+			StopMovement();
+		}
 		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
 		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
 	}
@@ -77,8 +86,49 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
 	}
-
+	
 	FollowTime = 0.f;
+}
+
+void APCCombatPlayerController::LoadShopWidget()
+{
+	if (IsLocalController())
+	{
+		if (!ShopWidgetClass) return;
+	
+		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
+		if (!ShopWidget) return;
+
+		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			if (auto PS = GetPlayerState<APCPlayerState>())
+			{
+				GS->GetShopManager()->UpdateShopSlots(PS);
+			}
+		}
+		
+		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
+		ShopWidget->OpenMenu();
+	}
+}
+
+void APCCombatPlayerController::ShopRequest_ShopRefresh()
+{
+	if (IsLocalController())
+	{
+		Server_ShopRefresh();
+	}
+}
+
+void APCCombatPlayerController::Server_ShopRefresh_Implementation()
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
+		}
+	}
 }
 
 void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)

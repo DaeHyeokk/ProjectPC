@@ -4,17 +4,18 @@
 #include "UI/Shop/PCShopWidget.h"
 
 #include "Components/Button.h"
+#include "Components/HorizontalBox.h"
+#include "Components/TextBlock.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/Shop/PCUnitSlotWidget.h"
 
-UPCShopWidget::UPCShopWidget(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
 
 bool UPCShopWidget::Initialize()
 {
-	bool SuperSuccess = Super::Initialize();
-	if (!SuperSuccess) return false;
+	if (!Super::Initialize()) return false;
 
 	if (!Btn_BuyXP) return false;
 	Btn_BuyXP->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedBuyXP);
@@ -26,12 +27,26 @@ bool UPCShopWidget::Initialize()
 
 void UPCShopWidget::OnClickedBuyXP()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Btn_BuyXP Clicked"));
 }
 
 void UPCShopWidget::OnClickedReroll()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Btn_Reroll Clicked"));
+	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	{
+		PC->ShopRequest_ShopRefresh();
+	}
+}
+
+void UPCShopWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
+{
+	if (!NewPlayerState) return;
+
+	NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
+	{
+		SetupShopSlots();
+	});
+	
+	SetupShopSlots();
 }
 
 void UPCShopWidget::OpenMenu()
@@ -42,4 +57,38 @@ void UPCShopWidget::OpenMenu()
 void UPCShopWidget::CloseMenu()
 {
 	this->RemoveFromParent();
+}
+
+void UPCShopWidget::SetupShopSlots()
+{
+	if (!ShopBox) return;
+	ShopBox->ClearChildren();
+
+	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+	
+	const auto& ShopSlots = PS->GetShopSlots();
+
+	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
+	for (const FPCShopUnitData& UnitData : ShopSlots)
+	{
+		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
+		if (!UnitSlotWidget) return;
+		
+		UnitSlotWidget->Setup(UnitData);
+		ShopBox->AddChild(UnitSlotWidget);
+	}
+
+	// 코스트 확률 정보 Text 세팅
+	auto CostProbabilities = GS->GetCostProbabilities();
+	TArray<UTextBlock*> CostTextBlocks = { Cost1, Cost2, Cost3, Cost4, Cost5 };
+	for (int32 i = 0; i < CostTextBlocks.Num(); ++i)
+	{
+		int32 Percent = FMath::RoundToInt(CostProbabilities[i] * 100);
+		FString Text = FString::Printf(TEXT("%d%%"), Percent);
+		CostTextBlocks[i]->SetText(FText::FromString(Text));
+	}
 }

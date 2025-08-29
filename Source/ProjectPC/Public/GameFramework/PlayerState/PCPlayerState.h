@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "Shop/PCShopUnitData.h"
 #include "PCPlayerState.generated.h"
 
 /**
@@ -59,4 +60,21 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 #pragma endregion AbilitySystem
+
+#pragma region Shop
+
+public:
+	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
+	TArray<FPCShopUnitData> ShopSlots;
+
+	DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
+	FOnShopSlotsUpdated OnShopSlotsUpdated;
+
+	UFUNCTION()
+	void OnRep_ShopSlots();
+
+	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
+	const TArray<FPCShopUnitData>& GetShopSlots();
+	
+#pragma endregion Shop
 };

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
-#include "Shop/PCShopRequestTypes.h"
 #include "PCDataAsset_PlayerAbilities.generated.h"
 
 class UGameplayEffect;
@@ -20,11 +20,11 @@ class PROJECTPC_API UPCDataAsset_PlayerAbilities : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "GE")
-	TArray<TSubclassOf<UGameplayEffect>> InitializedEffects;
+	TSubclassOf<UGameplayEffect> InitializedEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	TMap<FGameplayTag, float> InitializedEffectCallerValues;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GA")
 	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;
-
-	UPROPERTY(EditDefaultsOnly, Category = "GA")
-	TMap<EPCShopRequestTypes, TSubclassOf<UGameplayAbility>> ShopAbility;
 };

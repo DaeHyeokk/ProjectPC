@@ -38,6 +38,25 @@ private:
 
 #pragma endregion Move
 
+#pragma region Shop
+	
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
+	TSubclassOf<class UUserWidget> ShopWidgetClass;
+
+	UPROPERTY()
+	class UPCShopWidget* ShopWidget;
+
+	UFUNCTION(BlueprintCallable)
+	void LoadShopWidget();
+
+	void ShopRequest_ShopRefresh();
+
+	UFUNCTION(Server, Reliable)
+	void Server_ShopRefresh();
+
+#pragma endregion Shop
+
 	// 게임 카메라 세팅
 public:
 	// 서버->클라 : 내 자리 인덱스로 카메라 세팅

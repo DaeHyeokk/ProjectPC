@@ -7,8 +7,7 @@
 #include "Shop/PCShopManager.h"
 
 
-APCCombatGameState::APCCombatGameState(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+APCCombatGameState::APCCombatGameState()
 {
 	ShopManager = CreateDefaultSubobject<UPCShopManager>(TEXT("ShopManager"));
 }
@@ -17,10 +16,35 @@ void APCCombatGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (ShopUnitDataTable && ShopUnitProbabilityDataTable)
+	if (ShopUnitDataTable && ShopUnitProbabilityDataTable && ShopUnitSellingPriceDataTable)
 	{
 		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
 		LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
+		LoadDataTableToMap<FPCShopUnitSellingPriceData>(ShopUnitSellingPriceDataTable, ShopUnitSellingPriceDataMap, TEXT("Loading Shop Unit Selling Price Data"));
+	}
+
+	for (auto Unit : ShopUnitDataList)
+	{
+		switch (Unit.UnitCost)
+		{
+		case 1:
+			ShopUnitDataList_Cost1.Add(Unit);
+			break;
+		case 2:
+			ShopUnitDataList_Cost2.Add(Unit);
+			break;
+		case 3:
+			ShopUnitDataList_Cost3.Add(Unit);
+			break;
+		case 4:
+			ShopUnitDataList_Cost4.Add(Unit);
+			break;
+		case 5:
+			ShopUnitDataList_Cost5.Add(Unit);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -46,31 +70,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 }
 
-// void APCCombatGameState::Server_ShopRequest(EPCShopRequestTypes RequestType)
-// {
-// 	switch (RequestType)
-// 	{
-// 	case EPCShopRequestTypes::UpdateSlot:
-// 		ShopManager->UpdateShopSlots(PlayerLevel);
-// 		break;
-// 	case EPCShopRequestTypes::BuyUnit:
-// 		ShopManager->BuyUnit(SlotIndex, PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::BuyXP:
-// 		ShopManager->BuyXP(PlayerLevel, PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::Reroll:
-// 		ShopManager->Reroll(PlayerGold);
-// 		break;
-// 	case EPCShopRequestTypes::SellUnit:
-// 		ShopManager->SellUnit(UnitName, UnitStarCount, PlayerGold);
-// 		break;
-// 	default:
-// 		break;
-// 	}
-// }
-
-TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
+const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
 {
 	return ShopUnitDataList;
 }
@@ -78,4 +78,52 @@ TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
 const TArray<FPCShopUnitProbabilityData>& APCCombatGameState::GetShopUnitProbabilityDataList()
 {
 	return ShopUnitProbabilityDataList;
+}
+
+const TMap<TPair<uint8, uint8>, uint8>& APCCombatGameState::GetShopUnitSellingPriceDataMap()
+{
+	return ShopUnitSellingPriceDataMap;
+}
+
+TArray<float> APCCombatGameState::GetCostProbabilities()
+{
+	uint8 PlayerLevel = 10;
+	// 플레이어 레벨에 따라 DataList 탐색
+	const auto& ProbData = ShopUnitProbabilityDataList.FindByPredicate(
+		[PlayerLevel](const FPCShopUnitProbabilityData& Data)
+		{
+			return Data.PlayerLevel == PlayerLevel;
+		});
+	
+	TArray<float> CostProbabilities = {
+		ProbData->Probability_Cost1,
+		ProbData->Probability_Cost2,
+		ProbData->Probability_Cost3,
+		ProbData->Probability_Cost4,
+		ProbData->Probability_Cost5
+	};
+
+	return CostProbabilities;
+}
+
+TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cost)
+{
+	switch (Cost)
+	{
+	case 1:
+		return ShopUnitDataList_Cost1;
+	case 2:
+		return ShopUnitDataList_Cost2;
+	case 3:
+		return ShopUnitDataList_Cost3;
+	case 4:
+		return ShopUnitDataList_Cost4;
+	case 5:
+		return ShopUnitDataList_Cost5;
+	default:
+		break;
+	}
+
+	// Cost값이 1-5의 값이 아니면, 전체 배열 반환
+	return ShopUnitDataList;
 }

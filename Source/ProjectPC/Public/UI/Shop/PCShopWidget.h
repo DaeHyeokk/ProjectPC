@@ -14,9 +14,6 @@ class PROJECTPC_API UPCShopWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-public:
-	UPCShopWidget(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
 protected:
 	virtual bool Initialize() override;
 	
@@ -25,20 +22,29 @@ public:
 	TSubclassOf<class UUserWidget> UnitSlotWidgetClass;
 
 protected:
+	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UHorizontalBox* ShopBox;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* Btn_BuyXP;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UButton* Btn_Reroll;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* GoldBalance;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
+
+	// Cost Probability
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost1;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost2;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost3;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost4;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Cost5;
 
 private:
 	UFUNCTION()
@@ -47,8 +53,13 @@ private:
 	void OnClickedReroll();
 
 public:
+	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)
 	void CloseMenu();
+	UFUNCTION(BlueprintCallable)
+	void SetupShopSlots();
+
+	
 };
