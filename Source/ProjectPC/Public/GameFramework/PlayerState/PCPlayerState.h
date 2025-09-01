@@ -28,6 +28,7 @@ struct FUnitDataInBoard
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 TileIndex = -1;
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	uint8 TeamID = 0;

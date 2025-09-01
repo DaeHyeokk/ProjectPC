@@ -37,11 +37,6 @@ void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGamepl
 	if (MaxManaHandle.IsValid())
 		ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
 
-	UE_LOG(LogTemp, Warning, TEXT("[InitWithASC] ASC=%p Health=%s(%p) MaxHealth=%s(%p)"),
-	ASC.Get(),
-	*HealthAttr.GetName(),    HealthAttr.GetUProperty(),
-	*MaxHealthAttr.GetName(), MaxHealthAttr.GetUProperty());
-	
 	CachedHP = ASC->GetNumericAttribute(HealthAttr);
 	CachedMaxHP = ASC->GetNumericAttribute(MaxHealthAttr);
 	
