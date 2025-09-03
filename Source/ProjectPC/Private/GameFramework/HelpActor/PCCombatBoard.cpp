@@ -5,11 +5,9 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
-#include "Field/FieldSystemNoiseAlgo.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/HelpActor/PCUnitVisual.h"
-#include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Kismet/GameplayStatics.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 
 APCCombatBoard::APCCombatBoard()
@@ -48,6 +46,9 @@ APCCombatBoard::APCCombatBoard()
 	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
 	BoardCamera->SetupAttachment(SpringArm);
 	BoardCamera->FieldOfView = 55.f;
+
+	// TIle Manger
+	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
 }
 
 
@@ -57,31 +58,11 @@ void APCCombatBoard::BeginPlay()
 	RebuildAnchors();
 	RebuildTilesFromMarkers();
 
-	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
+	if (TileManager)
 	{
-		if (APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>())
-		{
-			if (PCPlayerState->SeatIndex == BoardSeatIndex)
-			{
-				BoundPCPlayerState = PCPlayerState;
-				BoundHandle = PCPlayerState->OnBoardUpdated.AddLambda([this, PCPlayerState]()
-				{
-					UpdateBoardFromPlayerState(PCPlayerState);
-				});
-				UpdateBoardFromPlayerState(PCPlayerState);
-			}
-		}
+		TileManager->QuickSetUp();
+		TileManager->DebugDrawTiles(true);
 	}
-	
-}
-
-void APCCombatBoard::EndPlay(const EEndPlayReason::Type reason)
-{
-	if (BoundPCPlayerState.IsValid() && BoundHandle.IsValid())
-	{
-		BoundPCPlayerState->OnBoardUpdated.Remove(BoundHandle);
-	}
-	Super::EndPlay(reason);
 	
 }
 
@@ -91,6 +72,9 @@ void APCCombatBoard::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 	RebuildAnchors();
 	RebuildTilesFromMarkers();
+	
+	
+		
 }
 #endif
 
@@ -187,123 +171,6 @@ void APCCombatBoard::BuildHISM()
 	BenchHISM->BuildTreeIfOutdated(true,true);
 }
 
-
-bool APCCombatBoard::TryGetTileFromHit(const FHitResult& Hit, int32& OutX, int32& OutY, bool& bBench) const
-{
-	OutX = -1;
-	OutY = -1;
-	bBench = false;
-	if (Hit.Component.Get() == FieldHISM)
-	{
-		const int32 HitComponentIdx = Hit.Item;
-		if (Field_InstanceToXY.IsValidIndex(HitComponentIdx))
-		{
-			const FIntPoint XY = Field_InstanceToXY[HitComponentIdx];
-			OutX = XY.X;
-			OutY = XY.Y;
-			bBench = false;
-			return true;
-		}
-	}
-
-	if (Hit.Component.Get() == BenchHISM)
-	{
-		const int32 HitComponentIdx = Hit.Item;
-		if (Bench_InstanceToXY.IsValidIndex(HitComponentIdx))
-		{
-			const FIntPoint XY = Bench_InstanceToXY[HitComponentIdx];
-			OutX = XY.X;
-			OutY = XY.Y;
-			bBench = true;
-			return true;
-		}
-	}
-	return false;
-}
-
-void APCCombatBoard::UpdateBoardFromPlayerState(APCPlayerState* PCPlayerState)
-{
-	if (!PCPlayerState) return;
-
-	TBitArray<> UsedField(false, FieldTiles.Num());
-	TBitArray<> UsedBench(false, BenchTiles.Num());
-
-	for (int32 i = 0; i < PCPlayerState->FieldUnit.Num(); ++i)
-	{
-		const FUnitDataInBoard& UnitDataInBoard = PCPlayerState->FieldUnit[i];
-	
-		if (!FieldTiles.IsValidIndex(UnitDataInBoard.TileIndex)) continue;
-		UsedField[UnitDataInBoard.TileIndex] = true;
-		const FTransform& Transform = FieldTiles[UnitDataInBoard.TileIndex].WorldTransform;
-		SpawnOrMoveVisual(false, UnitDataInBoard.TileIndex, UnitDataInBoard.UnitID, Transform);
-	}
-
-	for (int32 i = 0; i < PCPlayerState->BenchUnit.Num(); ++i)
-	{
-		const FUnitDataInBoard& UnitDataInBoard = PCPlayerState->BenchUnit[i];
-		if (!BenchTiles.IsValidIndex(UnitDataInBoard.TileIndex)) continue;
-
-		UsedBench[UnitDataInBoard.TileIndex] = true;
-		const FTransform Transform = BenchTiles[UnitDataInBoard.TileIndex].WorldTransform;
-		SpawnOrMoveVisual(true, UnitDataInBoard.TileIndex, UnitDataInBoard.UnitID, Transform);
-	}
-
-	GarbageUnusedVisual(false, UsedField);
-	GarbageUnusedVisual(true, UsedBench);
-}
-
-
-void APCCombatBoard::SpawnOrMoveVisual(bool bBench, int32 TileIndex, FGameplayTag UnitID, const FTransform& Transform)
-{
-	const int32 Key = MakeKey(bBench, TileIndex);
-	APCUnitVisual* Visual = Visuals.FindRef(Key).Get();
-
-	if (!Visual)
-	{
-		if (!UnitVisualClass) return;
-		Visual = GetWorld()->SpawnActor<APCUnitVisual>(UnitVisualClass, Transform);
-		if (Visual)
-		{
-			Visuals.Add(Key, Visual);
-			Visual->Init(UnitID);
-		}
-		return;
-	}
-
-	Visual->SetActorTransform(Transform);
-	Visual->SetUnitID(UnitID);
-	
-}
-
-
-
-void APCCombatBoard::GarbageUnusedVisual(bool bBench, const TBitArray<>& Used)
-{
-	TArray<int32> ToRemove;
-	for (const auto& KVP : Visuals)
-	{
-		const int32 Key = KVP.Key;
-		const bool IsBenchKey = (Key >= 1000000);
-		if (IsBenchKey != bBench) continue;
-
-		const int32 Idx = Key % 1000000;
-		if (!Used.IsValidIndex(Idx) || !Used[Idx])
-		{
-			if (AActor* Visual = KVP.Value.Get())
-			{
-				Visual->Destroy();
-			}
-			ToRemove.Add(Key);
-		}
-	}
-
-	for (int32 K : ToRemove)
-	{
-		Visuals.Remove(K);
-	}
-}
-
-
 void APCCombatBoard::RebuildAnchors()
 {
 	auto Make = [&](USceneComponent*& Out, const FComponentReference& ParentRef, FName Socket)
@@ -346,6 +213,39 @@ void APCCombatBoard::ApplyLocalBottomView(class APlayerController* PlayerControl
 	PlayerController->SetViewTargetWithBlend(this, Blend);
 }
 
+void APCCombatBoard::ApplyBattleCamera(class APCCombatPlayerController* PCPlayerController, bool bFlipYaw180,
+	float Blend)
+{
+	if (!PCPlayerController || !SpringArm)
+		return;
+	
+	if (bFlipYaw180)
+	{
+		SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
+		SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
+	}
+	PCPlayerController->SetViewTargetWithBlend(this, Blend);
+}
+
+APCHeroUnitCharacter* APCCombatBoard::GetUnitAt(int32 Row, int32 Col) const
+{
+	return TileManager ? TileManager->GetFieldUnit(Row, Col) : nullptr;
+}
+
+FVector APCCombatBoard::GetTileWorldLocation(int32 Row, int32 Col) const
+{
+	return TileManager ? TileManager->GetTileWorldPosition(Row, Col) : FVector::ZeroVector;
+}
+
+APCHeroUnitCharacter* APCCombatBoard::GetBenchUnitAt(int32 BenchIndex) const
+{
+	return TileManager ? TileManager->GetBenchUnit(BenchIndex) : nullptr;
+}
+
+FVector APCCombatBoard::GetBenchWorldLocation(int32 BenchIndex) const
+{
+	return TileManager ? TileManager->GetBenchWorldPosition(BenchIndex) : FVector::ZeroVector;
+}
 
 
 

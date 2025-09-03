@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
-#include "GameFramework/DataAsset/PCStageData.h"
+#include "DataAsset/FrameWork/PCStageData.h"
 #include "Shop/PCShopUnitData.h"
 #include "Shop/PCShopUnitProbabilityData.h"
 #include "Shop/PCShopUnitSellingPriceData.h"
