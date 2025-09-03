@@ -9,6 +9,8 @@
 #include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -18,24 +20,25 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	//NetUpdateFrequency = 100.f;
 	//MinNetUpdateFrequency = 66.f;
 	
+	bReplicates = true;
+	SetReplicates(true);
+	
 	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = true;
-	
+
+	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
-	GetCharacterMovement()->SetIsReplicated(true);
 
-	bReplicates = true;
-	SetReplicates(true);
-
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
 	GetMesh()->SetIsReplicated(true);
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
-
+	
 	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
+	StatusBarComp->SetIsReplicated(true);
 	StatusBarComp->SetupAttachment(GetMesh(), StatusBarSocketName);
 	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
 	StatusBarComp->SetDrawSize({300.f, 100.f});
@@ -61,7 +64,7 @@ const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
 
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
 {
-	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAnimData() : nullptr;
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAnimSetData() : nullptr;
 }
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
@@ -81,7 +84,7 @@ void APCBaseUnitCharacter::BeginPlay()
 	InitAbilitySystem();
 	SetAnimSetData();
 
-	if (const auto StatusBarClass = GetStatusBarClass())
+	if (StatusBarClass)
 	{
 		StatusBarComp->SetWidgetClass(StatusBarClass);
 		ReAttachStatusBarToSocket();
@@ -91,7 +94,6 @@ void APCBaseUnitCharacter::BeginPlay()
 			InitStatusBarWidget(W);
 		}
 	}
-	
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -101,10 +103,11 @@ void APCBaseUnitCharacter::PossessedBy(AController* NewController)
 	//InitAbilitySystem();
 }
 
-void APCBaseUnitCharacter::OnConstruction(const FTransform& Transform)
+void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::OnConstruction(Transform);
-	ReAttachStatusBarToSocket();
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -119,8 +122,30 @@ void APCBaseUnitCharacter::ReAttachStatusBarToSocket() const
 		if (SkeMesh->DoesSocketExist(StatusBarSocketName))
 		{
 			StatusBarComp->AttachToComponent(
-				SkeMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				SkeMesh,
+				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				StatusBarSocketName);
+		}
+	}
+}
+
+void APCBaseUnitCharacter::OnRep_UnitTag()
+{
+	// 클라에서 보여줄 유닛 데이터 세팅
+	if (UWorld* W = GetWorld())
+	{
+		if (auto* SpawnSubSystem = W->GetSubsystem<UPCUnitSpawnSubsystem>())
+		{
+			const auto* Definition = SpawnSubSystem->ResolveDefinition(UnitTag);
+			if (!Definition)
+			{
+				SpawnSubSystem->EnsureConfigFromGameState();
+				Definition = SpawnSubSystem->ResolveDefinition(UnitTag);
+			}
+			if (Definition)
+			{
+				SpawnSubSystem->ApplyDefinitionDataVisuals(this, Definition);
+			}
 		}
 	}
 }
@@ -141,7 +166,7 @@ void APCBaseUnitCharacter::InitAbilitySystem()
 void APCBaseUnitCharacter::SetAnimSetData() const
 {
 	const UPCDataAsset_BaseUnitData* UnitData = GetUnitDataAsset();
-	if (UPCDataAsset_UnitAnimSet* UnitAnimSet = UnitData ? UnitData->GetAnimData() : nullptr)
+	if (UPCDataAsset_UnitAnimSet* UnitAnimSet = UnitData ? UnitData->GetAnimSetData() : nullptr)
 	{
 		if (UPCUnitAnimInstance* UnitAnimInstance =	Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
 		{

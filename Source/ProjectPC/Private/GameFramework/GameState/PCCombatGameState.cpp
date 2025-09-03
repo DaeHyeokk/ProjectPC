@@ -3,6 +3,7 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
 
@@ -15,7 +16,12 @@ APCCombatGameState::APCCombatGameState()
 void APCCombatGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	if (auto* UnitSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+	{
+		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
+	}
+	
 	if (ShopUnitDataTable && ShopUnitProbabilityDataTable && ShopUnitSellingPriceDataTable)
 	{
 		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));

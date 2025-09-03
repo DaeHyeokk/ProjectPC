@@ -9,7 +9,7 @@
 
 void UPCHeroUnitAbilitySystemComponent::UpdateGAS()
 {
-	UpdateStatSetForLevel();
+	UpdateBaseStatForLevel();
 	UpdateUltimateAbilityForLevel();
 }
 
@@ -43,7 +43,7 @@ void UPCHeroUnitAbilitySystemComponent::GrantStartupAbilities()
 	}
 }
 
-void UPCHeroUnitAbilitySystemComponent::UpdateStatSetForLevel()
+void UPCHeroUnitAbilitySystemComponent::UpdateBaseStatForLevel()
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 		return;
@@ -56,19 +56,15 @@ void UPCHeroUnitAbilitySystemComponent::UpdateStatSetForLevel()
 	if (!UnitData)
 		return;
 	
-	TMap<FGameplayTag, float> StatMap;
+	TMap<FGameplayAttribute, float> StatMap;
 	UnitData->FillInitStatMap(HeroCharacter->GetUnitLevel(), StatMap);
 	if (StatMap.Num() == 0)
 		return;
 	
-	if (InitStatSetGEHandle.IsValid())
+	for (const auto& KV : StatMap)
 	{
-		for (const auto& Pair : StatMap)
-		{
-			UpdateActiveGameplayEffectSetByCallerMagnitude(InitStatSetGEHandle, Pair.Key, Pair.Value);
-		}
+		SetNumericAttributeBase(KV.Key, KV.Value);
 	}
-	
 }
 
 void UPCHeroUnitAbilitySystemComponent::UpdateUltimateAbilityForLevel()

@@ -6,7 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
-#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 void UPCUnitAbilitySystemComponent::InitGAS()
 {
@@ -14,7 +14,7 @@ void UPCUnitAbilitySystemComponent::InitGAS()
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 		return;
 	
-	ApplyInitStatSet();
+	ApplyInitBaseStat();
 	GrantStartupAbilities();
 }
 
@@ -44,10 +44,8 @@ void UPCUnitAbilitySystemComponent::ApplyInitStatSet()
 	int32 UnitLevel = UnitCharacter->HasLevelSystem() ? UnitCharacter->GetUnitLevel() : 1;
 	
 	TMap<FGameplayTag, float> StatMap;
-	UnitData->FillInitStatMap(UnitLevel, StatMap);
 	
-	const UGameInstance* GI = GetWorld()->GetGameInstance();
-	UPCUnitGERegistrySubsystem* UnitGERegistrySubsystem = GI ? GI->GetSubsystem<UPCUnitGERegistrySubsystem>() : nullptr;
+	UPCUnitGERegistrySubsystem* UnitGERegistrySubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>() : nullptr;
 	if (!UnitGERegistrySubsystem)
 		return;
 
@@ -69,6 +67,31 @@ void UPCUnitAbilitySystemComponent::ApplyInitStatSet()
 
 		InitStatSetGEHandle = ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 	}
+}
+
+void UPCUnitAbilitySystemComponent::ApplyInitBaseStat()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || bInitBaseStatsApplied)
+		return;
+
+	const APCBaseUnitCharacter* UnitCharacter = Cast<APCBaseUnitCharacter>(GetOwner());
+	if (!UnitCharacter)
+		return;
+
+	const UPCDataAsset_BaseUnitData* UnitData = UnitCharacter->GetUnitDataAsset();
+	if (!UnitData || !TryGrantUnitTypeTag())
+		return;
+
+	const int32 UnitLevel = UnitCharacter->HasLevelSystem() ? UnitCharacter->GetUnitLevel() : 1;
+	TMap<FGameplayAttribute, float> AttrMap;
+	UnitData->FillInitStatMap(UnitLevel, AttrMap);
+
+	for (const auto& KV : AttrMap)
+	{
+		SetNumericAttributeBase(KV.Key, KV.Value);
+	}
+
+	bInitBaseStatsApplied = true;
 }
 
 void UPCUnitAbilitySystemComponent::GrantStartupAbilities()
@@ -114,9 +137,8 @@ bool UPCUnitAbilitySystemComponent::TryGrantUnitTypeTag()
 	// 태그 중복 부여 방지
 	if (HasMatchingGameplayTag(UnitCharacter->GetUnitTypeTag()))
 		return true;
-
-	const UGameInstance* GI = GetWorld()->GetGameInstance();
-	UPCUnitGERegistrySubsystem* UnitGERegistrySubSystem = GI->GetSubsystem<UPCUnitGERegistrySubsystem>();
+	
+	UPCUnitGERegistrySubsystem* UnitGERegistrySubSystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>();
 	if (const UGameplayEffect* UnitTypeGE = UnitGERegistrySubSystem->GetGrantUnitTypeGE_CDO(UnitCharacter->GetUnitTypeTag()))
 	{
 		ApplyGameplayEffectToSelf(

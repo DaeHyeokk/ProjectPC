@@ -22,6 +22,7 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, CurrentMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, PhysicalDamageMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, MagicDamageMultiplier);
+	ATTRIBUTE_ACCESSORS(ThisClass, CritChance);
 	ATTRIBUTE_ACCESSORS(ThisClass, LifeSteal);
 	ATTRIBUTE_ACCESSORS(ThisClass, SpellVamp);
 

@@ -8,6 +8,7 @@ namespace UnitGameplayTags
 {
 	// ==== Unit Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 
 	// ==== Unit Attack Types ====

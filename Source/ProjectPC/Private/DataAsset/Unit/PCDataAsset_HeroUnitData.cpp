@@ -6,37 +6,39 @@
 #include "BaseGameplayTags.h"
 #include "GameplayEffect.h"
 #include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 
 
 UPCDataAsset_HeroUnitData::UPCDataAsset_HeroUnitData()
 {
-	HeroScalableStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_MaxHealth);
-	HeroScalableStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_BaseDamage);
+	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetMaxHealthAttribute());
+	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetBaseDamageAttribute());
 
-	HeroStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Hero_MaxMana);
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetMaxManaAttribute());
 }
 
-void UPCDataAsset_HeroUnitData::FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const
+void UPCDataAsset_HeroUnitData::FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const
 {
 	Super::FillInitStatMap(Level, Out);
 	
 	for (const FHeroScalableStatConfig& StatConfig : HeroScalableStatConfigs)
 	{
-		Out.Add(StatConfig.StatTag, StatConfig.StatValue.GetValueAtLevel(Level));
+		Out.Add(StatConfig.StatAttribute, StatConfig.StatValue.GetValueAtLevel(Level));
 	}
 
 	for (const FUnitStaticStatConfig& StatConfig : HeroStaticStatConfigs)
 	{
-		Out.Add(StatConfig.StatTag, StatConfig.StatValue);
+		Out.Add(StatConfig.StatAttribute, StatConfig.StatValue);
 	}
 }
 
 void UPCDataAsset_HeroUnitData::FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const
 {
-		if (UltimateAttackAbility)
-		{
-			OutAbilities.AddUnique(UltimateAttackAbility);
-		}
+	if (UltimateAttackAbility)
+	{
+		OutAbilities.AddUnique(UltimateAttackAbility);
+	}
 }
 
 FGameplayTag UPCDataAsset_HeroUnitData::GetJobSynergyTag() const

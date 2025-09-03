@@ -11,6 +11,34 @@
 #include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
 
+USTRUCT(BlueprintType)
+struct FSpawnSubsystemConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category="Spawner|Registry")
+	TObjectPtr<class UPCDataAsset_UnitDefinitionReg> Registry = nullptr;
+
+	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
+	TSubclassOf<class APCCreepUnitCharacter> DefaultCreepClass;
+	
+	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
+	TSubclassOf<class APCAppearanceChangedHeroCharacter> DefaultAppearanceChangedHeroClass;
+	
+	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
+	TSubclassOf<class APCAppearanceFixedHeroCharacter> DefaultAppearanceFixedHeroClass;
+
+	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
+	TSubclassOf<class UPCUnitStatusBarWidget> CreepStatusBarWidgetClass;
+	
+	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
+	TSubclassOf<class UPCHeroStatusBarWidget> HeroStatusBarWidgetClass;
+	
+	// == 공통 AI Controller (전 유닛 공유) ==
+	UPROPERTY(EditAnywhere, Category="Spawner|AI")
+	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
+};
+
 /**
  * 
  */
@@ -151,4 +179,15 @@ public:
 	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(uint8 Cost);
 	
 #pragma endregion Shop
+
+#pragma region Unit
+	
+private:
+	UPROPERTY(EditAnywhere, Category="Unit Spawner Data")
+	FSpawnSubsystemConfig SpawnConfig;
+
+public:
+	FORCEINLINE const FSpawnSubsystemConfig& GetSpawnConfig() const { return SpawnConfig; }
+	
+#pragma endregion Unit
 };

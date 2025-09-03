@@ -16,7 +16,7 @@ class PROJECTPC_API UPCDataAsset_CreepUnitData : public UPCDataAsset_BaseUnitDat
 
 public:
 	UPCDataAsset_CreepUnitData();
-	virtual void FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const override;
+	virtual void FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const override;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")

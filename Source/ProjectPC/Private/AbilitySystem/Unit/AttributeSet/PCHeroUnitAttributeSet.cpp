@@ -11,13 +11,13 @@ void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,MaxMana);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,CurrentMana);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,MagicDamageMultiplier);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,CritChance);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,LifeSteal);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,SpellVamp);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MaxMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CurrentMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MagicDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CritChance, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,LifeSteal, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,SpellVamp, COND_None, REPNOTIFY_OnChanged);
 }
 
 void UPCHeroUnitAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -32,35 +32,35 @@ void UPCHeroUnitAttributeSet::PostGameplayEffectExecute(const struct FGameplayEf
 
 void UPCHeroUnitAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, MaxMana, OldMaxMana);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, MaxMana, OldMaxMana);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_CurrentMana(const FGameplayAttributeData& OldCurrentMana)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CurrentMana, OldCurrentMana);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CurrentMana, OldCurrentMana);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_PhysicalDamageMultiplier(const FGameplayAttributeData& OldPhysicalDamageMultiplier)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, PhysicalDamageMultiplier, OldPhysicalDamageMultiplier);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, PhysicalDamageMultiplier, OldPhysicalDamageMultiplier);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_MagicDamageMultiplier(const FGameplayAttributeData& OldMagicDamageMultiplier)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, MagicDamageMultiplier, OldMagicDamageMultiplier);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, MagicDamageMultiplier, OldMagicDamageMultiplier);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_CritChance(const FGameplayAttributeData& OldCritChance)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CritChance, OldCritChance);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CritChance, OldCritChance);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_LifeSteal(const FGameplayAttributeData& OldLifeSteal)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, LifeSteal, OldLifeSteal);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, LifeSteal, OldLifeSteal);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_SpellVamp(const FGameplayAttributeData& OldSpellVamp)
 {
-	//GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, SpellVamp, OldSpellVamp);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, SpellVamp, OldSpellVamp);
 }

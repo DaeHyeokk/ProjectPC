@@ -20,6 +20,6 @@ public:
 	
 protected:
 	virtual void GrantStartupAbilities() override;
-	void UpdateStatSetForLevel();
+	void UpdateBaseStatForLevel();
 	void UpdateUltimateAbilityForLevel();
 };

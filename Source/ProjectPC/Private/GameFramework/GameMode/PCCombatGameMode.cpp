@@ -12,7 +12,8 @@
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -34,11 +35,13 @@ void APCCombatGameMode::BeginPlay()
 	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel, 0.1f, true, 0.15f);
 	StartFromBeginning();
 
+	if (!GetWorld())
+		return;
+	
 	if (!UnitGEDictionary)
 		return;
 	
-	const UGameInstance* GI = GetWorld()->GetGameInstance();
-	if (auto* UnitGERegistrySubsystem = GI->GetSubsystem<UPCUnitGERegistrySubsystem>())
+	if (auto* UnitGERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>())
 	{
 		FGameplayTagContainer PreloadGEClassTag;
 		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_HealthChange);
@@ -429,5 +432,10 @@ void APCCombatGameMode::BroadcastStageToClients(EPCStageType Stage, const FStrin
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 		if (auto* PlayerController = Cast<APCCombatPlayerController>(*It))
 			PlayerController->ClientStageChanged(Stage, StageName, Seconds);
+}
+
+APCCombatGameState* APCCombatGameMode::GetCombatGameState() const
+{
+	return GetGameState<APCCombatGameState>();
 }
 
