@@ -17,6 +17,7 @@ enum class EPCStageType : uint8
 	Setup UMETA(DisplayName = "Setup"),
 	Travel UMETA(DisplayName = "Travel"),
 	PvP UMETA(DisplayName = "PvP"),
+	CreepSpawn UMETA(DisplayName = "CreepSpawn"),
 	PvE UMETA(DisplayName = "PvE"),
 	Carousel UMETA(DisplayName = "Carousel"),
 	Return UMETA(DisplayName = "Return"),
@@ -80,6 +81,8 @@ public:
 	float DefaultPvPSeconds       = 30.f;
 	UPROPERTY(EditAnywhere, Category="Defaults")
 	float DefaultPvESeconds       = 30.f;
+	UPROPERTY(EditAnywhere, Category="Defaults")
+	float DefaultsCreepSpawnSeconds = 3.f;
 	UPROPERTY(EditAnywhere, Category="Defaults")
 	float DefaultReturnSeconds    = 3.f;
 
