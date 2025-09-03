@@ -86,6 +86,7 @@ private:
 	void Step_Return();
 	void Step_PvP();
 	void Step_PvE();
+	void Step_CreepSpawn();
 	void Step_Carousel();
 
 	// 공동 유틸 함수

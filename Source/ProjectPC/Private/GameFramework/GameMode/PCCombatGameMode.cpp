@@ -273,6 +273,7 @@ void APCCombatGameMode::BeginCurrentStep()
 	case EPCStageType::Travel : Step_Travel(); break;
 	case EPCStageType::Return : Step_Return(); break;
 	case EPCStageType::PvP : Step_PvP(); break;
+	case EPCStageType::CreepSpawn : Step_CreepSpawn(); break;
 	case EPCStageType::PvE : Step_PvE(); break;
 	case EPCStageType::Carousel : Step_Carousel(); break;
 		default: break;
@@ -318,6 +319,10 @@ void APCCombatGameMode::Step_PvP()
 }
 
 void APCCombatGameMode::Step_PvE()
+{
+}
+
+void APCCombatGameMode::Step_CreepSpawn()
 {
 }
 
