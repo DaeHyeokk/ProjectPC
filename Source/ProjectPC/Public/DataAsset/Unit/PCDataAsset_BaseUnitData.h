@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
-#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_BaseUnitData.generated.h"
 
@@ -20,10 +19,10 @@ struct FUnitStaticStatConfig
 	GENERATED_BODY()
 
 	FUnitStaticStatConfig() : StatValue(0.f) {}
-	FUnitStaticStatConfig(const FGameplayTag InStatTag) : StatTag(InStatTag), StatValue(0.f) {}
+	FUnitStaticStatConfig(const FGameplayAttribute& InStatAttribute) : StatAttribute(InStatAttribute), StatValue(0.f) {}
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag StatTag;
+	FGameplayAttribute StatAttribute;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float StatValue;
@@ -41,13 +40,13 @@ public:
 	UPCDataAsset_BaseUnitData();
 	
 	UFUNCTION()
-	virtual void FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const;
+	virtual void FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const;
 	
 	UFUNCTION()
 	virtual void FillStartupAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 
 	UFUNCTION()
-	UPCDataAsset_UnitAnimSet* GetAnimData() const;
+	UPCDataAsset_UnitAnimSet* GetAnimSetData() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")
@@ -74,5 +73,5 @@ protected:
 	TArray<TSubclassOf<UGameplayAbility>> EventAbilities;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animations")
-	TObjectPtr<UPCDataAsset_UnitAnimSet> AnimData;
+	TObjectPtr<UPCDataAsset_UnitAnimSet> AnimSetData;
 };

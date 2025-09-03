@@ -18,12 +18,14 @@ class PROJECTPC_API UPCUnitAbilitySystemComponent : public UAbilitySystemCompone
 	
 protected:
 	FActiveGameplayEffectHandle InitStatSetGEHandle;
-
+	bool bInitBaseStatsApplied = false;
+	
 public:
 	virtual void InitGAS();
 	
 protected:
 	virtual void ApplyInitStatSet();
+	virtual void ApplyInitBaseStat();
 	virtual void GrantStartupAbilities();
 	bool TryGrantUnitTypeTag();
 };

@@ -11,13 +11,13 @@ void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,MaxMana);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,CurrentMana);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,MagicDamageMultiplier);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,CritChance);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,LifeSteal);
-	DOREPLIFETIME(UPCHeroUnitAttributeSet,SpellVamp);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MaxMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CurrentMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MagicDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CritChance, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,LifeSteal, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,SpellVamp, COND_None, REPNOTIFY_OnChanged);
 }
 
 void UPCHeroUnitAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)

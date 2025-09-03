@@ -19,7 +19,6 @@ class APCCarouselRing;
 class UPCStageData;
 class APCPlayerState;
 
-
 UCLASS()
 class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 {
@@ -97,9 +96,10 @@ private:
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;
 	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
-	APCCombatGameState* GetCombatGameState() const { return GetGameState<APCCombatGameState>(); }
+	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
+// ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;

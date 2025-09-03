@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "PCCreepUnitCharacter.generated.h"
 
-class UPCDataAsset_CreepUnitData;
 /**
  * 
  */
@@ -18,19 +18,17 @@ class PROJECTPC_API APCCreepUnitCharacter : public APCBaseUnitCharacter
 	
 public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
-	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
+
+	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return CreepUnitDataAsset; }
+	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
 	
 protected:
-	virtual TSubclassOf<UUserWidget> GetStatusBarClass() const override { return CreepStatusBarClass; }
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCUnitAbilitySystemComponent> UnitAbilitySystemComponent;
-	
-	UPROPERTY(EditAnywhere, Category="Data")
-	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 
-	UPROPERTY(EditAnywhere, Category="Data")
-	TSubclassOf<UPCUnitStatusBarWidget> CreepStatusBarClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
+	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 };

@@ -6,23 +6,24 @@
 #include "BaseGameplayTags.h"
 #include "GameplayEffect.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
+#include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 
 UPCDataAsset_BaseUnitData::UPCDataAsset_BaseUnitData()
 {
-	UnitStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_AttackRange);
-	UnitStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_AttackSpeed);
-	UnitStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_PhysicalDefense);
-	UnitStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_MagicDefense);
+	UnitStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetAttackRangeAttribute());
+	UnitStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetAttackSpeedAttribute());
+	UnitStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetPhysicalDefenseAttribute());
+	UnitStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetMagicDefenseAttribute());
 }
 
 void UPCDataAsset_BaseUnitData::FillInitStatMap(int32 Level,
-	TMap<FGameplayTag, float>& Out) const
+	TMap<FGameplayAttribute, float>& Out) const
 {
 	Out.Reset();
 	
 	for (const FUnitStaticStatConfig& StatConfig : UnitStaticStatConfigs)
 	{
-		Out.Add(StatConfig.StatTag, StatConfig.StatValue);
+		Out.Add(StatConfig.StatAttribute, StatConfig.StatValue);
 	}
 }
 
@@ -50,7 +51,7 @@ void UPCDataAsset_BaseUnitData::FillStartupAbilities(TArray<TSubclassOf<UGamepla
 	AppendValidUnique(EventAbilities);
 }
 
-UPCDataAsset_UnitAnimSet* UPCDataAsset_BaseUnitData::GetAnimData() const
+UPCDataAsset_UnitAnimSet* UPCDataAsset_BaseUnitData::GetAnimSetData() const
 {
-	return AnimData;
+	return AnimSetData;
 }

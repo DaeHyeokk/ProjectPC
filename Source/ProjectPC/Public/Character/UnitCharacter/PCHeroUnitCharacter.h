@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "PCHeroUnitCharacter.generated.h"
 
-class UPCDataAsset_HeroUnitData;
 class UPCHeroUnitAbilitySystemComponent;
 /**
  * 
@@ -28,14 +28,15 @@ public:
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
-	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
-	virtual bool HasLevelSystem() const override { return true; }
-	virtual int32 GetUnitLevel() const override { return HeroLevel; };
-
-	virtual TSubclassOf<UUserWidget> GetStatusBarClass() const override { return HeroStatusBarClass; }
-	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	FORCEINLINE virtual bool HasLevelSystem() const override { return true; }
+	FORCEINLINE virtual int32 GetUnitLevel() const override { return HeroLevel; };
+	virtual void SetUnitLevel(const int32 Level) override;
+	
+	FORCEINLINE virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
+	FORCEINLINE virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
+	FORCEINLINE virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
 	
 	UFUNCTION(BlueprintCallable)
 	void LevelUp();
@@ -52,11 +53,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
-	UPROPERTY(EditAnywhere, Category="Data")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
-
-	UPROPERTY(EditAnywhere, Category="Data")
-	TSubclassOf<UPCHeroStatusBarWidget> HeroStatusBarClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_HeroLevel, meta=(ExposeOnSpawn=true), Category="Data")
 	int32 HeroLevel = 1;

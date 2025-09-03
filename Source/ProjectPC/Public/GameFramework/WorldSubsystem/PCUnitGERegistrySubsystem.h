@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "DataAsset/Unit/PCDataAsset_UnitGEDictionary.h"
-#include "Subsystems/GameInstanceSubsystem.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "PCUnitGERegistrySubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UPCUnitGERegistrySubsystem : public UGameInstanceSubsystem
+class PROJECTPC_API UPCUnitGERegistrySubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 

@@ -11,6 +11,18 @@
 void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGameplayAttribute InHealthAttr,
                                          FGameplayAttribute InMaxHealthAttr, FGameplayAttribute InManaAttr, FGameplayAttribute InMaxManaAttr)
 {
+	if (UAbilitySystemComponent* OldASC = ASC.Get())
+	{
+		if (HealthHandle.IsValid())
+			OldASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
+		if (MaxHealthHandle.IsValid())
+			OldASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
+		if (ManaHandle.IsValid())
+			OldASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
+		if (MaxManaHandle.IsValid())
+			OldASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
+	}
+	
 	ASC = InASC;
 	HealthAttr = InHealthAttr;
 	MaxHealthAttr = InMaxHealthAttr;
@@ -24,18 +36,6 @@ void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGamepl
 		ApplyToUI();
 		return;
 	}
-	
-	if (HealthHandle.IsValid())
-		ASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
-		
-	if (MaxHealthHandle.IsValid())
-		ASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
-		
-	if (ManaHandle.IsValid())
-		ASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
-		
-	if (MaxManaHandle.IsValid())
-		ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
 
 	CachedHP = ASC->GetNumericAttribute(HealthAttr);
 	CachedMaxHP = ASC->GetNumericAttribute(MaxHealthAttr);
@@ -100,26 +100,48 @@ void UPCUnitStatusBarWidget::NativeDestruct()
 void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UI OnCurrentHealthChanged: New=%.1f"), Data.NewValue);
-	CachedHP = Data.NewValue;
+	
+	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
+	const float NowValue = ASC.IsValid()
+		? ASC->GetNumericAttribute(HealthAttr)
+		: Data.NewValue;
+	
+	CachedHP = NowValue;
 	ApplyToUI();
 }
 
 void UPCUnitStatusBarWidget::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(LogTemp, Warning, TEXT("UI OnMaxHealthChanged: New=%.1f"), Data.NewValue);
-	CachedMaxHP = FMath::Max(1.f, Data.NewValue);
+	
+	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
+	const float NowValue = ASC.IsValid()
+		? ASC->GetNumericAttribute(MaxHealthAttr)
+		: Data.NewValue;
+	
+	CachedMaxHP = FMath::Max(1.f, NowValue);
 	ApplyToUI();
-}
+} 
 
 void UPCUnitStatusBarWidget::OnManaChanged(const FOnAttributeChangeData& Data)
 {
-	CachedMP = Data.NewValue;
+	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
+	const float NowValue = ASC.IsValid()
+		? ASC->GetNumericAttribute(ManaAttr)
+		: Data.NewValue;
+	
+	CachedMP = NowValue;
 	ApplyToUI();
 }
 
 void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data)
 {
-	CachedMaxMP = FMath::Max(1.f, Data.NewValue);
+	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
+	const float NowValue = ASC.IsValid()
+		? ASC->GetNumericAttribute(ManaAttr)
+		: Data.NewValue;
+	
+	CachedMaxMP = FMath::Max(1.f, NowValue);
 	ApplyToUI();
 }
 

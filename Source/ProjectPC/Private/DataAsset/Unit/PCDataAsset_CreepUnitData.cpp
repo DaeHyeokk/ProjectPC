@@ -5,20 +5,21 @@
 
 #include "BaseGameplayTags.h"
 #include "GameplayEffect.h"
+#include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 
 
 UPCDataAsset_CreepUnitData::UPCDataAsset_CreepUnitData()
 {
-	CreepStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_MaxHealth);
-	CreepStaticStatConfigs.Emplace(UnitGameplayTags::Unit_Stat_Shared_BaseDamage);
+	CreepStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetMaxHealthAttribute());
+	CreepStaticStatConfigs.Emplace(UPCUnitAttributeSet::GetBaseDamageAttribute());
 }
 
-void UPCDataAsset_CreepUnitData::FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const
+void UPCDataAsset_CreepUnitData::FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const
 {
 	Super::FillInitStatMap(Level, Out);
 	
 	for (const FUnitStaticStatConfig& StatConfig : CreepStaticStatConfigs)
 	{
-		Out.Add(StatConfig.StatTag, StatConfig.StatValue);
+		Out.Add(StatConfig.StatAttribute, StatConfig.StatValue);
 	}
 }

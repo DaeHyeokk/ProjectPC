@@ -14,7 +14,12 @@ class PROJECTPC_API APCUnitAIController : public AAIController
 {
 	GENERATED_BODY()
 	
+protected:
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 	
-	
+public:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UBehaviorTree> DefaultBT;
 	
 };

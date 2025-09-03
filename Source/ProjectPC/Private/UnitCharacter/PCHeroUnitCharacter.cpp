@@ -9,6 +9,7 @@
 #include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/Unit/PCUnitStatusBarWidget.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -46,11 +47,6 @@ UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySyste
 UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemComponent() const
 {
 	return HeroUnitAbilitySystemComponent;
-}
-
-const UPCDataAsset_BaseUnitData* APCHeroUnitCharacter::GetUnitDataAsset() const
-{
-	return HeroUnitDataAsset;
 }
 
 FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const
@@ -101,10 +97,28 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 	UpdateStatusBarUI();
 }
 
+void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
+{
+	// 레벨 데이터 직접적인 수정은 서버권한
+	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
+		return;
+	
+	HeroLevel = FMath::Clamp(Level, 1, 3);
+	HeroUnitAbilitySystemComponent->UpdateGAS();
+	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	if (GetNetMode() == NM_ListenServer)
+		UpdateStatusBarUI();
+}
+
+void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)
+{
+	HeroUnitDataAsset = Cast<UPCDataAsset_HeroUnitData>(InUnitDataAsset);
+}
+
 void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 {
 	// 데디서버거나 StatusBar Class가 없으면 실행하지 않음, HasAuthority() 안쓰는 이유: Listen Server 환경 고려
-	if (GetNetMode() == NM_DedicatedServer || !HeroStatusBarClass)
+	if (GetNetMode() == NM_DedicatedServer || !StatusBarClass)
 		return;
 
 	if (UPCHeroStatusBarWidget* StatusBar = Cast<UPCHeroStatusBarWidget>(StatusBarWidget))

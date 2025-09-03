@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameFramework/GameInstanceSubsystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 #include "BaseGameplayTags.h"
 #include "Engine/AssetManager.h"

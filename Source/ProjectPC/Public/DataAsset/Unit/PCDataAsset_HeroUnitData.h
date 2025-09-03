@@ -25,10 +25,10 @@ struct FHeroScalableStatConfig
 	GENERATED_BODY()
 
 	FHeroScalableStatConfig() : StatValue(0.f) {}
-	FHeroScalableStatConfig(const FGameplayTag InStatTag) : StatTag(InStatTag), StatValue(0.f) {}
+	FHeroScalableStatConfig(const FGameplayAttribute& InStatAttribute) : StatAttribute(InStatAttribute), StatValue(0.f) {}
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Unit.Stat"))
-	FGameplayTag StatTag;
+	FGameplayAttribute StatAttribute;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FScalableFloat StatValue;
@@ -44,7 +44,7 @@ class PROJECTPC_API UPCDataAsset_HeroUnitData : public UPCDataAsset_BaseUnitData
 
 public:
 	UPCDataAsset_HeroUnitData();
-	virtual void FillInitStatMap(int32 Level, TMap<FGameplayTag, float>& Out) const override;
+	virtual void FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const override;
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 	FGameplayTag GetJobSynergyTag() const;
 	FGameplayTag GetSpeciesSynergyTag() const;
