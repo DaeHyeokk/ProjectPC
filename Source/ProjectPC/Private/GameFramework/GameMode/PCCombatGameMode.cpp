@@ -11,6 +11,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/PCCombatManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
@@ -139,6 +140,8 @@ void APCCombatGameMode::AssignSeatInitial(bool bForceReassign)
 		PCPlayerState->ForceNetUpdate();
 	}
 }
+
+
 
 void APCCombatGameMode::AssignSeatIfNeeded(class APCPlayerState* PCPlayerState)
 {
@@ -316,14 +319,17 @@ void APCCombatGameMode::Step_Return()
 
 void APCCombatGameMode::Step_PvP()
 {
+	
 }
 
 void APCCombatGameMode::Step_PvE()
 {
+	
 }
 
 void APCCombatGameMode::Step_CreepSpawn()
 {
+	
 }
 
 void APCCombatGameMode::Step_Carousel()

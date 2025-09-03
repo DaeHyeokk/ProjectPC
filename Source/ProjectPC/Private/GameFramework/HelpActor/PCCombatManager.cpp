@@ -116,6 +116,7 @@ void APCCombatManager::StartAllBattle()
 		}
 
 		GuestTileManager->MoveUnitsMirroredTo(HostTileManager, bMirrorRows, bMirrorCols, bIncludeBench);
+		
 	}
 }
 
