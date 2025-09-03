@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "PCCombatBoard.generated.h"
 
+class APCHeroUnitCharacter;
+class UPCTileManager;
 class APCUnitVisual;
 struct FGameplayTag;
 class APCPlayerState;
@@ -72,14 +74,24 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FTransform GetEnemySeatTransform() const;
 
-	// 로컬 플레이어 카메라
+	// 전투용 카메라 세팅 함수
 	UFUNCTION(BlueprintCallable)
 	void ApplyLocalBottomView(class APlayerController* PlayerController, int32 MySeatIndex, float Blend = 0.35f);
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void ApplyBattleCamera(class APCCombatPlayerController* PCPlayerController, bool bFlipYaw180 = false, float Blend = 0.35f);
+
+	UPROPERTY(EditAnywhere, Category= "Camera")
+	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1150.f);
+
+	UPROPERTY(EditAnywhere, Category= "Camera")
+	FRotator BattleCameraChangeRotation = FRotator(-50.f, 0.f,180.f);
+
+	
 
 protected:
 	
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type reason) override;
 
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -136,11 +148,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RebuildTilesFromMarkers();
 
-	// 마우스 히트 -> (x,y) / 벤치 여부로 변환
-	bool TryGetTileFromHit(const FHitResult& Hit, int32& OutX, int32& OutY, bool& bBench) const;
-
-	// PlayerState 변경되면 호출 : 비주얼 동기화
-	void UpdateBoardFromPlayerState(APCPlayerState* PCPlayerState);
 
 protected:
 	// 마커 수집
@@ -148,14 +155,6 @@ protected:
 
 	// 인스터스 / 매핑 구축
 	void BuildHISM();
-
-	// 유닛 비주얼 풀 관리
-	void SpawnOrMoveVisual(bool bBench, int32 TileIndex, FGameplayTag UnitID, const FTransform& Transform);
-	void GarbageUnusedVisual(bool bBench, const TBitArray<>& Used);
-
-	// 내부 키 (벤치/ 필드 구분 포함)
-	static int32 MakeKey(bool bBench, int32 TileIndex) { return TileIndex + (bBench ? 100000 : 0);}
-
 
 private:
 
@@ -171,14 +170,24 @@ private:
 	UPROPERTY()
 	TArray<FIntPoint> Bench_InstanceToXY;
 
-	// (벤치/타일) -> 비주얼 엑터
-	UPROPERTY(Transient)
-	TMap<int32, TWeakObjectPtr<APCUnitVisual>> Visuals;
+	// Tile Manager
+public:
 
-	// 내가 구독중인 PlayerState
-	UPROPERTY()
-	TWeakObjectPtr<APCPlayerState> BoundPCPlayerState;
-	FDelegateHandle BoundHandle;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	UPCTileManager* TileManager;
+
+	// 보드에서 바로 타일 쿼리하고 싶을때 (래퍼)
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	APCHeroUnitCharacter* GetUnitAt(int32 Row, int32 Col) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	FVector GetTileWorldLocation(int32 Row, int32 Col) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	APCHeroUnitCharacter* GetBenchUnitAt(int32 BenchIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	FVector GetBenchWorldLocation(int32 BenchIndex) const;
 	
 	
 };

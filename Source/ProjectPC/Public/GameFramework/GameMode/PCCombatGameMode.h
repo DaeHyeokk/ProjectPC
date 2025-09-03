@@ -82,7 +82,9 @@ private:
 
 	// 개별 Step 처리
 	void Step_Start();
-	void Step_Shop();
+	void Step_Setup();
+	void Step_Travel();
+	void Step_Return();
 	void Step_PvP();
 	void Step_PvE();
 	void Step_Carousel();

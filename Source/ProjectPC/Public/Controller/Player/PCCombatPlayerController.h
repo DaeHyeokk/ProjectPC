@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/DataAsset/PCStageData.h"
+#include "DataAsset/FrameWork//PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
 
 
+class APCCombatBoard;
 struct FGameplayTag;
 class APCCarouselRing;
 /**
@@ -60,8 +61,28 @@ public:
 
 #pragma endregion Shop
 
+
+#pragma region Camera
 	// 게임 카메라 세팅
+
+private:
+	UPROPERTY(Transient)
+	int32 HomeBoardSeatIndex = INDEX_NONE;
+
+	APCCombatBoard* FindBoardBySeatIndex(int32 BoardSeatIndex) const;
+	
 public:
+
+	// 자기 보드 인덱스 저장
+	UFUNCTION(Client, Reliable)
+	void ClientSetHomeBoardIndex(int32 InHomeBoardIdx);
+
+	UFUNCTION(Client, Reliable)
+	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, bool bRespectFlipPolicy, float Blend = 0.35f);
+
+	UFUNCTION(BlueprintPure, Category = "Camera")
+	bool ShouldFlipForBoardIndex(int32 BoardSeatIndex) const;
+	
 	// 서버->클라 : 내 자리 인덱스로 카메라 세팅
 	UFUNCTION(Client, Reliable)
 	void ClientCameraSet(int32 BoardIndex, float BlendTime);
@@ -73,4 +94,6 @@ public:
 	// 서버->클라 : 페이즈 변경 알림
 	UFUNCTION(Client, Reliable)
 	void ClientStageChanged(EPCStageType NewStage, const FString& StageRoundName, float Seconds);
+
+#pragma endregion Camera
 };

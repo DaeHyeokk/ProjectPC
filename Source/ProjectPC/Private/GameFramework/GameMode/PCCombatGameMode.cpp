@@ -216,17 +216,16 @@ void APCCombatGameMode::BuildStageData()
 	FlatRoundIdx.Reset();
 	FlatStepIdxInRound.Reset();
 
-	if (!StageData)
+	if (ensure(StageData))
 	{
-		FlatRoundSteps = {{EPCStageType::Start, 0.f},
-			{EPCStageType::Shop, 0.f},
-			{EPCStageType::PvP, 0.f}};
-		FlatStageIdx = {0,0,0};
-		FlatRoundIdx = {0,1,2};
-		FlatStepIdxInRound = {0,0,0};
-		return;
+		StageData->BuildFlattenedPhase(FlatRoundSteps, FlatStageIdx, FlatRoundIdx, FlatStepIdxInRound);
 	}
-	StageData->BuildFlattenedPhase(FlatRoundSteps, FlatStageIdx, FlatRoundIdx, FlatStepIdxInRound);
+	else
+	{
+		// 최소 Fallback: 한 스텝만
+		FlatRoundSteps = { {EPCStageType::Start, 5.f} };
+		FlatStageIdx = {0}; FlatRoundIdx = {0}; FlatStepIdxInRound = {0};
+	}
 }
 
 void APCCombatGameMode::StartFromBeginning()
@@ -267,7 +266,9 @@ void APCCombatGameMode::BeginCurrentStep()
 	switch (Step.StageType)
 	{
 	case EPCStageType::Start : Step_Start(); break;
-	case EPCStageType::Shop : Step_Shop(); break;
+	case EPCStageType::Setup : Step_Setup(); break;
+	case EPCStageType::Travel : Step_Travel(); break;
+	case EPCStageType::Return : Step_Return(); break;
 	case EPCStageType::PvP : Step_PvP(); break;
 	case EPCStageType::PvE : Step_PvE(); break;
 	case EPCStageType::Carousel : Step_Carousel(); break;
@@ -286,8 +287,6 @@ void APCCombatGameMode::EndCurrentStep()
 	
 }
 
-
-
 void APCCombatGameMode::Step_Start()
 {
 	// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
@@ -299,7 +298,15 @@ void APCCombatGameMode::Step_Start()
 	// }
 }
 
-void APCCombatGameMode::Step_Shop()
+void APCCombatGameMode::Step_Setup()
+{
+}
+
+void APCCombatGameMode::Step_Travel()
+{
+}
+
+void APCCombatGameMode::Step_Return()
 {
 }
 
@@ -390,7 +397,8 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 			Pawn->TeleportTo(Seat.GetLocation(), Pawn->GetActorRotation(), false, true);
 		}
 
-		PlayerController->ClientCameraSet(BoardIdx, ShopFocusBlend);
+		PlayerController->ClientSetHomeBoardIndex(BoardIdx);
+		PlayerController->ClientFocusBoardBySeatIndex(BoardIdx, false, ShopFocusBlend);
 	}
 }
 
