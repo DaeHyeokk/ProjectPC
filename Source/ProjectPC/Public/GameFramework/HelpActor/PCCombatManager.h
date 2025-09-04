@@ -6,10 +6,10 @@
 #include "GameFramework/Actor.h"
 #include "PCCombatManager.generated.h"
 
+class APCBaseUnitCharacter;
 class APCPlayerState;
 class UPCTileManager;
 class APCCombatBoard;
-class APCHeroUnitCharacter;
 
 USTRUCT()
 struct FCombatManager_FieldSlot
@@ -20,7 +20,7 @@ struct FCombatManager_FieldSlot
 	UPROPERTY()
 	int32 Row = 0;
 	UPROPERTY()
-	TWeakObjectPtr<APCHeroUnitCharacter> Unit;
+	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 };
 
 USTRUCT()
@@ -30,7 +30,7 @@ struct FCombatManager_BenchSlot
 	UPROPERTY()
 	int32 Index = 0;
 	UPROPERTY()
-	TWeakObjectPtr<APCHeroUnitCharacter> Unit;
+	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 };
 
 USTRUCT()
@@ -67,7 +67,7 @@ struct FCombatManager_Pair
 	UPROPERTY()
 	FCombatManager_BoardSnapShot GuestSnapShot;
 	UPROPERTY()
-	TArray<TWeakObjectPtr<APCHeroUnitCharacter>> MovedUnits;
+	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> MovedUnits;
 };
 
 UCLASS()
@@ -118,7 +118,7 @@ private:
 	static APCCombatBoard* FindBoardBySeatIndex(UWorld* World, int32 SeatIndex);
 	static void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
 	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
-	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCHeroUnitCharacter* Unit);
+	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
 
 public:	
 	

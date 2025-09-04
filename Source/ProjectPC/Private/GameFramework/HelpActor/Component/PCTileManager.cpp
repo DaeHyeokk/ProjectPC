@@ -12,15 +12,20 @@ UPCTileManager::UPCTileManager()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+bool UPCTileManager::IsInRange(int32 Y, int32 X) const
+{
+	return (Y >= 0 && Y < Rows && X >= 0 && X < Cols);
+}
+
 void UPCTileManager::QuickSetUp()
 {
 	CreateField();
 	CreateBench();
 }
 
-bool UPCTileManager::PlaceUnitOnField(int32 Col, int32 Row, APCHeroUnitCharacter* Unit)
+bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
-	const int32 i = Col * Rows + Row;
+	const int32 i = Y * Rows + X;
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
@@ -28,36 +33,55 @@ bool UPCTileManager::PlaceUnitOnField(int32 Col, int32 Row, APCHeroUnitCharacter
 	return true;
 }
 
-bool UPCTileManager::RemoveFromField(int32 Col, int32 Row)
+bool UPCTileManager::RemoveFromField(int32 Y, int32 X)
 {
-	const int32 i = Col * Rows + Row;
+	const int32 i = Y * Rows + X;
 	if (!Field.IsValidIndex(i))
 		return false;
 	Field[i].Unit = nullptr;
 	return true;
 }
 
-APCHeroUnitCharacter* UPCTileManager::GetFieldUnit(int32 Col, int32 Row) const
+APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
-	const int32 i = Col * Rows + Row;
+	const int32 i = Y * Rows + X;
 	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
 }
 
-FVector UPCTileManager::GetTileWorldPosition(int32 Col, int32 Row) const
+FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 {
-	const int32 i = Col * Rows + Row;
+	if (!InUnit)
+		return FVector::ZeroVector;
+
+	for (int32 y = 0; y < Rows; y++)
+	{
+		for (int32 x = 0; x < Cols; x++)
+		{
+			const int32 i = y * Cols + x;
+			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
+			{
+				return Field[i].Position;
+			}
+		}
+	}
+	return FVector::ZeroVector;
+}
+
+FVector UPCTileManager::GetTileWorldPosition(int32 Y, int32 X) const
+{
+	const int32 i = Y * Rows + X;
 	return Field.IsValidIndex(i) ? Field[i].Position : FVector::ZeroVector;
 }
 
-FVector UPCTileManager::GetTileLocalPosition(int32 Col, int32 Row) const
+FVector UPCTileManager::GetTileLocalPosition(int32 Y, int32 X) const
 {
 	if (!GetOwner())
 		return FVector::ZeroVector;
-	const FVector WorldPosition = GetTileWorldPosition(Col, Row);
+	const FVector WorldPosition = GetTileWorldPosition(Y, X);
 	return GetOwner()->GetTransform().InverseTransformPosition(WorldPosition);
 }
 
-bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCHeroUnitCharacter* Unit)
+bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit)
 {
 	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty())
 		return false;
@@ -74,7 +98,7 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex)
 	return true;
 }
 
-APCHeroUnitCharacter* UPCTileManager::GetBenchUnit(int32 BenchIndex) const
+APCBaseUnitCharacter* UPCTileManager::GetBenchUnit(int32 BenchIndex) const
 {
 	return Bench.IsValidIndex(BenchIndex) ? Bench[BenchIndex].Unit : nullptr;
 }
@@ -134,7 +158,7 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
     {
         int32 Col;
         int32 Row;
-        TWeakObjectPtr<APCHeroUnitCharacter> Unit;
+        TWeakObjectPtr<APCBaseUnitCharacter> Unit;
     };
 
     TArray<FCapturedField> CapturedField;
@@ -143,14 +167,14 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
     for (int32 row = 0; row < Rows; ++row)
     for (int32 col = 0; col < Cols; ++col)
     {
-        if (APCHeroUnitCharacter* U = GetFieldUnit(col, row)) 
+        if (APCBaseUnitCharacter* U = GetFieldUnit(col, row)) 
         {
             CapturedField.Add({col, row, U});
         }
     }
 
     // --- 벤치 캡쳐 ---
-    struct FCapturedBench { int32 Index; TWeakObjectPtr<APCHeroUnitCharacter> Unit; };
+    struct FCapturedBench { int32 Index; TWeakObjectPtr<APCBaseUnitCharacter> Unit; };
     TArray<FCapturedBench> CapturedBench;
 
     const int32 NThis   = BenchSlotsPerSide;
@@ -163,7 +187,7 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
     if (bIncludeBench)
     {
         for (int32 i = 0; i < Bench.Num(); ++i)
-            if (APCHeroUnitCharacter* U = GetBenchUnit(i))
+            if (APCBaseUnitCharacter* U = GetBenchUnit(i))
                 CapturedBench.Add({i, U});
     }
 

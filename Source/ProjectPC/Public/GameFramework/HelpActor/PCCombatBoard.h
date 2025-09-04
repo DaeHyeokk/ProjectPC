@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PCCombatBoard.generated.h"
 
+class APCBaseUnitCharacter;
 class APCHeroUnitCharacter;
 class UPCTileManager;
 class APCUnitVisual;
@@ -178,16 +179,22 @@ public:
 
 	// 보드에서 바로 타일 쿼리하고 싶을때 (래퍼)
 	UFUNCTION(BlueprintPure, Category = "Tile")
-	APCHeroUnitCharacter* GetUnitAt(int32 Row, int32 Col) const;
+	APCBaseUnitCharacter* GetUnitAt(int32 Y, int32 X) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
-	FVector GetTileWorldLocation(int32 Row, int32 Col) const;
+	FVector GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
-	APCHeroUnitCharacter* GetBenchUnitAt(int32 BenchIndex) const;
+	FVector GetTileWorldLocation(int32 Y, int32 X) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	APCBaseUnitCharacter* GetBenchUnitAt(int32 BenchIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetBenchWorldLocation(int32 BenchIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	bool IsInRange(int32 Y, int X) const;
 	
 	
 };

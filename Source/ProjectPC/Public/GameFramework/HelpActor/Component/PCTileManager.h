@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PCTileManager.generated.h"
 
-class APCHeroUnitCharacter;
+class APCBaseUnitCharacter;
 
 USTRUCT(BlueprintType)
 struct FTile
@@ -15,9 +15,9 @@ struct FTile
 	
 	UPROPERTY(BlueprintReadWrite)
 	FVector Position = FVector::ZeroVector;
-
+	
 	UPROPERTY(BlueprintReadWrite)
-	APCHeroUnitCharacter* Unit = nullptr;
+	APCBaseUnitCharacter* Unit = nullptr;
 
 	bool IsEmpty() const { return Unit == nullptr; }
 };
@@ -31,13 +31,17 @@ class PROJECTPC_API UPCTileManager : public UActorComponent
 public:	
 	
 	UPCTileManager();
-
+	
+	
 	// 필드 타일 크기 ( 8 * 7 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
 	int32 Cols = 8;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
 	int32 Rows = 7;
+	
+	UFUNCTION(BlueprintPure, Category = "BFS")
+	bool IsInRange(int32 Y, int32 X) const;
 	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
@@ -81,33 +85,36 @@ public:
 
 	// 필드 배치 / 삭제 / 조회
 	UFUNCTION(BlueprintCallable, Category = "Field")
-	bool PlaceUnitOnField(int32 Col, int32 Row, APCHeroUnitCharacter* Unit);
+	bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
 
 	UFUNCTION(BLueprintCallable, Category = "Field")
-	bool RemoveFromField(int32 Col, int32 Row);
+	bool RemoveFromField(int32 Y, int32 X);
 
 	UFUNCTION(BlueprintPure, Category = "Field")
-	APCHeroUnitCharacter* GetFieldUnit(int32 Col, int32 Row) const;
+	APCBaseUnitCharacter* GetFieldUnit(int32 Y, int32 X) const;
+
+	UFUNCTION(BlueprintPure, Category = "Field")
+	FVector GetFieldUnitLocation(APCBaseUnitCharacter* Unit) const;
 
 	// 월드 / 로컬 포지션 제공
 	UFUNCTION(BlueprintPure, Category = "Field")
-	FVector GetTileWorldPosition(int32 Col, int32 Row) const;
+	FVector GetTileWorldPosition(int32 Y, int32 X) const;
 
 	UFUNCTION(BlueprintPure, Category = "Field")
-	FVector GetTileLocalPosition(int32 Col, int32 Row) const;
+	FVector GetTileLocalPosition(int32 Y, int32 X) const;
 
 	UFUNCTION(BlueprintPure, Category = "Field")
-	FVector GetTilePosition(int32 Col, int32 Row) const { return GetTileWorldPosition(Col, Row);}
+	FVector GetTilePosition(int32 Y, int32 X) const { return GetTileWorldPosition(Y, X);}
 
 	// 벤치 배치 / 삭제 / 조회
 	UFUNCTION(BlueprintCallable, Category = "Bench")
-	bool PlaceUnitOnBench(int32 BenchIndex, APCHeroUnitCharacter* Unit);
+	bool PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit);
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
 	bool RemoveFromBench(int32 BenchIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
-	APCHeroUnitCharacter* GetBenchUnit(int32 BenchIndex) const;
+	APCBaseUnitCharacter* GetBenchUnit(int32 BenchIndex) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
 	FVector GetBenchWorldPosition(int32 BenchIndex) const;

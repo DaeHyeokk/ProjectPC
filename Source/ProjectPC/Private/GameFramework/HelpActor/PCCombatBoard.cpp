@@ -227,17 +227,22 @@ void APCCombatBoard::ApplyBattleCamera(class APCCombatPlayerController* PCPlayer
 	PCPlayerController->SetViewTargetWithBlend(this, Blend);
 }
 
-APCHeroUnitCharacter* APCCombatBoard::GetUnitAt(int32 Row, int32 Col) const
+APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
 {
-	return TileManager ? TileManager->GetFieldUnit(Row, Col) : nullptr;
+	return TileManager ? TileManager->GetFieldUnit(Y, X) : nullptr;
 }
 
-FVector APCCombatBoard::GetTileWorldLocation(int32 Row, int32 Col) const
+FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 {
-	return TileManager ? TileManager->GetTileWorldPosition(Row, Col) : FVector::ZeroVector;
+	return TileManager ? TileManager->GetFieldUnitLocation(InUnit) : FVector::ZeroVector;
 }
 
-APCHeroUnitCharacter* APCCombatBoard::GetBenchUnitAt(int32 BenchIndex) const
+FVector APCCombatBoard::GetTileWorldLocation(int32 Y, int32 X) const
+{
+	return TileManager ? TileManager->GetTileWorldPosition(Y, X) : FVector::ZeroVector;
+}
+
+APCBaseUnitCharacter* APCCombatBoard::GetBenchUnitAt(int32 BenchIndex) const
 {
 	return TileManager ? TileManager->GetBenchUnit(BenchIndex) : nullptr;
 }
@@ -245,6 +250,11 @@ APCHeroUnitCharacter* APCCombatBoard::GetBenchUnitAt(int32 BenchIndex) const
 FVector APCCombatBoard::GetBenchWorldLocation(int32 BenchIndex) const
 {
 	return TileManager ? TileManager->GetBenchWorldPosition(BenchIndex) : FVector::ZeroVector;
+}
+
+bool APCCombatBoard::IsInRange(int32 Y, int X) const
+{
+	return TileManager ? TileManager->IsInRange(Y, X) : false;
 }
 
 

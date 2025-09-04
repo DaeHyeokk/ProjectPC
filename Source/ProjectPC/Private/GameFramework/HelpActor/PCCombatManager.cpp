@@ -137,7 +137,7 @@ void APCCombatManager::FinishAllBattle()
 		{
 			for (const auto& WeakUnit : InPair.MovedUnits)
 			{
-				if (APCHeroUnitCharacter* Unit = WeakUnit.Get())
+				if (APCBaseUnitCharacter* Unit = WeakUnit.Get())
 				{
 					RemoveUnitFromAny(HostTileManager, Unit);
 				}
@@ -180,7 +180,7 @@ void APCCombatManager::TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardS
 	{
 		for (int32 c = 0; c < Cols; ++c)
 		{
-			if (APCHeroUnitCharacter* InUnit = TileManager->GetFieldUnit(c,r))
+			if (APCBaseUnitCharacter* InUnit = TileManager->GetFieldUnit(c,r))
 			{
 				FCombatManager_FieldSlot FieldSlot;
 				FieldSlot.Col = c;
@@ -194,7 +194,7 @@ void APCCombatManager::TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardS
 	// 벤치
 	for (int32 i = 0; i < TileManager->Bench.Num(); ++i)
 	{
-		if (APCHeroUnitCharacter* InUnit = TileManager->GetBenchUnit(i))
+		if (APCBaseUnitCharacter* InUnit = TileManager->GetBenchUnit(i))
 		{
 			FCombatManager_BenchSlot BenchSlot;
 			BenchSlot.Index = i;
@@ -212,7 +212,7 @@ void APCCombatManager::RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap)
 
 	for (const auto& FieldSlot : Snap.Field)
 	{
-		if (APCHeroUnitCharacter* InUnit = FieldSlot.Unit.Get())
+		if (APCBaseUnitCharacter* InUnit = FieldSlot.Unit.Get())
 		{
 			TileManager->PlaceUnitOnField(FieldSlot.Col, FieldSlot.Row, InUnit);
 		}
@@ -220,14 +220,14 @@ void APCCombatManager::RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap)
 
 	for (const auto& BenchSlot : Snap.Bench)
 	{
-		if (APCHeroUnitCharacter* InUnit = BenchSlot.Unit.Get())
+		if (APCBaseUnitCharacter* InUnit = BenchSlot.Unit.Get())
 		{
 			TileManager->PlaceUnitOnBench(BenchSlot.Index, InUnit);
 		}
 	}
 }
 
-bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCHeroUnitCharacter* Unit)
+bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit)
 {
 	if (!TileManager || !Unit) return false;
 
