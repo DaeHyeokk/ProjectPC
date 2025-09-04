@@ -11,6 +11,8 @@
 #include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
 
+class APCCombatBoard;
+
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
 {
@@ -48,8 +50,10 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
+	
 	APCCombatGameState();
-
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,6 +62,16 @@ protected:
 	// 전체 게임 로직 관련 코드
 public:
 
+	// SeatIndex -> Board
+	UPROPERTY()
+	TArray<TWeakObjectPtr<APCCombatBoard>> SeatToBoard;
+
+	UFUNCTION()
+	void BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boards);
+
+	UFUNCTION(BLueprintPure)
+	APCCombatBoard* GetBoardBySeat(int32 PlayerSeatIndex) const;
+	
 	// 표 기반 플렛 인덱스
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	int32 FloatIndex = -1;
@@ -91,7 +105,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI")
 	float GetRemainingSeconds() const;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 
 #pragma endregion GameLogic
 	

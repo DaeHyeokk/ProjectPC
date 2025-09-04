@@ -205,6 +205,11 @@ void APCCombatGameMode::BuildHelperActor()
 		return ABoard.BoardSeatIndex < BBoard.BoardSeatIndex;
 	});
 
+	if (APCCombatGameState* CombatGameState = GetGameState<APCCombatGameState>())
+	{
+		CombatGameState->BuildSeatToBoardMap(CombatBoard);
+	}
+
 	if (!CarouselRing)
 	{
 		for (TActorIterator<APCCarouselRing> It(GetWorld()); It; ++It)
@@ -458,3 +463,30 @@ APCCombatGameState* APCCombatGameMode::GetCombatGameState() const
 	return GetGameState<APCCombatGameState>();
 }
 
+APCCombatManager* APCCombatGameMode::GetCombatManager()
+{
+	if (CombatManager.IsValid())
+		return CombatManager.Get();
+	for (TActorIterator<APCCombatManager> It(GetWorld()); It; ++It)
+	{
+		CombatManager = *It;
+		return CombatManager.Get();
+	}
+	return nullptr;
+}
+
+APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
+{
+	if (AGameStateBase* GS = GameState)
+	{
+		for (APlayerState* PS : GS->PlayerArray)
+		{
+			if (auto* P = Cast<APCPlayerState>(PS))
+			{
+				if (P->SeatIndex == SeatIdx)
+					return P;
+			}
+		}
+	}
+	return nullptr;
+}

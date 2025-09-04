@@ -3,6 +3,7 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -52,6 +53,31 @@ void APCCombatGameState::BeginPlay()
 			break;
 		}
 	}
+}
+
+void APCCombatGameState::BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boards)
+{
+	int32 MaxSeat = 0;
+	for (const APCCombatBoard* CombatBoard : Boards)
+	{
+		if (CombatBoard)
+		{
+			MaxSeat = FMath::Max(MaxSeat, CombatBoard->BoardSeatIndex);
+		}
+	}
+	SeatToBoard.SetNum(MaxSeat+1);
+	for (APCCombatBoard* CombatBoard : Boards)
+	{
+		if (CombatBoard && CombatBoard->BoardSeatIndex >= 0)
+		{
+			SeatToBoard[CombatBoard->BoardSeatIndex] = CombatBoard;
+		}
+	}
+}
+
+APCCombatBoard* APCCombatGameState::GetBoardBySeat(int32 PlayerSeatIndex) const
+{
+	return SeatToBoard.IsValidIndex(PlayerSeatIndex) ? SeatToBoard[PlayerSeatIndex].Get() : nullptr;
 }
 
 FString APCCombatGameState::GetStageRoundLabel() const

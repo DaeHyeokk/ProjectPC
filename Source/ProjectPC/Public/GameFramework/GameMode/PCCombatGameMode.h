@@ -10,6 +10,7 @@
  * 
  */
 
+class APCCombatManager;
 enum class EPCStageType : uint8;
 class UPCDataAsset_UnitGEDictionary;
 class APCCombatGameState;
@@ -89,6 +90,13 @@ private:
 	void Step_CreepSpawn();
 	void Step_Carousel();
 
+	// CombatManager 핸들링
+	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
+	TWeakObjectPtr<APCCombatManager> CombatManager;
+
+	APCCombatManager* GetCombatManager();
+	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
+
 	// 공동 유틸 함수
 	void TryPlacePlayersAfterTravel();
 	void PlaceAllPlayersOnCarousel();
@@ -105,3 +113,4 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
 };
+
