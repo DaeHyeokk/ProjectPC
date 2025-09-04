@@ -69,6 +69,7 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Seat")
 	USceneComponent* EnemySeatAnchor = nullptr;
 
+	// 보드 좌석 스폰용 헬퍼
 	UFUNCTION(BlueprintCallable)
 	FTransform GetPlayerSeatTransform() const;
 
@@ -76,12 +77,19 @@ public:
 	FTransform GetEnemySeatTransform() const;
 
 	// 전투용 카메라 세팅 함수
+
 	UFUNCTION(BlueprintCallable)
-	void ApplyLocalBottomView(class APlayerController* PlayerController, int32 MySeatIndex, float Blend = 0.35f);
+	void ApplyClientHomeView();
 
-	UFUNCTION(BlueprintCallable, Category = "Camera")
-	void ApplyBattleCamera(class APCCombatPlayerController* PCPlayerController, bool bFlipYaw180 = false, float Blend = 0.35f);
+	UFUNCTION(BlueprintCallable)
+	void ApplyClientMirrorView();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	FVector HomeCam_LocPreset = FVector(-1150.f,0.f, 1150.f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	FRotator HomeCam_RocPreset = FRotator(0.f, -50.f, 0.f);
+	
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1150.f);
 
@@ -140,10 +148,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "HISM")
 	UMaterialInterface* BenchTileOverlayMaterial = nullptr;
-
-	// 유닛 비주얼 클래스
-	UPROPERTY(EditAnywhere, Category = "UnitViz")
-	TSubclassOf<APCUnitVisual> UnitVisualClass;
 
 	// 공개 API
 	UFUNCTION(BlueprintCallable)

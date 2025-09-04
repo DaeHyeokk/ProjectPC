@@ -65,9 +65,16 @@ public:
 #pragma region Camera
 	// 게임 카메라 세팅
 
-private:
+protected:
+	
 	UPROPERTY(Transient)
-	int32 HomeBoardSeatIndex = INDEX_NONE;
+	int32 HomeBoardSeatIndex = -1;
+
+	// 현재 뷰 타깃 보드 SeatIdex ( 중복호출 방지용)
+	UPROPERTY(Transient)
+	int32 CurrentFocusedSeatIndex = -999;
+
+	void SetBoardSpringArmPresets();
 
 	APCCombatBoard* FindBoardBySeatIndex(int32 BoardSeatIndex) const;
 	
@@ -77,16 +84,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientSetHomeBoardIndex(int32 InHomeBoardIdx);
 
+	// 보드 인덱스로 카메라 변경
 	UFUNCTION(Client, Reliable)
-	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, bool bRespectFlipPolicy, float Blend = 0.35f);
-
-	UFUNCTION(BlueprintPure, Category = "Camera")
-	bool ShouldFlipForBoardIndex(int32 BoardSeatIndex) const;
-	
-	// 서버->클라 : 내 자리 인덱스로 카메라 세팅
-	UFUNCTION(Client, Reliable)
-	void ClientCameraSet(int32 BoardIndex, float BlendTime);
-
+	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, bool bBattle, float Blend = 0.35f);
+		
 	// 서버->클라 : 임의 액터로 포커스 (회전초밥 등 사용)
 	UFUNCTION(Client, Reliable)
 	void ClientCameraSetCarousel(APCCarouselRing* CarouselRing, float BlendTime);

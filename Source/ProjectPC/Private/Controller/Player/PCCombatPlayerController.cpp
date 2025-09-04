@@ -133,23 +133,6 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation()
 	}
 }
 
-void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
-{
-	TArray<AActor*> Boards;
-	UGameplayStatics::GetAllActorsOfClass(this, APCCombatBoard::StaticClass(), Boards);
-	for (AActor* Actor : Boards)
-	{
-		if (auto* CombatBoards = Cast<APCCombatBoard>(Actor))
-		{
-			if (CombatBoards->BoardSeatIndex == BoardIndex)
-			{
-				CombatBoards->ApplyLocalBottomView(this, BoardIndex, BlendTime);
-				return;
-			}
-		}
-	}
-}
-
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, float BlendTime)
 {
 	if (APCCarouselRing* PCCarouselRing = Cast<APCCarouselRing>(CarouselRing))
@@ -161,6 +144,26 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 void APCCombatPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
 	float Seconds)
 {
+}
+
+void APCCombatPlayerController::SetBoardSpringArmPresets()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+	for (TActorIterator<APCCombatBoard> It(World); It; ++It)
+	{
+		APCCombatBoard* Board = *It;
+		if (!IsValid(Board)) continue;
+		
+		if (const bool bIsHome = (Board->BoardSeatIndex == HomeBoardSeatIndex))
+		{
+			Board->ApplyClientHomeView();
+		}
+		else
+		{
+			Board->ApplyClientMirrorView();
+		}
+	}
 }
 
 APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatIndex) const
@@ -178,19 +181,20 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InHomeBoardIdx)
 {
 	HomeBoardSeatIndex = InHomeBoardIdx;
+	SetBoardSpringArmPresets();
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
-	bool bRespectFlipPolicy, float Blend)
+	bool bBattle, float Blend)
 {
-	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
-	if (!CombatBoard) return;
+	if (CurrentFocusedSeatIndex == BoardSeatIndex)
+	{
+		return;
+	}
 
-	const bool bFlip = bRespectFlipPolicy ? ShouldFlipForBoardIndex(BoardSeatIndex) : false;
-	CombatBoard->ApplyBattleCamera(this,bFlip,Blend);
-}
-
-bool APCCombatPlayerController::ShouldFlipForBoardIndex(int32 BoardSeatIndex) const
-{
-	return (HomeBoardSeatIndex != INDEX_NONE && BoardSeatIndex != HomeBoardSeatIndex);
+	if (APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex))
+	{
+		SetViewTargetWithBlend(CombatBoard, Blend);
+		CurrentFocusedSeatIndex = BoardSeatIndex;
+	}
 }

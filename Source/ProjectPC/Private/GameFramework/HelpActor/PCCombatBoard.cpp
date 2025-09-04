@@ -206,25 +206,20 @@ FTransform APCCombatBoard::GetEnemySeatTransform() const
 	return EnemySeatAnchor ? EnemySeatAnchor->GetComponentTransform() : GetActorTransform();
 }
 
-void APCCombatBoard::ApplyLocalBottomView(class APlayerController* PlayerController, int32 MySeatIndex, float Blend)
+void APCCombatBoard::ApplyClientHomeView()
 {
-	if (!PlayerController)
+	if (!SpringArm)
 		return;
-	PlayerController->SetViewTargetWithBlend(this, Blend);
+	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
+	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
 }
 
-void APCCombatBoard::ApplyBattleCamera(class APCCombatPlayerController* PCPlayerController, bool bFlipYaw180,
-	float Blend)
+void APCCombatBoard::ApplyClientMirrorView()
 {
-	if (!PCPlayerController || !SpringArm)
+	if (!SpringArm)
 		return;
-	
-	if (bFlipYaw180)
-	{
-		SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
-		SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
-	}
-	PCPlayerController->SetViewTargetWithBlend(this, Blend);
+	SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
+	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
 
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
