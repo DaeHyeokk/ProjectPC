@@ -3,12 +3,14 @@
 
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
@@ -114,6 +116,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
 	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -193,4 +196,55 @@ void APCBaseUnitCharacter::SetAnimSetData() const
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UnitAnimSet Nullptr"));
 	}
+}
+
+void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	if (bIsOnField != IsOnField)
+	{
+		bIsOnField = IsOnField;
+		
+		// Listen Server 일 경우 OnRep 직접 호출
+		if (GetNetMode() == NM_ListenServer)
+			OnRep_IsOnField();
+	}
+}
+
+void APCBaseUnitCharacter::OnRep_IsOnField() const
+{
+	if (bIsOnField)
+	{
+		if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = GetUnitAnimSetDataAsset())
+		{
+			if (UAnimMontage* Montage = UnitAnimSet->GetAnimMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart))
+			{
+				if (Montage)
+					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
+			}
+		}
+	}
+}
+
+void APCBaseUnitCharacter::BindCombatState()
+{
+}
+
+void APCBaseUnitCharacter::UnbindCombatState()
+{
+}
+
+void APCBaseUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
+{
+	if (HasAuthority())
+	{
+		if (bIsCombatActive && GameStateTag == GameStateTags::Game_State_NonCombat)
+			bIsCombatActive = false;
+		else
+			bIsCombatActive = true;
+	}
+}
+
+void APCBaseUnitCharacter::OnRep_IsCombatActive() const
+{
+	// 플레이어 마우스 입력 충돌 비활성화 같은 로직들
 }

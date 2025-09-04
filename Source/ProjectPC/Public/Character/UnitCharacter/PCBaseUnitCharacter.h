@@ -7,9 +7,10 @@
 #include "AbilitySystemInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "PCBaseUnitCharacter.generated.h"
 
-class APCCombatBoard;
 class UPCUnitStatusBarWidget;
 class UWidgetComponent;
 class UGameplayAbility;
@@ -40,24 +41,12 @@ public:
 	virtual int32 GetUnitLevel() const { return 1; }
 	virtual void SetUnitLevel(const int32 Level) { }
 
-	// Unit Tag, Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
+	// Unit Tag 설정은 서버에서만 실행
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	void SetUnitTag(const FGameplayTag& InUnitTag) { if (HasAuthority()) UnitTag = InUnitTag; }
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
 
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	void SetTeamIndex(const int32 InTeamID) { if (HasAuthority()) TeamIndex = InTeamID; }
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	int32 GetTeamIndex() const { return TeamIndex; }
-
-	virtual FGenericTeamId GetGenericTeamId() const override final;
-	
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	void SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex) { if (HasAuthority()) OnCombatBoard = InCombatBoardIndex; }
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	FORCEINLINE const APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
-	
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -83,8 +72,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Replicated, Category="Data")
 	int32 TeamIndex = -1;
 	
-	TWeakObjectPtr<APCCombatBoard> OnCombatBoard = nullptr;
-	
 	UFUNCTION()
 	void OnRep_UnitTag();
 
@@ -92,4 +79,44 @@ protected:
 	
 	void InitAbilitySystem();
 	void SetAnimSetData() const;
+
+	// 전투 시스템 관련 //
+public:
+	// Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void SetTeamIndex(const int32 InTeamID) { if (HasAuthority()) TeamIndex = InTeamID; }
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	int32 GetTeamIndex() const { return TeamIndex; }
+
+	virtual FGenericTeamId GetGenericTeamId() const override final;
+	
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void SetOnCombatBoard(APCCombatBoard* InCombatBoard) { if (HasAuthority()) OnCombatBoard = InCombatBoard; }
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	FORCEINLINE APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void ChangedOnTile(const bool IsOnField);
+
+protected:
+	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsOnField, Category="Combat")
+	bool bIsOnField = false;
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsCombatActive, Category="Combat")
+	bool bIsCombatActive = false;
+	
+	UFUNCTION()
+	void OnRep_IsOnField() const;
+
+	void BindCombatState();	// 필드에 올라갈 때 바인딩
+	void UnbindCombatState(); // 벤치로 가거나 사망하면 바인딩 해제
+	// 델리게이트 콜백, 크립 유닛은 준비 단계 때 동작이 없으므로 virtual로 선언하여 분기
+	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag);
+
+	UFUNCTION()
+	void OnRep_IsCombatActive() const;
+	
+	FDelegateHandle GameStateHandle;
 };

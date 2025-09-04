@@ -19,6 +19,9 @@ struct FTile
 	UPROPERTY(BlueprintReadWrite)
 	APCBaseUnitCharacter* Unit = nullptr;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsField = true;
+	
 	bool IsEmpty() const { return Unit == nullptr; }
 };
 

@@ -9,7 +9,7 @@
 #include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "Net/UnrealNetwork.h"
-#include "UI/Unit/PCUnitStatusBarWidget.h"
+#include "UI/Unit/PCHeroStatusBarWidget.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -62,9 +62,9 @@ void APCHeroUnitCharacter::LevelUp()
 
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
-	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
-		UpdateStatusBarUI();
+		OnRep_HeroLevel();
 }
 
 void APCHeroUnitCharacter::UpdateStatusBarUI() const
@@ -91,7 +91,7 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
-void APCHeroUnitCharacter::OnRep_HeroLevel()
+void APCHeroUnitCharacter::OnRep_HeroLevel() const
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
 	UpdateStatusBarUI();
@@ -105,9 +105,9 @@ void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 	
 	HeroLevel = FMath::Clamp(Level, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
-	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
-		UpdateStatusBarUI();
+		OnRep_HeroLevel();
 }
 
 void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)
@@ -131,4 +131,27 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 			HeroLevel);
 	}
 	
+}
+
+void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
+{
+	Super::HandleGameStateChanged(GameStateTag);
+
+	if (HasAuthority())
+	{
+		if (HeroUnitAbilitySystemComponent)
+		{
+			FGameplayTagContainer CurrentTags;
+			HeroUnitAbilitySystemComponent->GetOwnedGameplayTags(CurrentTags);
+
+			// Game_State 하위 태그 제거
+			for (const FGameplayTag& Tag : CurrentTags)
+			{
+				if (Tag.MatchesTag(GameStateTags::Game_State))
+					HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(Tag);
+			}
+
+			HeroUnitAbilitySystemComponent->AddReplicatedLooseGameplayTag(GameStateTag);
+		}
+	}
 }

@@ -46,4 +46,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
+
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetAnimMontageByTag(const FGameplayTag& MontageTag) const;
 };

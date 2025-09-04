@@ -204,4 +204,19 @@ public:
 	FORCEINLINE const FSpawnSubsystemConfig& GetSpawnConfig() const { return SpawnConfig; }
 	
 #pragma endregion Unit
+
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatStateChanged, FGameplayTag);
+	FOnCombatStateChanged OnCombatStateChanged;
+	
+	void SetGameStateTag(const FGameplayTag& InGameStateTag);
+	UFUNCTION(BlueprintPure)
+	const FGameplayTag& GetGameStateTag() const { return GameStateTag; }
+
+protected:
+	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)
+	FGameplayTag GameStateTag;
+
+	UFUNCTION()
+	void OnRep_GameStateTag() const;
 };

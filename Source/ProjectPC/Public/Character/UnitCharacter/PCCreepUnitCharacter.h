@@ -31,4 +31,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
+
+	// 전투 관련 //
+protected:
+	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag) override;
 };

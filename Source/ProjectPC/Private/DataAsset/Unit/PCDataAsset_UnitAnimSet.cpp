@@ -4,5 +4,7 @@
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 
 
-
-
+UAnimMontage* UPCDataAsset_UnitAnimSet::GetAnimMontageByTag(const FGameplayTag& MontageTag) const
+{
+	return MontageByTagMap.FindRef(MontageTag);
+}

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Character/UnitCharacter/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
-#include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "PCHeroUnitCharacter.generated.h"
 
 class UPCHeroUnitAbilitySystemComponent;
@@ -53,12 +52,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_HeroLevel, meta=(ExposeOnSpawn=true), Category="Data")
 	int32 HeroLevel = 1;
 
 	UFUNCTION()
-	void OnRep_HeroLevel();
+	void OnRep_HeroLevel() const;
+
+	// 전투 관련 //
+protected:
+	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag) override;
 };

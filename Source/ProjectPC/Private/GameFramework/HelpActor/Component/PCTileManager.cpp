@@ -29,7 +29,7 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
-	Unit->SetActorLocation(Field[i].Position);
+	Unit->SetActorLocation(Field[i].Position + FVector(0.f,0.f,500.f));
 	return true;
 }
 
@@ -255,6 +255,7 @@ void UPCTileManager::CreateField()
 			const float RowShift = ((c&1) ? OddColumRowShift : 0.0f);
 			const float y = (rLocal + RowShift) * Ys;
 			Field[i].Position = Base + FVector(x, y, 0);
+			Field[i].bIsField = true;
 			Field[i].Unit = nullptr;
 		}
 	}
@@ -275,6 +276,7 @@ void UPCTileManager::CreateBench()
 	for ( int32 i = 0; i < N; ++i)
 	{
 		Bench[i].Position = FirstPlayerLoc + FVector(0.f, i * BenchStepLocalY, 0.f);
+		Bench[i].bIsField = false;
 		Bench[i].Unit = nullptr;
 	}
 
@@ -283,6 +285,7 @@ void UPCTileManager::CreateBench()
 		const int32 dst = bBenchClockwise ? (N + i) : (N + (N - 1 - i));
 
 		Bench[dst].Position = FirstEnemyLoc + FVector(0.f, i * -BenchStepLocalY, 0.f);
+		Bench[i].bIsField = false;
 		Bench[dst].Unit = nullptr;
 	}
 }
