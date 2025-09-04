@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "PCUnitAIController.generated.h"
 
+class APCBaseUnitCharacter;
 /**
  * 
  */
@@ -13,13 +14,14 @@ UCLASS()
 class PROJECTPC_API APCUnitAIController : public AAIController
 {
 	GENERATED_BODY()
-	
+
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
-	
+
 public:
+	void UpdateTeamId();
+	
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UBehaviorTree> DefaultBT;
-	
 };

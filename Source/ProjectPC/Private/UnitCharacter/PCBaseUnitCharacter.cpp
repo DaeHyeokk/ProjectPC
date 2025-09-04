@@ -7,6 +7,7 @@
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
 #include "Components/WidgetComponent.h"
+#include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
@@ -39,7 +40,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	
 	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
 	StatusBarComp->SetIsReplicated(true);
-	StatusBarComp->SetupAttachment(GetMesh(), StatusBarSocketName);
+	StatusBarComp->SetupAttachment(GetMesh());
 	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
 	StatusBarComp->SetDrawSize({300.f, 100.f});
 	StatusBarComp->SetPivot({0.5f, 1.f});
@@ -77,6 +78,12 @@ FGameplayTag APCBaseUnitCharacter::GetUnitTypeTag() const
 	return FGameplayTag::EmptyTag;
 }
 
+FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
+{
+	const uint8 Clamped = static_cast<uint8>(FMath::Clamp(TeamIndex, 0, 254));
+	return FGenericTeamId(Clamped);
+}
+
 void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -99,8 +106,6 @@ void APCBaseUnitCharacter::BeginPlay()
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
-	//InitAbilitySystem();
 }
 
 void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -108,6 +113,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -125,13 +131,15 @@ void APCBaseUnitCharacter::ReAttachStatusBarToSocket() const
 				SkeMesh,
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				StatusBarSocketName);
+			StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
 		}
 	}
 }
 
 void APCBaseUnitCharacter::OnRep_UnitTag()
 {
-	// 클라에서 보여줄 유닛 데이터 세팅
+	// 유닛이 Spawn 되면 UnitTag 값이 세팅됨 -> 클라에서 OnRep_UnitTag 호출
+	// -> 클라에서 보여줄 유닛 데이터 세팅 (메쉬, AnimBP, StatusBar UI)
 	if (UWorld* W = GetWorld())
 	{
 		if (auto* SpawnSubSystem = W->GetSubsystem<UPCUnitSpawnSubsystem>())
@@ -147,6 +155,14 @@ void APCBaseUnitCharacter::OnRep_UnitTag()
 				SpawnSubSystem->ApplyDefinitionDataVisuals(this, Definition);
 			}
 		}
+	}
+}
+
+void APCBaseUnitCharacter::PushTeamIndexToController() const
+{
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->SetGenericTeamId(GetGenericTeamId());
 	}
 }
 
