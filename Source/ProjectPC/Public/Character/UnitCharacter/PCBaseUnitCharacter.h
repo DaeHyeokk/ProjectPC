@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "PCBaseUnitCharacter.generated.h"
 
+class APCCombatBoard;
 class UPCUnitStatusBarWidget;
 class UWidgetComponent;
 class UGameplayAbility;
@@ -15,7 +17,7 @@ class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
 
 UCLASS()
-class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface
+class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -29,17 +31,32 @@ public:
 	virtual FGameplayTag GetUnitTypeTag() const;
 
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
-	FORCEINLINE virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
+	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
 
-	FORCEINLINE void SetStatusBarClass(const TSubclassOf<UUserWidget>& InStatusBarClass) { StatusBarClass = InStatusBarClass; }
+	void SetStatusBarClass(const TSubclassOf<UUserWidget>& InStatusBarClass) { StatusBarClass = InStatusBarClass; }
 	
-	FORCEINLINE virtual bool HasLevelSystem() const { return false; }
-	FORCEINLINE virtual int32 GetUnitLevel() const { return 1; }
+	virtual bool HasLevelSystem() const { return false; }
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	virtual int32 GetUnitLevel() const { return 1; }
 	virtual void SetUnitLevel(const int32 Level) { }
 
-	// 유닛 태그 설정은 서버에서만
-	FORCEINLINE void SetUnitTag(const FGameplayTag& InUnitTag) { if (HasAuthority()) UnitTag = InUnitTag; }
-	FORCEINLINE const FGameplayTag& GetUnitTag() const { return UnitTag; }
+	// Unit Tag, Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	void SetUnitTag(const FGameplayTag& InUnitTag) { if (HasAuthority()) UnitTag = InUnitTag; }
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
+
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	void SetTeamIndex(const int32 InTeamID) { if (HasAuthority()) TeamIndex = InTeamID; }
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	int32 GetTeamIndex() const { return TeamIndex; }
+
+	virtual FGenericTeamId GetGenericTeamId() const override final;
+	
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	void SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex) { if (HasAuthority()) OnCombatBoard = InCombatBoardIndex; }
+	UFUNCTION(BlueprintCallable, Category="Unit Data")
+	FORCEINLINE const APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -59,12 +76,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
 	FName StatusBarSocketName = TEXT("HealthBar");
 	
-private:
+protected:
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing=OnRep_UnitTag, Category="Data")
 	FGameplayTag UnitTag;
 
+	UPROPERTY(EditDefaultsOnly, Replicated, Category="Data")
+	int32 TeamIndex = -1;
+	
+	TWeakObjectPtr<APCCombatBoard> OnCombatBoard = nullptr;
+	
 	UFUNCTION()
 	void OnRep_UnitTag();
+
+	void PushTeamIndexToController() const;
 	
 	void InitAbilitySystem();
 	void SetAnimSetData() const;

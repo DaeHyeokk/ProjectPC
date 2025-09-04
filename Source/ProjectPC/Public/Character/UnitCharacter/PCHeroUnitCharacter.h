@@ -30,13 +30,13 @@ public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
-	FORCEINLINE virtual bool HasLevelSystem() const override { return true; }
-	FORCEINLINE virtual int32 GetUnitLevel() const override { return HeroLevel; };
+	virtual bool HasLevelSystem() const override { return true; }
+	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 	virtual void SetUnitLevel(const int32 Level) override;
 	
-	FORCEINLINE virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
-	FORCEINLINE virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-	FORCEINLINE virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
+	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
+	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
 	
 	UFUNCTION(BlueprintCallable)
 	void LevelUp();
