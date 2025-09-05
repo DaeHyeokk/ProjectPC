@@ -237,6 +237,11 @@ FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return TileManager ? TileManager->GetFieldUnitLocation(InUnit) : FVector::ZeroVector;
 }
 
+FIntPoint APCCombatBoard::GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const
+{
+	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue; 
+}
+
 FVector APCCombatBoard::GetTileWorldLocation(int32 Y, int32 X) const
 {
 	return TileManager ? TileManager->GetTileWorldPosition(Y, X) : FVector::ZeroVector;
@@ -256,6 +261,3 @@ bool APCCombatBoard::IsInRange(int32 Y, int X) const
 {
 	return TileManager ? TileManager->IsInRange(Y, X) : false;
 }
-
-
-

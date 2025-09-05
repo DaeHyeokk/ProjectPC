@@ -132,26 +132,3 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 	
 }
-
-void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
-{
-	Super::HandleGameStateChanged(GameStateTag);
-
-	if (HasAuthority())
-	{
-		if (HeroUnitAbilitySystemComponent)
-		{
-			FGameplayTagContainer CurrentTags;
-			HeroUnitAbilitySystemComponent->GetOwnedGameplayTags(CurrentTags);
-
-			// Game_State 하위 태그 제거
-			for (const FGameplayTag& Tag : CurrentTags)
-			{
-				if (Tag.MatchesTag(GameStateTags::Game_State))
-					HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(Tag);
-			}
-
-			HeroUnitAbilitySystemComponent->AddReplicatedLooseGameplayTag(GameStateTag);
-		}
-	}
-}

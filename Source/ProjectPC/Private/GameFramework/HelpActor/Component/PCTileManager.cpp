@@ -3,6 +3,7 @@
 
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
+#include "IPropertyTable.h"
 #include "Character/UnitCharacter/PCHeroUnitCharacter.h"
 
 
@@ -12,13 +13,19 @@ UPCTileManager::UPCTileManager()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+APCCombatBoard* UPCTileManager::GetCombatBoard() const
+{
+	return CachedCombatBoard.IsValid() ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
+}
+
 bool UPCTileManager::IsInRange(int32 Y, int32 X) const
 {
-	return (Y >= 0 && Y < Rows && X >= 0 && X < Cols);
+	return (Y >= 0 && Y < Cols && X >= 0 && X < Rows);
 }
 
 void UPCTileManager::QuickSetUp()
 {
+	CachedCombatBoard = Cast<APCCombatBoard>(GetOwner());
 	CreateField();
 	CreateBench();
 }
@@ -29,7 +36,9 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
+	Unit->SetOnCombatBoard(CachedCombatBoard.Get());
 	Unit->SetActorLocation(Field[i].Position + FVector(0.f,0.f,500.f));
+	Unit->ChangedOnTile(Field[i].bIsField);
 	return true;
 }
 
@@ -57,7 +66,7 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	{
 		for (int32 x = 0; x < Cols; x++)
 		{
-			const int32 i = y * Cols + x;
+			const int32 i = y * Rows + x;
 			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
 			{
 				return Field[i].Position;
@@ -65,6 +74,27 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 		}
 	}
 	return FVector::ZeroVector;
+}
+
+FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
+{
+	if (!InUnit)
+		return FIntPoint::NoneValue;
+
+	
+	for (int32 y = 0; y < Rows; y++)
+	{
+		for (int32 x = 0; x < Cols; x++)
+		{
+			const int32 i = y * Rows + x;
+			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
+			{
+				return Field[i].UnitIntPoint;
+			}
+		}
+	}
+	return FIntPoint::NoneValue;
+	
 }
 
 FVector UPCTileManager::GetTileWorldPosition(int32 Y, int32 X) const
@@ -254,6 +284,7 @@ void UPCTileManager::CreateField()
 
 			const float RowShift = ((c&1) ? OddColumRowShift : 0.0f);
 			const float y = (rLocal + RowShift) * Ys;
+			Field[i].UnitIntPoint = FIntPoint(r,c);
 			Field[i].Position = Base + FVector(x, y, 0);
 			Field[i].bIsField = true;
 			Field[i].Unit = nullptr;

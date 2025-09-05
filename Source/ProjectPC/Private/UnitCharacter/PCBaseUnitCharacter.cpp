@@ -12,6 +12,7 @@
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -210,7 +211,7 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 	}
 }
 
-void APCBaseUnitCharacter::OnRep_IsOnField() const
+void APCBaseUnitCharacter::OnRep_IsOnField()
 {
 	if (bIsOnField)
 	{
@@ -222,25 +223,87 @@ void APCBaseUnitCharacter::OnRep_IsOnField() const
 					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
 			}
 		}
+
+		BindCombatState();
+	}
+	else
+	{
+		UnbindCombatState();
 	}
 }
 
 void APCBaseUnitCharacter::BindCombatState()
 {
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+		
+		GameStateChangedHandle = CombatGS->OnGameStateChanged.AddUObject(
+			this, &ThisClass::HandleGameStateChanged);
+
+		HandleGameStateChanged(CombatGS->GetGameStateTag());
+	}
+
 }
 
 void APCBaseUnitCharacter::UnbindCombatState()
 {
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+	}
+
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			FGameplayTagContainer CurrentTags;
+			ASC->GetOwnedGameplayTags(CurrentTags);
+
+			// Game_State 하위 태그 제거
+			for (const FGameplayTag& Tag : CurrentTags)
+			{
+				if (Tag.MatchesTag(GameStateTags::Game_State))
+					ASC->RemoveReplicatedLooseGameplayTag(Tag);
+			}
+		}
+	}
 }
 
 void APCBaseUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
 {
 	if (HasAuthority())
 	{
-		if (bIsCombatActive && GameStateTag == GameStateTags::Game_State_NonCombat)
+		if (bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_NonCombat))
 			bIsCombatActive = false;
-		else
+		else if (!bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_Combat))
 			bIsCombatActive = true;
+
+		if (HasAuthority())
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer CurrentTags;
+				ASC->GetOwnedGameplayTags(CurrentTags);
+
+				// Game_State 하위 태그 제거
+				for (const FGameplayTag& Tag : CurrentTags)
+				{
+					if (Tag.MatchesTag(GameStateTags::Game_State))
+						ASC->RemoveLooseGameplayTag(Tag);
+				}
+				// 새로 들어온 Game_State 태그 부여
+				ASC->AddLooseGameplayTag(GameStateTag);
+			}
+		}
 	}
 }
 

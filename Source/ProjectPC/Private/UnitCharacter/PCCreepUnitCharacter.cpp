@@ -39,13 +39,3 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 		
 	}
 }
-
-void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
-{
-	Super::HandleGameStateChanged(GameStateTag);
-
-	if (HasAuthority())
-	{
-		
-	}
-}

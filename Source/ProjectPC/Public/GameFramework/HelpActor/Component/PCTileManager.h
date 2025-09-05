@@ -6,12 +6,16 @@
 #include "Components/ActorComponent.h"
 #include "PCTileManager.generated.h"
 
+class APCCombatBoard;
 class APCBaseUnitCharacter;
 
 USTRUCT(BlueprintType)
 struct FTile
 {
 	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FIntPoint UnitIntPoint;
 	
 	UPROPERTY(BlueprintReadWrite)
 	FVector Position = FVector::ZeroVector;
@@ -99,6 +103,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* Unit) const;
 
+	UFUNCTION(BlueprintPure, Category = "Field")
+	FIntPoint GetFiledUnitGridPoint(APCBaseUnitCharacter* Unit) const;
+
 	// 월드 / 로컬 포지션 제공
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FVector GetTileWorldPosition(int32 Y, int32 X) const;
@@ -132,6 +139,9 @@ public:
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
 	// 유틸 함수
+	UFUNCTION(BlueprintCallable, Category="Util")
+	APCCombatBoard* GetCombatBoard() const;
+	
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void ClearAll();
 
@@ -147,6 +157,8 @@ public:
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 	void CreateBench(); // 벤치 좌표 생성 (월드기준)
+
+	TWeakObjectPtr<APCCombatBoard> CachedCombatBoard;
 			
 
 

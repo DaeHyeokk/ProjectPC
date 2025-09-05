@@ -18,7 +18,10 @@ struct FUnitLocomotionSet
 	TSoftObjectPtr<UBlendSpace1D> MovementBS; // Walk 1D BS
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSoftObjectPtr<UAnimSequence> Idle;
+	TSoftObjectPtr<UAnimSequence> NonCombatIdle;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UAnimSequence> CombatIdle;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UAnimSequence> JumpStart;

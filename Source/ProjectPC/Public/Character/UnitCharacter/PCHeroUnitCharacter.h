@@ -62,6 +62,4 @@ protected:
 	void OnRep_HeroLevel() const;
 
 	// 전투 관련 //
-protected:
-	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag) override;
 };

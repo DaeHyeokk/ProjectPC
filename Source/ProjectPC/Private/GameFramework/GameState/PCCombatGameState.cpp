@@ -101,7 +101,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageDuration);
 	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 
-	DOREPLIFETIME(APCCombatGameState, CombatStateTag);
+	DOREPLIFETIME(APCCombatGameState, GameStateTag);
 }
 
 const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
@@ -175,5 +175,5 @@ void APCCombatGameState::SetGameStateTag(const FGameplayTag& InGameStateTag)
 // 클라는 자동으로 호출
 void APCCombatGameState::OnRep_GameStateTag() const
 {
-	OnCombatStateChanged.Broadcast(GameStateTag);
+	OnGameStateChanged.Broadcast(GameStateTag);
 }
