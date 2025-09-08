@@ -97,6 +97,7 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerLevel, "Player.Stat.PlayerLevel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerXP, "Player.Stat.PlayerXP")
+	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerMaxXP, "Player.Stat.PlayerMaxXP")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerGold, "Player.Stat.PlayerGold")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerHP, "Player.Stat.PlayerHP")
 

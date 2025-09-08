@@ -14,7 +14,6 @@ class PROJECTPC_API UPCGameplayEffect_LevelChange : public UGameplayEffect
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+public:
+	UPCGameplayEffect_LevelChange();
 };

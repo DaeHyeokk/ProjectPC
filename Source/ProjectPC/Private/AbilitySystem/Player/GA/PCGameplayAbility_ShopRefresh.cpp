@@ -3,8 +3,10 @@
 
 #include "AbilitySystem/Player/GA/PCGameplayAbility_ShopRefresh.h"
 
+#include "AbilitySystemComponent.h"
 #include "BaseGameplayTags.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
@@ -15,6 +17,37 @@ UPCGameplayAbility_ShopRefresh::UPCGameplayAbility_ShopRefresh()
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_ShopRefresh);
 }
 
+bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
+	{
+		return false;
+	}
+
+	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+	{
+		return CostAttributeSet->GetPlayerGold() >= CostValue;
+	}
+	
+	return false;
+}
+
+void UPCGameplayAbility_ShopRefresh::ApplyCost(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	// Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
+
+	if (!ActorInfo->IsNetAuthority()) return;
+
+	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
+	if (CostSpecHandle.IsValid())
+	{
+		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -CostValue);
+		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+	}
+}
+
 void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                                      const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                                      const FGameplayEventData* TriggerEventData)
@@ -23,6 +56,12 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 	if (!ActorInfo->IsNetAuthority())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 

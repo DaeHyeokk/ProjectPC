@@ -13,8 +13,7 @@ UCLASS()
 class PROJECTPC_API UPCGameplayEffect_XPChange : public UGameplayEffect
 {
 	GENERATED_BODY()
-	
-	
-	
-	
+
+public:
+	UPCGameplayEffect_XPChange();
 };

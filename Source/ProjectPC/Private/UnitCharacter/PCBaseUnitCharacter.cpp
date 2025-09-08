@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "DSP/BufferDiagnostics.h"
 #include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
@@ -89,7 +90,7 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	InitAbilitySystem();
 	SetAnimSetData();
 

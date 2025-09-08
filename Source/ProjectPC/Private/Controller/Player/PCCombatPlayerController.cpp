@@ -9,20 +9,23 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+
+#include "BaseGameplayTags.h"
+#include "Shop/PCShopManager.h"
+#include "UI/Shop/PCShopWidget.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Shop/PCShopManager.h"
-#include "UI/Shop/PCShopWidget.h"
+
 
 APCCombatPlayerController::APCCombatPlayerController()
 {
 	bShowMouseCursor = true;
-	bAutoManageActiveCameraTarget = false;
+	bAutoManageActiveCameraTarget = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
@@ -121,6 +124,13 @@ void APCCombatPlayerController::ShopRequest_ShopRefresh()
 	}
 }
 
+void APCCombatPlayerController::ShopRequest_BuyXP()
+{
+	if (IsLocalController())
+	{
+		Server_BuyXP();
+	}
+}
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation()
 {
@@ -128,7 +138,20 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation()
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
+			// ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_ShopRefresh));
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_BuyXP_Implementation()
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			// ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.BuyXP")));
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_BuyXP));
 		}
 	}
 }

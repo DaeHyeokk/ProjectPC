@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "PCShopWidget.generated.h"
 
+struct FOnAttributeChangeData;
+
 /**
  * 
  */
@@ -20,6 +22,8 @@ protected:
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<class UUserWidget> UnitSlotWidgetClass;
+
+	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 
 protected:
 	// UMG Widget
@@ -46,20 +50,31 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UTextBlock* Cost5;
 
-private:
-	UFUNCTION()
-	void OnClickedBuyXP();
-	UFUNCTION()
-	void OnClickedReroll();
+	// Level
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* Level;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock* XP;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UProgressBar* XPBar;
 
 public:
-	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)
 	void CloseMenu();
 	UFUNCTION(BlueprintCallable)
 	void SetupShopSlots();
-
+	UFUNCTION(BlueprintCallable)
+	void SetupPlayerInfo();
 	
+private:
+	UFUNCTION()
+	void OnClickedBuyXP();
+	UFUNCTION()
+	void OnClickedReroll();
+	
+	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
+	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
+	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
 };

@@ -55,9 +55,12 @@ public:
 	void LoadShopWidget();
 
 	void ShopRequest_ShopRefresh();
+	void ShopRequest_BuyXP();
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh();
+	UFUNCTION(Server, Reliable)
+	void Server_BuyXP();
 
 #pragma endregion Shop
 

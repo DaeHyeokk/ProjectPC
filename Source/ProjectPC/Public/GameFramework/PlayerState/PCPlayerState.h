@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
 #include "Shop/PCShopUnitData.h"
+#include "PCLevelMaxXPData.h"
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
@@ -117,6 +118,7 @@ protected:
 
 
 #pragma endregion MyFieldData
+
 #pragma region AbilitySystem
 	
 private:
@@ -124,10 +126,11 @@ private:
 	class UPCPlayerAbilitySystemComponent* PlayerAbilitySystemComponent;
 
 	UPROPERTY()
-	class UPCPlayerAttributeSet* PlayerAttributeSet;
+	const class UPCPlayerAttributeSet* PlayerAttributeSet;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	const UPCPlayerAttributeSet* GetAttributeSet() const;
 
 #pragma endregion AbilitySystem
 
@@ -147,4 +150,41 @@ public:
 	const TArray<FPCShopUnitData>& GetShopSlots();
 	
 #pragma endregion Shop
+
+#pragma region Attribute
+	
+protected:
+	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* LevelMaxXPDataTable;
+
+private:
+	// 실제로 DataTable에서 가져온 정보를 저장할 배열
+	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
+
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutDataList.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		// DataTable의 Row수만큼 메모리 미리 확보
+		OutDataList.Reserve(RowPtrs.Num());
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				OutDataList.Add(*Row);
+			}
+		}
+	}
+
+public:
+	const int32 GetMaxXP() const;
+
+#pragma endregion Attribute
 };

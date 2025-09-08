@@ -101,7 +101,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageDuration);
 	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 
-	DOREPLIFETIME(APCCombatGameState, CombatStateTag);
+	DOREPLIFETIME(APCCombatGameState, GameStateTag);
 }
 
 const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()

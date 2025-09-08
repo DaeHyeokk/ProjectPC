@@ -9,6 +9,9 @@
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
+#include "BaseGameplayTags.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+
 
 bool UPCUnitSlotWidget::Initialize()
 {
@@ -69,4 +72,6 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 
 void UPCUnitSlotWidget::OnClickedUnitSlot()
 {
+	auto Transform = FTransform(FQuat::Identity, FVector(0.f, 0.f ,200.f));
+	GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, Transform);
 }

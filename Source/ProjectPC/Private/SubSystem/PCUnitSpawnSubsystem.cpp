@@ -7,6 +7,8 @@
 #include "Character/UnitCharacter/PCCreepUnitCharacter.h"
 #include "Character/UnitCharacter/PCAppearanceChangedHeroCharacter.h"
 #include "Character/UnitCharacter/PCAppearanceFixedHeroCharacter.h"
+#include "UI/Unit/PCHeroStatusBarWidget.h"
+#include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Kismet/GameplayStatics.h"
