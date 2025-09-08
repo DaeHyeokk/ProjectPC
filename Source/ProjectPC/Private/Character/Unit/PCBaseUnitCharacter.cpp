@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
@@ -60,10 +60,14 @@ UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemCompone
 	return nullptr;
 }
 
-const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
+const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet()
 {
-	return Cast<UPCUnitAttributeSet>(GetUnitAbilitySystemComponent()->GetAttributeSet(UPCUnitAttributeSet::StaticClass()));
-	//return GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	if (!UnitAttributeSet)
+	{
+		UnitAttributeSet = GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	}
+
+	return UnitAttributeSet.Get();
 }
 
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const

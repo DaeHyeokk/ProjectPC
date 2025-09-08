@@ -4,7 +4,7 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 
 #include "BaseGameplayTags.h"
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 
 void UPCHeroUnitAbilitySystemComponent::UpdateGAS()

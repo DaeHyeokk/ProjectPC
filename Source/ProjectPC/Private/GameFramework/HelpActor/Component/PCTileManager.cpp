@@ -4,7 +4,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 #include "IPropertyTable.h"
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 
 
 // Sets default values for this component's properties

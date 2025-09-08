@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
@@ -23,8 +23,9 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 		HeroUnitAbilitySystemComponent->SetIsReplicated(true);
 		HeroUnitAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-		UPCHeroUnitAttributeSet* HeroUnitAttributeSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
-		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroUnitAttributeSet);
+		UPCHeroUnitAttributeSet* HeroAttrSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
+		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroAttrSet);
+		HeroUnitAttributeSet = HeroUnitAbilitySystemComponent->GetSet<UPCHeroUnitAttributeSet>();
 	}
 }
 
@@ -47,6 +48,11 @@ UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySyste
 UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemComponent() const
 {
 	return HeroUnitAbilitySystemComponent;
+}
+
+const UPCUnitAttributeSet* APCHeroUnitCharacter::GetUnitAttributeSet() const
+{
+	return HeroUnitAttributeSet;
 }
 
 FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagAssetInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -17,7 +18,8 @@ class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
 
 UCLASS()
-class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
+class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
+										public IGenericTeamAgentInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -26,10 +28,13 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
-	const UPCUnitAttributeSet* GetUnitAttributeSet() const;
+	virtual const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet;
+	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
 
@@ -54,7 +59,7 @@ protected:
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
 	void ReAttachStatusBarToSocket() const;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> StatusBarComp;
 	
@@ -123,4 +128,10 @@ protected:
 	void OnRep_IsCombatActive() const;
 	
 	FDelegateHandle GameStateChangedHandle;
+
+	// ==== 전투 시스템 | BT 관련 ====
+protected:
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	
+	
 };

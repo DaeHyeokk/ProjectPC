@@ -4,7 +4,7 @@
 #include "Controller/Unit/PCUnitAIController.h"
 
 #include "BrainComponent.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 
 
 void APCUnitAIController::OnPossess(APawn* InPawn)

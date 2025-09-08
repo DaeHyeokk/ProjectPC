@@ -4,7 +4,7 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 
 #include "BaseGameplayTags.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 

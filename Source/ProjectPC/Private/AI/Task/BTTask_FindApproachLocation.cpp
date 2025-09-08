@@ -5,7 +5,7 @@
 
 #include "AIController.h"
 #include "Algo/RandomShuffle.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Utility/PCGridUtils.h"
 
 

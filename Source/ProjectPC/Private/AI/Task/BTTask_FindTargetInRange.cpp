@@ -7,7 +7,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Containers/Queue.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "Utility/PCGridUtils.h"

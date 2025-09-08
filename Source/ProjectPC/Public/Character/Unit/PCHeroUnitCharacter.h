@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "PCHeroUnitCharacter.generated.h"
 
+class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
 /**
  * 
@@ -27,6 +28,7 @@ public:
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
+	virtual const UPCUnitAttributeSet* GetUnitAttributeSet() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
 	virtual bool HasLevelSystem() const override { return true; }
@@ -52,6 +54,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<const UPCHeroUnitAttributeSet> HeroUnitAttributeSet;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
 	
