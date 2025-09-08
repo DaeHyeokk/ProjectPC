@@ -140,7 +140,7 @@ TArray<float> APCCombatGameState::GetCostProbabilities(int32 PlayerLevel)
 	return CostProbabilities;
 }
 
-TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cost)
+TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(int32 Cost)
 {
 	switch (Cost)
 	{
@@ -162,7 +162,7 @@ TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cos
 	return ShopUnitDataList;
 }
 
-const int32 APCCombatGameState::GetMaxXP(uint8 PlayerLevel) const
+const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
 	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;
 }

@@ -191,7 +191,7 @@ public:
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
 	TArray<float> GetCostProbabilities(int32 PlayerLevel);
-	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(uint8 Cost);
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
 	
 #pragma endregion Shop
 
@@ -207,7 +207,7 @@ private:
 	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
 
 public:
-	const int32 GetMaxXP(uint8 PlayerLevel) const;
+	const int32 GetMaxXP(int32 PlayerLevel) const;
 
 #pragma endregion Attribute
 
