@@ -8,3 +8,8 @@ UAnimMontage* UPCDataAsset_UnitAnimSet::GetAnimMontageByTag(const FGameplayTag& 
 {
 	return MontageByTagMap.FindRef(MontageTag);
 }
+
+UAnimMontage* UPCDataAsset_UnitAnimSet::GetRandomBasicAttackMontage() const
+{
+	return nullptr;
+}

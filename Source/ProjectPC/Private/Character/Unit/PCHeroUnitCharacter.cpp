@@ -45,14 +45,21 @@ UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySyste
 	return HeroUnitAbilitySystemComponent;
 }
 
+const UPCHeroUnitAttributeSet* APCHeroUnitCharacter::GetHeroUnitAttributeSet()
+{
+	if (!HeroUnitAttributeSet)
+	{
+		if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			HeroUnitAttributeSet = ASC->GetSet<UPCHeroUnitAttributeSet>();
+		}
+	}
+	return HeroUnitAttributeSet;
+}
+
 UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemComponent() const
 {
 	return HeroUnitAbilitySystemComponent;
-}
-
-const UPCUnitAttributeSet* APCHeroUnitCharacter::GetUnitAttributeSet() const
-{
-	return HeroUnitAttributeSet;
 }
 
 FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const

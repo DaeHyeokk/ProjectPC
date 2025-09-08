@@ -39,7 +39,7 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	Field[i].Unit = Unit;
 	Unit->SetOnCombatBoard(GetCombatBoard());
 	Unit->SetActorLocation(Field[i].Position);
-	Unit->SetOnCombatBoard(CachedCombatBoard.Get());
+	//Unit->SetOnCombatBoard(CachedCombatBoard.Get());
 	Unit->SetActorLocation(Field[i].Position + FVector(0.f,0.f,500.f));
 	Unit->ChangedOnTile(Field[i].bIsField);
 	return true;
@@ -84,27 +84,6 @@ FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) co
 {
 	if (!InUnit)
 		return FIntPoint::NoneValue;
-
-	
-	for (int32 y = 0; y < Rows; y++)
-	{
-		for (int32 x = 0; x < Cols; x++)
-		{
-			const int32 i = y * Rows + x;
-			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
-			{
-				return Field[i].UnitIntPoint;
-			}
-		}
-	}
-	return FIntPoint::NoneValue;
-	
-}
-
-FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
-{
-	if (!InUnit)
-		return FIntPoint::NoneValue;
 	for (int32 x = 0; x < Rows; ++x)
 	{
 		for (int32 y = 0; y < Cols; ++y)
@@ -118,8 +97,6 @@ FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) co
 	}
 	
 	return FIntPoint::NoneValue;
-		
-	
 }
 
 FVector UPCTileManager::GetTileWorldPosition(int32 Y, int32 X) const
@@ -306,12 +283,6 @@ bool UPCTileManager::IsValidTile(int32 Y, int32 X, int32& OutIndex) const
 	return Field.IsValidIndex(OutIndex);
 	
 }
-
-APCCombatBoard* UPCTileManager::GetCombatBoard() const
-{
-	return CachedCombatBoard.IsValid() ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
-}
-
 
 int32 UPCTileManager::MirrorBenchIndex(int32 Index) const
 {

@@ -122,13 +122,6 @@ void APCCombatGameState::OnRep_StageRunTime()
 void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(APCCombatGameState, FloatIndex);
-	DOREPLIFETIME(APCCombatGameState, StageIdx);
-	DOREPLIFETIME(APCCombatGameState, RoundIdx);
-	DOREPLIFETIME(APCCombatGameState, StepIdxInRound);
-	DOREPLIFETIME(APCCombatGameState, CurrentStage);
-	DOREPLIFETIME(APCCombatGameState, StageDuration);
-	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
 
 	DOREPLIFETIME(APCCombatGameState, GameStateTag);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);

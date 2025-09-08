@@ -5,14 +5,16 @@
 
 #include "BrainComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Navigation/PathFollowingComponent.h"
 
 
 void APCUnitAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (const APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(InPawn))
+	if (APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(InPawn))
 	{
+		OwnerUnit = Unit;
 		const FGenericTeamId PawnTeam = Unit->GetGenericTeamId();
 		SetGenericTeamId(PawnTeam);
 	}
@@ -28,6 +30,22 @@ void APCUnitAIController::OnUnPossess()
 	{
 		Brain->StopLogic(TEXT("UnPossess"));
 	}
+}
+
+void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	Super::OnMoveCompleted(RequestID, Result);
+	
+	if (Result.Code == EPathFollowingResult::Success)
+	{
+		if (OwnerUnit)
+		{
+			const FIntPoint LastPoint = OwnerUnit->GetOnCombatBoard()->GetFiledUnitPoint(OwnerUnit);
+			OwnerUnit->GetOnCombatBoard()->SetTileState(LastPoint.Y, LastPoint.X, OwnerUnit, ETileAction::Release);
+			OwnerUnit->GetOnCombatBoard()->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit, ETileAction::Occupy);
+		}
+	}
+		
 }
 
 void APCUnitAIController::UpdateTeamId()

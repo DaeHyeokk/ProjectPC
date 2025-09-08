@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AI/Task/BTTask_FindTargetInRange.h"
+#include "AI/Task/BTTask_FindTarget.h"
 
 #include "AbilitySystemComponent.h"
 #include "GenericTeamAgentInterface.h"
@@ -13,7 +13,7 @@
 #include "Utility/PCGridUtils.h"
 #include "Algo/RandomShuffle.h"
 
-UBTTask_FindTargetInRange::UBTTask_FindTargetInRange()
+UBTTask_FindTarget::UBTTask_FindTarget()
 {
 	NodeName = TEXT("Find Target In Attack Range");
 }
@@ -25,7 +25,7 @@ static bool IsHostile(const AActor* A, const AActor* B)
 	return FGenericTeamId::GetAttitude(TA, TB) == ETeamAttitude::Hostile;
 }
 
-EBTNodeResult::Type UBTTask_FindTargetInRange::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent();
 	if (!BB)
@@ -82,12 +82,12 @@ EBTNodeResult::Type UBTTask_FindTargetInRange::ExecuteTask(UBehaviorTreeComponen
 			switch (TargetSearchMode)
 			{
 				// 가장 가까이 있는 적을 찾는거라면 바로 Succeeded 반환
-			case ETargetSearchMode::Nearest:
+			case ETargetSearchMode::NearestInRange:
 				SetTargetActorKey(HereUnit, BB);
 				return EBTNodeResult::Succeeded;
 				
 				// 가장 멀리 있는 적을 찾는거라면 현재 적을 Target 후보에 추가
-			case ETargetSearchMode::Farthest:
+			case ETargetSearchMode::FarthestInRange:
 				BestTarget = HereUnit;
 				break;
 
@@ -97,9 +97,12 @@ EBTNodeResult::Type UBTTask_FindTargetInRange::ExecuteTask(UBehaviorTreeComponen
 		}
 
 		// 현재까지 탐색한 거리가 Range보다 크거나 같다면 더 멀리 탐색하지 않음
-		if (HereDist >= Range)
+		if (TargetSearchMode != ETargetSearchMode::Farthest)
 		{
-			continue;
+			if (HereDist >= Range)
+			{
+				continue;
+			}
 		}
 		
 		// 탐색 방향 랜덤으로 섞음 (랜덤성 부여)
@@ -136,7 +139,7 @@ EBTNodeResult::Type UBTTask_FindTargetInRange::ExecuteTask(UBehaviorTreeComponen
 	
 }
 
-void UBTTask_FindTargetInRange::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
+void UBTTask_FindTarget::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
 {
 	BB->SetValueAsObject(TargetActorKey.SelectedKeyName, Target);
 }

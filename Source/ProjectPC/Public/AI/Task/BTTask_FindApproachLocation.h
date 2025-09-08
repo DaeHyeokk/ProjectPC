@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_FindApproachLocation.generated.h"
 
+class APCBaseUnitCharacter;
 /**
  * 
  */

@@ -28,12 +28,12 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
-	virtual const UPCUnitAttributeSet* GetUnitAttributeSet();
+	const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet;
+	UPROPERTY(Transient)
+	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet = nullptr;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
@@ -132,6 +132,8 @@ protected:
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	
+	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 	
 };

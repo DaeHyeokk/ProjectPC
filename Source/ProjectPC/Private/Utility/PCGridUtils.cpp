@@ -1,6 +1,7 @@
 #include "Utility/PCGridUtils.h"
 
-const FIntPoint PCGridUtils::Directions[8] = {
-	{ 1, 0}, {-1, 0}, { 0, 1}, { 0,-1},
-	{ 1, 1}, { 1,-1}, {-1, 1}, {-1,-1}
+const FIntPoint PCGridUtils::Directions[6] = {
+	{ -1,1}, {0, 1},
+	{ -1, 0}, { 1,0},
+	{ -1, -1}, { 0, -1}
 };

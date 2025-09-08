@@ -37,6 +37,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
+	GetCharacterMovement()->MaxWalkSpeed = 200.f;
 
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
@@ -92,16 +93,6 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 	return FGenericTeamId(Clamped);
 }
 
-void APCBaseUnitCharacter::SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex)
-{
-	if (HasAuthority()) OnCombatBoard = InCombatBoardIndex;
-}
-
-APCCombatBoard* APCBaseUnitCharacter::GetOnCombatBoard() const
-{
-	return OnCombatBoard.Get();
-}
-
 void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -133,6 +124,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatActive);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -325,4 +317,30 @@ void APCBaseUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateT
 void APCBaseUnitCharacter::OnRep_IsCombatActive() const
 {
 	// 플레이어 마우스 입력 충돌 비활성화 같은 로직들
+}
+
+void APCBaseUnitCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->GetOwnedGameplayTags(TagContainer);
+	}
+}
+
+bool APCBaseUnitCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasMatchingGameplayTag(TagToCheck);
+}
+
+bool APCBaseUnitCharacter::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAllMatchingGameplayTags(TagContainer);
+}
+
+bool APCBaseUnitCharacter::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAnyMatchingGameplayTags(TagContainer);
 }

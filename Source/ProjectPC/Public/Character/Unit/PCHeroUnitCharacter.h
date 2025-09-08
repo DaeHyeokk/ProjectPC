@@ -27,8 +27,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
+	const UPCHeroUnitAttributeSet* GetHeroUnitAttributeSet();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
-	virtual const UPCUnitAttributeSet* GetUnitAttributeSet() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
 	virtual bool HasLevelSystem() const override { return true; }
@@ -54,8 +54,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<const UPCHeroUnitAttributeSet> HeroUnitAttributeSet;
+	UPROPERTY(Transient)
+	TObjectPtr<const UPCHeroUnitAttributeSet> HeroUnitAttributeSet = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
