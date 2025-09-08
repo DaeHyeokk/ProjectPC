@@ -18,7 +18,8 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	if (!GS) return;
 	
 	const auto& ShopSlots = TargetPlayer->GetShopSlots();
-	ReturnUnitsToShop(GS, ShopSlots);
+	ReturnUnitsToShop(GS, ShopSlots, TargetPlayer->PurchasedSlots);
+	TargetPlayer->PurchasedSlots.Empty();
 
 	TArray<FPCShopUnitData> NewShopSlots;
 	const auto PlayerLevel = static_cast<int32>(TargetPlayer->GetAttributeSet()->GetPlayerLevel());
@@ -58,11 +59,14 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots)
+void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots)
 {
 	// 구매하지 않은 유닛 상점에 기물 반환
-	for (const auto& OldSlot : OldSlots)
+	for (int32 i = 0; i < OldSlots.Num(); ++i)
 	{
+		if (PurchasedSlots.Contains(i)) continue;
+
+		const auto& OldSlot = OldSlots[i];
 		for (auto& Unit : GS->GetShopUnitDataListByCost(OldSlot.UnitCost))
 		{
 			if (Unit.UnitName == OldSlot.UnitName)
@@ -72,4 +76,24 @@ void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCS
 			}
 		}
 	}
+	
+	// for (const auto& OldSlot : OldSlots)
+	// {
+	// 	for (auto& Unit : GS->GetShopUnitDataListByCost(OldSlot.UnitCost))
+	// 	{
+	// 		if (Unit.UnitName == OldSlot.UnitName)
+	// 		{
+	// 			Unit.UnitCount += 1;
+	// 			break;
+	// 		}
+	// 	}
+	// }
+}
+
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex)
+{
+	if (!TargetPlayer) return;
+
+	// 구매 성공하면
+	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }

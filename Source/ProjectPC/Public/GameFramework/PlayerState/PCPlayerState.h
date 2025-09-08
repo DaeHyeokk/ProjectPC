@@ -29,7 +29,6 @@ struct FUnitDataInBoard
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 TileIndex = -1;
 	
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	uint8 TeamID = 0;
 
@@ -136,6 +135,9 @@ public:
 #pragma region Shop
 
 public:
+	UPROPERTY()
+	TSet<int32> PurchasedSlots;
+	
 	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
 	TArray<FPCShopUnitData> ShopSlots;
 

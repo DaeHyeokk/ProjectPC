@@ -132,13 +132,20 @@ void APCCombatPlayerController::ShopRequest_BuyXP()
 	}
 }
 
+void APCCombatPlayerController::ShopRequest_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex)
+{
+	if (IsLocalController())
+	{
+		Server_BuyUnit(UnitTag, SlotIndex);
+	}
+}
+
 void APCCombatPlayerController::Server_ShopRefresh_Implementation()
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			// ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
 			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_ShopRefresh));
 		}
 	}
@@ -150,8 +157,18 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			// ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.BuyXP")));
 			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_BuyXP));
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_BuyUnit_Implementation(FGameplayTag UnitTag, int32 SlotIndex)
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			
 		}
 	}
 }
@@ -184,6 +201,7 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 void APCCombatPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
 	float Seconds)
 {
+	
 }
 
 APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatIndex) const

@@ -6,7 +6,7 @@
 #include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
 
-#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 
 
 void UPCPlayerAttributeSet::OnRep_PlayerLevel(const FGameplayAttributeData& OldValue)
@@ -41,7 +41,27 @@ void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 
 void UPCPlayerAttributeSet::CheckLevelUp()
 {
-	
+	auto ASC = GetOwningAbilitySystemComponent();
+	if (!ASC) return;
+
+	auto OwningActor = ASC->GetOwnerActor();
+	if (!OwningActor || !OwningActor->HasAuthority()) return;
+
+	auto World = OwningActor->GetWorld();
+	if (!World) return;
+
+	auto GS = World->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+
+	auto PlayerCurrentLevel = static_cast<int32>(GetPlayerLevel());
+	auto PlayerCurrentXP = static_cast<int32>(GetPlayerXP());
+	auto RequiredXP = GS->GetMaxXP(GetPlayerLevel());
+
+	if (PlayerCurrentXP >= RequiredXP)
+	{
+		SetPlayerLevel(PlayerCurrentLevel + 1);
+		SetPlayerXP(PlayerCurrentXP - RequiredXP);
+	}
 }
 
 void UPCPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

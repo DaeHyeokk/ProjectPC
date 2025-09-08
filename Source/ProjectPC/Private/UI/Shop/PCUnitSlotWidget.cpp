@@ -10,6 +10,7 @@
 #include "Engine/Texture2D.h"
 
 #include "BaseGameplayTags.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
 
@@ -24,8 +25,10 @@ bool UPCUnitSlotWidget::Initialize()
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
+void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 {
+	UnitTag = UnitData.Tag;
+	SlotIndex = NewSlotIndex;
 	if (!Text_UnitName || !Text_Cost || !Img_UnitThumbnail || !Img_CostBorder) return;
 
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
@@ -72,6 +75,13 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 
 void UPCUnitSlotWidget::OnClickedUnitSlot()
 {
+	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	{
+		PC->ShopRequest_BuyUnit(UnitTag, SlotIndex);
+	}
+	
+	this->SetVisibility(ESlateVisibility::Hidden);
+
 	auto Transform = FTransform(FQuat::Identity, FVector(0.f, 0.f ,200.f));
 	GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, Transform);
 }

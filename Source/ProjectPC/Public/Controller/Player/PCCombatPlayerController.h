@@ -3,14 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
 #include "DataAsset/FrameWork//PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
 
-
 class APCCombatBoard;
-struct FGameplayTag;
 class APCCarouselRing;
+class UPCDataAsset_PlayerInput;
+class UPCShopWidget;
+class UUserWidget;
+
 /**
  * 
  */
@@ -28,7 +31,7 @@ protected:
 private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
-	class UPCDataAsset_PlayerInput* PlayerInputData;
+	UPCDataAsset_PlayerInput* PlayerInputData;
 
 #pragma region Move
 	
@@ -46,21 +49,24 @@ private:
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
-	TSubclassOf<class UUserWidget> ShopWidgetClass;
+	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
-	class UPCShopWidget* ShopWidget;
+	UPCShopWidget* ShopWidget;
 
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
 
 	void ShopRequest_ShopRefresh();
 	void ShopRequest_BuyXP();
+	void ShopRequest_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh();
 	UFUNCTION(Server, Reliable)
 	void Server_BuyXP();
+	UFUNCTION(Server, Reliable)
+	void Server_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex);
 
 #pragma endregion Shop
 

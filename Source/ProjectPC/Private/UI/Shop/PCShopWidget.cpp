@@ -75,13 +75,16 @@ void UPCShopWidget::SetupShopSlots()
 	const auto& ShopSlots = PS->GetShopSlots();
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
+	int32 Index = 0;
 	for (const FPCShopUnitData& UnitData : ShopSlots)
 	{
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
 		if (!UnitSlotWidget) return;
 		
-		UnitSlotWidget->Setup(UnitData);
+		UnitSlotWidget->Setup(UnitData, Index);
 		ShopBox->AddChild(UnitSlotWidget);
+
+		++Index;
 	}
 }
 

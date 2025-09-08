@@ -8,6 +8,12 @@
 
 struct FOnAttributeChangeData;
 
+class UHorizontalBox;
+class UButton;
+class UTextBlock;
+class UWidgetSwitcher;
+class UProgressBar;
+
 /**
  * 
  */
@@ -28,35 +34,35 @@ public:
 protected:
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UHorizontalBox* ShopBox;
+	UHorizontalBox* ShopBox;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UButton* Btn_BuyXP;
+	UButton* Btn_BuyXP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UButton* Btn_Reroll;
+	UButton* Btn_Reroll;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* GoldBalance;
+	UTextBlock* GoldBalance;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UWidgetSwitcher* WidgetSwitcher;
+	UWidgetSwitcher* WidgetSwitcher;
 
 	// Cost Probability
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Cost1;
+	UTextBlock* Cost1;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Cost2;
+	UTextBlock* Cost2;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Cost3;
+	UTextBlock* Cost3;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Cost4;
+	UTextBlock* Cost4;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Cost5;
+	UTextBlock* Cost5;
 
 	// Level
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* Level;
+	UTextBlock* Level;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* XP;
+	UTextBlock* XP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UProgressBar* XPBar;
+	UProgressBar* XPBar;
 
 public:
 	UFUNCTION(BlueprintCallable)

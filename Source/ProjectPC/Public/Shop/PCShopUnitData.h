@@ -35,5 +35,5 @@ public:
 	int32 UnitCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagContainer Tag;
+	FGameplayTag Tag;
 };

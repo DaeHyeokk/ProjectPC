@@ -24,6 +24,11 @@ bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle
 
 	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
 	{
+		if (static_cast<int32>(CostAttributeSet->GetPlayerLevel()) == 10)
+		{
+			return false;
+		}
+		
 		return CostAttributeSet->GetPlayerGold() >= CostValue;
 	}
 	

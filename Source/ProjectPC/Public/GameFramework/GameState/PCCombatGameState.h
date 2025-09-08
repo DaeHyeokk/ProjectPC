@@ -13,6 +13,7 @@
 #include "PCCombatGameState.generated.h"
 
 class APCCombatBoard;
+class UPCShopManager;
 
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
@@ -114,7 +115,7 @@ public:
 	
 private:
 	UPROPERTY()
-	class UPCShopManager* ShopManager;
+	UPCShopManager* ShopManager;
 
 public:
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
