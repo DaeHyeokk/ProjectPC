@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameFramework/HelpActor/PCTileType.h"
 #include "PCTileManager.generated.h"
 
 class APCCombatBoard;
@@ -16,7 +17,7 @@ struct FTile
 
 	UPROPERTY(BlueprintReadWrite)
 	FIntPoint UnitIntPoint;
-	
+		
 	UPROPERTY(BlueprintReadWrite)
 	FVector Position = FVector::ZeroVector;
 	
@@ -25,8 +26,19 @@ struct FTile
 
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsField = true;
-	
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseUnitCharacter> ReservedUnit;
+
 	bool IsEmpty() const { return Unit == nullptr; }
+	bool IsReserved() const { return ReservedUnit.IsValid(); }
+	bool IsFree() const { return !Unit && !ReservedUnit.IsValid(); }
+	bool IsOwnedBy(const APCBaseUnitCharacter* TestUnit) const { return Unit == TestUnit; }
+	bool IsReservedBy(const APCBaseUnitCharacter* TestUnit) const { return ReservedUnit.Get() == TestUnit; }
+	bool CanBeUsedBy(const APCBaseUnitCharacter* TestUnit) const
+	{
+		return IsFree() || IsOwnedBy(TestUnit) || IsReservedBy(TestUnit);
+	}
 };
 
 
@@ -49,7 +61,9 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "BFS")
 	bool IsInRange(int32 Y, int32 X) const;
-	
+
+	// 헷갈림 방지 고정 
+	FORCEINLINE int32 IndexOf(int32 Y, int32 X) const { return Y * Rows + X; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
 	float TileWidthX = 220.f;
@@ -105,7 +119,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FIntPoint GetFiledUnitGridPoint(APCBaseUnitCharacter* Unit) const;
-
+	
 	// 월드 / 로컬 포지션 제공
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FVector GetTileWorldPosition(int32 Y, int32 X) const;
@@ -138,8 +152,35 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
+	// 점유 관련 헬퍼
+
+	// 완전히 비어있는가? (점유, 예약 둘다 X)
+	UFUNCTION(BlueprintPure, Category = "BFS")
+	bool IsTileFree(int32 Y, int32 X) const;
+
+	// 이 유닛이 지금 사용(이동) 할수 있는가?
+	UFUNCTION(BlueprintPure, Category = "BFS")
+	bool CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const;
+
+	// 상대가 떠날 예약이 있으면 다음 칸 후보로 허용
+	UFUNCTION(BlueprintPure, Category = "BFS")
+	bool CanUseNextStep(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const;
+
+	// 해당 유닛이 어떤 타일이든 예약을 하고 있는가?
+	UFUNCTION(BlueprintPure, Category = "BFS")
+	bool HasAnyReservation(const APCBaseUnitCharacter* InUnit) const;
+
+	// 타일 예약/점유/해제 상태 설정 함수
+	UFUNCTION(BlueprintCallable, Category = "BFS")
+	bool SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit, ETileAction Action);
+
+	// 그 유닛이 가지고 있던 점유 예약 전부 해제(사망, 취소)
+	UFUNCTION(BlueprintCallable, Category = "BFS")
+	void ClearAllForUnit(APCBaseUnitCharacter* InUnit);
+	
+
 	// 유틸 함수
-	UFUNCTION(BlueprintCallable, Category="Util")
+	UFUNCTION(BlueprintCallable, category = "Util")
 	APCCombatBoard* GetCombatBoard() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Util")
@@ -159,6 +200,10 @@ private:
 	void CreateBench(); // 벤치 좌표 생성 (월드기준)
 
 	TWeakObjectPtr<APCCombatBoard> CachedCombatBoard;
+
+	virtual void BeginPlay() override;
+
+	bool IsValidTile(int32 Y, int32 X, int32& OutIndex) const;
 			
 
 

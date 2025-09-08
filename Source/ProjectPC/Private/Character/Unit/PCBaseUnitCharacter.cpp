@@ -15,6 +15,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
 APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -89,6 +90,16 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 {
 	const uint8 Clamped = static_cast<uint8>(FMath::Clamp(TeamIndex, 0, 254));
 	return FGenericTeamId(Clamped);
+}
+
+void APCBaseUnitCharacter::SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex)
+{
+	if (HasAuthority()) OnCombatBoard = InCombatBoardIndex;
+}
+
+APCCombatBoard* APCBaseUnitCharacter::GetOnCombatBoard() const
+{
+	return OnCombatBoard.Get();
 }
 
 void APCBaseUnitCharacter::BeginPlay()

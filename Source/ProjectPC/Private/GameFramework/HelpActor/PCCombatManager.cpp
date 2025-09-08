@@ -6,6 +6,8 @@
 #include "EngineUtils.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -21,61 +23,56 @@ void APCCombatManager::BuildRandomPairs()
 {
 	if (!IsAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CM] BuildRandomPairs on non-authority"));
 		return;
 	}
 
-	TArray<APCCombatBoard*> Boards;
-	for (TActorIterator<APCCombatBoard> It(GetWorld()); It; ++It)
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+	APCCombatGameState* PCGameState = World->GetGameState<APCCombatGameState>();
+	if (!PCGameState)
+		return;
+
+	TArray<APCPlayerState*> Players;
+	if (AGameStateBase* GameState = World->GetGameState())
 	{
-		if (It->TileManager)
+		for (APlayerState* PlayerState : GameState->PlayerArray)
 		{
-			Boards.Add(*It);
+			if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState))
+			{
+				if (PCPlayerState->SeatIndex >= 0)
+				{
+					Players.Add(PCPlayerState);
+				}
+			}
 		}
 	}
-	if (Boards.Num() == 0)
+
+	if (Players.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CM] No boards"))
+		Pairs.Reset();
 		return;
 	}
 
-	Boards.Sort([](const APCCombatBoard& A, const APCCombatBoard& B)
+	// 셔플
+	int32 Seed = bReseedEveryRound ? (RandomSeed ^ FMath::Rand()) : RandomSeed;
+	FRandomStream RNG(Seed);
+	for (int32 i = Players.Num() - 1; i >0; --i)
 	{
-		return A.BoardSeatIndex < B.BoardSeatIndex;
-	});
-	FRandomStream RNG(RandomSeed);
-	for (int32 i = 0; i < Boards.Num(); ++i)
-	{
-		int32 SwapIdx = RNG.RandRange(i, Boards.Num() - 1);
-		Boards.Swap(i, SwapIdx);
+		Players.Swap(i, RNG.RandRange(0,i));
 	}
+	
+	for (int32 i = 0; i < Players.Num(); i+=2)
+	{
+		APCCombatBoard* HostBoard = PCGameState->GetBoardBySeat(Players[i]->SeatIndex);
+		APCCombatBoard* GuestBoard = (i+1 < Players.Num()) ? PCGameState->GetBoardBySeat(Players[i+1]->SeatIndex) : nullptr;
 
-	Pairs.Reset();
-	for (int32 i = 0; i < Boards.Num(); i += 2)
-	{
-		FCombatManager_Pair InPairs;
-		InPairs.Host = Boards[i];
-		if (i + 1 < Boards.Num())
-		{
-			InPairs.Guest = Boards[i + 1];
-		}
-		else
-		{
-			InPairs.Guest = nullptr;
-		}
-		InPairs.GuestSnapShot.Reset();
-		InPairs.MovedUnits.Reset();
-		Pairs.Add(InPairs);
-	}
-	// 로그
-	UE_LOG(LogTemp, Log, TEXT("[CM] Built %d pairs (boards=%d)"), Pairs.Num(), Boards.Num());
-	for (int32 k=0;k<Pairs.Num();++k)
-	{
-		auto H = Pairs[k].Host.Get();
-		auto G = Pairs[k].Guest.Get();
-		UE_LOG(LogTemp, Log, TEXT("  Pair %d: Host S=%d  Guest %s"), k,
-			H ? H->BoardSeatIndex : -1,
-			G ? *FString::Printf(TEXT("S=%d"), G->BoardSeatIndex) : TEXT("BYE"));
+		FCombatManager_Pair Pair;
+		Pair.Host = HostBoard;
+		Pair.Guest = GuestBoard;
+		Pair.GuestSnapShot.Reset();
+		Pair.MovedUnits.Reset();
+		Pairs.Add(Pair);
 	}
 }
 
@@ -87,7 +84,10 @@ void APCCombatManager::StartAllBattle()
 	{
 		APCCombatBoard* Host = InPair.Host.Get();
 		APCCombatBoard* Guest = InPair.Guest.Get();
-		if (!Host || !Host->TileManager) continue;
+		if (!Host || !Host->TileManager)
+		{
+			continue;
+		}
 
 		if (!Guest || !Guest->TileManager)
 		{
@@ -146,8 +146,6 @@ void APCCombatManager::FinishAllBattle()
 		RestoreSnapshot(InPair.GuestSnapShot);
 	}
 }
-
-
 
 APCCombatBoard* APCCombatManager::FindBoardBySeatIndex(UWorld* World, int32 SeatIndex)
 {
@@ -254,28 +252,160 @@ bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUni
 	return false;
 }
 
-void APCCombatManager::Server_TravelFocusCamera(APCPlayerState* PCPlayerStateA, int32 BoardSeatIndexA,
-	APCPlayerState* PCPlayerStateB, int32 BoardSeatIndexB, float Blend)
+// 좌석 기반 조회 헬퍼
+APCPlayerState* APCCombatManager::FindPlayerStateBySeat(int32 SeatIndex) const
 {
-	if (auto* PCPlayerControllerA = PCPlayerStateA ? Cast<APCCombatPlayerController>(PCPlayerStateA->GetOwner()) : nullptr )
+	if (AGameStateBase* GameState = GetWorld() ? GetWorld()->GetGameState() : nullptr)
 	{
-		PCPlayerControllerA->ClientFocusBoardBySeatIndex(BoardSeatIndexA, true, Blend);
+		for (APlayerState* PlayerState : GameState->PlayerArray)
+		{
+			if (auto* PCPlayerState = Cast<APCPlayerState>(PlayerState))
+			{
+				if (PCPlayerState->SeatIndex == SeatIndex)
+					return PCPlayerState;
+			}
+		}
 	}
-	if (auto* PCPlayerControllerB = PCPlayerStateB ? Cast<APCCombatPlayerController>(PCPlayerStateB->GetOwner()) : nullptr)
+	return nullptr;
+}
+
+APCCombatPlayerController* APCCombatManager::FindPlayerController(int32 SeatIndex) const
+{
+	if (APCPlayerState* PCPlayerState = FindPlayerStateBySeat(SeatIndex))
 	{
-		PCPlayerControllerB->ClientFocusBoardBySeatIndex(BoardSeatIndexB, true, Blend);
+		return Cast<APCCombatPlayerController>(PCPlayerState->GetOwner());
+	}
+	return nullptr;
+}
+
+APawn* APCCombatManager::FindPawnBySeat(int32 SeatIndex) const
+{
+	if (APCCombatPlayerController* PCPlayerController = FindPlayerController(SeatIndex))
+	{
+		return PCPlayerController->GetPawn();
+	}
+	return nullptr;
+}
+
+
+// 이동 및 카메라 유틸
+void APCCombatManager::TeleportPlayerToTransform(APawn* PlayerCharacter, const FTransform& T) const
+{
+	if (!PlayerCharacter)
+		return;
+	PlayerCharacter->TeleportTo(T.GetLocation(), T.GetRotation().Rotator(), false, true);
+}
+
+void APCCombatManager::FocusCameraToBoard(int32 ViewerSeatIdx, int32 BoardSeatIdx, bool bIsBattle, float Blend)
+{
+	if (APCCombatPlayerController* CombatController = FindPlayerController(ViewerSeatIdx))
+	{
+		CombatController->ClientFocusBoardBySeatIndex(BoardSeatIdx, bIsBattle, Blend);
 	}
 }
 
-void APCCombatManager::Server_ReturnFocusCamera(APCPlayerState* PCPlayerStateA, int32 BoardSeatIndexA,
-	APCPlayerState* PCPlayerStateB, int32 BoardSeatIndexB, float Blend)
+
+void APCCombatManager::TravelPlayersForAllPairs(float Blend)
 {
-	if (auto* PCPlayerControllerA = PCPlayerStateA ? Cast<APCCombatPlayerController>(PCPlayerStateA->GetOwner()) : nullptr )
+	if (!IsAuthority())
+		return;
+	for (int i = 0; i < Pairs.Num(); ++i)
 	{
-		PCPlayerControllerA->ClientFocusBoardBySeatIndex(BoardSeatIndexA, false, Blend);
+		TravelPlayersForPair(i, Blend);
 	}
-	if (auto* PCPlayerControllerB = PCPlayerStateB ? Cast<APCCombatPlayerController>(PCPlayerStateB->GetOwner()) : nullptr)
+}
+
+void APCCombatManager::ReturnPlayersForAllPairs(float Blend)
+{
+	if (!IsAuthority())
+		return;
+	for (int32 i = 0; i < Pairs.Num(); ++i)
 	{
-		PCPlayerControllerB->ClientFocusBoardBySeatIndex(BoardSeatIndexB, false, Blend);
+		ReturnPlayersForPair(i, Blend);
+	}
+}
+
+void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
+{
+	if (!IsAuthority() || !Pairs.IsValidIndex(PairIndex))
+		return;
+
+	FCombatManager_Pair& Pair = Pairs[PairIndex];
+	APCCombatBoard* Host = Pair.Host.Get();
+	APCCombatBoard* Guest = Pair.Guest.Get();
+
+	if (!Host)
+		return;
+
+	const int32 HostSeat = Host->BoardSeatIndex;
+	const int32 GuestSeat = Guest->BoardSeatIndex;
+
+	const FTransform T_Player = Host->GetPlayerSeatTransform();
+	const FTransform T_Enemy = Host->GetEnemySeatTransform();
+
+	if (APawn* PHost = FindPawnBySeat(HostSeat))
+	{
+		TeleportPlayerToTransform(PHost, T_Player);
+	}
+	if (Guest)
+	{
+		if (APawn* PGuest = FindPawnBySeat(GuestSeat))
+		{
+			TeleportPlayerToTransform(PGuest, T_Enemy);
+			PGuest->SetActorRotation(GuestRotation);
+		}
+	}
+
+	if (APCPlayerState* HostPlayerState = FindPlayerStateBySeat(HostSeat))
+	{
+		FocusCameraToBoard(HostPlayerState->SeatIndex, HostSeat, true, Blend);
+	}
+
+	if (Guest)
+	{
+		if (APCPlayerState* GuestPlayerState = FindPlayerStateBySeat(GuestSeat))
+		{
+			FocusCameraToBoard(GuestPlayerState->SeatIndex, HostSeat, true, Blend);
+		}
+	}
+}
+
+void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
+{
+	if (!IsAuthority() || !Pairs.IsValidIndex(PairIndex))
+		return;
+
+	FCombatManager_Pair& Pair = Pairs[PairIndex];
+	APCCombatBoard* Host = Pair.Host.Get();
+	APCCombatBoard* Guest = Pair.Guest.Get();
+	if (!Host) return;
+
+	const int32 HostSeat  = Host->BoardSeatIndex;
+	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
+
+	if (APawn* PHost = FindPawnBySeat(HostSeat))
+	{
+		TeleportPlayerToTransform(PHost, Host->GetPlayerSeatTransform());
+	}
+
+	if (Guest)
+	{
+		if (APawn* PGuest = FindPawnBySeat(GuestSeat))
+		{
+			TeleportPlayerToTransform(PGuest, Guest->GetPlayerSeatTransform());
+		}
+	}
+
+	if (APCPlayerState* HostPlayerState = FindPlayerStateBySeat(HostSeat))
+	{
+		FocusCameraToBoard(HostPlayerState->SeatIndex, HostSeat, false, Blend);
+	}
+
+	if (Guest)
+	{
+		if (APCPlayerState* GuestPlayerState = FindPlayerStateBySeat(GuestSeat))
+		{
+			FocusCameraToBoard(GuestPlayerState->SeatIndex, GuestSeat, false, Blend);
+		}
 	}
 }

@@ -40,8 +40,8 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm->SetupAttachment(SceneRoot);
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->TargetArmLength = 2200.f;
-	SpringArm->SetRelativeLocation(FVector(0,0,1200));
-	SpringArm->SetRelativeRotation(FRotator(-55,0,0));
+	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
+	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
 
 	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
 	BoardCamera->SetupAttachment(SpringArm);
@@ -206,25 +206,20 @@ FTransform APCCombatBoard::GetEnemySeatTransform() const
 	return EnemySeatAnchor ? EnemySeatAnchor->GetComponentTransform() : GetActorTransform();
 }
 
-void APCCombatBoard::ApplyLocalBottomView(class APlayerController* PlayerController, int32 MySeatIndex, float Blend)
+void APCCombatBoard::ApplyClientHomeView()
 {
-	if (!PlayerController)
+	if (!SpringArm)
 		return;
-	PlayerController->SetViewTargetWithBlend(this, Blend);
+	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
+	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
 }
 
-void APCCombatBoard::ApplyBattleCamera(class APCCombatPlayerController* PCPlayerController, bool bFlipYaw180,
-	float Blend)
+void APCCombatBoard::ApplyClientMirrorView()
 {
-	if (!PCPlayerController || !SpringArm)
+	if (!SpringArm)
 		return;
-	
-	if (bFlipYaw180)
-	{
-		SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
-		SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
-	}
-	PCPlayerController->SetViewTargetWithBlend(this, Blend);
+	SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
+	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
 
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
@@ -239,7 +234,7 @@ FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 
 FIntPoint APCCombatBoard::GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const
 {
-	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue; 
+	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue;
 }
 
 FVector APCCombatBoard::GetTileWorldLocation(int32 Y, int32 X) const
@@ -261,3 +256,34 @@ bool APCCombatBoard::IsInRange(int32 Y, int X) const
 {
 	return TileManager ? TileManager->IsInRange(Y, X) : false;
 }
+
+bool APCCombatBoard::IsTileFree(int32 Y, int32 X) const
+{
+	return TileManager ? TileManager->IsTileFree(Y, X) : false;
+}
+
+bool APCCombatBoard::CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit)
+{
+	return TileManager ? TileManager->CanUse(Y, X, InUnit) : false;
+}
+
+bool APCCombatBoard::HasAnyReservation(const APCBaseUnitCharacter* InUnit)
+{
+	return TileManager ? TileManager->HasAnyReservation(InUnit) : false;
+}
+
+bool APCCombatBoard::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit, ETileAction Action)
+{
+	return TileManager ? TileManager->SetTileState(Y, X, InUnit, Action) : false;
+}
+
+void APCCombatBoard::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
+{
+	if (TileManager)
+	{
+		TileManager->ClearAllForUnit(InUnit);
+	}
+}
+
+
+

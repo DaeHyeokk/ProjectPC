@@ -13,6 +13,7 @@
 UENUM()
 enum class EPCStageType : uint8
 {
+	None = 0,
 	Start UMETA(DisplayName = "Start Stage"),
 	Setup UMETA(DisplayName = "Setup"),
 	Travel UMETA(DisplayName = "Travel"),
