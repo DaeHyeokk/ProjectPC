@@ -93,6 +93,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Match")
 	int32 RandomSeed = 12345;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Match")
+	bool bReseedEveryRound = true;
+
 	// 현재 라운드 페어링
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
@@ -107,6 +110,9 @@ public:
 	void FinishAllBattle();
 
 	// 플레이어 전체 이동
+
+	UPROPERTY(BlueprintReadOnly, Category = "Combat|Travel")
+	FRotator GuestRotation = FRotator(0.f, 180.f, 0.f);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat|Travel")
 	void TravelPlayersForAllPairs(float Blend = 0.35f);

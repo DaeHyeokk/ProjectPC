@@ -8,6 +8,7 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCPlayerMainWidget;
 class APCCombatBoard;
 struct FGameplayTag;
 class APCCarouselRing;
@@ -24,6 +25,7 @@ public:
 	
 protected:
 	virtual void SetupInputComponent() override;
+	virtual void BeginPlay() override;
 	
 private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
@@ -70,9 +72,12 @@ protected:
 	UPROPERTY(Transient)
 	int32 HomeBoardSeatIndex = -1;
 
-	// 현재 뷰 타깃 보드 SeatIdex ( 중복호출 방지용)
+	// 현재 뷰 타깃 보드 SeatIndex ( 중복호출 방지용)
 	UPROPERTY(Transient)
 	int32 CurrentFocusedSeatIndex = -999;
+
+	UPROPERTY()
+	bool bBoardPresetInitialized = false;
 
 	void SetBoardSpringArmPresets();
 
@@ -97,4 +102,21 @@ public:
 	void ClientStageChanged(EPCStageType NewStage, const FString& StageRoundName, float Seconds);
 
 #pragma endregion Camera
+
+#pragma region UI
+public:
+
+	UFUNCTION(CLient, Reliable)
+	void Client_InitPlayerMainHUD();
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void InitPlayerMainHUD();
+	
+private:
+	
+	UPROPERTY(EditAnywhere, Category = "UI", meta = (AllowPrivateAccess = true))
+	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "UI", meta = (AllowPrivateAccess = true))
+	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget;
+#pragma endregion UI
 };

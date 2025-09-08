@@ -80,26 +80,50 @@ APCCombatBoard* APCCombatGameState::GetBoardBySeat(int32 PlayerSeatIndex) const
 	return SeatToBoard.IsValidIndex(PlayerSeatIndex) ? SeatToBoard[PlayerSeatIndex].Get() : nullptr;
 }
 
-FString APCCombatGameState::GetStageRoundLabel() const
+void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
 {
-	return FString::Printf(TEXT("%d-%d"), StageIdx+1, RoundIdx+1);
+	if (!HasAuthority())
+		return;
+
+	StageRuntimeState = NewState;
+
+	OnRep_StageRunTime();
 }
 
-float APCCombatGameState::GetRemainingSeconds() const
+float APCCombatGameState::GetStageRemainingSeconds() const
 {
-	return FMath::Max(0.f, StageEndTime_Server - GetServerWorldTimeSeconds());
+	const float Now = GetServerWorldTimeSeconds();
+	return FMath::Max(0.f, StageRuntimeState.ServerEndTime - Now);
 }
+
+float APCCombatGameState::GetStageProgress() const
+{
+	const float Now = GetServerWorldTimeSeconds();
+	const float Elapsed = Now - StageRuntimeState.ServerStartTime;
+	return (StageRuntimeState.Duration > 0.f) ? FMath::Clamp(Elapsed / StageRuntimeState.Duration, 0.f, 1.f) : 1.f;
+}
+
+FString APCCombatGameState::GetStageLabelString() const
+{
+	return FString::Printf(TEXT("%d-%d"), StageRuntimeState.StageIdx + 1, StageRuntimeState.RoundIdx + 1);
+}
+
+EPCStageType APCCombatGameState::GetCurrentStageType() const
+{
+	return StageRuntimeState.Stage;
+}
+
+void APCCombatGameState::OnRep_StageRunTime()
+{
+	OnStageRuntimeChanged.Broadcast();
+}
+
 
 void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(APCCombatGameState, FloatIndex);
-	DOREPLIFETIME(APCCombatGameState, StageIdx);
-	DOREPLIFETIME(APCCombatGameState, RoundIdx);
-	DOREPLIFETIME(APCCombatGameState, StepIdxInRound);
-	DOREPLIFETIME(APCCombatGameState, CurrentStage);
-	DOREPLIFETIME(APCCombatGameState, StageDuration);
-	DOREPLIFETIME(APCCombatGameState, StageEndTime_Server);
+	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
+	
 }
 
 const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()

@@ -7,6 +7,7 @@
 #include "Character/UnitCharacter/PCHeroUnitCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -22,62 +23,56 @@ void APCCombatManager::BuildRandomPairs()
 {
 	if (!IsAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CM] BuildRandomPairs on non-authority"));
 		return;
 	}
 
-	TArray<APCCombatBoard*> Boards;
-	for (TActorIterator<APCCombatBoard> It(GetWorld()); It; ++It)
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+	APCCombatGameState* PCGameState = World->GetGameState<APCCombatGameState>();
+	if (!PCGameState)
+		return;
+
+	TArray<APCPlayerState*> Players;
+	if (AGameStateBase* GameState = World->GetGameState())
 	{
-		if (It->TileManager)
+		for (APlayerState* PlayerState : GameState->PlayerArray)
 		{
-			Boards.Add(*It);
+			if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState))
+			{
+				if (PCPlayerState->SeatIndex >= 0)
+				{
+					Players.Add(PCPlayerState);
+				}
+			}
 		}
 	}
-	if (Boards.Num() == 0)
+
+	if (Players.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CM] No boards"))
+		Pairs.Reset();
 		return;
 	}
 
-	Boards.Sort([](const APCCombatBoard& A, const APCCombatBoard& B)
+	// 셔플
+	int32 Seed = bReseedEveryRound ? (RandomSeed ^ FMath::Rand()) : RandomSeed;
+	FRandomStream RNG(Seed);
+	for (int32 i = Players.Num() - 1; i >0; --i)
 	{
-		return A.BoardSeatIndex < B.BoardSeatIndex;
-	});
+		Players.Swap(i, RNG.RandRange(0,i));
+	}
 	
-	FRandomStream RNG(RandomSeed);
-	for (int32 i = 0; i < Boards.Num(); ++i)
+	for (int32 i = 0; i < Players.Num(); i+=2)
 	{
-		const int32 SwapIdx = RNG.RandRange(i, Boards.Num() - 1);
-		Boards.Swap(i, SwapIdx);
-	}
+		APCCombatBoard* HostBoard = PCGameState->GetBoardBySeat(Players[i]->SeatIndex);
+		APCCombatBoard* GuestBoard = (i+1 < Players.Num()) ? PCGameState->GetBoardBySeat(Players[i+1]->SeatIndex) : nullptr;
 
-	Pairs.Reset();
-	for (int32 i = 0; i < Boards.Num(); i += 2)
-	{
-		FCombatManager_Pair InPairs;
-		InPairs.Host = Boards[i];
-		if (i + 1 < Boards.Num())
-		{
-			InPairs.Guest = Boards[i + 1];
-		}
-		else
-		{
-			InPairs.Guest = nullptr;
-		}
-		InPairs.GuestSnapShot.Reset();
-		InPairs.MovedUnits.Reset();
-		Pairs.Add(InPairs);
-	}
-	// 로그
-	UE_LOG(LogTemp, Log, TEXT("[CM] Built %d pairs (boards=%d)"), Pairs.Num(), Boards.Num());
-	for (int32 k=0;k<Pairs.Num();++k)
-	{
-		auto H = Pairs[k].Host.Get();
-		auto G = Pairs[k].Guest.Get();
-		UE_LOG(LogTemp, Log, TEXT("  Pair %d: Host S=%d  Guest %s"), k,
-			H ? H->BoardSeatIndex : -1,
-			G ? *FString::Printf(TEXT("S=%d"), G->BoardSeatIndex) : TEXT("BYE"));
+		FCombatManager_Pair Pair;
+		Pair.Host = HostBoard;
+		Pair.Guest = GuestBoard;
+		Pair.GuestSnapShot.Reset();
+		Pair.MovedUnits.Reset();
+		Pairs.Add(Pair);
 	}
 }
 
@@ -357,6 +352,7 @@ void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
 		if (APawn* PGuest = FindPawnBySeat(GuestSeat))
 		{
 			TeleportPlayerToTransform(PGuest, T_Enemy);
+			PGuest->SetActorRotation(GuestRotation);
 		}
 	}
 

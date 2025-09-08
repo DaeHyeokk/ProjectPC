@@ -17,6 +17,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
+#include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
 APCCombatPlayerController::APCCombatPlayerController()
@@ -45,6 +46,12 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
 	}
+}
+
+void APCCombatPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+		
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -178,10 +185,35 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 	return nullptr;
 }
 
+void APCCombatPlayerController::Client_InitPlayerMainHUD_Implementation()
+{
+	InitPlayerMainHUD();
+}
+
+void APCCombatPlayerController::InitPlayerMainHUD()
+{
+	if (!IsLocalController())
+		return;
+	
+	if (!IsValid(PlayerMainWidget) && PlayerMainWidgetClass)
+	{
+		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
+		if (PlayerMainWidget)
+		{
+			PlayerMainWidget->AddToViewport();
+		}
+	}
+}
+
 void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InHomeBoardIdx)
 {
+	if (bBoardPresetInitialized && HomeBoardSeatIndex == InHomeBoardIdx)
+	{
+		return;
+	}
 	HomeBoardSeatIndex = InHomeBoardIdx;
 	SetBoardSpringArmPresets();
+	bBoardPresetInitialized = true;
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,

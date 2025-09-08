@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DataAsset/FrameWork/PCStageData.h"
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
@@ -12,9 +13,9 @@
 
 class APCCombatManager;
 enum class EPCStageType : uint8;
+struct FRoundStep;
 class UPCDataAsset_UnitGEDictionary;
 class APCCombatGameState;
-struct FRoundStep;
 class APCCombatBoard;
 class APCCarouselRing;
 class UPCStageData;
@@ -48,6 +49,12 @@ public:
 	UPROPERTY(EditAnywhere, Category="Camera")
 	float ShopFocusBlend = 0.6f;
 
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float TravelCameraBlend = 0.4f;
+
+	UPROPERTY(EditAnywhere, Category="Camera")
+	float ReturnCameraBlend = 0.4f;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
@@ -72,13 +79,14 @@ private:
 	FTimerHandle WaitAllPlayerController;
 	
 private:
+	// 내부 빌드 / 흐름
 	void BuildHelperActor();
 	void BuildStageData();
 	void StartFromBeginning();
-
+	void AdvanceCursor();
 	void BeginCurrentStep();
 	void EndCurrentStep();
-	void AdvanceCursor();
+	
 
 	// 개별 Step 처리
 	void Step_Start();
@@ -90,14 +98,10 @@ private:
 	void Step_CreepSpawn();
 	void Step_Carousel();
 
-	// CombatManager 핸들링
-	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
-	TWeakObjectPtr<APCCombatManager> CombatManager;
-
-	APCCombatManager* GetCombatManager();
-	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
+	
 
 	// 공동 유틸 함수
+	void InitializeHomeBoardsForPlayers();
 	void TryPlacePlayersAfterTravel();
 	void PlaceAllPlayersOnCarousel();
 	void MovePlayersToBoardsAndCameraSet();
@@ -105,6 +109,15 @@ private:
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;
 	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
+	// 인접 스텝 조회
+	const FRoundStep* PeekPrevStep() const;
+	const FRoundStep* PeekNextStep() const;
+	
+	// CombatManager / GameState 핸들러
+	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
+	TWeakObjectPtr<APCCombatManager> CombatManager;
+	APCCombatManager* GetCombatManager();
+	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 

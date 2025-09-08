@@ -54,10 +54,10 @@ public:
 	virtual FGenericTeamId GetGenericTeamId() const override final;
 	
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	void SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex) { if (HasAuthority()) OnCombatBoard = InCombatBoardIndex; }
+	void SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex);
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	FORCEINLINE const APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
-	
+	APCCombatBoard* GetOnCombatBoard() const;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -83,7 +83,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Replicated, Category="Data")
 	int32 TeamIndex = -1;
 	
-	TWeakObjectPtr<APCCombatBoard> OnCombatBoard = nullptr;
+	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;
 	
 	UFUNCTION()
 	void OnRep_UnitTag();

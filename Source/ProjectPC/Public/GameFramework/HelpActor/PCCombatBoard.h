@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/HelpActor/PCTileType.h"
 #include "PCCombatBoard.generated.h"
 
 class APCBaseUnitCharacter;
@@ -88,13 +89,13 @@ public:
 	FVector HomeCam_LocPreset = FVector(-1150.f,0.f, 1150.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FRotator HomeCam_RocPreset = FRotator(0.f, -50.f, 0.f);
+	FRotator HomeCam_RocPreset = FRotator(-50.f, 0.f, 0.f);
 	
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1150.f);
 
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FRotator BattleCameraChangeRotation = FRotator(-50.f, 0.f,180.f);
+	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
 
 	
 
@@ -189,6 +190,9 @@ public:
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
+	FIntPoint GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const;
+
+	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetTileWorldLocation(int32 Y, int32 X) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
@@ -199,6 +203,27 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	bool IsInRange(int32 Y, int X) const;
+
+	// BFS 점유 예약 관련
+	// 완전히 비어 있는가? (점유, 예약 둘다 x)
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	bool IsTileFree(int32 Y, int32 X) const;
+
+	// 이 유닛이 지금 이동 할 수 있는가? ( 비었거나/ 내 점유 / 내 예약 )
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	bool CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit);
+
+	// 해당 유닛이 어떤 타일이든 예약을 하나라도 가지고 있는가?
+	UFUNCTION(BlueprintPure, Category = "Tile")
+	bool HasAnyReservation(const APCBaseUnitCharacter* InUnit);
+
+	// 예약/ 점유/ 해제 : 하나의 함수로 상태 전이 (성공 여부 반환)
+	UFUNCTION(BlueprintCallable, Category = "Tile")
+	bool SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit, ETileAction Action);
 	
+	// 그 유닛이 갖고있던 타일 상태 전부 풀기 ( 사망 / 취소 시)
+	UFUNCTION(BlueprintCallable, Category = "Tile")
+	void ClearAllForUnit(APCBaseUnitCharacter* InUnit);
+
 	
 };

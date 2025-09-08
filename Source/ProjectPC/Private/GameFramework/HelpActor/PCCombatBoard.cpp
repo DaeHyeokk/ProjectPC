@@ -40,8 +40,8 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm->SetupAttachment(SceneRoot);
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->TargetArmLength = 2200.f;
-	SpringArm->SetRelativeLocation(FVector(0,0,1200));
-	SpringArm->SetRelativeRotation(FRotator(-55,0,0));
+	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
+	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
 
 	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
 	BoardCamera->SetupAttachment(SpringArm);
@@ -232,6 +232,11 @@ FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return TileManager ? TileManager->GetFieldUnitLocation(InUnit) : FVector::ZeroVector;
 }
 
+FIntPoint APCCombatBoard::GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const
+{
+	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue;
+}
+
 FVector APCCombatBoard::GetTileWorldLocation(int32 Y, int32 X) const
 {
 	return TileManager ? TileManager->GetTileWorldPosition(Y, X) : FVector::ZeroVector;
@@ -250,6 +255,34 @@ FVector APCCombatBoard::GetBenchWorldLocation(int32 BenchIndex) const
 bool APCCombatBoard::IsInRange(int32 Y, int X) const
 {
 	return TileManager ? TileManager->IsInRange(Y, X) : false;
+}
+
+bool APCCombatBoard::IsTileFree(int32 Y, int32 X) const
+{
+	return TileManager ? TileManager->IsTileFree(Y, X) : false;
+}
+
+bool APCCombatBoard::CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit)
+{
+	return TileManager ? TileManager->CanUse(Y, X, InUnit) : false;
+}
+
+bool APCCombatBoard::HasAnyReservation(const APCBaseUnitCharacter* InUnit)
+{
+	return TileManager ? TileManager->HasAnyReservation(InUnit) : false;
+}
+
+bool APCCombatBoard::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit, ETileAction Action)
+{
+	return TileManager ? TileManager->SetTileState(Y, X, InUnit, Action) : false;
+}
+
+void APCCombatBoard::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
+{
+	if (TileManager)
+	{
+		TileManager->ClearAllForUnit(InUnit);
+	}
 }
 
 

@@ -4,6 +4,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 #include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
 // Sets default values for this component's properties
@@ -14,11 +15,12 @@ UPCTileManager::UPCTileManager()
 
 bool UPCTileManager::IsInRange(int32 Y, int32 X) const
 {
-	return (Y >= 0 && Y < Rows && X >= 0 && X < Cols);
+	return (Y >= 0 && Y < Cols && X >= 0 && X < Rows);
 }
 
 void UPCTileManager::QuickSetUp()
 {
+	CachedCombatBoard = Cast<APCCombatBoard>(GetOwner());
 	CreateField();
 	CreateBench();
 }
@@ -29,6 +31,7 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
+	Unit->SetOnCombatBoard(GetCombatBoard());
 	Unit->SetActorLocation(Field[i].Position);
 	return true;
 }
@@ -38,6 +41,7 @@ bool UPCTileManager::RemoveFromField(int32 Y, int32 X)
 	const int32 i = Y * Rows + X;
 	if (!Field.IsValidIndex(i))
 		return false;
+	Field[i].Unit->SetOnCombatBoard(nullptr);
 	Field[i].Unit = nullptr;
 	return true;
 }
@@ -53,11 +57,11 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	if (!InUnit)
 		return FVector::ZeroVector;
 
-	for (int32 y = 0; y < Rows; y++)
+	for (int32 x = 0; x < Rows; ++x)
 	{
-		for (int32 x = 0; x < Cols; x++)
+		for (int32 y = 0; y < Cols; ++y)
 		{
-			const int32 i = y * Cols + x;
+			const int32 i = y * Rows + x;
 			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
 			{
 				return Field[i].Position;
@@ -65,6 +69,27 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 		}
 	}
 	return FVector::ZeroVector;
+}
+
+FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
+{
+	if (!InUnit)
+		return FIntPoint::NoneValue;
+	for (int32 x = 0; x < Rows; ++x)
+	{
+		for (int32 y = 0; y < Cols; ++y)
+		{
+			const int32 i = y * Rows + x;
+			if (Field.IsValidIndex(i) && Field[i].Unit == InUnit)
+			{
+				return Field[i].UnitIntPoint;
+			}
+		}
+	}
+	
+	return FIntPoint::NoneValue;
+		
+	
 }
 
 FVector UPCTileManager::GetTileWorldPosition(int32 Y, int32 X) const
@@ -86,6 +111,7 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty())
 		return false;
 	Bench[BenchIndex].Unit = Unit;
+	Unit->SetOnCombatBoard(CachedCombatBoard.Get());
 	Unit->SetActorLocation(Bench[BenchIndex].Position);
 	return true;
 }
@@ -94,6 +120,7 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex)
 {
 	if (!Bench.IsValidIndex(BenchIndex))
 		return false;
+	Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	Bench[BenchIndex].Unit = nullptr;
 	return true;
 }
@@ -134,6 +161,125 @@ int32 UPCTileManager::GetBenchIndex(bool bEnemySide, int32 LocalIndex) const
 	if (LocalIndex < 0 || LocalIndex >= N)
 		return INDEX_NONE;
 	return (bEnemySide ? N : 0) + LocalIndex;
+}
+
+bool UPCTileManager::IsTileFree(int32 Y, int32 X) const
+{
+	int32 Index;
+	return IsValidTile(Y,X,Index) ? Field[Index].IsFree() : false;
+}
+
+bool UPCTileManager::CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const
+{
+	int32 Index;
+	return IsValidTile(Y,X, Index) ? Field[Index].CanBeUsedBy(InUnit) : false; 
+}
+
+// 점유자가 떠날 예약이 있으면 통과 후보로 허용
+bool UPCTileManager::CanUseNextStep(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const
+{
+	int32 Index;
+	if (!IsValidTile(Y,X,Index))
+	{
+		return true;
+	}
+	return false;
+}
+
+// 어딘가에 예약이 되어있는지
+bool UPCTileManager::HasAnyReservation(const APCBaseUnitCharacter* InUnit) const
+{
+	if (!InUnit) return false;
+	for (const FTile& Tile : Field)
+	{
+		if (Tile.IsReservedBy(InUnit))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit, ETileAction Action)
+{
+	if (!InUnit) return false;
+
+	int32 Index;
+	if (!IsValidTile(Y,X,Index)) return false;
+
+	FTile& Tile = Field[Index];
+
+	switch (Action)
+	{
+	case ETileAction::Reserve:
+		// 다른 유닛이 점유/ 예약 중이면 실패, 내 점유/내 예약 빈칸만 허용
+		if (!Tile.CanBeUsedBy(InUnit))
+		{
+			return false;
+		}
+		Tile.ReservedUnit = InUnit;
+		return true;
+
+	case ETileAction::Occupy:
+		// 남이 점유 중이거나 남이 예약 중이면 실패
+		if (!Tile.IsOwnedBy(InUnit) && Tile.Unit != nullptr || Tile.IsReserved() && !Tile.IsReservedBy(InUnit))
+		{
+			return false;
+		}
+		Tile.Unit = InUnit;
+		Tile.ReservedUnit = nullptr;
+		InUnit->SetOnCombatBoard(CachedCombatBoard.Get());
+		InUnit->SetActorLocation(Tile.Position);
+		return true;
+
+	case ETileAction::Release:
+		{
+			bool bAny = false;
+			if (Tile.IsOwnedBy(InUnit))
+			{
+				Tile.Unit = nullptr;
+				bAny = true;
+			}
+			if (Tile.IsReservedBy(InUnit))
+			{
+				Tile.ReservedUnit = nullptr;
+				bAny = true;
+			}
+		}
+	}
+	return false;
+}
+
+void UPCTileManager::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
+{
+	if (!InUnit) return;
+
+	for (FTile& Tile : Field)
+	{
+		if (Tile.IsOwnedBy(InUnit))
+		{
+			Tile.Unit = nullptr;
+		}
+		if (Tile.IsReservedBy(InUnit))
+		{
+			Tile.ReservedUnit = nullptr;
+		}
+	}
+}
+
+// 타일 유효성 헬퍼
+bool UPCTileManager::IsValidTile(int32 Y, int32 X, int32& OutIndex) const
+{
+	if (!IsInRange(Y, X))
+		return false;
+	OutIndex = IndexOf(Y,X);
+	return Field.IsValidIndex(OutIndex);
+	
+}
+
+APCCombatBoard* UPCTileManager::GetCombatBoard() const
+{
+	return CachedCombatBoard.IsValid() ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
 }
 
 
@@ -254,6 +400,7 @@ void UPCTileManager::CreateField()
 
 			const float RowShift = ((c&1) ? OddColumRowShift : 0.0f);
 			const float y = (rLocal + RowShift) * Ys;
+			Field[i].UnitIntPoint = FIntPoint(r,c);
 			Field[i].Position = Base + FVector(x, y, 0);
 			Field[i].bIsField = true;
 			Field[i].Unit = nullptr;
@@ -288,6 +435,12 @@ void UPCTileManager::CreateBench()
 		Bench[dst].bIsField = false;
 		Bench[dst].Unit = nullptr;
 	}
+}
+
+void UPCTileManager::BeginPlay()
+{
+	Super::BeginPlay();
+	CachedCombatBoard = Cast<APCCombatBoard>(GetOwner());
 }
 
 void UPCTileManager::DebugDrawTiles(bool bPersistent)
