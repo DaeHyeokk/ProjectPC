@@ -50,6 +50,7 @@ void UPCGameplayAbility_BuyXP::ActivateAbility(const FGameplayAbilitySpecHandle 
                                                const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	if (!ActorInfo->IsNetAuthority())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

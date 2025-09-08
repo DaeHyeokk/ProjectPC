@@ -16,7 +16,7 @@ struct PROJECTPC_API FPCShopUnitProbabilityData : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 PlayerLevel;
+	int32 PlayerLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Probability_Cost1;

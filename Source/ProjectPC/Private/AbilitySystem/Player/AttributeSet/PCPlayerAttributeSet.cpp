@@ -3,7 +3,10 @@
 
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
+#include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
+
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 void UPCPlayerAttributeSet::OnRep_PlayerLevel(const FGameplayAttributeData& OldValue)
@@ -24,6 +27,21 @@ void UPCPlayerAttributeSet::OnRep_PlayerGold(const FGameplayAttributeData& OldVa
 void UPCPlayerAttributeSet::OnRep_PlayerHP(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCPlayerAttributeSet, PlayerHP, OldValue);
+}
+
+void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+	if (Data.EvaluatedData.Attribute == GetPlayerXPAttribute())
+	{
+		CheckLevelUp();
+	}
+}
+
+void UPCPlayerAttributeSet::CheckLevelUp()
+{
+	
 }
 
 void UPCPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

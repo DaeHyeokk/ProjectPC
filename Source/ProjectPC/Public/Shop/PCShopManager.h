@@ -22,11 +22,6 @@ private:
 public:
 	void UpdateShopSlots(class APCPlayerState* TargetPlayer);
 	void ReturnUnitsToShop(class APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots);
-	
-	void BuyXP();
-	void BuyUnit();
-	void SellUnit();
-	void ShopLock();
 
 private:
 	// 누적합을 통한 확률 구현

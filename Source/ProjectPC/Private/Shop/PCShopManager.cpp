@@ -3,6 +3,7 @@
 
 #include "Shop/PCShopManager.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Engine/DataTable.h"
 
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -11,6 +12,8 @@
 
 void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 {
+	if (!TargetPlayer) return;
+	
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS) return;
 	
@@ -18,7 +21,8 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	ReturnUnitsToShop(GS, ShopSlots);
 
 	TArray<FPCShopUnitData> NewShopSlots;
-	const auto& CostProbabilities = GS->GetCostProbabilities();
+	const auto PlayerLevel = static_cast<int32>(TargetPlayer->GetAttributeSet()->GetPlayerLevel());
+	const auto& CostProbabilities = GS->GetCostProbabilities(PlayerLevel);
 	
 	for (uint8 i = 0; i < NumSlots; ++i)
 	{
@@ -68,20 +72,4 @@ void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCS
 			}
 		}
 	}
-}
-
-void UPCShopManager::BuyXP()
-{
-}
-
-void UPCShopManager::BuyUnit()
-{
-}
-
-void UPCShopManager::SellUnit()
-{
-}
-
-void UPCShopManager::ShopLock()
-{
 }

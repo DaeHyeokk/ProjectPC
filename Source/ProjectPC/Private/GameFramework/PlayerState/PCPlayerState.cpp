@@ -20,11 +20,6 @@ void APCPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (LevelMaxXPDataTable)
-	{
-		LoadDataTable<FPCLevelMaxXPData>(LevelMaxXPDataTable, LevelMaxXPDataList, TEXT("Loading Level MaxXP Data"));
-	}
-
 	if (HasAuthority())
 	{
 		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
@@ -122,12 +117,6 @@ void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 {
 	return ShopSlots;
-}
-
-const int32 APCPlayerState::GetMaxXP() const
-{
-	const auto PlayerLevel = static_cast<int32>(PlayerAttributeSet->GetPlayerLevel());
-	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;
 }
 
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

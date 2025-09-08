@@ -53,6 +53,7 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
                                                      const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
 	if (!ActorInfo->IsNetAuthority())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
