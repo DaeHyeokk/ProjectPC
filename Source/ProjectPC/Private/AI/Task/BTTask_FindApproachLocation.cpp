@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Controller/Unit/PCUnitAIController.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Utility/PCGridUtils.h"
 
 
@@ -39,7 +40,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	if (!Board)
 		return EBTNodeResult::Failed;
 
-	const FIntPoint StartPoint = Board->GetFiledUnitPoint(OwnerUnit);
+	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
 	if (StartPoint == FIntPoint::NoneValue)
 		return EBTNodeResult::Failed;
 
@@ -64,11 +65,17 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 		FIntPoint NextPoint = StartPoint + Dir;
 
 		// 이동할 좌표가 유효한 좌표이고 이동 가능한 좌표라면 이동 방향에 추가
-		if (Board->IsInRange(NextPoint.Y, NextPoint.X) && Board->IsTileFree(NextPoint.Y, NextPoint.X))
+		
+		Board->TileManager->DebugExplainTile(NextPoint.Y, NextPoint.X, TEXT("BFS_Neighbor"));
+		if (Board->IsInRange(NextPoint.Y, NextPoint.X))
 		{
-			Q.Enqueue(FBfsData(NextPoint, NextPoint));
-			Visited.Add(NextPoint);
+			if (Board->IsTileFree(NextPoint.Y, NextPoint.X))
+			{
+				Q.Enqueue(FBfsData(NextPoint, NextPoint));
+				Visited.Add(NextPoint);
+			}
 		}
+		
 	}
 
 	while (!Q.IsEmpty())

@@ -48,7 +48,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 	
 	const int8 Range = static_cast<int8>(AttrSet->GetAttackRange());
 	
-	const FIntPoint StartPoint = Board->GetFiledUnitPoint(OwnerUnit);
+	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
 	if (StartPoint == FIntPoint::NoneValue)
 		return EBTNodeResult::Failed;
 

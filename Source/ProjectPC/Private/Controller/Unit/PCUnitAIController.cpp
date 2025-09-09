@@ -40,7 +40,7 @@ void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 	{
 		if (OwnerUnit)
 		{
-			const FIntPoint LastPoint = OwnerUnit->GetOnCombatBoard()->GetFiledUnitPoint(OwnerUnit);
+			const FIntPoint LastPoint = OwnerUnit->GetOnCombatBoard()->GetFieldUnitPoint(OwnerUnit);
 			OwnerUnit->GetOnCombatBoard()->SetTileState(LastPoint.Y, LastPoint.X, OwnerUnit, ETileAction::Release);
 			OwnerUnit->GetOnCombatBoard()->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit, ETileAction::Occupy);
 		}

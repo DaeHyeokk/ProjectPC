@@ -61,10 +61,8 @@ protected:
 	virtual void PostSeamlessTravel() override;
 
 	// 좌석배정 유틸함수
-	void AssignSeatInitial(bool bForceReassign);
-	void AssignSeatIfNeeded(class APCPlayerState* PCPlayerState);
+	void AssignSeatInitial();
 	int32 GetTotalSeatSlots() const;
-	int32 FindNextFreeSeat(int32 TotalSeats) const;
 
 private:
 	// 데이터 평탄화

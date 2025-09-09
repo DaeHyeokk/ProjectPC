@@ -150,11 +150,6 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	}
 }
 
-void APCCombatPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
-	float Seconds)
-{
-}
-
 void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
 	UWorld* World = GetWorld();

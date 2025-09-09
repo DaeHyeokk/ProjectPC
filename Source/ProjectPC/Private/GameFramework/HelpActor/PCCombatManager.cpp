@@ -116,6 +116,23 @@ void APCCombatManager::StartAllBattle()
 		}
 
 		GuestTileManager->MoveUnitsMirroredTo(HostTileManager, bMirrorRows, bMirrorCols, bIncludeBench);
+		HostTileManager->DebugLogField(true,true,TEXT("HOST after mirror"));
+		GuestTileManager->DebugLogField(true,true,TEXT("GUEST after mirror"));
+
+		for (auto& UnitWeak : InPair.MovedUnits)
+		{
+			if (auto* U = UnitWeak.Get())
+			{
+				UE_LOG(LogTemp, Log, TEXT("Unit=%s OnBoard=%s"),
+					*U->GetName(),
+					U->GetOnCombatBoard() ? *U->GetOnCombatBoard()->GetName() : TEXT("NULL"));
+			}
+		}
+		
+		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
+		}
 		
 	}
 }
@@ -235,7 +252,7 @@ bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUni
 		{
 			if (TileManager->GetFieldUnit(c, r) == Unit)
 			{
-				TileManager->RemoveFromField(c,r);
+				TileManager->RemoveFromField(c,r,false);
 				return true;
 			}
 		}

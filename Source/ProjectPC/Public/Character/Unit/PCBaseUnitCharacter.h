@@ -109,7 +109,8 @@ public:
 	bool IsCombatActive() const { return bIsCombatActive; }
 	
 protected:
-	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;
+	UPROPERTY()
+	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsOnField, Category="Combat")
 	bool bIsOnField = false;

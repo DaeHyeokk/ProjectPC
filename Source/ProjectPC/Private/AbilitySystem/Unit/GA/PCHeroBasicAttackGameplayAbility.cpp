@@ -6,6 +6,10 @@
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 
 
+UPCHeroBasicAttackGameplayAbility::UPCHeroBasicAttackGameplayAbility()
+{
+}
+
 bool UPCHeroBasicAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
                                                   const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {

@@ -109,7 +109,7 @@ public:
 	bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
 
 	UFUNCTION(BLueprintCallable, Category = "Field")
-	bool RemoveFromField(int32 Y, int32 X);
+	bool RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard);
 
 	UFUNCTION(BlueprintPure, Category = "Field")
 	APCBaseUnitCharacter* GetFieldUnit(int32 Y, int32 X) const;
@@ -199,7 +199,8 @@ private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 	void CreateBench(); // 벤치 좌표 생성 (월드기준)
 
-	TWeakObjectPtr<APCCombatBoard> CachedCombatBoard;
+	UPROPERTY()
+	TObjectPtr<APCCombatBoard> CachedCombatBoard;
 
 	virtual void BeginPlay() override;
 
@@ -215,7 +216,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Debug") bool bDebugShowIndices = true;
 	UPROPERTY(EditAnywhere, Category="Debug") float DebugPointRadius = 18.f;   // 구 반지름
 	UPROPERTY(EditAnywhere, Category="Debug") float DebugTextScale  = 1.0f;    // 라벨 스케일
-	UPROPERTY(EditAnywhere, Category="Debug") float DebugDuration   = 100.f;     // 지속시간(초). 0이면 1프레임
+	UPROPERTY(EditAnywhere, Category="Debug") float DebugDuration   = 10.f;     // 지속시간(초). 0이면 1프레임
 
 	// 색상
 	UPROPERTY(EditAnywhere, Category="Debug") FColor FieldColor   = FColor(0,255,127); // 민트
@@ -224,7 +225,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Debug") FColor UnitColor    = FColor::Yellow;    // 유닛 있는 칸
 
 	// 에디터 버튼 + 런타임 호출 가능
-	UFUNCTION(BlueprintCallable, CallInEditor, Category="Debug")
-	void DebugDrawTiles(bool bPersistent = true);
+	UFUNCTION()
+	void DebugLogField(bool bAsGrid /*=true*/, bool bShowOccupiedList /*=true*/, const FString& Tag) const;
+
+	UFUNCTION(BlueprintCallable, Category="Debug")
+	void DebugExplainTile(int32 Y, int32 X, const FString& Tag) const;
 	
 };

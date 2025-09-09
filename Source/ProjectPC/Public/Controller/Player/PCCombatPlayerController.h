@@ -97,9 +97,6 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientCameraSetCarousel(APCCarouselRing* CarouselRing, float BlendTime);
 
-	// 서버->클라 : 페이즈 변경 알림
-	UFUNCTION(Client, Reliable)
-	void ClientStageChanged(EPCStageType NewStage, const FString& StageRoundName, float Seconds);
 
 #pragma endregion Camera
 
