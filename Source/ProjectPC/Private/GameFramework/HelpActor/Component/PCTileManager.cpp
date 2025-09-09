@@ -31,8 +31,21 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
-	Unit->SetOnCombatBoard(GetCombatBoard());
-	Unit->SetActorLocation(Field[i].Position);
+
+	const FVector Loc = Field[i].Position;
+	FRotator Rot = FRotator::ZeroRotator;
+	
+	if (Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
+	{
+		Unit->SetOnCombatBoard(GetCombatBoard());
+		Unit->SetActorLocation(Field[i].Position);
+	}
+	else
+	{
+		Rot = CachedCombatBoard->GetActorRotation();
+		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
+		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
+	}
 	return true;
 }
 
@@ -86,9 +99,7 @@ FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) co
 			}
 		}
 	}
-	
 	return FIntPoint::NoneValue;
-		
 	
 }
 

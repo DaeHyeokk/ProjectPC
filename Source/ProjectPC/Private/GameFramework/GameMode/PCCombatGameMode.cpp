@@ -7,11 +7,13 @@
 #include "EngineUtils.h"
 #include "INodeAndChannelMappings.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
@@ -299,7 +301,6 @@ void APCCombatGameMode::BeginCurrentStep()
 void APCCombatGameMode::EndCurrentStep()
 {
 	AdvanceCursor();
-	MovePlayersToBoardsAndCameraSet();
 	
 	if (FlatRoundSteps.IsValidIndex(Cursor))
 		BeginCurrentStep();
@@ -314,7 +315,7 @@ void APCCombatGameMode::Step_Start()
 
 void APCCombatGameMode::Step_Setup()
 {
-	MovePlayersToBoardsAndCameraSet();
+	
 }
 
 void APCCombatGameMode::Step_Travel()
@@ -338,9 +339,19 @@ void APCCombatGameMode::Step_Travel()
 		{
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+				{
+					PCCombatPlayerController->Client_HideWidget();
+				}
+			}
 			break;
 		}
 	case EPCStageType::PvE:
+		{
+			
+		}
 		default:
 		break;
 	}
@@ -368,17 +379,35 @@ void APCCombatGameMode::Step_Return()
 	}
 	else if (Prev->StageType == EPCStageType::Start)
 	{
+		MovePlayersToBoardsAndCameraSet();
 		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 		{
 			if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
 			{
-				PCCombatPlayerController->Client_InitPlayerMainHUD();
+				PCCombatPlayerController->Client_ShowWidget();
+				if (APCCombatGameState* PCGameState = GetCombatGameState())
+				{
+					if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
+					{
+						APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex);
+						const FVector UnitSpawnLoc = InCombatBoard->GetTileWorldLocation(0,1) + FVector(0,0,20);
+						const FTransform SpawnTransform(FRotator::ZeroRotator, UnitSpawnLoc, FVector::OneVector);
+						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+						{
+							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, SpawnTransform, PCPlayerState->SeatIndex);
+							InCombatBoard->TileManager->PlaceUnitOnField(0,1, Unit);
+						}
+					}
+							
+				}
+				
 			}
 		}
+		
 	}
 	else
 	{
-		MovePlayersToBoardsAndCameraSet();
+		
 	}
 }
 

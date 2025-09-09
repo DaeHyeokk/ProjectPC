@@ -232,7 +232,7 @@ FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return TileManager ? TileManager->GetFieldUnitLocation(InUnit) : FVector::ZeroVector;
 }
 
-FIntPoint APCCombatBoard::GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const
+FIntPoint APCCombatBoard::GetFieldUnitPoint(APCBaseUnitCharacter* InUnit) const
 {
 	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue;
 }

@@ -13,10 +13,24 @@ UCLASS()
 class PROJECTPC_API UPCPlayerMainWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void InitAndBind();
+
+	UFUNCTION(BlueprintCallable)
+	void HideWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowWidget();
+
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCGameStateWidget> W_GameStateWidget;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<class UPCShopWidget> W_ShopWidget;
 	
 	
 };

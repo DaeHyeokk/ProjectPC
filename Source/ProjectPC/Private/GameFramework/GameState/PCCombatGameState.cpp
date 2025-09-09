@@ -105,7 +105,7 @@ float APCCombatGameState::GetStageProgress() const
 
 FString APCCombatGameState::GetStageLabelString() const
 {
-	return FString::Printf(TEXT("%d-%d"), StageRuntimeState.StageIdx + 1, StageRuntimeState.RoundIdx + 1);
+	return FString::Printf(TEXT("%d-%d"), StageRuntimeState.StageIdx, StageRuntimeState.RoundIdx);
 }
 
 EPCStageType APCCombatGameState::GetCurrentStageType() const

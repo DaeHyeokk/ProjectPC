@@ -190,7 +190,7 @@ public:
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
-	FIntPoint GetFiledUnitPoint(APCBaseUnitCharacter* InUnit) const;
+	FIntPoint GetFieldUnitPoint(APCBaseUnitCharacter* InUnit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetTileWorldLocation(int32 Y, int32 X) const;

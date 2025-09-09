@@ -106,17 +106,27 @@ public:
 #pragma region UI
 public:
 
-	UFUNCTION(CLient, Reliable)
-	void Client_InitPlayerMainHUD();
-	UFUNCTION(BlueprintCallable, Category = "UI")
-	void InitPlayerMainHUD();
-	
+	UFUNCTION(BlueprintCallable)
+	void EnsureMainHUDCreated();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowWidget(bool bAnimate = true);
+
+	UFUNCTION(BlueprintCallable)
+	void HideWidget();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ShowWidget();
+
+	UFUNCTION(Client, Reliable)
+	void Client_HideWidget();
+
 private:
 	
-	UPROPERTY(EditAnywhere, Category = "UI", meta = (AllowPrivateAccess = true))
-	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "UI", meta = (AllowPrivateAccess = true))
-	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget;
+	UPROPERTY()
+	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
 #pragma endregion UI
 };

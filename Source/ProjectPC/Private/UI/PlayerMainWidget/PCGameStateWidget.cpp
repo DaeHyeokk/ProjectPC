@@ -14,14 +14,8 @@ void UPCGameStateWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	PCGameState = Cast<APCCombatGameState>(UGameplayStatics::GetGameState(this));
-	if (PCGameState.IsValid())
-	{
-		RepHandle = PCGameState->OnStageRuntimeChanged.AddUObject(this, &UPCGameStateWidget::ReFreshStatic);
-		ReFreshStatic();
-	}
+	GameStateBinding();
 
-	GetWorld()->GetTimerManager().SetTimer(TickHandle, this, &UPCGameStateWidget::TickUpdate, 0.1f, true);
 }
 
 void UPCGameStateWidget::NativeDestruct()
@@ -32,6 +26,19 @@ void UPCGameStateWidget::NativeDestruct()
 	}
 	GetWorld()->GetTimerManager().ClearTimer(TickHandle);
 	Super::NativeDestruct();
+}
+
+void UPCGameStateWidget::GameStateBinding()
+{
+	
+	PCGameState = Cast<APCCombatGameState>(UGameplayStatics::GetGameState(this));
+	if (PCGameState.IsValid())
+	{
+		RepHandle = PCGameState->OnStageRuntimeChanged.AddUObject(this, &UPCGameStateWidget::ReFreshStatic);
+		ReFreshStatic();
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(TickHandle, this, &UPCGameStateWidget::TickUpdate, 0.1f, true);
 }
 
 void UPCGameStateWidget::ReFreshStatic()

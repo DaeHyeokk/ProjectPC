@@ -107,7 +107,7 @@ FTransform APCCarouselRing::GetSlotTransformWorld(int32 Index) const
 	const float Rad = FMath::DegreesToRadians(Deg);
 
 	const FVector Local(FMath::Cos(Rad)*Radius, FMath::Sin(Rad)* Radius, Height);
-	const FVector WorldPosition = GetActorTransform().TransformPosition(Local);
+	const FVector WorldPosition = GetActorTransform().TransformPosition(Local) + FVector(0,0,20.f);
 
 	FRotator Rotation = GetActorRotation();
 	if (bFaceCenter)

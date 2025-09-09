@@ -51,6 +51,8 @@ void APCCombatPlayerController::SetupInputComponent()
 void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	EnsureMainHUDCreated();
 		
 }
 
@@ -185,24 +187,62 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 	return nullptr;
 }
 
-void APCCombatPlayerController::Client_InitPlayerMainHUD_Implementation()
+void APCCombatPlayerController::EnsureMainHUDCreated()
 {
-	InitPlayerMainHUD();
-}
+	if (!IsLocalController()) return;
+	if (!PlayerMainWidgetClass) { UE_LOG(LogTemp, Warning, TEXT("HUD Class NULL")); return; }
 
-void APCCombatPlayerController::InitPlayerMainHUD()
-{
-	if (!IsLocalController())
-		return;
-	
-	if (!IsValid(PlayerMainWidget) && PlayerMainWidgetClass)
+	// 이미 있으면 보장만
+	if (!IsValid(PlayerMainWidget))
 	{
 		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
-		if (PlayerMainWidget)
+		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
+
+		// 뷰포트에 항상 붙여둔다 (단 1회)
+		PlayerMainWidget->AddToViewport(50);
+		PlayerMainWidget->HideWidget();
+		PlayerMainWidget->InitAndBind();
+		
+		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
+		FTimerHandle Th;
+		GetWorld()->GetTimerManager().SetTimer(Th, [this]()
 		{
-			PlayerMainWidget->AddToViewport();
-		}
+			if (IsValid(PlayerMainWidget)) PlayerMainWidget->InitAndBind();
+		}, 0.f, false);
 	}
+	else
+	{
+		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
+		if (!PlayerMainWidget->IsInViewport())
+			PlayerMainWidget->AddToViewport(50);
+		PlayerMainWidget->InitAndBind();
+		PlayerMainWidget->HideWidget();
+	}
+}
+
+void APCCombatPlayerController::ShowWidget(bool bAnimate)
+{
+	if (!IsLocalController() || !IsValid(PlayerMainWidget))
+		return;
+	PlayerMainWidget->ShowWidget();
+	
+}
+
+void APCCombatPlayerController::HideWidget()
+{
+	if (!IsLocalController() || IsValid(PlayerMainWidget))
+		return;
+	PlayerMainWidget->HideWidget();
+}
+
+void APCCombatPlayerController::Client_ShowWidget_Implementation()
+{
+	ShowWidget(true);
+}
+
+void APCCombatPlayerController::Client_HideWidget_Implementation()
+{
+	HideWidget();
 }
 
 void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InHomeBoardIdx)
