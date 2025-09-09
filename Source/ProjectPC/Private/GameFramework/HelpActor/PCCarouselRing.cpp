@@ -50,13 +50,7 @@ void APCCarouselRing::BeginPlay()
 	Super::BeginPlay();
 	RotatingMovement->RotationRate.Yaw = RotationRateYawDeg;
 	RotatingMovement->SetActive(bRotate);
-
-	// if (HasAuthority() && PickupClass && NumPickups > 0)
-	// {
-	// 	SpawnPickUps();
-	// 	SetRotationActive(bRotate);
-	// }
-
+	
 	// 카메라 파라미터 반영(에디터에서 바꾼 값 유지)
 	SpringArm->TargetArmLength = CameraArmLength;
 	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
@@ -113,7 +107,7 @@ FTransform APCCarouselRing::GetSlotTransformWorld(int32 Index) const
 	const float Rad = FMath::DegreesToRadians(Deg);
 
 	const FVector Local(FMath::Cos(Rad)*Radius, FMath::Sin(Rad)* Radius, Height);
-	const FVector WorldPosition = GetActorTransform().TransformPosition(Local);
+	const FVector WorldPosition = GetActorTransform().TransformPosition(Local) + FVector(0,0,20.f);
 
 	FRotator Rotation = GetActorRotation();
 	if (bFaceCenter)

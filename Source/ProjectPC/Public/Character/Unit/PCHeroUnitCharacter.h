@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "PCHeroUnitCharacter.generated.h"
 
+class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
 /**
  * 
@@ -26,6 +27,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
+	const UPCHeroUnitAttributeSet* GetHeroUnitAttributeSet();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 	
@@ -52,6 +54,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
+	UPROPERTY(Transient)
+	TObjectPtr<const UPCHeroUnitAttributeSet> HeroUnitAttributeSet = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_HeroUnitData> HeroUnitDataAsset;
 	
@@ -62,6 +67,4 @@ protected:
 	void OnRep_HeroLevel() const;
 
 	// 전투 관련 //
-protected:
-	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag) override;
 };

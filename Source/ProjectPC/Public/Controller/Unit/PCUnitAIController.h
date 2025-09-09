@@ -18,10 +18,21 @@ class PROJECTPC_API APCUnitAIController : public AAIController
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
+	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
+private:
+	FAIRequestID ActiveMoveId;
+
+	UPROPERTY(Transient)
+	FIntPoint CachedMovePoint;
+	
 public:
 	void UpdateTeamId();
+	void SetMovePoint(const FIntPoint& MovePoint) { CachedMovePoint = MovePoint; }
 	
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UBehaviorTree> DefaultBT;
+
+	UPROPERTY(Transient)
+	APCBaseUnitCharacter* OwnerUnit;
 };

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
@@ -13,8 +13,10 @@
 #include "DSP/BufferDiagnostics.h"
 #include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
 APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -36,6 +38,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
+	GetCharacterMovement()->MaxWalkSpeed = 200.f;
 
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
@@ -60,10 +63,14 @@ UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemCompone
 	return nullptr;
 }
 
-const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
+const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet()
 {
-	return Cast<UPCUnitAttributeSet>(GetUnitAbilitySystemComponent()->GetAttributeSet(UPCUnitAttributeSet::StaticClass()));
-	//return GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	if (!UnitAttributeSet)
+	{
+		UnitAttributeSet = GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	}
+
+	return UnitAttributeSet.Get();
 }
 
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
@@ -118,6 +125,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatActive);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -211,7 +219,7 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 	}
 }
 
-void APCBaseUnitCharacter::OnRep_IsOnField() const
+void APCBaseUnitCharacter::OnRep_IsOnField()
 {
 	if (bIsOnField)
 	{
@@ -223,29 +231,117 @@ void APCBaseUnitCharacter::OnRep_IsOnField() const
 					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
 			}
 		}
+
+		BindCombatState();
+	}
+	else
+	{
+		UnbindCombatState();
 	}
 }
 
 void APCBaseUnitCharacter::BindCombatState()
 {
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+		
+		GameStateChangedHandle = CombatGS->OnGameStateChanged.AddUObject(
+			this, &ThisClass::HandleGameStateChanged);
+
+		HandleGameStateChanged(CombatGS->GetGameStateTag());
+	}
+
 }
 
 void APCBaseUnitCharacter::UnbindCombatState()
 {
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+	}
+
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			FGameplayTagContainer CurrentTags;
+			ASC->GetOwnedGameplayTags(CurrentTags);
+
+			// Game_State 하위 태그 제거
+			for (const FGameplayTag& Tag : CurrentTags)
+			{
+				if (Tag.MatchesTag(GameStateTags::Game_State))
+					ASC->RemoveReplicatedLooseGameplayTag(Tag);
+			}
+		}
+	}
 }
 
 void APCBaseUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
 {
 	if (HasAuthority())
 	{
-		if (bIsCombatActive && GameStateTag == GameStateTags::Game_State_NonCombat)
+		if (bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_NonCombat))
 			bIsCombatActive = false;
-		else
+		else if (!bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_Combat))
 			bIsCombatActive = true;
+
+		if (HasAuthority())
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer CurrentTags;
+				ASC->GetOwnedGameplayTags(CurrentTags);
+
+				// Game_State 하위 태그 제거
+				for (const FGameplayTag& Tag : CurrentTags)
+				{
+					if (Tag.MatchesTag(GameStateTags::Game_State))
+						ASC->RemoveLooseGameplayTag(Tag);
+				}
+				// 새로 들어온 Game_State 태그 부여
+				ASC->AddLooseGameplayTag(GameStateTag);
+			}
+		}
 	}
 }
 
 void APCBaseUnitCharacter::OnRep_IsCombatActive() const
 {
 	// 플레이어 마우스 입력 충돌 비활성화 같은 로직들
+}
+
+void APCBaseUnitCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->GetOwnedGameplayTags(TagContainer);
+	}
+}
+
+bool APCBaseUnitCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasMatchingGameplayTag(TagToCheck);
+}
+
+bool APCBaseUnitCharacter::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAllMatchingGameplayTags(TagContainer);
+}
+
+bool APCBaseUnitCharacter::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAnyMatchingGameplayTags(TagContainer);
 }

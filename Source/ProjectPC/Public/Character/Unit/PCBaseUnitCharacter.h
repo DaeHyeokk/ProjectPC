@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagAssetInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "PCBaseUnitCharacter.generated.h"
 
 class UPCUnitStatusBarWidget;
@@ -18,7 +18,8 @@ class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
 
 UCLASS()
-class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
+class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
+										public IGenericTeamAgentInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -27,10 +28,13 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
-	const UPCUnitAttributeSet* GetUnitAttributeSet() const;
+	const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 
+	UPROPERTY(Transient)
+	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet = nullptr;
+	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
 
@@ -55,7 +59,7 @@ protected:
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
 	void ReAttachStatusBarToSocket() const;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> StatusBarComp;
 	
@@ -98,8 +102,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void ChangedOnTile(const bool IsOnField);
 
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsOnField() const { return bIsOnField; }
+	
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsCombatActive() const { return bIsCombatActive; }
+	
 protected:
-	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;
+	UPROPERTY()
+	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsOnField, Category="Combat")
 	bool bIsOnField = false;
@@ -108,15 +119,22 @@ protected:
 	bool bIsCombatActive = false;
 	
 	UFUNCTION()
-	void OnRep_IsOnField() const;
+	void OnRep_IsOnField();
 
 	void BindCombatState();	// 필드에 올라갈 때 바인딩
 	void UnbindCombatState(); // 벤치로 가거나 사망하면 바인딩 해제
-	// 델리게이트 콜백, 크립 유닛은 준비 단계 때 동작이 없으므로 virtual로 선언하여 분기
-	virtual void HandleGameStateChanged(const FGameplayTag& GameStateTag);
+	void HandleGameStateChanged(const FGameplayTag& GameStateTag);
 
 	UFUNCTION()
 	void OnRep_IsCombatActive() const;
 	
-	FDelegateHandle GameStateHandle;
+	FDelegateHandle GameStateChangedHandle;
+
+	// ==== 전투 시스템 | BT 관련 ====
+protected:
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	
 };

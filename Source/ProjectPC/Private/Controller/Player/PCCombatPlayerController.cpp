@@ -20,6 +20,7 @@
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 
 
 APCCombatPlayerController::APCCombatPlayerController()
@@ -52,6 +53,14 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->ShopRefresh, ETriggerEvent::Started, this, &APCCombatPlayerController::OnShopRefreshStarted);
 		EnhancedInputComponent->BindAction(PlayerInputData->SellUnit, ETriggerEvent::Started, this, &APCCombatPlayerController::OnSellUnitStarted);
 	}
+}
+
+void APCCombatPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	EnsureMainHUDCreated();
+		
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -225,23 +234,6 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(FGameplayTag Unit
 	// }
 }
 
-void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)
-{
-	TArray<AActor*> Boards;
-	UGameplayStatics::GetAllActorsOfClass(this, APCCombatBoard::StaticClass(), Boards);
-	for (AActor* Actor : Boards)
-	{
-		if (auto* CombatBoards = Cast<APCCombatBoard>(Actor))
-		{
-			if (CombatBoards->BoardSeatIndex == BoardIndex)
-			{
-				CombatBoards->ApplyLocalBottomView(this, BoardIndex, BlendTime);
-				return;
-			}
-		}
-	}
-}
-
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, float BlendTime)
 {
 	if (APCCarouselRing* PCCarouselRing = Cast<APCCarouselRing>(CarouselRing))
@@ -250,10 +242,25 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	}
 }
 
-void APCCombatPlayerController::ClientStageChanged_Implementation(EPCStageType NewStage, const FString& StageRoundName,
-	float Seconds)
+void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
 	
+	UWorld* World = GetWorld();
+	if (!World) return;
+	for (TActorIterator<APCCombatBoard> It(World); It; ++It)
+	{
+		APCCombatBoard* Board = *It;
+		if (!IsValid(Board)) continue;
+		
+		if (const bool bIsHome = (Board->BoardSeatIndex == HomeBoardSeatIndex))
+		{
+			Board->ApplyClientHomeView();
+		}
+		else
+		{
+			Board->ApplyClientMirrorView();
+		}
+	}
 }
 
 APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatIndex) const
@@ -268,22 +275,86 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 	return nullptr;
 }
 
+void APCCombatPlayerController::EnsureMainHUDCreated()
+{
+	if (!IsLocalController()) return;
+	if (!PlayerMainWidgetClass) { UE_LOG(LogTemp, Warning, TEXT("HUD Class NULL")); return; }
+
+	// 이미 있으면 보장만
+	if (!IsValid(PlayerMainWidget))
+	{
+		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
+		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
+
+		// 뷰포트에 항상 붙여둔다 (단 1회)
+		PlayerMainWidget->AddToViewport(50);
+		PlayerMainWidget->HideWidget();
+		PlayerMainWidget->InitAndBind();
+		
+		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
+		FTimerHandle Th;
+		GetWorld()->GetTimerManager().SetTimer(Th, [this]()
+		{
+			if (IsValid(PlayerMainWidget)) PlayerMainWidget->InitAndBind();
+		}, 0.f, false);
+	}
+	else
+	{
+		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
+		if (!PlayerMainWidget->IsInViewport())
+			PlayerMainWidget->AddToViewport(50);
+		PlayerMainWidget->InitAndBind();
+		PlayerMainWidget->HideWidget();
+	}
+}
+
+void APCCombatPlayerController::ShowWidget(bool bAnimate)
+{
+	if (!IsLocalController() || !IsValid(PlayerMainWidget))
+		return;
+	PlayerMainWidget->ShowWidget();
+	
+}
+
+void APCCombatPlayerController::HideWidget()
+{
+	if (!IsLocalController() || IsValid(PlayerMainWidget))
+		return;
+	PlayerMainWidget->HideWidget();
+}
+
+void APCCombatPlayerController::Client_ShowWidget_Implementation()
+{
+	ShowWidget(true);
+}
+
+void APCCombatPlayerController::Client_HideWidget_Implementation()
+{
+	HideWidget();
+}
+
 void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InHomeBoardIdx)
 {
+	if (bBoardPresetInitialized && HomeBoardSeatIndex == InHomeBoardIdx)
+	{
+		return;
+	}
 	HomeBoardSeatIndex = InHomeBoardIdx;
+	SetBoardSpringArmPresets();
+	bBoardPresetInitialized = true;
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
-	bool bRespectFlipPolicy, float Blend)
+	bool bBattle, float Blend)
 {
-	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
-	if (!CombatBoard) return;
+	if (CurrentFocusedSeatIndex == BoardSeatIndex)
+	{
+		return;
+	}
 
-	const bool bFlip = bRespectFlipPolicy ? ShouldFlipForBoardIndex(BoardSeatIndex) : false;
-	CombatBoard->ApplyBattleCamera(this,bFlip,Blend);
-}
-
-bool APCCombatPlayerController::ShouldFlipForBoardIndex(int32 BoardSeatIndex) const
-{
-	return (HomeBoardSeatIndex != INDEX_NONE && BoardSeatIndex != HomeBoardSeatIndex);
+	if (APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex))
+	{
+		SetViewTargetWithBlend(CombatBoard, Blend);
+		CurrentFocusedSeatIndex = BoardSeatIndex;
+	}
 }

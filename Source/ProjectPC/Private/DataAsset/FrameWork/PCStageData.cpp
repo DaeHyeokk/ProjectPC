@@ -86,9 +86,9 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
     };
 
     // (0) 입장 5초
-    AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, 0, 0, {
-        S(EPCStageType::Start, 5.f),
-    	S(EPCStageType::Return, 3.f)
+    AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, 1, 1, {
+        S(EPCStageType::Start, 10.f),
+    	S(EPCStageType::Return, 5.f)
     });
 
     // (1) Stage 1 — 1-2, 1-3, 1-4 (PvE)

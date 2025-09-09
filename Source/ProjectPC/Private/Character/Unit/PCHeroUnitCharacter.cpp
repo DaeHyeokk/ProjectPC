@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
@@ -23,8 +23,9 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 		HeroUnitAbilitySystemComponent->SetIsReplicated(true);
 		HeroUnitAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-		UPCHeroUnitAttributeSet* HeroUnitAttributeSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
-		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroUnitAttributeSet);
+		UPCHeroUnitAttributeSet* HeroAttrSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
+		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroAttrSet);
+		HeroUnitAttributeSet = HeroUnitAbilitySystemComponent->GetSet<UPCHeroUnitAttributeSet>();
 	}
 }
 
@@ -42,6 +43,18 @@ void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent()
 {
 	return HeroUnitAbilitySystemComponent;
+}
+
+const UPCHeroUnitAttributeSet* APCHeroUnitCharacter::GetHeroUnitAttributeSet()
+{
+	if (!HeroUnitAttributeSet)
+	{
+		if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			HeroUnitAttributeSet = ASC->GetSet<UPCHeroUnitAttributeSet>();
+		}
+	}
+	return HeroUnitAttributeSet;
 }
 
 UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemComponent() const
@@ -131,27 +144,4 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 			HeroLevel);
 	}
 	
-}
-
-void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
-{
-	Super::HandleGameStateChanged(GameStateTag);
-
-	if (HasAuthority())
-	{
-		if (HeroUnitAbilitySystemComponent)
-		{
-			FGameplayTagContainer CurrentTags;
-			HeroUnitAbilitySystemComponent->GetOwnedGameplayTags(CurrentTags);
-
-			// Game_State 하위 태그 제거
-			for (const FGameplayTag& Tag : CurrentTags)
-			{
-				if (Tag.MatchesTag(GameStateTags::Game_State))
-					HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(Tag);
-			}
-
-			HeroUnitAbilitySystemComponent->AddReplicatedLooseGameplayTag(GameStateTag);
-		}
-	}
 }

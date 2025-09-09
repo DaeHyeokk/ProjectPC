@@ -5,7 +5,7 @@
 
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 

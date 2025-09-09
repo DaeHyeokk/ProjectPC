@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCCreepUnitCharacter.h"
+#include "Character/Unit/PCCreepUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
@@ -36,16 +36,6 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 			UPCUnitAttributeSet::GetCurrentHealthAttribute(),
 			UPCUnitAttributeSet::GetMaxHealthAttribute()
 			);
-		
-	}
-}
-
-void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
-{
-	Super::HandleGameStateChanged(GameStateTag);
-
-	if (HasAuthority())
-	{
 		
 	}
 }

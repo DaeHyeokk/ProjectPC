@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
@@ -43,6 +44,37 @@ struct FSpawnSubsystemConfig
 	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
 };
 
+USTRUCT(BlueprintType)
+struct FStageRuntimeState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 FloatIndex = -1;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 StageIdx = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 RoundIdx = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 StepIdxInRound = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	EPCStageType Stage = EPCStageType::Setup;
+
+	UPROPERTY(BlueprintReadOnly)
+	float Duration = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	float ServerStartTime = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	float ServerEndTime = 0.f;
+};
+
+DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 /**
  * 
  */
@@ -73,43 +105,46 @@ public:
 
 	UFUNCTION(BLueprintPure)
 	APCCombatBoard* GetBoardBySeat(int32 PlayerSeatIndex) const;
-	
-	// 표 기반 플렛 인덱스
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	int32 FloatIndex = -1;
 
-	// 원본 스테이지 표 좌표
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	int32 StageIdx = 0;
+	// GameStageState
+	UFUNCTION(BlueprintCallable, Category = "Stage")
+	void SetStageRunTime(const FStageRuntimeState& NewState);
 
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	int32 RoundIdx = 0;
+	UFUNCTION(BlueprintPure, Category = "Stage")
+	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	int32 StepIdxInRound = 0;
-
-	// 현재 Stage 정보
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	EPCStageType CurrentStage;
-
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	float StageDuration;
-
-	// 서버 시간 기준 종료시각(클라 카운트다운 계산)
-	UPROPERTY(Replicated, BlueprintReadOnly)
-	float StageEndTime_Server = 0.f;
-
-	// 1-2, 1-3 같은 라벨로 변환 (UI 용)
-	UFUNCTION(BlueprintPure, Category = "UI")
-	FString GetStageRoundLabel() const;
-
-	// 남은 시간(초) - UI 용
-	UFUNCTION(BlueprintPure, Category = "UI")
-	float GetRemainingSeconds() const;
-
-	
 
 #pragma endregion GameLogic
+
+#pragma region UI
+
+public:
+
+	// UI에서 바인딩할 값들
+	UFUNCTION(BlueprintPure)
+	float GetStageRemainingSeconds() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetStageProgress() const;
+
+	UFUNCTION(BlueprintPure)
+	FString GetStageLabelString() const;
+
+	UFUNCTION(BlueprintPure)
+	EPCStageType GetCurrentStageType() const;
+
+	FOnStageRuntimeChanged OnStageRuntimeChanged;
+
+protected:
+
+	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
+	FStageRuntimeState StageRuntimeState;
+	
+	UFUNCTION()
+	void OnRep_StageRunTime();
+
+	
+#pragma endregion UI
 	
 #pragma region Shop
 	
@@ -224,8 +259,8 @@ public:
 #pragma endregion Unit
 
 public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatStateChanged, FGameplayTag);
-	FOnCombatStateChanged OnCombatStateChanged;
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatStateChanged, const FGameplayTag&);
+	FOnCombatStateChanged OnGameStateChanged;
 	
 	void SetGameStateTag(const FGameplayTag& InGameStateTag);
 	UFUNCTION(BlueprintPure)
@@ -237,4 +272,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_GameStateTag() const;
+
+	// TEST CODE //
+public:
+	UFUNCTION(BlueprintCallable)
+	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 };

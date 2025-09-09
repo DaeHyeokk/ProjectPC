@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "PCCombatManager.generated.h"
 
+class APCPlayerCharacter;
+class APCCombatPlayerController;
 class APCBaseUnitCharacter;
 class APCPlayerState;
 class UPCTileManager;
@@ -91,6 +93,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Match")
 	int32 RandomSeed = 12345;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Match")
+	bool bReseedEveryRound = true;
+
 	// 현재 라운드 페어링
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
@@ -104,12 +109,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FinishAllBattle();
 
-	// 카메라 세팅
-	UFUNCTION()
-	void Server_TravelFocusCamera(APCPlayerState* PCPlayerStateA, int32 BoardSeatIndexA, APCPlayerState* PCPlayerStateB, int32 BoardSeatIndexB, float Blend);
+	// 플레이어 전체 이동
 
-	UFUNCTION()
-	void Server_ReturnFocusCamera(APCPlayerState* PCPlayerStateA, int32 BoardSeatIndexA, APCPlayerState* PCPlayerStateB, int32 BoardSeatIndexB, float Blend);
+	UPROPERTY(BlueprintReadOnly, Category = "Combat|Travel")
+	FRotator GuestRotation = FRotator(0.f, 180.f, 0.f);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Travel")
+	void TravelPlayersForAllPairs(float Blend = 0.35f);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Travel")
+	void ReturnPlayersForAllPairs(float Blend = 0.35f);
+
+	// 특정 페어만 이동 / 복귀
+	UFUNCTION(BlueprintCallable, Category = "Combat|Travel")
+	void TravelPlayersForPair(int32 PairIndex, float Blend = 0.35f);
+
+	UFUNCTION(BlueprintCallable, Category = "Combat|Travel")
+	void ReturnPlayersForPair(int32 PairIndex, float Blend = 0.35f);
 	
 
 private:
@@ -120,7 +136,14 @@ private:
 	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
 
-public:	
+	// 좌석 기반 조회 함수
+	APCPlayerState* FindPlayerStateBySeat(int32 SeatIndex) const;
+	APCCombatPlayerController* FindPlayerController(int32 SeatIndex) const;
+	APawn* FindPawnBySeat(int32 SeatIndex) const;
+
+	// 이동 및 카메라 유틸 함수
+	void TeleportPlayerToTransform(APawn* PlayerCharacter, const FTransform& T) const;
+	void FocusCameraToBoard(int32 ViewerSeatIdx, int32 BoardSeatIdx, bool bIsBattle, float Blend);
 	
 
 	
