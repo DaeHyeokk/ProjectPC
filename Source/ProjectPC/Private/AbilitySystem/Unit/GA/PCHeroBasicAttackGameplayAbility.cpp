@@ -6,6 +6,10 @@
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 
 
+UPCHeroBasicAttackGameplayAbility::UPCHeroBasicAttackGameplayAbility()
+{
+}
+
 bool UPCHeroBasicAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
                                                   const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
@@ -22,20 +26,4 @@ bool UPCHeroBasicAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHand
 	
 	const float CurrentValue = CostGameplayAttribute.GetGameplayAttributeData(HeroAttributeSet)->GetCurrentValue();
 	return CurrentValue >= CostValue;
-}
-
-void UPCHeroBasicAttackGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
-{
-	if (!CostGameplayEffectClass || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
-	{
-		return;
-	}
-
-	FGameplayEffectSpecHandle CostSpec = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
-	if (CostSpec.IsValid())
-	{
-		CostSpec.Data->SetSetByCallerMagnitude(CostEffectCallerTag, -CostValue);
-		(void)ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, CostSpec);
-	}
 }

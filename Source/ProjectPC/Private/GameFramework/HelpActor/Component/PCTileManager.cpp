@@ -38,8 +38,6 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 		return false;
 	Field[i].Unit = Unit;
 	Unit->SetOnCombatBoard(GetCombatBoard());
-	Unit->SetActorLocation(Field[i].Position);
-	//Unit->SetOnCombatBoard(CachedCombatBoard.Get());
 	Unit->SetActorLocation(Field[i].Position + FVector(0.f,0.f,500.f));
 	Unit->ChangedOnTile(Field[i].bIsField);
 	return true;

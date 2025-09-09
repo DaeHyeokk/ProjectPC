@@ -8,19 +8,13 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Controller/Unit/PCUnitAIController.h"
-#include "Utility/PCGridUtils.h"
+#include "Containers/Queue.h"
+#include "Utility/PCUnitCombatUtils.h"
 
 
 UBTTask_FindApproachLocation::UBTTask_FindApproachLocation()
 {
 	NodeName = TEXT("Find Approach Location To Near Enemy");
-}
-
-static bool IsHostile(const AActor* A, const AActor* B)
-{
-	const FGenericTeamId TA = FGenericTeamId::GetTeamIdentifier(A);
-	const FGenericTeamId TB = FGenericTeamId::GetTeamIdentifier(B);
-	return FGenericTeamId::GetAttitude(TA, TB) == ETeamAttitude::Hostile;
 }
 
 EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -33,16 +27,24 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	APCBaseUnitCharacter* OwnerUnit = UnitAIC ? Cast<APCBaseUnitCharacter>(UnitAIC->GetPawn()) : nullptr;
 	
 	if (!OwnerUnit)
+	{
+		BB->ClearValue(ApproachLocationKey.SelectedKeyName);
 		return EBTNodeResult::Failed;
-
+	}
+	
 	APCCombatBoard* Board = OwnerUnit->GetOnCombatBoard();
 	if (!Board)
+	{
+		BB->ClearValue(ApproachLocationKey.SelectedKeyName);
 		return EBTNodeResult::Failed;
-
-	const FIntPoint StartPoint = Board->GetFiledUnitPoint(OwnerUnit);
+	}
+	
+	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
 	if (StartPoint == FIntPoint::NoneValue)
+	{
+		BB->ClearValue(ApproachLocationKey.SelectedKeyName);
 		return EBTNodeResult::Failed;
-
+	}
 	struct FBfsData
 	{
 		FIntPoint GridPoint;
@@ -54,12 +56,8 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	TSet<FIntPoint> Visited;
 	Visited.Add(StartPoint);
 
-	// 탐색 방향 랜덤으로 섞음 (랜덤성 부여)
-	TArray<FIntPoint> ShuffledDirs;
-	ShuffledDirs.Append(PCGridUtils::Directions, UE_ARRAY_COUNT(PCGridUtils::Directions));
-	Algo::RandomShuffle(ShuffledDirs);
-
-	for (const FIntPoint& Dir : ShuffledDirs)
+	// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여)
+	for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
 	{
 		FIntPoint NextPoint = StartPoint + Dir;
 
@@ -78,8 +76,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 
 		const FIntPoint HerePoint = HereData.GridPoint;
 		
-		Algo::RandomShuffle(ShuffledDirs);
-		for (const FIntPoint& Dir : ShuffledDirs)
+		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
 			if (Board->IsInRange(NextPoint.Y, NextPoint.X) && !Visited.Contains(NextPoint))
@@ -87,14 +84,17 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 				const APCBaseUnitCharacter* NextUnit = Board->GetUnitAt(NextPoint.Y, NextPoint.X);
 				
 				// 다음에 탐색할 지점에 유닛이 있고, 적 유닛일 경우
-				if (NextUnit && IsHostile(OwnerUnit, NextUnit))
+				if (NextUnit && PCUnitCombatUtils::IsHostile(OwnerUnit, NextUnit))
 				{
 					const FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
-					BB->SetValueAsVector(ApproachLocationKey.SelectedKeyName, MoveLocation);
-					Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve);
-					UnitAIC->SetMovePoint(MovePoint);
-					return EBTNodeResult::Succeeded;
+					
+					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))
+					{
+						BB->SetValueAsVector(ApproachLocationKey.SelectedKeyName, MoveLocation);
+						UnitAIC->SetMovePoint(MovePoint);
+						return EBTNodeResult::Succeeded;
+					}
 				}
 
 				// 다음에 탐색할 지점이 비어있을 경우

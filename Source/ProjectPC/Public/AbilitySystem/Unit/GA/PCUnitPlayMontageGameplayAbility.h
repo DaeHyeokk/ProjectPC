@@ -14,7 +14,19 @@ class PROJECTPC_API UPCUnitPlayMontageGameplayAbility : public UPCBaseUnitGamepl
 {
 	GENERATED_BODY()
 	
+public:
+	UPCUnitPlayMontageGameplayAbility();
+
+protected:
+	virtual void ActivateAbility(
+		const FGameplayAbilitySpecHandle Handle,
+		const FGameplayAbilityActorInfo* ActorInfo,
+		const FGameplayAbilityActivationInfo ActivationInfo,
+		const FGameplayEventData* TriggerEventData) override;
 	
+	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const { return nullptr; }
+	virtual void PlayMontageAndWait();
 	
-	
+	UFUNCTION()
+	virtual void OnMontageCompleted();
 };

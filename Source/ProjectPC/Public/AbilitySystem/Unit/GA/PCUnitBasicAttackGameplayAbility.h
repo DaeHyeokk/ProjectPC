@@ -14,7 +14,8 @@ class PROJECTPC_API UPCUnitBasicAttackGameplayAbility : public UPCUnitPlayMontag
 {
 	GENERATED_BODY()
 	
-	
+protected:
+	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const override;
 	
 	
 };

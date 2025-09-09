@@ -43,8 +43,13 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Action Ability Tags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack, "Unit.Action.Attack")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Basic, "Unit.Action.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Ultimate, "Unit.Action.Attack.Ultimate")
 
+	// ==== Unit State Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Alive, "Unit.State.Combat.Alive")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Death, "Unit.State.Combat.Death")
+	
 	// ==== Unit Anim Montage Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_LevelStart, "Unit.Montage.LevelStart")
 }
@@ -72,7 +77,6 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_InitDefaultStat, "GE.Class.InitDefaultStat")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange, "GE.Class.HealthChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange, "GE.Class.ManaChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Hero, "GE.Class.GrantUnitTypeTag.Hero")

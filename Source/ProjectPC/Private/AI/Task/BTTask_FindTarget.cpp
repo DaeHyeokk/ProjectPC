@@ -4,25 +4,17 @@
 #include "AI/Task/BTTask_FindTarget.h"
 
 #include "AbilitySystemComponent.h"
-#include "GenericTeamAgentInterface.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Containers/Queue.h"
 #include "Controller/Unit/PCUnitAIController.h"
-#include "Utility/PCGridUtils.h"
+#include "Utility/PCUnitCombatUtils.h"
 #include "Algo/RandomShuffle.h"
 
 UBTTask_FindTarget::UBTTask_FindTarget()
 {
 	NodeName = TEXT("Find Target In Attack Range");
-}
-
-static bool IsHostile(const AActor* A, const AActor* B)
-{
-	const FGenericTeamId TA = FGenericTeamId::GetTeamIdentifier(A);
-	const FGenericTeamId TB = FGenericTeamId::GetTeamIdentifier(B);
-	return FGenericTeamId::GetAttitude(TA, TB) == ETeamAttitude::Hostile;
 }
 
 EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -35,23 +27,35 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 	APCBaseUnitCharacter* OwnerUnit = AIC ? Cast<APCBaseUnitCharacter>(AIC->GetPawn()) : nullptr;
 	
 	if (!OwnerUnit)
+	{
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
-
+	}
+	
 	const APCCombatBoard* Board = OwnerUnit->GetOnCombatBoard();
 	if (!Board)
+	{
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
-
+	}
+	
 	const UAbilitySystemComponent* ASC = OwnerUnit->GetAbilitySystemComponent();
 	const UPCUnitAttributeSet* AttrSet = ASC ? ASC->GetSet<UPCUnitAttributeSet>() : nullptr;
 	if (!AttrSet)
+	{
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
+	}
 	
 	const int8 Range = static_cast<int8>(AttrSet->GetAttackRange());
 	
-	const FIntPoint StartPoint = Board->GetFiledUnitPoint(OwnerUnit);
+	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
 	if (StartPoint == FIntPoint::NoneValue)
+	{
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
-
+	}
+	
 	struct FBfsData
 	{
 		FIntPoint GridPoint;
@@ -77,7 +81,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		APCBaseUnitCharacter* HereUnit = Board->GetUnitAt(HerePoint.Y, HerePoint.X);
 
 		// 현재 유닛이 유효하고, 자기 자신이 아니며, 사거리 내에 있고, 적일 경우
-		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && IsHostile(OwnerUnit, HereUnit))
+		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && PCUnitCombatUtils::IsHostile(OwnerUnit, HereUnit))
 		{
 			switch (TargetSearchMode)
 			{
@@ -105,12 +109,8 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 			}
 		}
 		
-		// 탐색 방향 랜덤으로 섞음 (랜덤성 부여)
-		TArray<FIntPoint> ShuffledDirs;
-		ShuffledDirs.Append(PCGridUtils::Directions, UE_ARRAY_COUNT(PCGridUtils::Directions));
-		Algo::RandomShuffle(ShuffledDirs);
-
-		for (const FIntPoint& Dir : ShuffledDirs)
+		// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여)
+		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
 			
@@ -132,8 +132,8 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 	}
 	else
 	{
-		// 찾은 타겟이 없다면 TargetActorKey를 nullptr로 할당하고 Failed 반환
-		SetTargetActorKey(nullptr, BB);
+		// 찾은 타겟이 없다면 TargetActorKey를 클리어 하고 Failed 반환
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
 	}
 	
@@ -142,4 +142,9 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 void UBTTask_FindTarget::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
 {
 	BB->SetValueAsObject(TargetActorKey.SelectedKeyName, Target);
+}
+
+void UBTTask_FindTarget::ClearTargetActorKey(UBlackboardComponent* BB) const
+{
+	BB->ClearValue(TargetActorKey.SelectedKeyName);
 }

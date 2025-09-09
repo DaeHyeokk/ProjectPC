@@ -39,7 +39,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Data")
 	ETargetSearchMode TargetSearchMode = ETargetSearchMode::NearestInRange;
-
+	
 private:
 	void SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const;
+	void ClearTargetActorKey(UBlackboardComponent* BB) const;
 };

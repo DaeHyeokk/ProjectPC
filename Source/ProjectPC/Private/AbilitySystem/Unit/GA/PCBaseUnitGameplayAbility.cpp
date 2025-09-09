@@ -9,7 +9,9 @@ UPCBaseUnitGameplayAbility::UPCBaseUnitGameplayAbility()
 {
 	NetExecutionPolicy  = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	InstancingPolicy    = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	ReplicationPolicy   = EGameplayAbilityReplicationPolicy::ReplicateNo; 
+	ReplicationPolicy   = EGameplayAbilityReplicationPolicy::ReplicateNo;
+	bReplicateInputDirectly = false;
+	
 }
 
 bool UPCBaseUnitGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
