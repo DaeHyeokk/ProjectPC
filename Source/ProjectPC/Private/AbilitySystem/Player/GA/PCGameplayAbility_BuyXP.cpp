@@ -4,8 +4,8 @@
 #include "AbilitySystem/Player/GA/PCGameplayAbility_BuyXP.h"
 
 #include "AbilitySystemComponent.h"
-#include "BaseGameplayTags.h"
 
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
 
@@ -38,10 +38,6 @@ bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle
 void UPCGameplayAbility_BuyXP::ApplyCost(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	// Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
-	
-	if (!CostGameplayEffectClass || !ActorInfo->IsNetAuthority()) return;
-	
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
 	if (CostSpecHandle.IsValid())
 	{
@@ -55,12 +51,6 @@ void UPCGameplayAbility_BuyXP::ActivateAbility(const FGameplayAbilitySpecHandle 
                                                const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	
-	if (!ActorInfo->IsNetAuthority())
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		return;
-	}
 	
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
 	{

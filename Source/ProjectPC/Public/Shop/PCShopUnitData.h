@@ -36,4 +36,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag Tag;
+
+	bool operator==(const FPCShopUnitData& Other) const
+	{
+		return UnitName == Other.UnitName && Tag == Other.Tag;
+	}
 };

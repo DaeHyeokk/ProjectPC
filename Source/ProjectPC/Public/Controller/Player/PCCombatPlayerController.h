@@ -32,18 +32,23 @@ private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
 	UPCDataAsset_PlayerInput* PlayerInputData;
-
-#pragma region Move
 	
-private:
 	FVector CachedDestination;
 	float FollowTime;
-	
+
+#pragma region Input
+
+	// Move
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
-#pragma endregion Move
+	// Shop
+	void OnBuyXPStarted();
+	void OnShopRefreshStarted();
+	void OnSellUnitStarted();
+
+#pragma endregion Input
 
 #pragma region Shop
 	
@@ -57,19 +62,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
 
-	void ShopRequest_ShopRefresh();
+	void ShopRequest_ShopRefresh(float GoldCost);
 	void ShopRequest_BuyXP();
-	void ShopRequest_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex);
+	void ShopRequest_BuyUnit(int32 SlotIndex);
+	void ShopRequest_SellUnit(FGameplayTag UnitTag);
 
 	UFUNCTION(Server, Reliable)
-	void Server_ShopRefresh();
+	void Server_ShopRefresh(float GoldCost);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyXP();
 	UFUNCTION(Server, Reliable)
-	void Server_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex);
+	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Server, Reliable)
+	void Server_SellUnit(FGameplayTag UnitTag);
 
 #pragma endregion Shop
-
 
 #pragma region Camera
 	// 게임 카메라 세팅

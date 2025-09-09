@@ -15,6 +15,11 @@
 UPCGameplayAbility_ShopRefresh::UPCGameplayAbility_ShopRefresh()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_ShopRefresh);
+	
+	FAbilityTriggerData TriggerData;;
+	TriggerData.TriggerTag = PlayerGameplayTags::Player_GA_Shop_ShopRefresh;
+	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+	AbilityTriggers.Add(TriggerData);
 }
 
 bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle Handle,
@@ -24,22 +29,13 @@ bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle 
 	{
 		return false;
 	}
-
-	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
-	{
-		return CostAttributeSet->GetPlayerGold() >= CostValue;
-	}
 	
-	return false;
+	return true;
 }
 
 void UPCGameplayAbility_ShopRefresh::ApplyCost(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	// Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
-
-	if (!ActorInfo->IsNetAuthority()) return;
-
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
 	if (CostSpecHandle.IsValid())
 	{
@@ -54,23 +50,30 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	if (!ActorInfo->IsNetAuthority())
+	if (!TriggerEventData)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
+	
+	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
-	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-	{
-		if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+		CostValue = TriggerEventData->EventMagnitude;
+		if (CostAttributeSet->GetPlayerGold() >= CostValue)
 		{
-			GS->GetShopManager()->UpdateShopSlots(PS);
+			if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
+			{
+				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+				return;
+			}
+
+			if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+				{
+					GS->GetShopManager()->UpdateShopSlots(PS);
+				}
+			}
 		}
 	}
 	

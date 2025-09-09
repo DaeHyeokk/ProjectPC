@@ -30,36 +30,29 @@ public:
 	void OnClickedUnitSlot();
 	
 protected:
+	int32 SlotIndex;
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_UnitSlot;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_CostBorder;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_UnitThumbnail;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* Text_Cost;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* Text_UnitName;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost1Border;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost2Border;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost3Border;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost4Border;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost5Border;
-
-	FGameplayTag UnitTag;
-	int32 SlotIndex;
 };

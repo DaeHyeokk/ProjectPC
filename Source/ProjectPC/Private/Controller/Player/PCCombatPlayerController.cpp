@@ -47,6 +47,10 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCCombatPlayerController::OnSetDestinationTriggered);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
+
+		EnhancedInputComponent->BindAction(PlayerInputData->BuyXP, ETriggerEvent::Started, this, &APCCombatPlayerController::OnBuyXPStarted);
+		EnhancedInputComponent->BindAction(PlayerInputData->ShopRefresh, ETriggerEvent::Started, this, &APCCombatPlayerController::OnShopRefreshStarted);
+		EnhancedInputComponent->BindAction(PlayerInputData->SellUnit, ETriggerEvent::Started, this, &APCCombatPlayerController::OnSellUnitStarted);
 	}
 }
 
@@ -94,6 +98,21 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
+void APCCombatPlayerController::OnBuyXPStarted()
+{
+	ShopRequest_BuyXP();
+}
+
+void APCCombatPlayerController::OnShopRefreshStarted()
+{
+	ShopRequest_ShopRefresh(2);
+}
+
+void APCCombatPlayerController::OnSellUnitStarted()
+{
+	// ShopRequest_SellUnit()
+}
+
 void APCCombatPlayerController::LoadShopWidget()
 {
 	if (IsLocalController())
@@ -103,24 +122,18 @@ void APCCombatPlayerController::LoadShopWidget()
 		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget) return;
 
-		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-		{
-			if (auto PS = GetPlayerState<APCPlayerState>())
-			{
-				GS->GetShopManager()->UpdateShopSlots(PS);
-			}
-		}
+		ShopRequest_ShopRefresh(0);
 		
 		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
 		ShopWidget->OpenMenu();
 	}
 }
 
-void APCCombatPlayerController::ShopRequest_ShopRefresh()
+void APCCombatPlayerController::ShopRequest_ShopRefresh(float GoldCost)
 {
 	if (IsLocalController())
 	{
-		Server_ShopRefresh();
+		Server_ShopRefresh(GoldCost);
 	}
 }
 
@@ -132,21 +145,36 @@ void APCCombatPlayerController::ShopRequest_BuyXP()
 	}
 }
 
-void APCCombatPlayerController::ShopRequest_BuyUnit(FGameplayTag UnitTag, int32 SlotIndex)
+void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
 {
 	if (IsLocalController())
 	{
-		Server_BuyUnit(UnitTag, SlotIndex);
+		Server_BuyUnit(SlotIndex);
 	}
 }
 
-void APCCombatPlayerController::Server_ShopRefresh_Implementation()
+void APCCombatPlayerController::ShopRequest_SellUnit(FGameplayTag UnitTag)
+{
+	if (IsLocalController())
+	{
+		Server_SellUnit(UnitTag);
+	}
+}
+
+void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_ShopRefresh));
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_ShopRefresh;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.EventMagnitude = GoldCost;
+
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
 		}
 	}
 }
@@ -162,15 +190,39 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 	}
 }
 
-void APCCombatPlayerController::Server_BuyUnit_Implementation(FGameplayTag UnitTag, int32 SlotIndex)
+void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.EventMagnitude = static_cast<float>(SlotIndex);
+
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
 		}
 	}
+}
+
+void APCCombatPlayerController::Server_SellUnit_Implementation(FGameplayTag UnitTag)
+{
+	// if (auto PS = GetPlayerState<APCPlayerState>())
+	// {
+	// 	if (auto ASC = PS->GetAbilitySystemComponent())
+	// 	{
+	// 		FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+	// 		FGameplayEventData EventData;
+	// 		EventData.Instigator = PS;
+	// 		EventData.Target = PS;
+	// 		EventData.EventTag = GA_Tag;
+	//
+	// 		ASC->HandleGameplayEvent(GA_Tag, &EventData);
+	// 	}
+	// }
 }
 
 void APCCombatPlayerController::ClientCameraSet_Implementation(int32 BoardIndex, float BlendTime)

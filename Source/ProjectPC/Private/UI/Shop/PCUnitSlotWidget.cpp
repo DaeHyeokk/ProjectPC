@@ -27,10 +27,10 @@ bool UPCUnitSlotWidget::Initialize()
 
 void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 {
-	UnitTag = UnitData.Tag;
-	SlotIndex = NewSlotIndex;
 	if (!Text_UnitName || !Text_Cost || !Img_UnitThumbnail || !Img_CostBorder) return;
-
+	
+	SlotIndex = NewSlotIndex;
+	
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
 
@@ -77,11 +77,8 @@ void UPCUnitSlotWidget::OnClickedUnitSlot()
 {
 	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
 	{
-		PC->ShopRequest_BuyUnit(UnitTag, SlotIndex);
+		PC->ShopRequest_BuyUnit(SlotIndex);
 	}
 	
 	this->SetVisibility(ESlateVisibility::Hidden);
-
-	auto Transform = FTransform(FQuat::Identity, FVector(0.f, 0.f ,200.f));
-	GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, Transform);
 }

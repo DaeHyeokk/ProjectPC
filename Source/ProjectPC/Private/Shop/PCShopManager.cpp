@@ -3,12 +3,15 @@
 
 #include "Shop/PCShopManager.h"
 
-#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Engine/DataTable.h"
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
+
+class UPCUnitSpawnSubsystem;
 
 void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 {
@@ -55,7 +58,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 		Candidates[SelectedUnit].UnitCount -= 1;
 		NewShopSlots.Add(Candidates[SelectedUnit]);
 	}
-
+	
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
@@ -90,10 +93,12 @@ void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCS
 	// }
 }
 
-void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
 	if (!TargetPlayer) return;
 
-	// 구매 성공하면
+	auto Transform = FTransform(FQuat::Identity, FVector(0.f, 0.f ,200.f));
+	GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, Transform);
+
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }

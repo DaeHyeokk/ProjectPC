@@ -138,7 +138,7 @@ void UPCShopWidget::OnClickedReroll()
 {
 	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
 	{
-		PC->ShopRequest_ShopRefresh();
+		PC->ShopRequest_ShopRefresh(2);
 	}
 }
 

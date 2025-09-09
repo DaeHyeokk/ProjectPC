@@ -134,21 +134,25 @@ public:
 
 #pragma region Shop
 
+private:
+	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
+	TArray<FPCShopUnitData> ShopSlots;
+	
+	UFUNCTION()
+	void OnRep_ShopSlots();
+	
+	UFUNCTION(Client, Reliable)
+	void Client_ForceShopSlotsUpdate();
+
 public:
 	UPROPERTY()
 	TSet<int32> PurchasedSlots;
 	
-	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
-	TArray<FPCShopUnitData> ShopSlots;
-
 	DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 	FOnShopSlotsUpdated OnShopSlotsUpdated;
-
-	UFUNCTION()
-	void OnRep_ShopSlots();
-
+	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
-	
+
 #pragma endregion Shop
 };

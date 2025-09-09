@@ -3,10 +3,11 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
-#include "Net/UnrealNetwork.h"
+
 
 APCPlayerState::APCPlayerState()
 {
@@ -14,6 +15,9 @@ APCPlayerState::APCPlayerState()
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
 	PlayerAbilitySystemComponent->AddAttributeSetSubobject(CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet")));
 	PlayerAttributeSet = PlayerAbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
+
+	PlayerAbilitySystemComponent->SetIsReplicated(true);
+	PlayerAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 }
 
 void APCPlayerState::BeginPlay()
@@ -109,9 +113,20 @@ void APCPlayerState::OnRep_ShopSlots()
 	OnShopSlotsUpdated.Broadcast();
 }
 
+void APCPlayerState::Client_ForceShopSlotsUpdate_Implementation()
+{
+	OnRep_ShopSlots();
+}
+
 void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 {
-	ShopSlots = NewSlots;
+	if (ShopSlots == NewSlots)
+		Client_ForceShopSlotsUpdate();
+	else
+		ShopSlots = NewSlots;
+
+	if (HasAuthority())
+		OnRep_ShopSlots();
 }
 
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
@@ -122,6 +137,7 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
 	DOREPLIFETIME(APCPlayerState, bIsReady);
 	DOREPLIFETIME(APCPlayerState, LocalUserId);
 	DOREPLIFETIME(APCPlayerState, bIsLeader);

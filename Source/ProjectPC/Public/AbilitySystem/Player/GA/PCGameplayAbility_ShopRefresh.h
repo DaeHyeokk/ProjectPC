@@ -18,11 +18,10 @@ public:
 	UPCGameplayAbility_ShopRefresh();
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cost")
-	FGameplayTag CostTag;
+	float CostValue;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cost")
-	float CostValue;
+	FGameplayTag CostTag;
 	
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;

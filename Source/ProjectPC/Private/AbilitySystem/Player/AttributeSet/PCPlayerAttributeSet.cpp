@@ -32,7 +32,7 @@ void UPCPlayerAttributeSet::OnRep_PlayerHP(const FGameplayAttributeData& OldValu
 void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
-
+	
 	if (Data.EvaluatedData.Attribute == GetPlayerXPAttribute())
 	{
 		CheckLevelUp();
