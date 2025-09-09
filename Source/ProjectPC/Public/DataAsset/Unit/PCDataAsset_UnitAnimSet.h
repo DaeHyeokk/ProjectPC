@@ -18,7 +18,10 @@ struct FUnitLocomotionSet
 	TSoftObjectPtr<UBlendSpace1D> MovementBS; // Walk 1D BS
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSoftObjectPtr<UAnimSequence> Idle;
+	TSoftObjectPtr<UAnimSequence> NonCombatIdle;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UAnimSequence> CombatIdle;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UAnimSequence> JumpStart;
@@ -44,6 +47,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion")
 	FUnitLocomotionSet LocomotionSet;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages|Other")
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages|BasicAttack")
+	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
+	
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetAnimMontageByTag(const FGameplayTag& MontageTag) const;
+
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetRandomBasicAttackMontage() const;
 };

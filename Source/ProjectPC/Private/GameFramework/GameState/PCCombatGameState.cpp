@@ -122,6 +122,8 @@ void APCCombatGameState::OnRep_StageRunTime()
 void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APCCombatGameState, GameStateTag);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	
 }
@@ -182,4 +184,20 @@ TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cos
 
 	// Cost값이 1-5의 값이 아니면, 전체 배열 반환
 	return ShopUnitDataList;
+}
+
+// Game State Tag 변경은 서버에서만 실행
+void APCCombatGameState::SetGameStateTag(const FGameplayTag& InGameStateTag)
+{
+	if (HasAuthority() && GameStateTag != InGameStateTag)
+	{
+		GameStateTag = InGameStateTag;
+		OnRep_GameStateTag();	// 서버에서도 값이 변경됨을 알려야하므로 직접 호출
+	}
+}
+
+// 클라는 자동으로 호출
+void APCCombatGameState::OnRep_GameStateTag() const
+{
+	OnGameStateChanged.Broadcast(GameStateTag);
 }

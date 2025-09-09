@@ -6,7 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 
 void UPCUnitAnimInstance::PlayLevelStartMontage()
 {
@@ -50,6 +50,7 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Speed = CachedUnitCharacter->GetVelocity().Size2D();
 	bIsFalling = CachedMovementComp->IsFalling();
 	bIsAccelerating = CachedUnitCharacter->GetVelocity().SizeSquared2D() > 0.1f;
+	bIsCombatActive = CachedUnitCharacter->IsCombatActive();
 	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedUnitCharacter->GetVelocity(), CachedUnitCharacter->GetActorRotation());
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
 }
@@ -66,7 +67,8 @@ void UPCUnitAnimInstance::SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet)
 void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 {
 	MovementBS = AnimSet->LocomotionSet.MovementBS.LoadSynchronous();
-	Idle = AnimSet->LocomotionSet.Idle.LoadSynchronous();
+	NonCombatIdle = AnimSet->LocomotionSet.NonCombatIdle.LoadSynchronous();
+	CombatIdle = AnimSet->LocomotionSet.CombatIdle.LoadSynchronous();
 	JumpStart = AnimSet->LocomotionSet.JumpStart.LoadSynchronous();
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();

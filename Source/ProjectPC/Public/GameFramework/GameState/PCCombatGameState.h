@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
@@ -238,4 +239,24 @@ public:
 	FORCEINLINE const FSpawnSubsystemConfig& GetSpawnConfig() const { return SpawnConfig; }
 	
 #pragma endregion Unit
+
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatStateChanged, const FGameplayTag&);
+	FOnCombatStateChanged OnGameStateChanged;
+	
+	void SetGameStateTag(const FGameplayTag& InGameStateTag);
+	UFUNCTION(BlueprintPure)
+	const FGameplayTag& GetGameStateTag() const { return GameStateTag; }
+
+protected:
+	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)
+	FGameplayTag GameStateTag;
+
+	UFUNCTION()
+	void OnRep_GameStateTag() const;
+
+	// TEST CODE //
+public:
+	UFUNCTION(BlueprintCallable)
+	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 };

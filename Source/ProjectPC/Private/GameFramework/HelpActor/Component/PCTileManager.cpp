@@ -3,7 +3,8 @@
 
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "IPropertyTable.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
@@ -11,6 +12,11 @@
 UPCTileManager::UPCTileManager()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+APCCombatBoard* UPCTileManager::GetCombatBoard() const
+{
+	return CachedCombatBoard.IsValid() ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
 }
 
 bool UPCTileManager::IsInRange(int32 Y, int32 X) const
@@ -99,6 +105,7 @@ FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) co
 			}
 		}
 	}
+	
 	return FIntPoint::NoneValue;
 	
 }
@@ -287,12 +294,6 @@ bool UPCTileManager::IsValidTile(int32 Y, int32 X, int32& OutIndex) const
 	return Field.IsValidIndex(OutIndex);
 	
 }
-
-APCCombatBoard* UPCTileManager::GetCombatBoard() const
-{
-	return CachedCombatBoard.IsValid() ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
-}
-
 
 int32 UPCTileManager::MirrorBenchIndex(int32 Index) const
 {

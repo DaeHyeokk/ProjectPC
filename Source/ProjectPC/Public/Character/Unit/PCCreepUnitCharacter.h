@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "PCCreepUnitCharacter.generated.h"
@@ -31,4 +31,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
+
+	// 전투 관련 //
 };

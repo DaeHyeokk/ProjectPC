@@ -1,15 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -34,6 +37,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
+	GetCharacterMovement()->MaxWalkSpeed = 200.f;
 
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
@@ -58,10 +62,14 @@ UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemCompone
 	return nullptr;
 }
 
-const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet() const
+const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet()
 {
-	return Cast<UPCUnitAttributeSet>(GetUnitAbilitySystemComponent()->GetAttributeSet(UPCUnitAttributeSet::StaticClass()));
-	//return GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	if (!UnitAttributeSet)
+	{
+		UnitAttributeSet = GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
+	}
+
+	return UnitAttributeSet.Get();
 }
 
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
@@ -83,16 +91,6 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 {
 	const uint8 Clamped = static_cast<uint8>(FMath::Clamp(TeamIndex, 0, 254));
 	return FGenericTeamId(Clamped);
-}
-
-void APCBaseUnitCharacter::SetOnCombatBoard(APCCombatBoard* InCombatBoardIndex)
-{
-	if (HasAuthority()) OnCombatBoard = InCombatBoardIndex;
-}
-
-APCCombatBoard* APCBaseUnitCharacter::GetOnCombatBoard() const
-{
-	return OnCombatBoard.Get();
 }
 
 void APCBaseUnitCharacter::BeginPlay()
@@ -125,6 +123,8 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 
 	DOREPLIFETIME_CONDITION_NOTIFY(APCBaseUnitCharacter, UnitTag, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatActive);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -204,4 +204,143 @@ void APCBaseUnitCharacter::SetAnimSetData() const
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UnitAnimSet Nullptr"));
 	}
+}
+
+void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	if (bIsOnField != IsOnField)
+	{
+		bIsOnField = IsOnField;
+		
+		// Listen Server 일 경우 OnRep 직접 호출
+		if (GetNetMode() == NM_ListenServer)
+			OnRep_IsOnField();
+	}
+}
+
+void APCBaseUnitCharacter::OnRep_IsOnField()
+{
+	if (bIsOnField)
+	{
+		if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = GetUnitAnimSetDataAsset())
+		{
+			if (UAnimMontage* Montage = UnitAnimSet->GetAnimMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart))
+			{
+				if (Montage)
+					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
+			}
+		}
+
+		BindCombatState();
+	}
+	else
+	{
+		UnbindCombatState();
+	}
+}
+
+void APCBaseUnitCharacter::BindCombatState()
+{
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+		
+		GameStateChangedHandle = CombatGS->OnGameStateChanged.AddUObject(
+			this, &ThisClass::HandleGameStateChanged);
+
+		HandleGameStateChanged(CombatGS->GetGameStateTag());
+	}
+
+}
+
+void APCBaseUnitCharacter::UnbindCombatState()
+{
+	if (APCCombatGameState* CombatGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			CombatGS->OnGameStateChanged.Remove(GameStateChangedHandle);
+			GameStateChangedHandle.Reset();
+		}
+	}
+
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			FGameplayTagContainer CurrentTags;
+			ASC->GetOwnedGameplayTags(CurrentTags);
+
+			// Game_State 하위 태그 제거
+			for (const FGameplayTag& Tag : CurrentTags)
+			{
+				if (Tag.MatchesTag(GameStateTags::Game_State))
+					ASC->RemoveReplicatedLooseGameplayTag(Tag);
+			}
+		}
+	}
+}
+
+void APCBaseUnitCharacter::HandleGameStateChanged(const FGameplayTag& GameStateTag)
+{
+	if (HasAuthority())
+	{
+		if (bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_NonCombat))
+			bIsCombatActive = false;
+		else if (!bIsCombatActive && GameStateTag.MatchesTag(GameStateTags::Game_State_Combat))
+			bIsCombatActive = true;
+
+		if (HasAuthority())
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer CurrentTags;
+				ASC->GetOwnedGameplayTags(CurrentTags);
+
+				// Game_State 하위 태그 제거
+				for (const FGameplayTag& Tag : CurrentTags)
+				{
+					if (Tag.MatchesTag(GameStateTags::Game_State))
+						ASC->RemoveLooseGameplayTag(Tag);
+				}
+				// 새로 들어온 Game_State 태그 부여
+				ASC->AddLooseGameplayTag(GameStateTag);
+			}
+		}
+	}
+}
+
+void APCBaseUnitCharacter::OnRep_IsCombatActive() const
+{
+	// 플레이어 마우스 입력 충돌 비활성화 같은 로직들
+}
+
+void APCBaseUnitCharacter::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		ASC->GetOwnedGameplayTags(TagContainer);
+	}
+}
+
+bool APCBaseUnitCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasMatchingGameplayTag(TagToCheck);
+}
+
+bool APCBaseUnitCharacter::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAllMatchingGameplayTags(TagContainer);
+}
+
+bool APCBaseUnitCharacter::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && ASC->HasAnyMatchingGameplayTags(TagContainer);
 }

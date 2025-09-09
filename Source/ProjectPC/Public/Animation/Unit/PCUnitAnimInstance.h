@@ -43,13 +43,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="AnimSlot")
 	bool bFullBody = false;
 
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bIsCombatActive;
+	
 	UFUNCTION(BlueprintCallable)
 	void PlayLevelStartMontage();
 	
 protected:
 	virtual void NativeBeginPlay() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
+	
 private:
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedUnitCharacter;
 	TWeakObjectPtr<UCharacterMovementComponent> CachedMovementComp;
@@ -61,7 +64,10 @@ private:
 	TObjectPtr<UBlendSpace1D> MovementBS;
 
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
-	TObjectPtr<UAnimSequence> Idle;
+	TObjectPtr<UAnimSequence> NonCombatIdle;
+	
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> CombatIdle;
 	
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> JumpStart;

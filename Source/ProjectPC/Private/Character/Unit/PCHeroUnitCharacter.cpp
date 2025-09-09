@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/UnitCharacter/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
@@ -9,7 +9,7 @@
 #include "Components/WidgetComponent.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "Net/UnrealNetwork.h"
-#include "UI/Unit/PCUnitStatusBarWidget.h"
+#include "UI/Unit/PCHeroStatusBarWidget.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -23,8 +23,9 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 		HeroUnitAbilitySystemComponent->SetIsReplicated(true);
 		HeroUnitAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-		UPCHeroUnitAttributeSet* HeroUnitAttributeSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
-		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroUnitAttributeSet);
+		UPCHeroUnitAttributeSet* HeroAttrSet = CreateDefaultSubobject<UPCHeroUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
+		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroAttrSet);
+		HeroUnitAttributeSet = HeroUnitAbilitySystemComponent->GetSet<UPCHeroUnitAttributeSet>();
 	}
 }
 
@@ -42,6 +43,18 @@ void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent()
 {
 	return HeroUnitAbilitySystemComponent;
+}
+
+const UPCHeroUnitAttributeSet* APCHeroUnitCharacter::GetHeroUnitAttributeSet()
+{
+	if (!HeroUnitAttributeSet)
+	{
+		if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			HeroUnitAttributeSet = ASC->GetSet<UPCHeroUnitAttributeSet>();
+		}
+	}
+	return HeroUnitAttributeSet;
 }
 
 UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemComponent() const
@@ -62,9 +75,9 @@ void APCHeroUnitCharacter::LevelUp()
 
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
-	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
-		UpdateStatusBarUI();
+		OnRep_HeroLevel();
 }
 
 void APCHeroUnitCharacter::UpdateStatusBarUI() const
@@ -91,7 +104,7 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
-void APCHeroUnitCharacter::OnRep_HeroLevel()
+void APCHeroUnitCharacter::OnRep_HeroLevel() const
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
 	UpdateStatusBarUI();
@@ -105,9 +118,9 @@ void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 	
 	HeroLevel = FMath::Clamp(Level, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
-	// Listen Server인 경우 UI 갱신 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
+	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
-		UpdateStatusBarUI();
+		OnRep_HeroLevel();
 }
 
 void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)

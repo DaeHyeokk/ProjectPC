@@ -180,7 +180,6 @@ public:
 	
 
 	// 유틸 함수
-
 	UFUNCTION(BlueprintCallable, category = "Util")
 	APCCombatBoard* GetCombatBoard() const;
 	
