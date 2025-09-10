@@ -18,7 +18,7 @@ UBTTask_FindTarget::UBTTask_FindTarget()
 	NodeName = TEXT("Find Target In Attack Range");
 }
 
-static bool IsHostile(const AActor* A, const AActor* B)
+static bool IsHostile2(const AActor* A, const AActor* B)
 {
 	const FGenericTeamId TA = FGenericTeamId::GetTeamIdentifier(A);
 	const FGenericTeamId TB = FGenericTeamId::GetTeamIdentifier(B);
@@ -77,7 +77,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		APCBaseUnitCharacter* HereUnit = Board->GetUnitAt(HerePoint.Y, HerePoint.X);
 
 		// 현재 유닛이 유효하고, 자기 자신이 아니며, 사거리 내에 있고, 적일 경우
-		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && IsHostile(OwnerUnit, HereUnit))
+		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && IsHostile2(OwnerUnit, HereUnit))
 		{
 			switch (TargetSearchMode)
 			{

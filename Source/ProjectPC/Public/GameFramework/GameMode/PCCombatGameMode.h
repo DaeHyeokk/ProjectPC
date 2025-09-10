@@ -105,7 +105,6 @@ private:
 	void MovePlayersToBoardsAndCameraSet();
 	void SetCarouselCameraForAllPlayers();
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;
-	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
 	// 인접 스텝 조회
 	const FRoundStep* PeekPrevStep() const;

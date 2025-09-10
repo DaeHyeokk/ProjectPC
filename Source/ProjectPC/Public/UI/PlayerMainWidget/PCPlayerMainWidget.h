@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class APCPlayerState;
 /**
  * 
  */
@@ -24,13 +25,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowWidget();
 
-	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCGameStateWidget> W_GameStateWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCShopWidget> W_ShopWidget;
-	
-	
 };

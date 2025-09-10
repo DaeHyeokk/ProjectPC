@@ -13,7 +13,6 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "BaseGameplayTags.h"
-#include "Shop/PCShopManager.h"
 #include "UI/Shop/PCShopWidget.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -59,8 +58,12 @@ void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetHideCursorDuringCapture(false);
+	SetInputMode(InputMode);
+	
 	EnsureMainHUDCreated();
-		
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -127,7 +130,7 @@ void APCCombatPlayerController::LoadShopWidget()
 	if (IsLocalController())
 	{
 		if (!ShopWidgetClass) return;
-	
+		
 		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget) return;
 

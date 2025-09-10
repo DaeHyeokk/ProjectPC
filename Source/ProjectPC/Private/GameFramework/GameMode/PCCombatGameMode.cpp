@@ -218,7 +218,6 @@ void APCCombatGameMode::BeginCurrentStep()
 	}
 
 	const FString StageName = FString::Printf(TEXT("%d-%d"), State.StageIdx+1, State.RoundIdx+1);
-	BroadcastStageToClients(Step.StageType, StageName, Duration);
 
 	// 타이머
 	GetWorldTimerManager().ClearTimer(RoundTimer);
@@ -507,13 +506,6 @@ int32 APCCombatGameMode::ResolveBoardIndex(const APCPlayerState* PlayerState) co
 	if (!PlayerState || CombatBoard.Num() == 0)
 		return 0;
 	return FMath::Clamp(PlayerState->SeatIndex % CombatBoard.Num(), 0, CombatBoard.Num()-1);
-}
-
-void APCCombatGameMode::BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds)
-{
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		if (auto* PlayerController = Cast<APCCombatPlayerController>(*It))
-			PlayerController->ClientStageChanged(Stage, StageName, Seconds);
 }
 
 const FRoundStep* APCCombatGameMode::PeekPrevStep() const

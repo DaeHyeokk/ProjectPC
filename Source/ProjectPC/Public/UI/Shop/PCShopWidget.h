@@ -27,7 +27,7 @@ protected:
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
-	TSubclassOf<class UUserWidget> UnitSlotWidgetClass;
+	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
 	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 
@@ -35,12 +35,15 @@ protected:
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* ShopBox;
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_BuyXP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_Reroll;
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* GoldBalance;
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UWidgetSwitcher* WidgetSwitcher;
 

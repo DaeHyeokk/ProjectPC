@@ -28,7 +28,7 @@ bool UPCShopWidget::Initialize()
 	return true;
 }
 
-void UPCShopWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
+void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
 
@@ -56,7 +56,7 @@ void UPCShopWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 
 void UPCShopWidget::OpenMenu()
 {
-	this->AddToViewport();
+	this->AddToViewport(100);
 }
 
 void UPCShopWidget::CloseMenu()
@@ -181,6 +181,20 @@ void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 
 void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 {
-	if (!GoldBalance) return;
+	if (!GoldBalance || !ShopBox) return;
+	
+	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
 	GoldBalance->SetText(FText::AsNumber(static_cast<int32>(Data.NewValue)));
+	
+	// 골드가 바뀔 때마다 상점 슬롯도 업데이트 (바뀐 골드로 구매 불가능한 유닛 판별)
+	for (int32 i = 0; i < ShopBox->GetChildrenCount(); ++i)
+	{
+		if (auto UnitSlotWidget = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(i)))
+		{
+			const auto& ShopSlots = PS->GetShopSlots();
+			UnitSlotWidget->Setup(ShopSlots[i], i);
+		}
+	}
 }

@@ -3,15 +3,15 @@
 
 #include "UI/Shop/PCUnitSlotWidget.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
-#include "BaseGameplayTags.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 bool UPCUnitSlotWidget::Initialize()
@@ -70,6 +70,18 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 	if (BorderTexture)
 	{
 		Img_CostBorder->SetBrushFromTexture(BorderTexture);
+	}
+
+	if (auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>())
+	{
+		if (auto AttributeSet = PS->GetAttributeSet())
+		{
+			if (static_cast<int32>(AttributeSet->GetPlayerGold()) < UnitData.UnitCost)
+			{
+				Btn_UnitSlot->SetIsEnabled(false);
+				SetRenderOpacity(0.3f);
+			}
+		}
 	}
 }
 
