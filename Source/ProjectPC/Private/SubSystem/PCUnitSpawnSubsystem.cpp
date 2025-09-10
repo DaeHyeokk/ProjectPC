@@ -3,13 +3,16 @@
 
 #include "ProjectPC/Public/GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
+#include "Animation/Unit/PCPreviewHeroAnimInstance.h"
 #include "DataAsset/Unit/PCDataAsset_UnitDefinitionReg.h"
 #include "Character/Unit/PCCreepUnitCharacter.h"
 #include "Character/Unit/PCAppearanceChangedHeroCharacter.h"
 #include "Character/Unit/PCAppearanceFixedHeroCharacter.h"
+#include "Character/Unit/PCPreviewHeroActor.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "Controller/Unit/PCUnitAIController.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -22,6 +25,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultCreepStatusBarWidgetClass =SpawnConfig.CreepStatusBarWidgetClass;
 	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass;
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass;
+	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass;
 }
 
 void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
@@ -170,4 +174,48 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataServerOnly(APCBaseUnitCharacter* 
 		Unit->AIControllerClass = DefaultAIControllerClass;
 
 	Unit->AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+}
+
+APCPreviewHeroActor* UPCUnitSpawnSubsystem::SpawnPreviewHeroBySourceHero(APCHeroUnitCharacter* SourceHero,
+	const FTransform& Transform, AActor* InOwner, APawn* InInstigator,
+	ESpawnActorCollisionHandlingMethod HandlingMethod) const
+{
+	// 프리뷰 유닛 스폰은 클라에서만, Listen Server 환경 고려 NM_DedicatedServer로 판별
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_DedicatedServer)
+		return nullptr;
+
+	const TSubclassOf<APCPreviewHeroActor> SpawnClass = DefaultPreviewHeroClass;
+	if (!SpawnClass)
+		return nullptr;
+	if (!SourceHero)
+		return nullptr;
+	
+	const USkeletalMeshComponent* SourceMesh = SourceHero->GetMesh();
+	const UPCDataAsset_UnitDefinition* Definition = ResolveDefinition(SourceHero->GetUnitTag());
+	if (!SourceMesh || !Definition)
+		return nullptr;
+
+	const TSubclassOf<UUserWidget>& SourceStatusBarWidgetClass = ResolveStatusBarWidgetClass(Definition);
+	const TSubclassOf<UAnimInstance>& PreviewHeroAnimBP = Definition->PreviewHeroAnimBP;
+	
+	if (!SourceStatusBarWidgetClass || !PreviewHeroAnimBP)
+		return nullptr;
+	
+	APCPreviewHeroActor* PreviewHero = GetWorld()->SpawnActorDeferred<APCPreviewHeroActor>(
+		SpawnClass,
+		Transform,
+		InOwner,
+		InInstigator,
+		HandlingMethod);
+
+	if (!PreviewHero)
+		return nullptr;
+
+	PreviewHero->InitializeFromSourceHero(SourceHero, PreviewHeroAnimBP, SourceStatusBarWidgetClass);
+	
+	UGameplayStatics::FinishSpawningActor(PreviewHero, Transform);
+	
+	PreviewHero->SetActorHiddenInGame(false);
+
+	return PreviewHero;
 }

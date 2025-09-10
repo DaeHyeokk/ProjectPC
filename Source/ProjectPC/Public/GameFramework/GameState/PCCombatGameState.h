@@ -40,6 +40,9 @@ struct FSpawnSubsystemConfig
 	// == 공통 AI Controller (전 유닛 공유) ==
 	UPROPERTY(EditAnywhere, Category="Spawner|AI")
 	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
+
+	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
+	TSubclassOf<class APCPreviewHeroActor> DefaultPreviewHeroClass;
 };
 
 USTRUCT(BlueprintType)

@@ -11,6 +11,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "PCBaseUnitCharacter.generated.h"
 
+class UPCDataAsset_UnitAbilityConfig;
 class UPCUnitStatusBarWidget;
 class UWidgetComponent;
 class UGameplayAbility;
@@ -30,6 +31,7 @@ public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
+	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 
 	UPROPERTY(Transient)
@@ -51,6 +53,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
 
+	FORCEINLINE const UWidgetComponent* GetStatusBarComponent() const { return StatusBarComp; }
+	FORCEINLINE FName GetStatusBarSocketName() const { return StatusBarSocketName; }
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -89,6 +94,7 @@ public:
 	// Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetTeamIndex(const int32 InTeamID) { if (HasAuthority()) TeamIndex = InTeamID; }
+
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	int32 GetTeamIndex() const { return TeamIndex; }
 
@@ -96,6 +102,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetOnCombatBoard(APCCombatBoard* InCombatBoard) { if (HasAuthority()) OnCombatBoard = InCombatBoard; }
+
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	FORCEINLINE APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
 
@@ -107,6 +114,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsCombatActive() const { return bIsCombatActive; }
+
+	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
+	void SetUnitLocalHidden(bool bIsHidden);
 	
 protected:
 	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;

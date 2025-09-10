@@ -77,6 +77,11 @@ UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAnimSetData() : nullptr;
 }
 
+const UPCDataAsset_UnitAbilityConfig* APCBaseUnitCharacter::GetUnitAbilityConfigDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAbilityConfigData() : nullptr;
+}
+
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
 {
 	return nullptr;
@@ -215,6 +220,18 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 		// Listen Server 일 경우 OnRep 직접 호출
 		if (GetNetMode() == NM_ListenServer)
 			OnRep_IsOnField();
+	}
+}
+
+void APCBaseUnitCharacter::SetUnitLocalHidden(bool bIsHidden)
+{
+	// 클라에서만 실행 (Listen Server 포함)
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+
+	if (GetMesh())
+	{
+		GetMesh()->SetHiddenInGame(bIsHidden);
 	}
 }
 

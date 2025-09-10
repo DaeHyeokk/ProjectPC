@@ -79,6 +79,9 @@ namespace GameplayEffectTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange, "GE.Class.HealthChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange, "GE.Class.ManaChange")
+
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
+	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Hero, "GE.Class.GrantUnitTypeTag.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Creep, "GE.Class.GrantUnitTypeTag.Creep")
 
@@ -94,6 +97,8 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_CritChanceChange, "GE.Caller.CritChangeChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_LifeStealChange, "GE.Caller.LifeStealChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_SpellVampChange, "GE.Caller.SpellVampChange")
+	
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Cooldown_BasicAttack, "GE.Caller.Cooldown.BasicAttack")
 }
 
 namespace PlayerGameplayTags

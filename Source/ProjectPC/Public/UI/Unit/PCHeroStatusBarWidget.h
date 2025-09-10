@@ -30,6 +30,9 @@ public:
 	UFUNCTION()
 	void SetVariantByLevel(int32 Level);
 
+	UFUNCTION()
+	void CopyVariantBySourceStatusBar(const UPCHeroStatusBarWidget* SourceStatusBar) const;
+	
 protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> StatusSwitcher;

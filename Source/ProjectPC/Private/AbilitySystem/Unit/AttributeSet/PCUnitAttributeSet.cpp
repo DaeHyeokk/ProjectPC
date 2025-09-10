@@ -54,15 +54,11 @@ void UPCUnitAttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeDa
 
 void UPCUnitAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Client OnRep_MaxHealth: Old=%.1f New=%.1f"),
-	OldMaxHealth.GetCurrentValue(), MaxHealth.GetCurrentValue());
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, MaxHealth, OldMaxHealth);
 }
 
 void UPCUnitAttributeSet::OnRep_CurrentHealth(const FGameplayAttributeData& OldCurrentHealth)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Client OnRep_CurrentHealth: Old=%.1f New=%.1f"),
-	OldCurrentHealth.GetCurrentValue(), CurrentHealth.GetCurrentValue());
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, CurrentHealth, OldCurrentHealth);
 }
 

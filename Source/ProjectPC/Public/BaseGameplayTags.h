@@ -80,6 +80,9 @@ namespace GameplayEffectTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Creep)
 
@@ -95,6 +98,8 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_CritChanceChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_LifeStealChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_SpellVampChange)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Cooldown_BasicAttack)
 }
 
 namespace PlayerGameplayTags

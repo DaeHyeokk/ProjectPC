@@ -37,4 +37,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UPCDataAsset_BaseUnitData> UnitDataAsset;
+
+	// Creep이 아닌 Hero 타입으로 지정할 경우 보여지는 속성 (이동할 때 나타나는 Preview Hero Unit의 AnimBP)
+	UPROPERTY(EditDefaultsOnly, Category="Preview AnimBP", meta=(EditCondition="ClassType!=EUnitClassType::Creep"))
+	TSubclassOf<UAnimInstance> PreviewHeroAnimBP;
 };

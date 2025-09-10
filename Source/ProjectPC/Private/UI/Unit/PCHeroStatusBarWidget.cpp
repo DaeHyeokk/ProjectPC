@@ -29,6 +29,27 @@ void UPCHeroStatusBarWidget::SetVariantByLevel(int32 Level)
 	EnsureActiveVariantInitialized();
 }
 
+void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBarWidget* SourceStatusBar) const
+{
+	if (!SourceStatusBar || !StatusSwitcher || !SourceStatusBar->StatusSwitcher)
+		return;
+
+	const int32 SrcIndex = SourceStatusBar->StatusSwitcher->GetActiveWidgetIndex();
+	StatusSwitcher->SetActiveWidgetIndex(SrcIndex);
+	
+	if (UPCUnitStatusBarWidget* ActiveStatusBar = Cast<UPCUnitStatusBarWidget>(StatusSwitcher->GetActiveWidget()))
+	{
+		const UAbilitySystemComponent* SrcASC = SourceStatusBar->ASC.Get();
+
+		const float HP = SrcASC->GetNumericAttribute(SourceStatusBar->HealthAttr);
+		const float MaxHP = SrcASC->GetNumericAttribute(SourceStatusBar->MaxHealthAttr);
+		const float Mana = SrcASC->GetNumericAttribute(SourceStatusBar->ManaAttr);
+		const float MaxMana = SrcASC->GetNumericAttribute(SourceStatusBar->MaxManaAttr);
+
+		ActiveStatusBar->SetInstant(HP, MaxHP, Mana, MaxMana);
+	}
+}
+
 void UPCHeroStatusBarWidget::EnsureActiveVariantInitialized()
 {
 	if (!StatusSwitcher)

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AttributeSet.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_UnitAbilityConfig.generated.h"
@@ -16,6 +17,9 @@ struct FAbilityConfig
 
 	UPROPERTY(EditDefaultsOnly, Category="Cost")
 	TSoftClassPtr<UGameplayEffect> CostGEClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Cost")
+	FGameplayAttribute CostGameplayAttribute;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Cost")
 	FGameplayTag CostCallerTag;
@@ -36,6 +40,9 @@ class PROJECTPC_API UPCDataAsset_UnitAbilityConfig : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+	bool TryFindAbilityConfigByTag(const FGameplayTag& AbilityTag, FAbilityConfig& OutConfig) const;
+	
+protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Abilities")
 	TMap<FGameplayTag, FAbilityConfig> AbilityConfigMap;
 	
