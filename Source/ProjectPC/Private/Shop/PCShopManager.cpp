@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 
 class UPCUnitSpawnSubsystem;
@@ -17,7 +19,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 {
 	if (!TargetPlayer) return;
 	
-	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 	
 	const auto& ShopSlots = TargetPlayer->GetShopSlots();
@@ -79,26 +81,21 @@ void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCS
 			}
 		}
 	}
-	
-	// for (const auto& OldSlot : OldSlots)
-	// {
-	// 	for (auto& Unit : GS->GetShopUnitDataListByCost(OldSlot.UnitCost))
-	// 	{
-	// 		if (Unit.UnitName == OldSlot.UnitName)
-	// 		{
-	// 			Unit.UnitCount += 1;
-	// 			break;
-	// 		}
-	// 	}
-	// }
 }
 
-void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex)
 {
 	if (!TargetPlayer) return;
 
-	auto Transform = FTransform(FQuat::Identity, FVector(0.f, 0.f ,200.f));
-	GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, Transform);
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+
+	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+	if (!Board) return;
+	
+	auto Transform = FTransform(FQuat::Identity, FVector::ZeroVector);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, Transform, TargetPlayer->SeatIndex);
+	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
 
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }

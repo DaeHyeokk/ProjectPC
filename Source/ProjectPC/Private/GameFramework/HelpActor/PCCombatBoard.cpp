@@ -61,8 +61,8 @@ void APCCombatBoard::BeginPlay()
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
+		TileManager->DebugLogField(true,true,TEXT("TileManger"));
 	}
-	
 }
 
 #if WITH_EDITOR
@@ -86,6 +86,21 @@ void APCCombatBoard::RebuildTilesFromMarkers()
 {
 	CollectTileMarkers();
 	BuildHISM();
+}
+
+int32 APCCombatBoard::GetFirstEmptyBenchIndex() const
+{
+	// for (int32 Index = 0; Index < TileManager->BenchSize; ++Index)
+		// 헤더에는 TileManager의 BenchSize가 9지만, 런타임에 18이 되므로 임시로 하드 코딩
+	for (int32 Index = 0; Index < 9; ++Index)
+	{
+		if (TileManager->Bench[Index].IsEmpty())
+		{
+			return Index;
+		}
+	}
+
+	return -1;
 }
 
 static int32 NameSuffixToIndex(const FString& Name, const FString& Prefix)

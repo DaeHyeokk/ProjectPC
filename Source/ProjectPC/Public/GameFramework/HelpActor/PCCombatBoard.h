@@ -154,6 +154,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RebuildTilesFromMarkers();
 
+	// 비어있는 벤치 중 가장 왼쪽의 인덱스를 받아오는 함수
+	int32 GetFirstEmptyBenchIndex() const;
 
 protected:
 	// 마커 수집

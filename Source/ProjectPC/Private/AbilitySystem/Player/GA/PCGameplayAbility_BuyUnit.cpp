@@ -9,6 +9,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -60,13 +61,6 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 	{
 		SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
 		
-		if (!PS->GetShopSlots().IsValidIndex(SlotIndex))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("InValid SlotIndex"));
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-		
 		UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
 		UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 		
@@ -82,7 +76,13 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 				
 				if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
 				{
-					GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag);
+					if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+					{
+						auto BenchIndex = Board->GetFirstEmptyBenchIndex();
+						UE_LOG(LogTemp, Warning, TEXT("Index : %d"), BenchIndex);
+						
+						GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
+					}
 				}
 			}
 		}

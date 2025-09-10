@@ -26,11 +26,9 @@ protected:
 public:
 	void Setup(FPCShopUnitData UnitData, int32 NewSlotIndex);
 
-	UFUNCTION()
-	void OnClickedUnitSlot();
-	
 protected:
 	int32 SlotIndex;
+	int32 UnitCost;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_UnitSlot;
@@ -55,4 +53,11 @@ protected:
 	UTexture2D* Cost4Border;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost5Border;
+	
+public:
+	UFUNCTION()
+	void SetupButton();
+	
+	UFUNCTION()
+	void OnClickedUnitSlot();
 };

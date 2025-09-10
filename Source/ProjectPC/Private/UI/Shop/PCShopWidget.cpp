@@ -193,8 +193,7 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 	{
 		if (auto UnitSlotWidget = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(i)))
 		{
-			const auto& ShopSlots = PS->GetShopSlots();
-			UnitSlotWidget->Setup(ShopSlots[i], i);
+			UnitSlotWidget->SetupButton();
 		}
 	}
 }

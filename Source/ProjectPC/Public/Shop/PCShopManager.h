@@ -24,7 +24,7 @@ private:
 public:
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
 	void ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
-	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag);
+	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
 
 private:
 	// 누적합을 통한 확률 구현
