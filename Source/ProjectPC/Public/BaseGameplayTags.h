@@ -19,6 +19,7 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 
 	// ==== Unit Attack Types ====
@@ -49,10 +50,16 @@ namespace UnitGameplayTags
 
 	// ==== Unit State Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Alive)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Death)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
+
+	// ==== Unit Cooldown Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
 	
 	// ==== Unit Anim Montage Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
+
+	// ==== Unit GameplayEvent Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)
 }
 
 namespace SynergyGameplayTags
@@ -78,13 +85,12 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Heal_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Damage_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Gain_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Spend_Instant)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
-	
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Hero)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Creep)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_CurrentHealthChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_MaxHealthChange)

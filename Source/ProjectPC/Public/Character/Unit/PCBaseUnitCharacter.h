@@ -29,13 +29,9 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
-	const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
-
-	UPROPERTY(Transient)
-	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet = nullptr;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
@@ -141,6 +137,8 @@ protected:
 
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
+	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
 	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;

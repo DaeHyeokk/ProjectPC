@@ -5,7 +5,6 @@
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
-#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 
 UPCBaseUnitGameplayAbility::UPCBaseUnitGameplayAbility()
@@ -14,6 +13,8 @@ UPCBaseUnitGameplayAbility::UPCBaseUnitGameplayAbility()
 	InstancingPolicy    = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	ReplicationPolicy   = EGameplayAbilityReplicationPolicy::ReplicateNo;
 	bReplicateInputDirectly = false;
+
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
 }
 
 // void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,

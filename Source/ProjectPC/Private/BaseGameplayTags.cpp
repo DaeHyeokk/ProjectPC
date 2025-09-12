@@ -18,6 +18,7 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero, "Unit.Type.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
 
 	// ==== Unit Attack Types
@@ -48,10 +49,16 @@ namespace UnitGameplayTags
 
 	// ==== Unit State Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Alive, "Unit.State.Combat.Alive")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Death, "Unit.State.Combat.Death")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Dead, "Unit.State.Combat.Dead")
+	
+	// ==== Unit Cooldown Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Cooldown_BasicAttack, "Unit.Cooldown.BasicAttack")
 	
 	// ==== Unit Anim Montage Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_LevelStart, "Unit.Montage.LevelStart")
+
+	// ==== Unit GameplayEvent Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_AttackCommit, "Unit.Event.AttackCommit")
 }
 
 namespace SynergyGameplayTags
@@ -77,13 +84,12 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange, "GE.Class.HealthChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange, "GE.Class.ManaChange")
-
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Heal_Instant, "GE.Class.Health.Heal.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Damage_Instant, "GE.Class.Health.Damage.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Gain_Instant, "GE.Class.Mana.Gain.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Spend_Instant, "GE.Class.Mana.Spend.Instant")
 	
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Hero, "GE.Class.GrantUnitTypeTag.Hero")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_GrantUnitTypeTag_Creep, "GE.Class.GrantUnitTypeTag.Creep")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
 
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_CurrentHealthChange, "GE.Caller.CurrentHealthChange")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_MaxHealthChange, "GE.Caller.MaxHealthChange")

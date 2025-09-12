@@ -3,74 +3,49 @@
 
 #include "AbilitySystem/Unit/GA/PCUnitBasicAttackGameplayAbility.h"
 
-#include "AbilitySystemComponent.h"
-#include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
-#include "Character/Unit/PCBaseUnitCharacter.h"
+#include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
-// bool UPCUnitBasicAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
-// 	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
-// {
-// 	if (!ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
-// 		return false;
-//
-// 	// Cost Gameplay Effect Class가 None일 경우 True
-// 	if (!CostGameplayEffectClass)
-// 		return true;
-//
-// 	const UPCUnitAttributeSet* UnitAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCUnitAttributeSet>();
-// 	if (!UnitAttributeSet)
-// 		return false;
-// 	
-// 	const float CurrentValue = CostGameplayAttribute.GetGameplayAttributeData(UnitAttributeSet)->GetCurrentValue();
-// 	//return CurrentValue >= CostMagnitude;
-// 	return true;
-// }
-//
-// void UPCUnitBasicAttackGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
-// 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
-// {
-// 	if (!CostGameplayEffectClass || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
-// 	{
-// 		return;
-// 	}
-//
-// 	FGameplayEffectSpecHandle CostSpec = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
-// 	if (CostSpec.IsValid())
-// 	{
-// 		CostSpec.Data->SetSetByCallerMagnitude(CostEffectCallerTag, -CostMagnitude);
-// 		(void)ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, CostSpec);
-// 	}
-// }
 
-void UPCUnitBasicAttackGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo,
-                                                      const FGameplayAbilitySpec& Spec)
+UPCUnitBasicAttackGameplayAbility::UPCUnitBasicAttackGameplayAbility()
 {
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Action_Attack_Basic);
+
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_Action_Attack_Basic);
+
+	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Action_Attack_Basic);
+
+	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_Action_Attack_Basic);
+}
+
+void UPCUnitBasicAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilitySpec& Spec)
+{
+	Super::OnAvatarSet(ActorInfo, Spec);
+
 	UPCUnitGERegistrySubsystem* UnitGERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>();
 	if (!UnitGERegistrySubsystem)
 		return;
 
-	FGameplayTag CooldownEffectTag = GameplayEffectTags::GE_Class_Cooldown_BasicAttack;
+	const FGameplayTag CooldownEffectTag = GameplayEffectTags::GE_Class_Cooldown_BasicAttack;
 	CooldownGameplayEffectClass = UnitGERegistrySubsystem->GetGEClass(CooldownEffectTag);
+
+	const FGameplayTag ManaGainEffectTag = GameplayEffectTags::GE_Class_Mana_Gain_Instant;
+	ManaGainEffectClass = UnitGERegistrySubsystem->GetGEClass(ManaGainEffectTag);
 }
 
 void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
                                                       const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (!CooldownGameplayEffectClass || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
+	if (!CooldownGameplayEffectClass || !UnitAttrSet || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
 		return;
-
-	const UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-	const UPCUnitAttributeSet* UnitAttributeSet = ASC ? ASC->GetSet<UPCUnitAttributeSet>() : nullptr;
-	if (!UnitAttributeSet)
-		return;
-
-	const float AttackSpeed = UnitAttributeSet->GetAttackSpeed();
-	const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
 	
-	if (CooldownGameplayEffectClass)
+	if (CooldownGameplayEffectClass && UnitAttrSet)
 	{
+		const float AttackSpeed = UnitAttrSet->GetAttackSpeed();
+		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
+		
 		FGameplayEffectSpecHandle CooldownSpec = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel());
 		if (CooldownSpec.IsValid())
 		{
@@ -84,10 +59,23 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 
 UAnimMontage* UPCUnitBasicAttackGameplayAbility::GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	const APCBaseUnitCharacter* UnitCharacter = Cast<APCBaseUnitCharacter>(ActorInfo->OwnerActor.Get());
-	const UPCDataAsset_UnitAnimSet* UnitAnimSet = UnitCharacter ? UnitCharacter->GetUnitAnimSetDataAsset() : nullptr;
-	if (!UnitAnimSet)
-		return nullptr;
-
 	return UnitAnimSet->GetRandomBasicAttackMontage();
+}
+
+void UPCUnitBasicAttackGameplayAbility::ApplyGameplayEffect()
+{
+	if (ManaGainEffectClass)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(ManaGainEffectClass, 1.f);
+		if (SpecHandle.IsValid())
+		{
+			const FGameplayTag CallerTag = GameplayEffectTags::GE_Caller_ManaChange;
+			SpecHandle.Data->SetSetByCallerMagnitude(CallerTag, ManaGainAmount);
+
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+			{
+				ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
 }

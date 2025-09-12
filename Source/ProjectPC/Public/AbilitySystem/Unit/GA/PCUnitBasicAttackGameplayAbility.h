@@ -3,30 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseGameplayTags.h"
-#include "AbilitySystem/Unit/GA/PCUnitPlayMontageGameplayAbility.h"
+#include "AbilitySystem/Unit/GA/PCUnitBaseAttackGameplayAbility.h"
 #include "PCUnitBasicAttackGameplayAbility.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UPCUnitBasicAttackGameplayAbility : public UPCUnitPlayMontageGameplayAbility
+class PROJECTPC_API UPCUnitBasicAttackGameplayAbility : public UPCUnitBaseAttackGameplayAbility
 {
 	GENERATED_BODY()
 	
+public:
+	UPCUnitBasicAttackGameplayAbility();
+
 protected:
-	// virtual bool CheckCost(
-	// const FGameplayAbilitySpecHandle Handle,
-	// const FGameplayAbilityActorInfo* ActorInfo,
-	// FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	//
-	// virtual void ApplyCost(
-	// 	const FGameplayAbilitySpecHandle Handle,
-	// 	const FGameplayAbilityActorInfo* ActorInfo,
-	// 	const FGameplayAbilityActivationInfo ActivationInfo) const override;
-	
-	virtual void OnGiveAbility(
+	virtual void OnAvatarSet(
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
 	virtual void ApplyCooldown(
@@ -36,6 +28,10 @@ protected:
 	
 	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const override;
 
-//	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Cooldowns)
-//	FGameplayTag CooldownEffectCallerTag;
+	virtual void ApplyGameplayEffect() override;
+
+	UPROPERTY(Transient)
+	TSubclassOf<UGameplayEffect> ManaGainEffectClass;
+
+	float ManaGainAmount = 10.f;
 };

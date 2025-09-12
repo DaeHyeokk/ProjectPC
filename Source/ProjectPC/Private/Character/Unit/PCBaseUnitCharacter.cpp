@@ -22,8 +22,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	//NetUpdateFrequency = 100.f;
-	//MinNetUpdateFrequency = 66.f;
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -60,16 +60,6 @@ UAbilitySystemComponent* APCBaseUnitCharacter::GetAbilitySystemComponent() const
 UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemComponent() const
 {
 	return nullptr;
-}
-
-const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet()
-{
-	if (!UnitAttributeSet)
-	{
-		UnitAttributeSet = GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
-	}
-
-	return UnitAttributeSet.Get();
 }
 
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const

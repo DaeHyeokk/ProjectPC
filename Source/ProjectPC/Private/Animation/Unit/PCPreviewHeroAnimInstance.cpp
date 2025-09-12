@@ -23,6 +23,9 @@ void UPCPreviewHeroAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		CachedPreviewHero = Cast<APCPreviewHeroActor>(GetOwningActor());
 	}
-	
-	CachedPreviewHero->SetupSourceSnapshot(SourceSnapshot);
+
+	if (CachedPreviewHero.IsValid())
+	{
+		CachedPreviewHero->SetupSourceSnapshot(SourceSnapshot);
+	}
 }
