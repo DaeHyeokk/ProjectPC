@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "DataAsset/FrameWork//PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
 
 
@@ -13,8 +12,12 @@ class UPCDragComponent;
 class APCBaseUnitCharacter;
 class UPCPlayerMainWidget;
 class APCCombatBoard;
-struct FGameplayTag;
 class APCCarouselRing;
+class UPCDataAsset_PlayerInput;
+class UPCShopWidget;
+class UUserWidget;
+class APCHeroUnitCharacter;
+
 /**
  * 
  */
@@ -49,39 +52,58 @@ protected:
 private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
-	class UPCDataAsset_PlayerInput* PlayerInputData;
-
-#pragma region Move
+	UPCDataAsset_PlayerInput* PlayerInputData;
 	
-private:
 	FVector CachedDestination;
 	float FollowTime;
-	
+
+#pragma region Input
+
+	// Move
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
-#pragma endregion Move
+	// Shop
+	void OnBuyXPStarted();
+	void OnShopRefreshStarted();
+	void OnSellUnitStarted();
+
+#pragma endregion Input
 
 #pragma region Shop
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
-	TSubclassOf<class UUserWidget> ShopWidgetClass;
+	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
-	class UPCShopWidget* ShopWidget;
+	UPCShopWidget* ShopWidget;
 
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
 
-	void ShopRequest_ShopRefresh();
+	void ShopRequest_ShopRefresh(float GoldCost);
+	void ShopRequest_BuyXP();
+	void ShopRequest_BuyUnit(int32 SlotIndex);
+	void ShopRequest_SellUnit();
 
 	UFUNCTION(Server, Reliable)
-	void Server_ShopRefresh();
+	void Server_ShopRefresh(float GoldCost);
+	UFUNCTION(Server, Reliable)
+	void Server_BuyXP();
+	UFUNCTION(Server, Reliable)
+	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Server, Reliable)
+	void Server_SellUnit();
+
+private:
+	APCHeroUnitCharacter* OverlappedUnit;
+
+public:
+	void SetOverlappedUnit(APCHeroUnitCharacter* NewUnit);
 
 #pragma endregion Shop
-
 
 #pragma region Camera
 	// 게임 카메라 세팅

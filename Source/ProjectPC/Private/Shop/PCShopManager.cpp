@@ -7,18 +7,28 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 
+
+class UPCUnitSpawnSubsystem;
 
 void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 {
-	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!TargetPlayer) return;
+	
+	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 	
 	const auto& ShopSlots = TargetPlayer->GetShopSlots();
-	ReturnUnitsToShop(GS, ShopSlots);
+	GS->ReturnUnitsToShopBySlotUpdate(ShopSlots, TargetPlayer->PurchasedSlots);
+	TargetPlayer->PurchasedSlots.Empty();
 
 	TArray<FPCShopUnitData> NewShopSlots;
-	const auto& CostProbabilities = GS->GetCostProbabilities();
+	const auto PlayerLevel = static_cast<int32>(TargetPlayer->GetAttributeSet()->GetPlayerLevel());
+	const auto& CostProbabilities = GS->GetCostProbabilities(PlayerLevel);
 	
 	for (uint8 i = 0; i < NumSlots; ++i)
 	{
@@ -50,38 +60,41 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 		Candidates[SelectedUnit].UnitCount -= 1;
 		NewShopSlots.Add(Candidates[SelectedUnit]);
 	}
-
+	
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex)
 {
-	// 구매하지 않은 유닛 상점에 기물 반환
-	for (const auto& OldSlot : OldSlots)
+	if (!TargetPlayer) return;
+
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+
+	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+	if (!Board) return;
+	
+	auto Transform = FTransform(FQuat::Identity, FVector::ZeroVector);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, Transform, TargetPlayer->SeatIndex);
+	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+
+	TargetPlayer->PurchasedSlots.Add(SlotIndex);
+}
+
+void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
+{
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+
+	auto UnitCost = GS->GetUnitCostByTag(UnitTag);
+
+	for (auto& Unit : GS->GetShopUnitDataListByCost(UnitCost))
 	{
-		for (auto& Unit : GS->GetShopUnitDataListByCost(OldSlot.UnitCost))
+		if (UnitTag == Unit.Tag)
 		{
-			if (Unit.UnitName == OldSlot.UnitName)
-			{
-				Unit.UnitCount += 1;
-				break;
-			}
+			// 1성은 1개, 2성은 3개, 3성은 9개 기물 반환
+				// 4성이 추가되도 그대로 사용 가능
+			Unit.UnitCount += FMath::Pow(3.f, static_cast<float>(UnitLevel) - 1.f);
 		}
 	}
-}
-
-void UPCShopManager::BuyXP()
-{
-}
-
-void UPCShopManager::BuyUnit()
-{
-}
-
-void UPCShopManager::SellUnit()
-{
-}
-
-void UPCShopManager::ShopLock()
-{
 }

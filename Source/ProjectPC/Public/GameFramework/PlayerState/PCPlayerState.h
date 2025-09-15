@@ -62,27 +62,35 @@ private:
 	class UPCPlayerAbilitySystemComponent* PlayerAbilitySystemComponent;
 
 	UPROPERTY()
-	class UPCPlayerAttributeSet* PlayerAttributeSet;
+	const class UPCPlayerAttributeSet* PlayerAttributeSet;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	const UPCPlayerAttributeSet* GetAttributeSet() const;
 
 #pragma endregion AbilitySystem
 
 #pragma region Shop
 
-public:
+private:
 	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
 	TArray<FPCShopUnitData> ShopSlots;
-
-	DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
-	FOnShopSlotsUpdated OnShopSlotsUpdated;
-
+	
 	UFUNCTION()
 	void OnRep_ShopSlots();
+	
+	UFUNCTION(Client, Reliable)
+	void Client_ForceShopSlotsUpdate();
 
+public:
+	UPROPERTY()
+	TSet<int32> PurchasedSlots;
+	
+	DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
+	FOnShopSlotsUpdated OnShopSlotsUpdated;
+	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
-	
+
 #pragma endregion Shop
 };

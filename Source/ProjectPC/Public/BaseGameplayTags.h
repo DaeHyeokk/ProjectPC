@@ -116,6 +116,7 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerLevel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerXP)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerMaxXP)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerGold)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerHP)
 

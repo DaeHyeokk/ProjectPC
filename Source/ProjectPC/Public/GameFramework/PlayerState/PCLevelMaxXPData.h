@@ -4,23 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "PCShopUnitSellingPriceData.generated.h"
+#include "PCLevelMaxXpData.generated.h"
 
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct PROJECTPC_API FPCShopUnitSellingPriceData : public FTableRowBase
+struct PROJECTPC_API FPCLevelMaxXPData : public FTableRowBase
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitCost;
+	int32 PlayerLevel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitLevel;
+	int32 MaxXP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitSellingPrice;
+	int32 TotalXP;
 };

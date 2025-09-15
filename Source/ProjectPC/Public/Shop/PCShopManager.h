@@ -7,6 +7,8 @@
 #include "Shop/PCShopUnitData.h"
 #include "PCShopManager.generated.h"
 
+class APCPlayerState;
+class APCCombatGameState;
 
 /**
  * 
@@ -20,14 +22,10 @@ private:
 	uint8 NumSlots = 5;
 
 public:
-	void UpdateShopSlots(class APCPlayerState* TargetPlayer);
-	void ReturnUnitsToShop(class APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots);
+	void UpdateShopSlots(APCPlayerState* TargetPlayer);
+	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
+	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
 	
-	void BuyXP();
-	void BuyUnit();
-	void SellUnit();
-	void ShopLock();
-
 private:
 	// 누적합을 통한 확률 구현
 	template<typename T>

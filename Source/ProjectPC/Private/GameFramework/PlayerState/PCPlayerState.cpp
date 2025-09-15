@@ -3,16 +3,22 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "Net/UnrealNetwork.h"
+
 
 APCPlayerState::APCPlayerState()
 {
 	bReplicates = true;
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
-	PlayerAttributeSet = CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet"));
-	PlayerAbilitySystemComponent->AddAttributeSetSubobject(PlayerAttributeSet);
+	PlayerAbilitySystemComponent->AddAttributeSetSubobject(CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet")));
+	PlayerAttributeSet = PlayerAbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
+	
+	PlayerAbilitySystemComponent->SetIsReplicated(true);
+	PlayerAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	NetUpdateFrequency = 100.f;
 }
 
 void APCPlayerState::BeginPlay()
@@ -36,14 +42,30 @@ UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
 	return PlayerAbilitySystemComponent; 
 }
 
+const UPCPlayerAttributeSet* APCPlayerState::GetAttributeSet() const
+{
+	return PlayerAttributeSet;
+}
+
 void APCPlayerState::OnRep_ShopSlots()
 {
 	OnShopSlotsUpdated.Broadcast();
 }
 
+void APCPlayerState::Client_ForceShopSlotsUpdate_Implementation()
+{
+	OnRep_ShopSlots();
+}
+
 void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 {
-	ShopSlots = NewSlots;
+	if (ShopSlots == NewSlots)
+		Client_ForceShopSlotsUpdate();
+	else
+		ShopSlots = NewSlots;
+
+	if (HasAuthority())
+		OnRep_ShopSlots();
 }
 
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
@@ -54,6 +76,7 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
 	DOREPLIFETIME(APCPlayerState, bIsReady);
 	DOREPLIFETIME(APCPlayerState, LocalUserId);
 	DOREPLIFETIME(APCPlayerState, bIsLeader);

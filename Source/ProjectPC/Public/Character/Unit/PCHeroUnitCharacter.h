@@ -9,6 +9,7 @@
 
 class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
+
 /**
  * 
  */
@@ -67,4 +68,12 @@ protected:
 	void OnRep_HeroLevel() const;
 
 	// 전투 관련 //
+
+#pragma region Shop
+
+public:
+	virtual void NotifyActorBeginCursorOver() override;
+	virtual void NotifyActorEndCursorOver() override;
+	
+#pragma endregion Shop
 };

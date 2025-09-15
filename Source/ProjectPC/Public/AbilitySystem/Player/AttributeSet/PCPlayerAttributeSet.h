@@ -39,6 +39,9 @@ private:
 	void OnRep_PlayerGold(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
 	void OnRep_PlayerHP(const FGameplayAttributeData& OldValue);
+
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+	void CheckLevelUp();
 	
 public:
 	ATTRIBUTE_ACCESSORS(UPCPlayerAttributeSet, PlayerLevel)

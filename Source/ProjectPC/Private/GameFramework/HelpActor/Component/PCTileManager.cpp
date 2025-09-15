@@ -38,8 +38,7 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
 	Field[i].Unit = Unit;
-    
-	// 즉시 확인
+
 	APCCombatBoard* CombatBoard = GetCombatBoard();
 	const FVector Loc = Field[i].Position;
 	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
@@ -77,8 +76,7 @@ bool UPCTileManager::RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard)
 APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
-	APCBaseUnitCharacter* Unit = Field[i].Unit;    
-	return Unit;
+	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
@@ -100,7 +98,7 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return FVector::ZeroVector;
 }
 
-FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
+FIntPoint UPCTileManager::GetFieldUnitGridPoint(APCBaseUnitCharacter* InUnit) const
 {
 	if (!InUnit)
 		return FIntPoint::NoneValue;
@@ -156,6 +154,8 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
 	}
+	
+	OnBenchUpdated.Broadcast();
 	return true;
 }
 
@@ -169,6 +169,9 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	}
 	Bench[BenchIndex].Unit = nullptr;
+
+	OnBenchUpdated.Broadcast();
+	
 	return true;
 }
 
@@ -279,7 +282,7 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 		Tile.Unit = InUnit;
 		Tile.ReservedUnit = nullptr;
 		InUnit->SetOnCombatBoard(CachedCombatBoard.Get());
-		//InUnit->SetActorLocation(Tile.Position);
+		InUnit->SetActorLocation(Tile.Position);
 		return true;
 
 	case ETileAction::Release:

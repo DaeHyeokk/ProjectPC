@@ -27,6 +27,7 @@ void APCCombatGameState::BeginPlay()
 	{
 		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
 		LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
+		LoadDataTable<FPCLevelMaxXPData>(LevelMaxXPDataTable, LevelMaxXPDataList, TEXT("Loading Level MaxXP Data"));
 		LoadDataTableToMap<FPCShopUnitSellingPriceData>(ShopUnitSellingPriceDataTable, ShopUnitSellingPriceDataMap, TEXT("Loading Shop Unit Selling Price Data"));
 	}
 
@@ -142,14 +143,13 @@ const TArray<FPCShopUnitProbabilityData>& APCCombatGameState::GetShopUnitProbabi
 	return ShopUnitProbabilityDataList;
 }
 
-const TMap<TPair<uint8, uint8>, uint8>& APCCombatGameState::GetShopUnitSellingPriceDataMap()
+const TMap<TPair<int32, int32>, int32>& APCCombatGameState::GetShopUnitSellingPriceDataMap()
 {
 	return ShopUnitSellingPriceDataMap;
 }
 
-TArray<float> APCCombatGameState::GetCostProbabilities()
+TArray<float> APCCombatGameState::GetCostProbabilities(int32 PlayerLevel)
 {
-	uint8 PlayerLevel = 10;
 	// 플레이어 레벨에 따라 DataList 탐색
 	const auto& ProbData = ShopUnitProbabilityDataList.FindByPredicate(
 		[PlayerLevel](const FPCShopUnitProbabilityData& Data)
@@ -168,7 +168,7 @@ TArray<float> APCCombatGameState::GetCostProbabilities()
 	return CostProbabilities;
 }
 
-TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cost)
+TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(int32 Cost)
 {
 	switch (Cost)
 	{
@@ -188,6 +188,93 @@ TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(uint8 Cos
 
 	// Cost값이 1-5의 값이 아니면, 전체 배열 반환
 	return ShopUnitDataList;
+}
+
+int32 APCCombatGameState::GetUnitCostByTag(FGameplayTag UnitTag)
+{
+	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
+	{
+		if (UnitData.Tag == UnitTag)
+		{
+			return UnitData.UnitCost;
+		}
+	}
+
+	return 0;
+}
+
+int32 APCCombatGameState::GetSellingPrice(TPair<int32, int32> UnitLevelCostData)
+{
+	if (const int32* Price = ShopUnitSellingPriceDataMap.Find(UnitLevelCostData))
+	{
+		return *Price;
+	}
+
+	return 0;
+}
+
+void APCCombatGameState::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots)
+{
+	// 구매하지 않은 유닛 상점에 기물 반환
+	for (int32 i = 0; i < OldSlots.Num(); ++i)
+	{
+		if (PurchasedSlots.Contains(i)) continue;
+
+		const auto& OldSlot = OldSlots[i];
+		for (auto& Unit : GetShopUnitDataListByCost(OldSlot.UnitCost))
+		{
+			if (Unit.UnitName == OldSlot.UnitName)
+			{
+				Unit.UnitCount += 1;
+				break;
+			}
+		}
+	}
+}
+
+void APCCombatGameState::ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags)
+{
+	for (auto UnitTag : UnitTags)
+	{
+		auto UnitCost = GetUnitCostByTag(UnitTag);
+		if (UnitCost != 0)
+		{
+			auto UnitDataList = GetShopUnitDataListByCost(UnitCost);
+			for (auto Unit : UnitDataList)
+			{
+				if (Unit.Tag == UnitTag)
+				{
+					Unit.UnitCount += 1;
+				}
+			}
+		}
+	}
+}
+
+TArray<FGameplayTag> APCCombatGameState::GetCarouselUnitTags(int32 Round)
+{
+	TArray<FGameplayTag> ReturnTags;
+	
+	switch (Round)
+	{
+	case 1:
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	case 4:
+		break;
+	default:
+		break;
+	}
+
+	return ReturnTags;
+}
+
+const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
+{
+	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;
 }
 
 // Game State Tag 변경은 서버에서만 실행

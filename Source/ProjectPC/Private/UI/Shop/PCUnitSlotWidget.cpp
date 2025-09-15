@@ -3,11 +3,18 @@
 
 #include "UI/Shop/PCUnitSlotWidget.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
+
+#include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 bool UPCUnitSlotWidget::Initialize()
@@ -18,13 +25,21 @@ bool UPCUnitSlotWidget::Initialize()
 	if (!Btn_UnitSlot) return false;
 	Btn_UnitSlot->OnClicked.AddDynamic(this, &UPCUnitSlotWidget::OnClickedUnitSlot);
 
+	if (auto TileManager = GetWorld()->GetGameState<APCCombatGameState>()->GetBoardBySeat(GetOwningPlayer()->GetPlayerState<APCPlayerState>()->SeatIndex)->TileManager)
+	{
+		TileManager->OnBenchUpdated.AddDynamic(this, &UPCUnitSlotWidget::SetupButton);
+	}
+
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
+void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 {
 	if (!Text_UnitName || !Text_Cost || !Img_UnitThumbnail || !Img_CostBorder) return;
-
+	
+	SlotIndex = NewSlotIndex;
+	UnitCost = UnitData.UnitCost;
+	
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
 
@@ -32,8 +47,7 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
 	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
 	{
-		UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject());
-		if (Texture)
+		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
 		{
 			Img_UnitThumbnail->SetBrushFromTexture(Texture);
 		}
@@ -65,8 +79,47 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData)
 	{
 		Img_CostBorder->SetBrushFromTexture(BorderTexture);
 	}
+
+	SetupButton();
+}
+
+void UPCUnitSlotWidget::SetupButton()
+{
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+	
+	if (auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>())
+	{
+		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+		{
+			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
+			if (BenchIndex == -1)
+			{
+				Btn_UnitSlot->SetIsEnabled(false);
+			}
+			else
+			{
+				Btn_UnitSlot->SetIsEnabled(true);
+			}
+		}
+		
+		if (auto AttributeSet = PS->GetAttributeSet())
+		{
+			if (static_cast<int32>(AttributeSet->GetPlayerGold()) < UnitCost)
+			{
+				Btn_UnitSlot->SetIsEnabled(false);
+				SetRenderOpacity(0.3f);
+			}
+		}
+	}
 }
 
 void UPCUnitSlotWidget::OnClickedUnitSlot()
 {
+	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	{
+		PC->ShopRequest_BuyUnit(SlotIndex);
+	}
+	
+	this->SetVisibility(ESlateVisibility::Hidden);
 }

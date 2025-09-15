@@ -20,7 +20,7 @@ public:
 	FName UnitName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 UnitCost;
+	int32 UnitCost;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName UnitClass;
@@ -32,8 +32,13 @@ public:
 	TSoftObjectPtr<UTexture2D> UnitTexture;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 UnitCount;
+	int32 UnitCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagContainer Tag;
+	FGameplayTag Tag;
+
+	bool operator==(const FPCShopUnitData& Other) const
+	{
+		return UnitName == Other.UnitName && Tag == Other.Tag;
+	}
 };
