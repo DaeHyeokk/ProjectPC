@@ -147,12 +147,14 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 	{
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocation(Loc);
+		Unit->ChangedOnTile(false);
 	}
 	else
 	{
 		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
+		Unit->ChangedOnTile(false);
 	}
 	
 	OnBenchUpdated.Broadcast();
