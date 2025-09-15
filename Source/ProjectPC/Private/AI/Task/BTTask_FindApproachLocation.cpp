@@ -10,6 +10,7 @@
 #include "Controller/Unit/PCUnitAIController.h"
 #include "Containers/Queue.h"
 #include "Utility/PCUnitCombatUtils.h"
+#include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 
 UBTTask_FindApproachLocation::UBTTask_FindApproachLocation()

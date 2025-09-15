@@ -109,7 +109,7 @@ public:
 	bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
 
 	UFUNCTION(BLueprintCallable, Category = "Field")
-	bool RemoveFromField(int32 Y, int32 X);
+	bool RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard);
 
 	UFUNCTION(BlueprintPure, Category = "Field")
 	APCBaseUnitCharacter* GetFieldUnit(int32 Y, int32 X) const;
@@ -135,7 +135,7 @@ public:
 	bool PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit);
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
-	bool RemoveFromBench(int32 BenchIndex);
+	bool RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard);
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
 	APCBaseUnitCharacter* GetBenchUnit(int32 BenchIndex) const;
@@ -145,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Bench")
 	FVector GetBenchLocalPosition(int32 BenchIndex) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Bench")
+	int32 GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 MirrorBenchIndex(int32 Index) const;
@@ -161,11 +164,7 @@ public:
 	// 이 유닛이 지금 사용(이동) 할수 있는가?
 	UFUNCTION(BlueprintPure, Category = "BFS")
 	bool CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const;
-
-	// 상대가 떠날 예약이 있으면 다음 칸 후보로 허용
-	UFUNCTION(BlueprintPure, Category = "BFS")
-	bool CanUseNextStep(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const;
-
+	
 	// 해당 유닛이 어떤 타일이든 예약을 하고 있는가?
 	UFUNCTION(BlueprintPure, Category = "BFS")
 	bool HasAnyReservation(const APCBaseUnitCharacter* InUnit) const;
@@ -189,20 +188,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows = true, bool bMirrorCols = true, bool bIncludeBench = true );
 
-	UPROPERTY(EditAnywhere, Category = "Data")
+	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
-	UPROPERTY(EditAnywhere, Category = "Data")
+	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Bench;
 
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 	void CreateBench(); // 벤치 좌표 생성 (월드기준)
 
-	TWeakObjectPtr<APCCombatBoard> CachedCombatBoard;
+	UPROPERTY()
+	TObjectPtr<APCCombatBoard> CachedCombatBoard;
 
 	virtual void BeginPlay() override;
-
+	
 	bool IsValidTile(int32 Y, int32 X, int32& OutIndex) const;
 			
 
@@ -215,7 +215,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Debug") bool bDebugShowIndices = true;
 	UPROPERTY(EditAnywhere, Category="Debug") float DebugPointRadius = 18.f;   // 구 반지름
 	UPROPERTY(EditAnywhere, Category="Debug") float DebugTextScale  = 1.0f;    // 라벨 스케일
-	UPROPERTY(EditAnywhere, Category="Debug") float DebugDuration   = 100.f;     // 지속시간(초). 0이면 1프레임
+	UPROPERTY(EditAnywhere, Category="Debug") float DebugDuration   = 10.f;     // 지속시간(초). 0이면 1프레임
 
 	// 색상
 	UPROPERTY(EditAnywhere, Category="Debug") FColor FieldColor   = FColor(0,255,127); // 민트
@@ -224,7 +224,29 @@ public:
 	UPROPERTY(EditAnywhere, Category="Debug") FColor UnitColor    = FColor::Yellow;    // 유닛 있는 칸
 
 	// 에디터 버튼 + 런타임 호출 가능
-	UFUNCTION(BlueprintCallable, CallInEditor, Category="Debug")
-	void DebugDrawTiles(bool bPersistent = true);
+	UFUNCTION()
+	void DebugLogField(bool bAsGrid /*=true*/, bool bShowOccupiedList /*=true*/, const FString& Tag) const;
+
+	UFUNCTION(BlueprintCallable, Category="Debug")
+	void DebugExplainTile(int32 Y, int32 X, const FString& Tag) const;
+
+#pragma region Drag&Drop
+
+public:
 	
+	// 드래그 앤 드랍 헬퍼 함수
+	// 월드 좌표 -> 가장 가까운 필드 타일(Y,X), 성공시 True
+	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
+	bool WorldToField( const FVector& WorldLoc, int32& OutY, int32& OutX, float MaxSnapDist = 0.f) const;
+
+	// 월드 좌표 -> 가장 가까운 벤치 인덱스, 성공시 True
+	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
+	bool WorldToBench(const FVector& World, int32& OutBenchIndex, float MaxSnapDist = 0.f) const;
+
+	// 월드 좌표 -> 필드/벤치 중 더 가까운 곳 스냅
+	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
+	bool WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
+		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f) const;
+
+#pragma endregion Drag&Drop
 };

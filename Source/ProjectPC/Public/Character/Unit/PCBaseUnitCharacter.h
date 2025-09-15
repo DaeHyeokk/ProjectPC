@@ -115,7 +115,8 @@ public:
 	void ActionDrag(const bool IsStart);
 	
 protected:
-	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;
+	UPROPERTY()
+	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsOnField, Category="Combat")
 	bool bIsOnField = false;

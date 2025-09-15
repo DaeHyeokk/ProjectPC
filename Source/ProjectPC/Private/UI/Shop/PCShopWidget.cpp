@@ -51,7 +51,7 @@ void UPCShopWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 
 void UPCShopWidget::OpenMenu()
 {
-	this->AddToViewport();
+	this->AddToViewport(100);
 }
 
 void UPCShopWidget::CloseMenu()

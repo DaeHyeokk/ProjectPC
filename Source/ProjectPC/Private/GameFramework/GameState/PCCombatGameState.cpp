@@ -73,11 +73,13 @@ void APCCombatGameState::BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boar
 			SeatToBoard[CombatBoard->BoardSeatIndex] = CombatBoard;
 		}
 	}
+
+	bBoardMappingComplete = true;
 }
 
 APCCombatBoard* APCCombatGameState::GetBoardBySeat(int32 PlayerSeatIndex) const
 {
-	return SeatToBoard.IsValidIndex(PlayerSeatIndex) ? SeatToBoard[PlayerSeatIndex].Get() : nullptr;
+	return SeatToBoard.IsValidIndex(PlayerSeatIndex) ? SeatToBoard[PlayerSeatIndex] : nullptr;
 }
 
 void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
@@ -105,7 +107,7 @@ float APCCombatGameState::GetStageProgress() const
 
 FString APCCombatGameState::GetStageLabelString() const
 {
-	return FString::Printf(TEXT("%d-%d"), StageRuntimeState.StageIdx + 1, StageRuntimeState.RoundIdx + 1);
+	return FString::Printf(TEXT("%d-%d"), StageRuntimeState.StageIdx, StageRuntimeState.RoundIdx);
 }
 
 EPCStageType APCCombatGameState::GetCurrentStageType() const
@@ -125,6 +127,8 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	DOREPLIFETIME(APCCombatGameState, GameStateTag);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
+	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
+	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	
 }
 

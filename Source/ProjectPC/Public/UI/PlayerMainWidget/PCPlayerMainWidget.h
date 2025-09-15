@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class APCPlayerState;
 /**
  * 
  */
@@ -13,6 +14,10 @@ UCLASS()
 class PROJECTPC_API UPCPlayerMainWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void InitAndBind();
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))

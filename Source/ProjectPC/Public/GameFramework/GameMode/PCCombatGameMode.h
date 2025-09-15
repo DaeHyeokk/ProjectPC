@@ -61,10 +61,8 @@ protected:
 	virtual void PostSeamlessTravel() override;
 
 	// 좌석배정 유틸함수
-	void AssignSeatInitial(bool bForceReassign);
-	void AssignSeatIfNeeded(class APCPlayerState* PCPlayerState);
+	void AssignSeatInitial();
 	int32 GetTotalSeatSlots() const;
-	int32 FindNextFreeSeat(int32 TotalSeats) const;
 
 private:
 	// 데이터 평탄화
@@ -97,9 +95,7 @@ private:
 	void Step_PvE();
 	void Step_CreepSpawn();
 	void Step_Carousel();
-
 	
-
 	// 공동 유틸 함수
 	void InitializeHomeBoardsForPlayers();
 	void TryPlacePlayersAfterTravel();
@@ -107,7 +103,6 @@ private:
 	void MovePlayersToBoardsAndCameraSet();
 	void SetCarouselCameraForAllPlayers();
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;
-	void BroadcastStageToClients(EPCStageType Stage, const FString& StageName, float Seconds);
 
 	// 인접 스텝 조회
 	const FRoundStep* PeekPrevStep() const;

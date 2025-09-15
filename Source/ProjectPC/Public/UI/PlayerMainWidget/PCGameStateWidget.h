@@ -23,6 +23,9 @@ public:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Bind")
+	void GameStateBinding();
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Txt_Stage;
