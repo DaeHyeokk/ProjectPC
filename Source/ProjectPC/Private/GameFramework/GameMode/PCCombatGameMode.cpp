@@ -361,9 +361,9 @@ void APCCombatGameMode::Step_Return()
 						const FTransform SpawnTransform(FRotator::ZeroRotator, UnitSpawnLoc, FVector::OneVector);
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, SpawnTransform, PCPlayerState->SeatIndex);
+							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, PCPlayerState->SeatIndex);
 							InCombatBoard->TileManager->PlaceUnitOnField(0,1, Unit);
-							APCBaseUnitCharacter* Unit2 = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, SpawnTransform2, PCPlayerState->SeatIndex);
+							APCBaseUnitCharacter* Unit2 = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, PCPlayerState->SeatIndex);
 							InCombatBoard->TileManager->PlaceUnitOnField(1,1, Unit2);
 							InCombatBoard->TileManager->DebugLogField(true,true, TEXT("TileManager"));
 						}

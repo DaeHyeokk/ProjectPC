@@ -163,7 +163,7 @@ void APCCarouselRing::SpawnPickups()
 		if (UPCUnitSpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 		{
 			
-			if (APCBaseUnitCharacter* SpawnedUnit = SpawnSystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow,Transform,-1))
+			if (APCBaseUnitCharacter* SpawnedUnit = SpawnSystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow,-1))
 			{
 				SpawnedUnit->AttachToComponent(UnitRingRoot, FAttachmentTransformRules::KeepWorldTransform);
 				SpawnedPickups.Add(SpawnedUnit);

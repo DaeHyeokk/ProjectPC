@@ -80,6 +80,7 @@ private:
 	UPROPERTY()
 	TSubclassOf<APCPreviewHeroActor> DefaultPreviewHeroClass;
 
+public:
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCPreviewHeroActor* SpawnPreviewHeroBySourceHero(
 		APCHeroUnitCharacter* SourceHero,

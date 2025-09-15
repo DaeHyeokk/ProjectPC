@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
+#include "GameplayTagAssetInterface.h"
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
@@ -290,6 +291,15 @@ protected:
 	UFUNCTION()
 	void OnRep_GameStateTag() const;
 
+	// ==== 전투 시스템 | BT 관련 ====
+protected:
+	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
+	// virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	// virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	// virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	// virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	
 	// TEST CODE //
 public:
 	UFUNCTION(BlueprintCallable)

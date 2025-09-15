@@ -282,7 +282,7 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 		Tile.Unit = InUnit;
 		Tile.ReservedUnit = nullptr;
 		InUnit->SetOnCombatBoard(CachedCombatBoard.Get());
-		InUnit->SetActorLocation(Tile.Position);
+		//InUnit->SetActorLocation(Tile.Position);
 		return true;
 
 	case ETileAction::Release:

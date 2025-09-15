@@ -274,6 +274,7 @@ TArray<FGameplayTag> APCCombatGameState::GetCarouselUnitTags(int32 Round)
 
 const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
+	if (PlayerLevel <= 0) return 0;
 	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;
 }
 
@@ -292,3 +293,22 @@ void APCCombatGameState::OnRep_GameStateTag() const
 {
 	OnGameStateChanged.Broadcast(GameStateTag);
 }
+
+// void APCCombatGameState::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+// {
+// }
+//
+// bool APCCombatGameState::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+// {
+// 	return IGameplayTagAssetInterface::HasMatchingGameplayTag(TagToCheck);
+// }
+//
+// bool APCCombatGameState::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+// {
+// 	return IGameplayTagAssetInterface::HasAllMatchingGameplayTags(TagContainer);
+// }
+//
+// bool APCCombatGameState::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+// {
+// 	return IGameplayTagAssetInterface::HasAnyMatchingGameplayTags(TagContainer);
+// }

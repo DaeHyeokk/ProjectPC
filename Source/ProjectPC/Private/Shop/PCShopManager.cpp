@@ -74,8 +74,7 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
 	if (!Board) return;
 	
-	auto Transform = FTransform(FQuat::Identity, FVector::ZeroVector);
-	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, Transform, TargetPlayer->SeatIndex);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
 
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
