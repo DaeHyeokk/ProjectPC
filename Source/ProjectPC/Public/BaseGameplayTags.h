@@ -23,8 +23,8 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 
 	// ==== Unit Attack Types ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Physical)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Magic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Magic)
 
 	// ==== Unit Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
@@ -51,12 +51,15 @@ namespace UnitGameplayTags
 	// ==== Unit State Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Alive)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
 
 	// ==== Unit Cooldown Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
 	
 	// ==== Unit Anim Montage Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
 
 	// ==== Unit GameplayEvent Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)

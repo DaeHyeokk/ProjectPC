@@ -39,7 +39,7 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 	}
 }
 
-APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const FTransform& Transform, const int32 TeamIndex,
+APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const int32 TeamIndex,
                                                             const int32 UnitLevel, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
 {
 	// 유닛 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
@@ -52,8 +52,11 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 
 	TSubclassOf<APCBaseUnitCharacter> SpawnClass = ResolveSpawnUnitClass(Definition);
 
+	FTransform SpawnTransform = FTransform::Identity;
+	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
+	
 	APCBaseUnitCharacter* Unit = GetWorld()->SpawnActorDeferred<APCBaseUnitCharacter>(
-		SpawnClass, Transform, InOwner, InInstigator, HandlingMethod);
+		SpawnClass, SpawnTransform, InOwner, InInstigator, HandlingMethod);
 	if (!Unit)
 		return nullptr;
 
@@ -67,7 +70,7 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 		Unit->SetUnitLevel(UnitLevel);
 	}
 
-	UGameplayStatics::FinishSpawningActor(Unit, Transform);
+	UGameplayStatics::FinishSpawningActor(Unit, SpawnTransform);
 	
 	Unit->SetNetDormancy(DORM_Awake);
 	Unit->ForceNetUpdate();
@@ -177,7 +180,7 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataServerOnly(APCBaseUnitCharacter* 
 }
 
 APCPreviewHeroActor* UPCUnitSpawnSubsystem::SpawnPreviewHeroBySourceHero(APCHeroUnitCharacter* SourceHero,
-	const FTransform& Transform, AActor* InOwner, APawn* InInstigator,
+	AActor* InOwner, APawn* InInstigator,
 	ESpawnActorCollisionHandlingMethod HandlingMethod) const
 {
 	// 프리뷰 유닛 스폰은 클라에서만, Listen Server 환경 고려 NM_DedicatedServer로 판별
@@ -200,10 +203,13 @@ APCPreviewHeroActor* UPCUnitSpawnSubsystem::SpawnPreviewHeroBySourceHero(APCHero
 	
 	if (!SourceStatusBarWidgetClass || !PreviewHeroAnimBP)
 		return nullptr;
+
+	FTransform SpawnTransform = FTransform::Identity;
+	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
 	
 	APCPreviewHeroActor* PreviewHero = GetWorld()->SpawnActorDeferred<APCPreviewHeroActor>(
 		SpawnClass,
-		Transform,
+		SpawnTransform,
 		InOwner,
 		InInstigator,
 		HandlingMethod);
@@ -213,7 +219,7 @@ APCPreviewHeroActor* UPCUnitSpawnSubsystem::SpawnPreviewHeroBySourceHero(APCHero
 
 	PreviewHero->InitializeFromSourceHero(SourceHero, PreviewHeroAnimBP, SourceStatusBarWidgetClass);
 	
-	UGameplayStatics::FinishSpawningActor(PreviewHero, Transform);
+	UGameplayStatics::FinishSpawningActor(PreviewHero, SpawnTransform);
 	
 	PreviewHero->SetActorHiddenInGame(false);
 

@@ -60,7 +60,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCBaseUnitCharacter* SpawnUnitByTag(
 		const FGameplayTag UnitTag,
-		const FTransform& Transform,
 		const int32 TeamIndex = 255,
 		const int32 UnitLevel = 1,
 		AActor* InOwner = nullptr,
@@ -84,7 +83,6 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCPreviewHeroActor* SpawnPreviewHeroBySourceHero(
 		APCHeroUnitCharacter* SourceHero,
-		const FTransform& Transform,
 		AActor* InOwner = nullptr,
 		APawn* InInstigator = nullptr,
 		ESpawnActorCollisionHandlingMethod HandlingMethod =

@@ -32,24 +32,35 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 
 	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const { return nullptr; }
+	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
 	
 	UPROPERTY(Transient)
 	TObjectPtr<const UPCUnitAttributeSet> UnitAttrSet;
 
 	UPROPERTY(Transient)
 	TObjectPtr<const UPCDataAsset_UnitAnimSet> UnitAnimSet;
+
 	
 protected:
 	virtual void ApplyGameplayEffect() { }
 	
+	UFUNCTION()
+	virtual void OnAttackCommit(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnMontageFinished();
+
+private:
+	bool bIsCommitted = false;
+	
+protected:
+	// ==== 디버깅용 ====
 	// UFUNCTION()
-	// virtual void OnAttackCommit(FGameplayEventData Payload);
-	UFUNCTION()
-	void OnMontageCompleted();
-	UFUNCTION()
-	void OnMontageCancelled();
-	UFUNCTION()
-	void OnMontageBlendOut();
-	UFUNCTION()
-	void OnMontageInterrupted();
+	// void OnMontageCompleted();
+	// UFUNCTION()
+	// void OnMontageCancelled();
+	// UFUNCTION()
+	// void OnMontageBlendOut();
+	// UFUNCTION()
+	// void OnMontageInterrupted();
 };

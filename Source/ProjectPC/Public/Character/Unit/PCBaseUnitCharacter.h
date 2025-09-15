@@ -112,7 +112,7 @@ public:
 	bool IsCombatActive() const { return bIsCombatActive; }
 
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
-	void SetUnitLocalHidden(bool bIsHidden);
+	void ActionDrag(const bool IsStart);
 	
 protected:
 	TWeakObjectPtr<APCCombatBoard> OnCombatBoard;

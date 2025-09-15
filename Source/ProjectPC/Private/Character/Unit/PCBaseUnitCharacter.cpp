@@ -213,7 +213,7 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 	}
 }
 
-void APCBaseUnitCharacter::SetUnitLocalHidden(bool bIsHidden)
+void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
 {
 	// 클라에서만 실행 (Listen Server 포함)
 	if (GetNetMode() == NM_DedicatedServer)
@@ -221,7 +221,7 @@ void APCBaseUnitCharacter::SetUnitLocalHidden(bool bIsHidden)
 
 	if (GetMesh())
 	{
-		GetMesh()->SetHiddenInGame(bIsHidden);
+		GetMesh()->SetHiddenInGame(IsStart);
 	}
 }
 

@@ -59,7 +59,35 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 
 UAnimMontage* UPCUnitBasicAttackGameplayAbility::GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	return UnitAnimSet->GetRandomBasicAttackMontage();
+	const FGameplayTag BasicAttackMontageTag = UnitGameplayTags::Unit_Montage_Attack_Basic;
+	return UnitAnimSet->GetAnimMontageByTag(BasicAttackMontageTag);
+}
+
+float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate(const UAnimMontage* Montage)
+{
+	float PlayRate = 1.f;
+	
+	if (CooldownGameplayEffectClass && UnitAttrSet)
+	{
+		const float AttackSpeed = UnitAttrSet->GetAttackSpeed();
+		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
+		const float MontageLength = Montage->GetPlayLength();
+
+		constexpr float Safety = 0.9f; // 안전 여유(쿨다운의 90% 시점에서 끝나도록)
+		
+		const float DesiredEnd = CooldownDuration * Safety;
+
+		if (DesiredEnd > KINDA_SMALL_NUMBER && MontageLength > KINDA_SMALL_NUMBER)
+		{
+			// 몽타주가 쿨다운보다 길다면
+			if (MontageLength > DesiredEnd)
+			{
+				PlayRate = FMath::Clamp(MontageLength / DesiredEnd, 0.2f, 3.0f);
+			}
+		}
+	}
+
+	return PlayRate;
 }
 
 void UPCUnitBasicAttackGameplayAbility::ApplyGameplayEffect()

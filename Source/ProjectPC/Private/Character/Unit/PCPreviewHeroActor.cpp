@@ -91,5 +91,6 @@ void APCPreviewHeroActor::UpdateLocation(const FVector& WorldLoc)
 
 void APCPreviewHeroActor::TearDown()
 {
+	//SetActorHiddenInGame(true);
 	Destroy();
 }

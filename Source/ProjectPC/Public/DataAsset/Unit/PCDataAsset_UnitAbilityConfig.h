@@ -15,19 +15,25 @@ struct FAbilityConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category="Cost")
-	TSoftClassPtr<UGameplayEffect> CostGEClass;
+	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(InlineEditConditionToggle))
+	bool bUseCost = false;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(EditCondition="bUseCost"))
+	FGameplayTag CostGETag;
 
-	UPROPERTY(EditDefaultsOnly, Category="Cost")
+	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(EditCondition="bUseCost"))
 	FGameplayAttribute CostGameplayAttribute;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Cost")
+	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(EditCondition="bUseCost"))
 	FGameplayTag CostCallerTag;
-
-	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
-	TSoftClassPtr<UGameplayEffect> CooldownGEClass;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
+	UPROPERTY(EditDefaultsOnly, Category="Coooldown", meta=(InlineEditConditionToggle))
+	bool bUseCooldown = false;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
+	FGameplayTag CooldownGETag;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
 	FGameplayTag CooldownCallerTag;
 };
 
