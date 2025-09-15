@@ -6,6 +6,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCDragGhost.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
 UPCDragComponent::UPCDragComponent()
 {
@@ -136,6 +137,7 @@ void UPCDragComponent::EnsureGhostAt(const FVector& World)
     {
         Ghost = APCDragGhost::SpawnGhost(GetWorld(), World);
     }
+    
 }
 
 void UPCDragComponent::ShowGhost(const FVector& World, bool bApproved, bool bValid)
@@ -145,6 +147,8 @@ void UPCDragComponent::ShowGhost(const FVector& World, bool bApproved, bool bVal
     {
         Ghost->UpdateState(true, bApproved && bValid, World);
     }
+
+
 }
 
 

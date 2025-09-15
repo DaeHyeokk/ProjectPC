@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "PCDragComponent.generated.h"
 
+class APCPreviewHeroActor;
 class APCCombatPlayerController;
 class APCCombatBoard;
 class UPCTileManager;
@@ -51,6 +52,7 @@ private:
 
     // 고스트
     UPROPERTY(Transient) TWeakObjectPtr<APCDragGhost> Ghost;
+    UPROPERTY(Transient) TWeakObjectPtr<APCPreviewHeroActor> Preview;
     void EnsureGhostAt(const FVector& World);
     void ShowGhost(const FVector& World, bool bApproved, bool bValid=true);
     void HideGhost();

@@ -7,6 +7,7 @@
 #include "UI/PlayerMainWidget/PCGameStateWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
+
 void UPCPlayerMainWidget::InitAndBind()
 {
 	if (!W_GameStateWidget)

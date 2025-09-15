@@ -14,6 +14,6 @@ class PROJECTPC_API UPCGameplayEffect_GoldChange : public UGameplayEffect
 {
 	GENERATED_BODY()
 	
-	
-	
+public:
+	UPCGameplayEffect_GoldChange();
 };

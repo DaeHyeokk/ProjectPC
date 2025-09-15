@@ -73,15 +73,4 @@ void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();
 	JumpRecovery = AnimSet->LocomotionSet.JumpRecovery.LoadSynchronous();
-
-	/*
-	MontageByTagMap.Empty();
-	for (const auto& KeyValuePair : AnimSet->MontageByTagMap)
-	{
-		if (UAnimMontage* Montage = KeyValuePair.Value)
-		{
-			MontageByTagMap.Add(KeyValuePair.Key, Montage);
-		}
-	}
-	*/
 }

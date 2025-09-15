@@ -55,3 +55,8 @@ UPCDataAsset_UnitAnimSet* UPCDataAsset_BaseUnitData::GetAnimSetData() const
 {
 	return AnimSetData;
 }
+
+UPCDataAsset_UnitAbilityConfig* UPCDataAsset_BaseUnitData::GetAbilityConfigData() const
+{
+	return AbilityConfigData;
+}

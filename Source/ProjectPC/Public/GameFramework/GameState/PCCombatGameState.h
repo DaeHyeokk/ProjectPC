@@ -4,15 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
+#include "GameplayTagAssetInterface.h"
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
+#include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "Shop/PCShopUnitData.h"
 #include "Shop/PCShopUnitProbabilityData.h"
 #include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
 
 class APCCombatBoard;
+class UPCShopManager;
+class APCPlayerState;
 
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
@@ -40,6 +44,9 @@ struct FSpawnSubsystemConfig
 	// == 공통 AI Controller (전 유닛 공유) ==
 	UPROPERTY(EditAnywhere, Category="Spawner|AI")
 	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
+
+	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
+	TSubclassOf<class APCPreviewHeroActor> DefaultPreviewHeroClass;
 };
 
 USTRUCT(BlueprintType)
@@ -151,7 +158,7 @@ protected:
 	
 private:
 	UPROPERTY()
-	class UPCShopManager* ShopManager;
+	UPCShopManager* ShopManager;
 
 public:
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
@@ -173,7 +180,7 @@ private:
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
 	TArray<FPCShopUnitData> ShopUnitDataList;
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
-	TMap<TPair<uint8, uint8>, uint8> ShopUnitSellingPriceDataMap;
+	TMap<TPair<int32, int32>, int32> ShopUnitSellingPriceDataMap;
 
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
@@ -204,7 +211,7 @@ private:
 
 	// DataTable을 읽어 아웃파라미터로 TMap에 값을 넘기는 템플릿 함수
 	template<typename T>
-	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<uint8, uint8>, uint8>& OutMap, const FString& Context)
+	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<int32, int32>, int32>& OutMap, const FString& Context)
 	{
 		if (DataTable == nullptr) return;
 		OutMap.Reset();
@@ -217,7 +224,7 @@ private:
 			if (Row)
 			{
 				// Key는 (UnitCost, UnitLevel), 값은 UnitSellingPrice
-				TPair<uint8, uint8> Key(Row->UnitCost, Row->UnitLevel);
+				TPair<int32, int32> Key(Row->UnitCost, Row->UnitLevel);
 				OutMap.Add(Key, Row->UnitSellingPrice);
 			}
 		}
@@ -226,11 +233,37 @@ private:
 public:
 	const TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
-	const TMap<TPair<uint8, uint8>, uint8>& GetShopUnitSellingPriceDataMap();
-	TArray<float> GetCostProbabilities();
-	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(uint8 Cost);
+	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
 	
+	TArray<float> GetCostProbabilities(int32 PlayerLevel);
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
+	int32 GetUnitCostByTag(FGameplayTag UnitTag);
+	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
+
+	// 상점 업데이트로 인한 유닛 반환
+	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
+	void ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTag);
+
+	// Carousel에 차출할 유닛 태그 배열 리턴
+	TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
+
 #pragma endregion Shop
+
+#pragma region Attribute
+	
+protected:
+	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* LevelMaxXPDataTable;
+
+private:
+	// 실제로 DataTable에서 가져온 정보를 저장할 배열
+	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
+
+public:
+	const int32 GetMaxXP(int32 PlayerLevel) const;
+
+#pragma endregion Attribute
 
 #pragma region Unit
 	
@@ -258,6 +291,15 @@ protected:
 	UFUNCTION()
 	void OnRep_GameStateTag() const;
 
+	// ==== 전투 시스템 | BT 관련 ====
+protected:
+	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
+	// virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	// virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	// virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	// virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	
 	// TEST CODE //
 public:
 	UFUNCTION(BlueprintCallable)

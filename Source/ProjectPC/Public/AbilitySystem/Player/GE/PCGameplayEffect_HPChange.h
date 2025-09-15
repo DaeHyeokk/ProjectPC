@@ -14,7 +14,6 @@ class PROJECTPC_API UPCGameplayEffect_HPChange : public UGameplayEffect
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+public:
+	UPCGameplayEffect_HPChange();
 };

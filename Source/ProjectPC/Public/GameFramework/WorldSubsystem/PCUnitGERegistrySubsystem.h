@@ -24,6 +24,4 @@ public:
 	void InitializeUnitGERegistry(UPCDataAsset_UnitGEDictionary* InUnitGEDict, const FGameplayTagContainer& PreloadGEClassKeys);
 	UClass* GetGEClass(const FGameplayTag& GEClassTag);
 	UGameplayEffect* GetGE_CDO(const FGameplayTag& GEClassTag);
-
-	UGameplayEffect* GetGrantUnitTypeGE_CDO(const FGameplayTag& UnitTypeTag);
 };

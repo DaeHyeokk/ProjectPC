@@ -19,11 +19,12 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 
 	// ==== Unit Attack Types ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Physical)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Magic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Magic)
 
 	// ==== Unit Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
@@ -44,10 +45,24 @@ namespace UnitGameplayTags
 
 	// ==== Unit Action Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
 
+	// ==== Unit State Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Alive)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
+
+	// ==== Unit Cooldown Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
+	
 	// ==== Unit Anim Montage Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
+
+	// ==== Unit GameplayEvent Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)
 }
 
 namespace SynergyGameplayTags
@@ -73,11 +88,12 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_InitDefaultStat)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Hero)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_GrantUnitTypeTag_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Heal_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Damage_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Gain_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Spend_Instant)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_CurrentHealthChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_MaxHealthChange)
@@ -91,6 +107,8 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_CritChanceChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_LifeStealChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_SpellVampChange)
+	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Cooldown_BasicAttack)
 }
 
 namespace PlayerGameplayTags
@@ -98,6 +116,7 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerLevel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerXP)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerMaxXP)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerGold)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerHP)
 

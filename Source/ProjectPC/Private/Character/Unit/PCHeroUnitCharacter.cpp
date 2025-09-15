@@ -3,12 +3,15 @@
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 
-#include "BaseGameplayTags.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
-#include "Components/WidgetComponent.h"
+#include "BaseGameplayTags.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
-#include "Net/UnrealNetwork.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 
 
@@ -32,6 +35,10 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 }
 
 void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -144,4 +151,30 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 			HeroLevel);
 	}
 	
+}
+
+void APCHeroUnitCharacter::NotifyActorBeginCursorOver()
+{
+	Super::NotifyActorBeginCursorOver();
+
+	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (PC->IsLocalController())
+		{
+			PC->SetOverlappedUnit(this);
+		}
+	}
+}
+
+void APCHeroUnitCharacter::NotifyActorEndCursorOver()
+{
+	Super::NotifyActorEndCursorOver();
+
+	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (PC->IsLocalController())
+		{
+			PC->SetOverlappedUnit(nullptr);
+		}
+	}
 }

@@ -35,23 +35,10 @@ void UPCTileManager::QuickSetUp()
 bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
 	const int32 i = Y * Rows + X;
-	UE_LOG(LogTemp, Error, TEXT("PlaceUnitOnField Y=%d X=%d i=%d Unit=%s NetMode=%d HasAuth=%d"), 
-		  Y, X, i, Unit ? *Unit->GetName() : TEXT("NULL"),
-		  (int32)GetNetMode(), GetOwner() ? GetOwner()->HasAuthority() : -1);
-    
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlaceUnit FAILED: ValidIndex=%d Unit=%s IsEmpty=%d"),
-			   Field.IsValidIndex(i), Unit ? TEXT("Valid") : TEXT("NULL"), 
-			   Field.IsValidIndex(i) ? Field[i].IsEmpty() : false);
 		return false;
-	}
-    
 	Field[i].Unit = Unit;
-    
-	// 즉시 확인
-	UE_LOG(LogTemp, Error, TEXT("After placement: Field[%d].Unit = %s"), 
-		   i, Field[i].Unit ? *Field[i].Unit->GetName() : TEXT("NULL"));
+
 	APCCombatBoard* CombatBoard = GetCombatBoard();
 	const FVector Loc = Field[i].Position;
 	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
@@ -89,8 +76,7 @@ bool UPCTileManager::RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard)
 APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
-	APCBaseUnitCharacter* Unit = Field[i].Unit;    
-	return Unit;
+	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
@@ -112,7 +98,7 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return FVector::ZeroVector;
 }
 
-FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
+FIntPoint UPCTileManager::GetFieldUnitGridPoint(APCBaseUnitCharacter* InUnit) const
 {
 	if (!InUnit)
 		return FIntPoint::NoneValue;
@@ -170,6 +156,8 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
 	}
+	
+	OnBenchUpdated.Broadcast();
 	return true;
 }
 
@@ -183,6 +171,9 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	}
 	Bench[BenchIndex].Unit = nullptr;
+
+	OnBenchUpdated.Broadcast();
+	
 	return true;
 }
 

@@ -11,6 +11,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "PCBaseUnitCharacter.generated.h"
 
+class UPCDataAsset_UnitAbilityConfig;
 class UPCUnitStatusBarWidget;
 class UWidgetComponent;
 class UGameplayAbility;
@@ -28,12 +29,9 @@ public:
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
-	const UPCUnitAttributeSet* GetUnitAttributeSet();
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
+	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
-
-	UPROPERTY(Transient)
-	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet = nullptr;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
@@ -51,6 +49,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
 
+	FORCEINLINE const UWidgetComponent* GetStatusBarComponent() const { return StatusBarComp; }
+	FORCEINLINE FName GetStatusBarSocketName() const { return StatusBarSocketName; }
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -89,6 +90,7 @@ public:
 	// Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetTeamIndex(const int32 InTeamID) { if (HasAuthority()) TeamIndex = InTeamID; }
+
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	int32 GetTeamIndex() const { return TeamIndex; }
 
@@ -96,6 +98,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetOnCombatBoard(APCCombatBoard* InCombatBoard) { if (HasAuthority()) OnCombatBoard = InCombatBoard; }
+
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	FORCEINLINE APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
 
@@ -107,6 +110,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsCombatActive() const { return bIsCombatActive; }
+
+	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
+	void ActionDrag(const bool IsStart);
 	
 protected:
 	UPROPERTY()
@@ -132,6 +138,8 @@ protected:
 
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
+	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
 	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;

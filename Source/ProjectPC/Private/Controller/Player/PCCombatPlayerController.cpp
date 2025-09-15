@@ -3,35 +3,42 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 
-#include "AbilitySystemComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Character/Unit/PCBaseUnitCharacter.h"
+
+#include "BaseGameplayTags.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
+//#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
-#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Shop/PCShopManager.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
+
 APCCombatPlayerController::APCCombatPlayerController()
 {
-	bShowMouseCursor = true;
-	bEnableClickEvents = true;
+	// 마우스 관련 초기화
 	bEnableMouseOverEvents = true;
-	bAutoManageActiveCameraTarget = false;
+	bEnableClickEvents = true;
 	DefaultMouseCursor = EMouseCursor::Default;
+	bShowMouseCursor = true;
+
+	// 이동 관련 초기화
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+
+	// 카메라 관련 초기화
+	bAutoManageActiveCameraTarget = true;
 
 	DragComponent = CreateDefaultSubobject<UPCDragComponent>(TEXT("DragComponent"));
 }
@@ -52,6 +59,10 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCCombatPlayerController::OnSetDestinationTriggered);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
+
+		EnhancedInputComponent->BindAction(PlayerInputData->BuyXP, ETriggerEvent::Started, this, &APCCombatPlayerController::OnBuyXPStarted);
+		EnhancedInputComponent->BindAction(PlayerInputData->ShopRefresh, ETriggerEvent::Started, this, &APCCombatPlayerController::OnShopRefreshStarted);
+		EnhancedInputComponent->BindAction(PlayerInputData->SellUnit, ETriggerEvent::Started, this, &APCCombatPlayerController::OnSellUnitStarted);
 
 		// Drag&Drop
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Started, this, &APCCombatPlayerController::OnMouse_Pressed);
@@ -141,47 +152,133 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
+void APCCombatPlayerController::OnBuyXPStarted()
+{
+	ShopRequest_BuyXP();
+}
+
+void APCCombatPlayerController::OnShopRefreshStarted()
+{
+	ShopRequest_ShopRefresh(2);
+}
+
+void APCCombatPlayerController::OnSellUnitStarted()
+{
+	ShopRequest_SellUnit();
+}
+
 void APCCombatPlayerController::LoadShopWidget()
 {
 	if (IsLocalController())
 	{
 		if (!ShopWidgetClass) return;
-	
-		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		
-		//ShopWidget->SetVisibility(ESlateVisibility::Hidden);
+		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget) return;
 
-		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-		{
-			if (auto PS = GetPlayerState<APCPlayerState>())
-			{
-				GS->GetShopManager()->UpdateShopSlots(PS);
-			}
-		}
+		ShopRequest_ShopRefresh(0);
 		
 		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
-		ShopWidget->AddToViewport(50);
-		//ShopWidget->OpenMenu();
+		ShopWidget->OpenMenu();
 	}
 }
 
-void APCCombatPlayerController::ShopRequest_ShopRefresh()
+void APCCombatPlayerController::ShopRequest_ShopRefresh(float GoldCost)
 {
 	if (IsLocalController())
 	{
-		Server_ShopRefresh();
+		Server_ShopRefresh(GoldCost);
 	}
 }
 
+void APCCombatPlayerController::ShopRequest_BuyXP()
+{
+	if (IsLocalController())
+	{
+		Server_BuyXP();
+	}
+}
 
-void APCCombatPlayerController::Server_ShopRefresh_Implementation()
+void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
+{
+	if (IsLocalController())
+	{
+		Server_BuyUnit(SlotIndex);
+	}
+}
+
+void APCCombatPlayerController::ShopRequest_SellUnit()
+{
+	if (IsLocalController())
+	{
+		Server_SellUnit();
+	}
+}
+
+void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("Player.GA.Shop.ShopRefresh")));
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_ShopRefresh;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.EventMagnitude = GoldCost;
+
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_BuyXP_Implementation()
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_BuyXP));
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.EventMagnitude = static_cast<float>(SlotIndex);
+
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_SellUnit_Implementation()
+{
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			if (OverlappedUnit)
+			{
+				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+				FGameplayEventData EventData;
+				EventData.Instigator = PS;
+				EventData.Target = PS;
+				EventData.EventTag = GA_Tag;
+				EventData.OptionalObject = OverlappedUnit;
+	
+				ASC->HandleGameplayEvent(GA_Tag, &EventData);
+			}
 		}
 	}
 }
@@ -196,8 +293,15 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	
 }
 
+void APCCombatPlayerController::SetOverlappedUnit(APCHeroUnitCharacter* NewUnit)
+{
+	OverlappedUnit = NewUnit;
+	UE_LOG(LogTemp, Warning, TEXT("Controller Hero Overlap"));
+}
+
 void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
+	
 	UWorld* World = GetWorld();
 	if (!World) return;
 	for (TActorIterator<APCCombatBoard> It(World); It; ++It)

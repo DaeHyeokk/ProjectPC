@@ -7,6 +7,7 @@
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_BaseUnitData.generated.h"
 
+class UPCDataAsset_UnitAbilityConfig;
 class UPCDataAsset_UnitAnimSet;
 class UAbilitySystemComponent;
 class UPCUnitAbilitySystemComponent;
@@ -47,6 +48,9 @@ public:
 
 	UFUNCTION()
 	UPCDataAsset_UnitAnimSet* GetAnimSetData() const;
+
+	UFUNCTION()
+	UPCDataAsset_UnitAbilityConfig* GetAbilityConfigData() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")
@@ -72,6 +76,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> EventAbilities;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability Data")
+	TObjectPtr<UPCDataAsset_UnitAbilityConfig> AbilityConfigData;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animations")
 	TObjectPtr<UPCDataAsset_UnitAnimSet> AnimSetData;
 };

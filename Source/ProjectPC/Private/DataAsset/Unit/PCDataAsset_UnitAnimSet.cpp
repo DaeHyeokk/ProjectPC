@@ -3,13 +3,10 @@
 
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 
+#include "BaseGameplayTags.h"
+
 
 UAnimMontage* UPCDataAsset_UnitAnimSet::GetAnimMontageByTag(const FGameplayTag& MontageTag) const
 {
 	return MontageByTagMap.FindRef(MontageTag);
-}
-
-UAnimMontage* UPCDataAsset_UnitAnimSet::GetRandomBasicAttackMontage() const
-{
-	return nullptr;
 }

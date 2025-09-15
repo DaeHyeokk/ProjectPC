@@ -47,15 +47,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Locomotion")
 	FUnitLocomotionSet LocomotionSet;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages|Other")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages|BasicAttack")
-	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
 	
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetAnimMontageByTag(const FGameplayTag& MontageTag) const;
-
-	UFUNCTION(BlueprintCallable)
-	UAnimMontage* GetRandomBasicAttackMontage() const;
 };

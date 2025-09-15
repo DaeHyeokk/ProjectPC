@@ -12,6 +12,9 @@
  * 
  */
 
+class APCCombatBoard;
+class APCHeroUnitCharacter;
+class APCPreviewHeroActor;
 class UPCHeroStatusBarWidget;
 class UPCUnitStatusBarWidget;
 struct FSpawnSubsystemConfig;
@@ -57,7 +60,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCBaseUnitCharacter* SpawnUnitByTag(
 		const FGameplayTag UnitTag,
-		const FTransform& Transform,
 		const int32 TeamIndex = 255,
 		const int32 UnitLevel = 1,
 		AActor* InOwner = nullptr,
@@ -73,4 +75,17 @@ private:
 	TSubclassOf<UUserWidget> ResolveStatusBarWidgetClass(const UPCDataAsset_UnitDefinition* Definition) const;
 	void ApplyDefinitionData(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
 	void ApplyDefinitionDataServerOnly(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
+
+private:
+	UPROPERTY()
+	TSubclassOf<APCPreviewHeroActor> DefaultPreviewHeroClass;
+
+public:
+	UFUNCTION(BlueprintCallable, Category="Spawner")
+	APCPreviewHeroActor* SpawnPreviewHeroBySourceHero(
+		APCHeroUnitCharacter* SourceHero,
+		AActor* InOwner = nullptr,
+		APawn* InInstigator = nullptr,
+		ESpawnActorCollisionHandlingMethod HandlingMethod =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn) const;
 };

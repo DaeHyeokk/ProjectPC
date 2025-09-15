@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "DSP/BufferDiagnostics.h"
 #include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -22,8 +23,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	//NetUpdateFrequency = 100.f;
-	//MinNetUpdateFrequency = 66.f;
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -62,19 +63,14 @@ UPCUnitAbilitySystemComponent* APCBaseUnitCharacter::GetUnitAbilitySystemCompone
 	return nullptr;
 }
 
-const UPCUnitAttributeSet* APCBaseUnitCharacter::GetUnitAttributeSet()
-{
-	if (!UnitAttributeSet)
-	{
-		UnitAttributeSet = GetAbilitySystemComponent()->GetSet<UPCUnitAttributeSet>();
-	}
-
-	return UnitAttributeSet.Get();
-}
-
 UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
 {
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAnimSetData() : nullptr;
+}
+
+const UPCDataAsset_UnitAbilityConfig* APCBaseUnitCharacter::GetUnitAbilityConfigDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAbilityConfigData() : nullptr;
 }
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
@@ -96,7 +92,7 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	InitAbilitySystem();
 	SetAnimSetData();
 
@@ -215,6 +211,18 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 		// Listen Server 일 경우 OnRep 직접 호출
 		if (GetNetMode() == NM_ListenServer)
 			OnRep_IsOnField();
+	}
+}
+
+void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
+{
+	// 클라에서만 실행 (Listen Server 포함)
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+
+	if (GetMesh())
+	{
+		GetMesh()->SetHiddenInGame(IsStart);
 	}
 }
 
