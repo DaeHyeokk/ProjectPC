@@ -3,32 +3,38 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 
-#include "AbilitySystemComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 
 #include "BaseGameplayTags.h"
-#include "UI/Shop/PCShopWidget.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
-#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
+#include "UI/Shop/PCShopWidget.h"
 
 
 APCCombatPlayerController::APCCombatPlayerController()
 {
-	bShowMouseCursor = true;
-	bAutoManageActiveCameraTarget = true;
+	// 마우스 관련 초기화
+	bEnableMouseOverEvents = true;
+	bEnableClickEvents = true;
 	DefaultMouseCursor = EMouseCursor::Default;
+	bShowMouseCursor = true;
+
+	// 이동 관련 초기화
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+
+	// 카메라 관련 초기화
+	bAutoManageActiveCameraTarget = true;
 }
 
 void APCCombatPlayerController::SetupInputComponent()
@@ -122,7 +128,7 @@ void APCCombatPlayerController::OnShopRefreshStarted()
 
 void APCCombatPlayerController::OnSellUnitStarted()
 {
-	// ShopRequest_SellUnit()
+	ShopRequest_SellUnit();
 }
 
 void APCCombatPlayerController::LoadShopWidget()
@@ -165,11 +171,11 @@ void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
 	}
 }
 
-void APCCombatPlayerController::ShopRequest_SellUnit(FGameplayTag UnitTag)
+void APCCombatPlayerController::ShopRequest_SellUnit()
 {
 	if (IsLocalController())
 	{
-		Server_SellUnit(UnitTag);
+		Server_SellUnit();
 	}
 }
 
@@ -220,21 +226,25 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	}
 }
 
-void APCCombatPlayerController::Server_SellUnit_Implementation(FGameplayTag UnitTag)
+void APCCombatPlayerController::Server_SellUnit_Implementation()
 {
-	// if (auto PS = GetPlayerState<APCPlayerState>())
-	// {
-	// 	if (auto ASC = PS->GetAbilitySystemComponent())
-	// 	{
-	// 		FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
-	// 		FGameplayEventData EventData;
-	// 		EventData.Instigator = PS;
-	// 		EventData.Target = PS;
-	// 		EventData.EventTag = GA_Tag;
-	//
-	// 		ASC->HandleGameplayEvent(GA_Tag, &EventData);
-	// 	}
-	// }
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			if (OverlappedUnit)
+			{
+				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+				FGameplayEventData EventData;
+				EventData.Instigator = PS;
+				EventData.Target = PS;
+				EventData.EventTag = GA_Tag;
+				EventData.OptionalObject = OverlappedUnit;
+	
+				ASC->HandleGameplayEvent(GA_Tag, &EventData);
+			}
+		}
+	}
 }
 
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, float BlendTime)
@@ -243,6 +253,12 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	{
 		PCCarouselRing->ApplyCentralView(this, BlendTime);
 	}
+}
+
+void APCCombatPlayerController::SetOverlappedUnit(APCHeroUnitCharacter* NewUnit)
+{
+	OverlappedUnit = NewUnit;
+	UE_LOG(LogTemp, Warning, TEXT("Controller Hero Overlap"));
 }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()
@@ -290,7 +306,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
-		PlayerMainWidget->AddToViewport(50);
+		//PlayerMainWidget->AddToViewport(50);
 		PlayerMainWidget->HideWidget();
 		PlayerMainWidget->InitAndBind();
 		
@@ -305,7 +321,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	{
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
-			PlayerMainWidget->AddToViewport(50);
+			//PlayerMainWidget->AddToViewport(50);
 		PlayerMainWidget->InitAndBind();
 		PlayerMainWidget->HideWidget();
 	}

@@ -56,35 +56,38 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	
-	if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+
+	auto* PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>();
+	if (!PS)
 	{
-		SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
-		
-		UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
-		UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
-		
-		if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
+	UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
+	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
+
+	const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
+	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
 		{
-			if (CostAttributeSet->GetPlayerGold() >= UnitCost)
-			{
-				if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
-				{
-					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-					return;
-				}
-				
-				if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-				{
-					if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
-					{
-						auto BenchIndex = Board->GetFirstEmptyBenchIndex();
-						UE_LOG(LogTemp, Warning, TEXT("Index : %d"), BenchIndex);
+			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
 						
-						GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
-					}
-				}
-			}
+			GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
 		}
 	}
 	

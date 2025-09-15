@@ -15,6 +15,7 @@
 
 class APCCombatBoard;
 class UPCShopManager;
+class APCPlayerState;
 
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
@@ -226,9 +227,19 @@ public:
 	const TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
+	
 	TArray<float> GetCostProbabilities(int32 PlayerLevel);
 	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
-	
+	int32 GetUnitCostByTag(FGameplayTag UnitTag);
+	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
+
+	// 상점 업데이트로 인한 유닛 반환
+	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
+	void ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTag);
+
+	// Carousel에 차출할 유닛 태그 배열 리턴
+	TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
+
 #pragma endregion Shop
 
 #pragma region Attribute

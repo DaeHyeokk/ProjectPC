@@ -186,6 +186,88 @@ TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(int32 Cos
 	return ShopUnitDataList;
 }
 
+int32 APCCombatGameState::GetUnitCostByTag(FGameplayTag UnitTag)
+{
+	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
+	{
+		if (UnitData.Tag == UnitTag)
+		{
+			return UnitData.UnitCost;
+		}
+	}
+
+	return 0;
+}
+
+int32 APCCombatGameState::GetSellingPrice(TPair<int32, int32> UnitLevelCostData)
+{
+	if (const int32* Price = ShopUnitSellingPriceDataMap.Find(UnitLevelCostData))
+	{
+		return *Price;
+	}
+
+	return 0;
+}
+
+void APCCombatGameState::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots)
+{
+	// 구매하지 않은 유닛 상점에 기물 반환
+	for (int32 i = 0; i < OldSlots.Num(); ++i)
+	{
+		if (PurchasedSlots.Contains(i)) continue;
+
+		const auto& OldSlot = OldSlots[i];
+		for (auto& Unit : GetShopUnitDataListByCost(OldSlot.UnitCost))
+		{
+			if (Unit.UnitName == OldSlot.UnitName)
+			{
+				Unit.UnitCount += 1;
+				break;
+			}
+		}
+	}
+}
+
+void APCCombatGameState::ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags)
+{
+	for (auto UnitTag : UnitTags)
+	{
+		auto UnitCost = GetUnitCostByTag(UnitTag);
+		if (UnitCost != 0)
+		{
+			auto UnitDataList = GetShopUnitDataListByCost(UnitCost);
+			for (auto Unit : UnitDataList)
+			{
+				if (Unit.Tag == UnitTag)
+				{
+					Unit.UnitCount += 1;
+				}
+			}
+		}
+	}
+}
+
+TArray<FGameplayTag> APCCombatGameState::GetCarouselUnitTags(int32 Round)
+{
+	TArray<FGameplayTag> ReturnTags;
+	
+	switch (Round)
+	{
+	case 1:
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	case 4:
+		break;
+	default:
+		break;
+	}
+
+	return ReturnTags;
+}
+
 const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
 	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;

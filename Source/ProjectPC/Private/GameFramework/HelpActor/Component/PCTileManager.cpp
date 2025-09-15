@@ -97,7 +97,7 @@ FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 	return FVector::ZeroVector;
 }
 
-FIntPoint UPCTileManager::GetFiledUnitGridPoint(APCBaseUnitCharacter* InUnit) const
+FIntPoint UPCTileManager::GetFieldUnitGridPoint(APCBaseUnitCharacter* InUnit) const
 {
 	if (!InUnit)
 		return FIntPoint::NoneValue;

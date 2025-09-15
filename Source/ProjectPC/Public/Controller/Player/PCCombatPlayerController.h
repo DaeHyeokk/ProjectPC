@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
-#include "DataAsset/FrameWork//PCStageData.h"
 #include "PCCombatPlayerController.generated.h"
 
 class UPCPlayerMainWidget;
@@ -14,6 +12,7 @@ class APCCarouselRing;
 class UPCDataAsset_PlayerInput;
 class UPCShopWidget;
 class UUserWidget;
+class APCHeroUnitCharacter;
 
 /**
  * 
@@ -67,7 +66,7 @@ public:
 	void ShopRequest_ShopRefresh(float GoldCost);
 	void ShopRequest_BuyXP();
 	void ShopRequest_BuyUnit(int32 SlotIndex);
-	void ShopRequest_SellUnit(FGameplayTag UnitTag);
+	void ShopRequest_SellUnit();
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh(float GoldCost);
@@ -76,7 +75,13 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_BuyUnit(int32 SlotIndex);
 	UFUNCTION(Server, Reliable)
-	void Server_SellUnit(FGameplayTag UnitTag);
+	void Server_SellUnit();
+
+private:
+	APCHeroUnitCharacter* OverlappedUnit;
+
+public:
+	void SetOverlappedUnit(APCHeroUnitCharacter* NewUnit);
 
 #pragma endregion Shop
 

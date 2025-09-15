@@ -123,7 +123,7 @@ public:
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* Unit) const;
 
 	UFUNCTION(BlueprintPure, Category = "Field")
-	FIntPoint GetFiledUnitGridPoint(APCBaseUnitCharacter* Unit) const;
+	FIntPoint GetFieldUnitGridPoint(APCBaseUnitCharacter* Unit) const;
 	
 	// 월드 / 로컬 포지션 제공
 	UFUNCTION(BlueprintPure, Category = "Field")
@@ -210,9 +210,7 @@ private:
 	virtual void BeginPlay() override;
 
 	bool IsValidTile(int32 Y, int32 X, int32& OutIndex) const;
-			
-
-
+	
 	// 디버그용
 
 public:

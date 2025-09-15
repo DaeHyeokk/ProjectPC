@@ -23,7 +23,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	if (!GS) return;
 	
 	const auto& ShopSlots = TargetPlayer->GetShopSlots();
-	ReturnUnitsToShop(GS, ShopSlots, TargetPlayer->PurchasedSlots);
+	GS->ReturnUnitsToShopBySlotUpdate(ShopSlots, TargetPlayer->PurchasedSlots);
 	TargetPlayer->PurchasedSlots.Empty();
 
 	TArray<FPCShopUnitData> NewShopSlots;
@@ -64,25 +64,6 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::ReturnUnitsToShop(APCCombatGameState* GS, const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots)
-{
-	// 구매하지 않은 유닛 상점에 기물 반환
-	for (int32 i = 0; i < OldSlots.Num(); ++i)
-	{
-		if (PurchasedSlots.Contains(i)) continue;
-
-		const auto& OldSlot = OldSlots[i];
-		for (auto& Unit : GS->GetShopUnitDataListByCost(OldSlot.UnitCost))
-		{
-			if (Unit.UnitName == OldSlot.UnitName)
-			{
-				Unit.UnitCount += 1;
-				break;
-			}
-		}
-	}
-}
-
 void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex)
 {
 	if (!TargetPlayer) return;
@@ -98,4 +79,22 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
 
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
+}
+
+void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
+{
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+
+	auto UnitCost = GS->GetUnitCostByTag(UnitTag);
+
+	for (auto& Unit : GS->GetShopUnitDataListByCost(UnitCost))
+	{
+		if (UnitTag == Unit.Tag)
+		{
+			// 1성은 1개, 2성은 3개, 3성은 9개 기물 반환
+				// 4성이 추가되도 그대로 사용 가능
+			Unit.UnitCount += FMath::Pow(3.f, static_cast<float>(UnitLevel) - 1.f);
+		}
+	}
 }

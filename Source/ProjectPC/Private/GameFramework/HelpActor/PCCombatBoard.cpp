@@ -248,7 +248,7 @@ FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
 
 FIntPoint APCCombatBoard::GetFieldUnitPoint(APCBaseUnitCharacter* InUnit) const
 {
-	return TileManager ? TileManager->GetFiledUnitGridPoint(InUnit) : FIntPoint::NoneValue;
+	return TileManager ? TileManager->GetFieldUnitGridPoint(InUnit) : FIntPoint::NoneValue;
 }
 
 FVector APCCombatBoard::GetTileWorldLocation(int32 Y, int32 X) const
