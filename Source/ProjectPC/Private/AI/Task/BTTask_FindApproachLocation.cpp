@@ -17,7 +17,7 @@ UBTTask_FindApproachLocation::UBTTask_FindApproachLocation()
 	NodeName = TEXT("Find Approach Location To Near Enemy");
 }
 
-static bool IsHostile(const AActor* A, const AActor* B)
+static bool IsHostile2(const AActor* A, const AActor* B)
 {
 	const FGenericTeamId TA = FGenericTeamId::GetTeamIdentifier(A);
 	const FGenericTeamId TB = FGenericTeamId::GetTeamIdentifier(B);
@@ -94,7 +94,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 				const APCBaseUnitCharacter* NextUnit = Board->GetUnitAt(NextPoint.Y, NextPoint.X);
 				
 				// 다음에 탐색할 지점에 유닛이 있고, 적 유닛일 경우
-				if (NextUnit && IsHostile(OwnerUnit, NextUnit))
+				if (NextUnit && IsHostile2(OwnerUnit, NextUnit))
 				{
 					const FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);

@@ -2,16 +2,17 @@
 
 
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
-
-#include "IPropertyTable.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+
 
 
 // Sets default values for this component's properties
 UPCTileManager::UPCTileManager()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
+	
 }
 
 APCCombatBoard* UPCTileManager::GetCombatBoard() const
@@ -34,10 +35,23 @@ void UPCTileManager::QuickSetUp()
 bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
 	const int32 i = Y * Rows + X;
+	UE_LOG(LogTemp, Error, TEXT("PlaceUnitOnField Y=%d X=%d i=%d Unit=%s NetMode=%d HasAuth=%d"), 
+		  Y, X, i, Unit ? *Unit->GetName() : TEXT("NULL"),
+		  (int32)GetNetMode(), GetOwner() ? GetOwner()->HasAuthority() : -1);
+    
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlaceUnit FAILED: ValidIndex=%d Unit=%s IsEmpty=%d"),
+			   Field.IsValidIndex(i), Unit ? TEXT("Valid") : TEXT("NULL"), 
+			   Field.IsValidIndex(i) ? Field[i].IsEmpty() : false);
 		return false;
+	}
+    
 	Field[i].Unit = Unit;
-
+    
+	// 즉시 확인
+	UE_LOG(LogTemp, Error, TEXT("After placement: Field[%d].Unit = %s"), 
+		   i, Field[i].Unit ? *Field[i].Unit->GetName() : TEXT("NULL"));
 	APCCombatBoard* CombatBoard = GetCombatBoard();
 	const FVector Loc = Field[i].Position;
 	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
@@ -75,7 +89,8 @@ bool UPCTileManager::RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard)
 APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
-	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
+	APCBaseUnitCharacter* Unit = Field[i].Unit;    
+	return Unit;
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
@@ -135,17 +150,36 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 {
 	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty())
 		return false;
+
 	Bench[BenchIndex].Unit = Unit;
-	Unit->SetOnCombatBoard(CachedCombatBoard.Get());
-	Unit->SetActorLocation(Bench[BenchIndex].Position);
+
+	APCCombatBoard* CombatBoard = GetCombatBoard();
+	const FVector Loc = Bench[BenchIndex].Position;
+	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
+	
+	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
+	{
+		Unit->SetOnCombatBoard(CombatBoard);
+		Unit->SetActorLocation(Loc);
+	}
+	else
+	{
+		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
+		Unit->SetOnCombatBoard(CombatBoard);
+		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
+	}
 	return true;
 }
 
-bool UPCTileManager::RemoveFromBench(int32 BenchIndex)
+bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 {
 	if (!Bench.IsValidIndex(BenchIndex))
 		return false;
-	Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
+
+	if (!bPreserveUnitBoard)
+	{
+		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
+	}
 	Bench[BenchIndex].Unit = nullptr;
 	return true;
 }
@@ -166,6 +200,20 @@ FVector UPCTileManager::GetBenchLocalPosition(int32 BenchIndex) const
 		return FVector::ZeroVector;
 	const FVector WorldPosition = GetBenchWorldPosition(BenchIndex);
 	return GetOwner()->GetTransform().InverseTransformPosition(WorldPosition);
+}
+
+int32 UPCTileManager::GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const
+{
+	if (!Unit)
+		return INDEX_NONE;
+	for (int32 i = 0; i < BenchSize; ++i)
+	{
+		if (Bench[i].Unit == Unit)
+		{
+			return i;
+		}
+	}
+	return INDEX_NONE;
 }
 
 void UPCTileManager::ClearAll()
@@ -198,17 +246,6 @@ bool UPCTileManager::CanUse(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit
 {
 	int32 Index;
 	return IsValidTile(Y,X, Index) ? Field[Index].CanBeUsedBy(InUnit) : false; 
-}
-
-// 점유자가 떠날 예약이 있으면 통과 후보로 허용
-bool UPCTileManager::CanUseNextStep(int32 Y, int32 X, const APCBaseUnitCharacter* InUnit) const
-{
-	int32 Index;
-	if (!IsValidTile(Y,X,Index))
-	{
-		return true;
-	}
-	return false;
 }
 
 // 어딘가에 예약이 되어있는지
@@ -254,7 +291,7 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 		Tile.Unit = InUnit;
 		Tile.ReservedUnit = nullptr;
 		InUnit->SetOnCombatBoard(CachedCombatBoard.Get());
-		InUnit->SetActorLocation(Tile.Position);
+		//InUnit->SetActorLocation(Tile.Position);
 		return true;
 
 	case ETileAction::Release:
@@ -400,7 +437,7 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
             }
 
             if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get()))
-                RemoveFromBench(E.Index);
+                RemoveFromBench(E.Index, true);
         }
     }
 }
@@ -563,5 +600,159 @@ void UPCTileManager::DebugExplainTile(int32 Y, int32 X, const FString& Tag) cons
 		(int32)T.IsReserved(),
 		(int32)T.IsFree(),
 		(int32)T.CanBeUsedBy(nullptr)); // 원하면 OwnerUnit 넘겨서 체크
+}
+
+// Drag&Drop Helper
+
+namespace
+{
+	// 제곱거릴 헬퍼
+	FORCEINLINE float Dist2_2D(const FVector&A, const FVector&B)
+	{
+		const float dx = A.X - B.X;
+		const float dy = A.Y - B.Y;
+		return dx*dx + dy*dy;
+	}
+}
+
+bool UPCTileManager::WorldToField(const FVector& WorldLoc, int32& OutY, int32& OutX, float MaxSnapDist) const
+{
+	OutY = INDEX_NONE;
+	OutX = INDEX_NONE;
+
+	if (Field.Num() <= 0 || Rows <= 0 || Cols <= 0)
+		return false;
+
+	float BestD2 = TNumericLimits<float>::Max();
+	int32 BestY = INDEX_NONE;
+	int32 BestX = INDEX_NONE;
+
+	// 전체 스캔 (Rows*Cols), 보드 크기가 작으니 충분히 빠름
+	for (int32 y = 0; y < Cols; ++y)
+	{
+		for (int32 x = 0; x < Rows; ++x)
+		{
+			const int32 i = IndexOf(y, x);
+			if (!Field.IsValidIndex(i)) continue;
+
+			const float d2 = Dist2_2D(Field[i].Position, WorldLoc);
+			if (d2 < BestD2)
+			{
+				BestD2 = d2;
+				BestY = y;
+				BestX = x;
+			}
+		}
+	}
+
+	if (BestY == INDEX_NONE)
+		return false;
+
+	// 스냅 임계값: 제곱거리끼리 비교!
+	const float DefSnap = (TileWidthX > 0.f) ? (TileWidthX * 0.6f) : 120.f;
+	const float Snap = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+
+	if (BestD2 > (Snap * Snap))
+		return false;
+
+	OutY = BestY;
+	OutX = BestX;
+
+	UE_LOG(LogTemp, Warning, TEXT("World: %s  Best (y=%d,x=%d) Pos:%s  d=%.1f"),
+	*WorldLoc.ToString(), BestY, BestX, *Field[IndexOf(BestY,BestX)].Position.ToString(),
+	FMath::Sqrt(BestD2));
+	
+	return true;
+	
+	
+}
+
+bool UPCTileManager::WorldToBench(const FVector& World, int32& OutBenchIndex, float MaxSnapDist) const
+{
+	OutBenchIndex = INDEX_NONE;
+	if (Bench.Num() <= 0)
+		return false;
+
+	float BestD2 = TNumericLimits<float>::Max();
+	int32 BestIdx = INDEX_NONE;
+
+	for (int32 i = 0; i < Bench.Num(); ++i)
+	{
+		const float d2 = Dist2_2D(Bench[i].Position, World);
+		if (d2 < BestD2)
+		{
+			BestD2 = d2;
+			BestIdx = i;
+		}
+	}
+
+	if (BestIdx == INDEX_NONE)
+		return false;
+
+	const float DefSnap = (TileWidthX > 0.f) ? (TileWidthX * 0.6f) : 120.f;
+	const float Snap = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+
+	// ★ 제곱거리 비교
+	if (BestD2 > (Snap * Snap))
+		return false;
+
+	OutBenchIndex = BestIdx;
+	return true;
+}
+
+bool UPCTileManager::WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
+	int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField, float MaxSnapDistBench) const
+{
+	bOutIsField = false;
+	OutY = INDEX_NONE;
+	OutX = INDEX_NONE;
+	OutBenchIndex = INDEX_NONE;
+	OutSnapPos = World;
+
+	int32 Y, X, B;
+	const bool bField = WorldToField(World, Y, X, MaxSnapDistField);
+	const bool bBench = WorldToBench(World, B, MaxSnapDistBench);
+
+	if (!bField && !bBench)
+		return false;
+
+	if (bField && bBench)
+	{
+		const FVector PField = Field[IndexOf(Y, X)].Position;
+		const FVector PBench = Bench[B].Position;
+
+		const float df2 = Dist2_2D(PField, World);
+		const float db2 = Dist2_2D(PBench, World);
+
+		const bool ChooseField = bPreferField ? (df2 <= db2 * 1.02f) : (df2 < db2);
+		if (ChooseField)
+		{
+			bOutIsField = true;
+			OutY = Y; OutX = X;
+			OutSnapPos = PField;
+		}
+		else
+		{
+			bOutIsField = false;
+			OutBenchIndex = B;
+			OutSnapPos = PBench;
+		}
+		return true;
+	}
+
+	if (bField)
+	{
+		bOutIsField = true;
+		OutY = Y; OutX = X;
+		OutSnapPos = Field[IndexOf(Y, X)].Position;
+		return true;
+	}
+
+	bOutIsField = false;
+	OutBenchIndex = B;
+	OutSnapPos = Bench[B].Position;
+	return true;
+
+	
 }
 

@@ -116,9 +116,7 @@ void APCCombatManager::StartAllBattle()
 		}
 
 		GuestTileManager->MoveUnitsMirroredTo(HostTileManager, bMirrorRows, bMirrorCols, bIncludeBench);
-		HostTileManager->DebugLogField(true,true,TEXT("HOST after mirror"));
-		GuestTileManager->DebugLogField(true,true,TEXT("GUEST after mirror"));
-
+		
 		for (auto& UnitWeak : InPair.MovedUnits)
 		{
 			if (auto* U = UnitWeak.Get())
@@ -262,7 +260,7 @@ bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUni
 	{
 		if (TileManager->GetBenchUnit(i) == Unit)
 		{
-			TileManager->RemoveFromBench(i);
+			TileManager->RemoveFromBench(i,false);
 			return true;
 		}
 	}

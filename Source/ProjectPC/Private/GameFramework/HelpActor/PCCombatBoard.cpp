@@ -5,7 +5,6 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
-#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
@@ -39,7 +38,7 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(SceneRoot);
 	SpringArm->bDoCollisionTest = false;
-	SpringArm->TargetArmLength = 2200.f;
+	SpringArm->TargetArmLength = 3000.f;
 	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
 	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
 
@@ -135,14 +134,12 @@ void APCCombatBoard::BuildHISM()
 		FieldHISM->SetStaticMesh(HexTileMesh);
 	if (HexTileMaterial)
 		FieldHISM->SetMaterial(0, HexTileMaterial);
-	if (HexTileOverlayMaterial)
-		FieldHISM->SetOverlayMaterial(HexTileOverlayMaterial);
+	FieldHISM->SetOverlayMaterial(nullptr);
 	if (BenchTileMesh)
 		BenchHISM->SetStaticMesh(BenchTileMesh);
 	if (BenchTileMaterial)
 		BenchHISM->SetMaterial(0, BenchTileMaterial);
-	if (BenchTileOverlayMaterial)
-		BenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
+	BenchHISM->SetOverlayMaterial(nullptr);
 	
 	Field_InstanceToXY.Reset();
 	Bench_InstanceToXY.Reset();
@@ -194,6 +191,22 @@ void APCCombatBoard::RebuildAnchors()
 	Make(EnemySeatAnchor, EnemySeatParent, EnemySeatSocket);
 }
 
+
+void APCCombatBoard::OnHism(bool bOn) const
+{
+	if (!FieldHISM && !BenchHISM)
+		return;
+	if (bOn)
+	{
+		FieldHISM->SetOverlayMaterial(HexTileOverlayMaterial);
+		BenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
+	}
+	else
+	{
+		FieldHISM->SetOverlayMaterial(nullptr);
+		BenchHISM->SetOverlayMaterial(nullptr);
+	}
+}
 
 FTransform APCCombatBoard::GetPlayerSeatTransform() const
 {

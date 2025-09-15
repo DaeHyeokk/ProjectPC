@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "PCCarouselRing.generated.h"
 
+class APCPlayerState;
+class UBoxComponent;
+class APCBaseUnitCharacter;
 class UCameraComponent;
 class USpringArmComponent;
 class URotatingMovementComponent;
@@ -19,88 +22,137 @@ public:
 	
 	APCCarouselRing();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	FName RingName;
+	// 바깥쪽 플레이어 링
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
+	int32 PlayerNumSlots = 8;
 
-	// 슬롯 / 지오메트리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	int32 NumSlots = 8;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
+	float PlayerRingRadius = 900.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	float Radius = 900.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
+	float PlayerRingHeight = 20.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	float Height = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
+	float PlayerRingStartAngleDeg = 180.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	float StartAngleDeg = 90.f;
+	// true면 플레이스 로테이션 항상 중심을 바라봄
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
+	bool bPlayerRingFaceCenter = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ring")
-	bool bFaceCenter = true;
+	// 안쪽 유닛 회전 링
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
+	int32 UnitRingNumSlots = 10;
 
-	// 회전
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotate")
-	bool bRotate = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
+	float UnitRingRadius = 400.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotate")
-	float RotationRateYawDeg = 35.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
+	float UnitRingHeight = 0.f;
 
-	// 회전초밥에 올릴 기물 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
+	float UnitRingStartAngleDeg = 90.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PickUp")
-	TSubclassOf<AActor> PickupClass;
+	// 회전 on/off
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Rotate")
+	bool bUnitRingRotate = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PickUp")
-	int32 NumPickups = 10;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Rotate")
+	float UnitRingRotationRateYawDeg = 35.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PickUp")
-	FVector PickupOffset = FVector(0,0,30);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
+	TSubclassOf<APCBaseUnitCharacter> PickupUnit;
 
-	// 스폰, 정리, 회전제어
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
+	int32 NumPickupsToSpawn = 10;
 
-	UFUNCTION(BlueprintCallable, Category = "Carousel")
-	void SpawnPickUps();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
+	FVector PickupLocalOffset = FVector(0,0,30);
 
-	UFUNCTION(BlueprintCallable, Category = "Carousel")
-	void ClearPickUps();
+	// 게이트 충돌 프리셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate")
+	FName GateCollisionProfile = TEXT("BlockAll");
 
-	UFUNCTION(BlueprintCallable, Category = "Carousel")
-	void SetRotationActive(bool bOn);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate", meta = (ClampMin = "5.0", ClampMax = "90.0"))
+	float GateArcDeg = 20.f;
 
-	// 중앙 카메라
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate")
+	float GateThickness = 100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate")
+	float GateHeight = 300.f;
+
+	UFUNCTION(BlueprintCallable, Category = "Gate")
+	void BuildGates();
+
+	UFUNCTION(BlueprintCallable, Category = "Gate")
+	void OpenGateForSeat(int32 SeatIndex, bool bOpen = true);
+
+	UFUNCTION(BlueprintCallable, Category = "Gate")
+	void OpenAllGates(bool bOpen);
+
+	// 카메라
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	bool bCameraInheritActorRotation = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta=(ClampMin = "100.0"))
-	float CameraArmLength = 2000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float CameraArmLength = 3000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FVector CameraArmLocalLocation = FVector(0,0,1200);
+	FVector CameraArmLocalLocation = FVector(-200,0,0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FRotator CameraArmLocalRotation = FRotator(-55,0,0);
+	FRotator CameraArmLocalRotation = FRotator(-50,0,0);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera", meta=(ClampMin="5.0", ClampMax="120.0"))
-	float CameraFov = 55.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float CameraFov = 50.f;
 
-	// 슬롯 변환(월드)
-	UFUNCTION(BlueprintCallable, Category = "Ring")
-	FTransform GetSlotTransformWorld(int32 Index) const;
-
-	// 중앙 카메라로 보기
 	UFUNCTION(BlueprintCallable, Category = "Camera")
-	void ApplyCentralView(APlayerController* PlayerController, float BlendTime = 0.4f);
+	void ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime = 0.0f, float ExtraYawDeg = 0.f );
+
+
+	// 슬롯 변환 제공
+	UFUNCTION(BlueprintCallable, Category = "Ring")
+	FTransform GetPlayerSlotTransformWorld(int32 Index) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Ring")
+	FTransform GetUnitSlotTransformWorld(int32 Index) const;
+
+	UFUNCTION(BlueprintPure, Category = "Ring")
+	float GetPlayerSeatAngelDeg(int32 SeatIndex) const;
+
+	// 픽업 제어
+	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
+	void SpawnPickups();
+
+	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
+	void ClearPickups();
+
+	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
+	void SetRotationOnActive(bool bOn);
+
 
 protected:
 
 	virtual void BeginPlay() override;
+	
+#if WITH_EDITOR
+	virtual void OnConstruction(const FTransform& transform) override;
 
-	UPROPERTY(VisibleAnywhere)
-	URotatingMovementComponent* RotatingMovement = nullptr;
+#endif
 
-	UPROPERTY(Transient)
-	TArray<TWeakObjectPtr<AActor>> SpawnedPickupActors;
+	// 루트 / 서브 루트들
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+	USceneComponent* SceneRoot;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+	USceneComponent* PlayerRingRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+	USceneComponent* UnitRingRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+	USceneComponent* GateRoot;
+	
 	// 카메라 구성요소
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USpringArmComponent* SpringArm = nullptr;
@@ -108,15 +160,34 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCameraComponent* CarouselCamera = nullptr;
 
-#if WITH_EDITOR
-public:
-	virtual void OnConstruction(const FTransform& transform) override;
-	
-	bool bDrawDebug = true;
-	FColor DebugColor = FColor::Green;
+	// 유닛 전용 회전 모션
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
+	URotatingMovementComponent* RotatingMovement = nullptr;
 
+	// 스폰한 픽업 게이트 핸들
+	UPROPERTY(Transient)
+	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> SpawnedPickups;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UBoxComponent>> GateBoxes;
+
+	// 내부 헬퍼
+	FVector GetRingCenterWorld(const USceneComponent* Root) const;
+	FRotator MakeFacingRotToCenter(const FVector& Pos, float ExtraYaw = 0.f) const;
+
+	/** 디버그 */
+	UPROPERTY(EditAnywhere, Category="Debug")
+	bool bDrawDebug = true;
+
+	UPROPERTY(EditAnywhere, Category="Debug")
+	FColor DebugColorOuter = FColor::Cyan;
+
+	UPROPERTY(EditAnywhere, Category="Debug")
+	FColor DebugColorInner = FColor::Yellow;
+
+	UPROPERTY(EditAnywhere, Category="Debug")
+	FColor DebugColorGate  = FColor::Green;
 	
-#endif
-	
+
 	
 };

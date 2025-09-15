@@ -70,6 +70,10 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Seat")
 	USceneComponent* EnemySeatAnchor = nullptr;
 
+	// HISM On / Off
+	UFUNCTION(BlueprintCallable, Category = "HISM")
+	void OnHism(bool bOn) const;
+
 	// 보드 좌석 스폰용 헬퍼
 	UFUNCTION(BlueprintCallable)
 	FTransform GetPlayerSeatTransform() const;
@@ -86,16 +90,16 @@ public:
 	void ApplyClientMirrorView();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FVector HomeCam_LocPreset = FVector(-1150.f,0.f, 1150.f);
+	FVector HomeCam_LocPreset = FVector(-1400.f,0.f, 1200.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FRotator HomeCam_RocPreset = FRotator(-50.f, 0.f, 0.f);
+	FRotator HomeCam_RocPreset = FRotator(-47.f, 0.f, 0.f);
 	
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1150.f);
+	FVector BattleCameraChangeLocation = FVector(1400.f, 0.f, 1200.f);
 
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
+	FRotator BattleCameraChangeRotation = FRotator(-47.f, 180.f,0.f);
 
 	
 

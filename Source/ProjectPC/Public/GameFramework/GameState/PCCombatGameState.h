@@ -95,8 +95,11 @@ protected:
 public:
 
 	// SeatIndex -> Board
-	UPROPERTY()
-	TArray<TWeakObjectPtr<APCCombatBoard>> SeatToBoard;
+	UPROPERTY(Replicated)
+	TArray<APCCombatBoard*> SeatToBoard;
+
+	UPROPERTY(Replicated)
+	bool bBoardMappingComplete = false;
 
 	UFUNCTION()
 	void BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boards);

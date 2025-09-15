@@ -30,4 +30,9 @@ public:
 	
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     float ShortPressThreshold;
+
+	// Drag&Drop
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* IA_LeftMouse;
+	
 };
