@@ -159,12 +159,14 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 	
 	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
 	{
+		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocation(Loc);
 	}
 	else
 	{
 		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
+		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
 	}
