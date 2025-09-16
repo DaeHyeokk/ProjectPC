@@ -122,12 +122,25 @@ void APCCombatGameState::SetGameStateTag(const FGameplayTag& InGameStateTag)
 	if (HasAuthority() && GameStateTag != InGameStateTag)
 	{
 		GameStateTag = InGameStateTag;
-		OnRep_GameStateTag();	// 서버에서도 값이 변경됨을 알려야하므로 직접 호출
 	}
 }
 
-// 클라는 자동으로 호출
-void APCCombatGameState::OnRep_GameStateTag() const
+void APCCombatGameState::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
-	OnGameStateChanged.Broadcast(GameStateTag);
+	TagContainer.AddTag(GameStateTag);
+}
+
+bool APCCombatGameState::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	return GameStateTag.MatchesTag(TagToCheck);
+}
+
+bool APCCombatGameState::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	return GameStateTag.MatchesAny(TagContainer);
+}
+
+bool APCCombatGameState::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	return GameStateTag.MatchesAny(TagContainer);
 }

@@ -26,6 +26,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass;
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass;
 	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass;
+	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
 
 void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
@@ -60,6 +61,7 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	if (!Unit)
 		return nullptr;
 
+	Unit->SetOutlineMID(DefaultOutlineMaterial);
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
 	
