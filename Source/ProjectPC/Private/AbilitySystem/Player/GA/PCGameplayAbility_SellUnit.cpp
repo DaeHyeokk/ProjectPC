@@ -58,6 +58,18 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	{
 		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
 		{
+			auto FieldGridPoint = TileManager->GetFieldUnitGridPoint(Unit);
+			auto BenchIndex = TileManager->GetBenchUnitIndex(Unit);
+			
+			if (FieldGridPoint != FIntPoint::NoneValue)
+			{
+				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, Unit);
+			}
+			else if (BenchIndex != INDEX_NONE)
+			{
+				TileManager->RemoveFromBench(BenchIndex, false);
+			}
+			
 			GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
 			Unit->Destroy();
 		}
