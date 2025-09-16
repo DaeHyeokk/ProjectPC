@@ -14,6 +14,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Shop/PCShopManager.h"
 
 
 bool UPCShopWidget::Initialize()
@@ -116,7 +117,7 @@ void UPCShopWidget::SetupPlayerInfo()
 	GoldBalance->SetText(FText::AsNumber(PlayerGold));
 	
 	// 코스트 확률 정보 Text 세팅
-	auto CostProbabilities = GS->GetCostProbabilities(PlayerLevel);
+	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(PlayerLevel);
 	TArray<UTextBlock*> CostTextBlocks = { Cost1, Cost2, Cost3, Cost4, Cost5 };
 	for (int32 i = 0; i < CostTextBlocks.Num(); ++i)
 	{
@@ -150,7 +151,7 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 	auto LevelText = FString::Printf(TEXT("Lv. %d"), static_cast<int32>(Data.NewValue));
 	Level->SetText(FText::FromString(LevelText));
 
-	auto CostProbabilities = GS->GetCostProbabilities(static_cast<int32>(Data.NewValue));
+	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(static_cast<int32>(Data.NewValue));
 	TArray<UTextBlock*> CostTextBlocks = { Cost1, Cost2, Cost3, Cost4, Cost5 };
 	for (int32 i = 0; i < CostTextBlocks.Num(); ++i)
 	{

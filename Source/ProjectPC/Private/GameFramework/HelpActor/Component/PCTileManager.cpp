@@ -148,6 +148,7 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocation(Loc);
+		Unit->ChangedOnTile(false);
 	}
 	else
 	{
@@ -155,6 +156,7 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
+		Unit->ChangedOnTile(false);
 	}
 	
 	OnBenchUpdated.Broadcast();

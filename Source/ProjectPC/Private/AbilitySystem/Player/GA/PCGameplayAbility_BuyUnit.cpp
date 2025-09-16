@@ -23,14 +23,21 @@ UPCGameplayAbility_BuyUnit::UPCGameplayAbility_BuyUnit()
 	AbilityTriggers.Add(TriggerData);
 }
 
-bool UPCGameplayAbility_BuyUnit::CheckCost(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+bool UPCGameplayAbility_BuyUnit::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
 	}
 	
+	return true;
+}
+
+bool UPCGameplayAbility_BuyUnit::CheckCost(const FGameplayAbilitySpecHandle Handle,
+                                           const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
 	return true;
 }
 

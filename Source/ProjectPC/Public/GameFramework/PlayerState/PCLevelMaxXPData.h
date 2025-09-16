@@ -16,11 +16,8 @@ struct PROJECTPC_API FPCLevelMaxXPData : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PlayerLevel;
+	int32 PlayerLevel = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MaxXP;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 TotalXP;
+	int32 MaxXP = 2;
 };

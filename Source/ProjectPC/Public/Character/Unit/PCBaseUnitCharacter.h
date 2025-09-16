@@ -20,7 +20,7 @@ class UPCUnitAbilitySystemComponent;
 
 UCLASS()
 class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
-										public IGenericTeamAgentInterface, public IGameplayTagAssetInterface
+										public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -37,6 +37,10 @@ public:
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
 
 	void SetStatusBarClass(const TSubclassOf<UUserWidget>& InStatusBarClass) { StatusBarClass = InStatusBarClass; }
+	void SetOutlineMID(UMaterialInterface* OutlineMat);
+
+	UFUNCTION(BlueprintCallable)
+	void SetOutlineEnabled(bool bEnable) const;
 	
 	virtual bool HasLevelSystem() const { return false; }
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
@@ -69,6 +73,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
 	FName StatusBarSocketName = TEXT("HealthBar");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Material Instance")
+	TObjectPtr<UMaterialInstanceDynamic> OutlineMID = nullptr;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing=OnRep_UnitTag, Category="Data")
@@ -107,39 +114,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsOnField() const { return bIsOnField; }
-	
-	UFUNCTION(BlueprintCallable, Category="Combat")
-	bool IsCombatActive() const { return bIsCombatActive; }
 
 protected:
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsOnField, Category="Combat")
+	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
-
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsCombatActive, Category="Combat")
-	bool bIsCombatActive = false;
-	
-	UFUNCTION()
-	void OnRep_IsOnField();
-
-	void BindCombatState();	// 필드에 올라갈 때 바인딩
-	void UnbindCombatState(); // 벤치로 가거나 사망하면 바인딩 해제
-	void HandleGameStateChanged(const FGameplayTag& GameStateTag);
-
-	UFUNCTION()
-	void OnRep_IsCombatActive() const;
-	
-	FDelegateHandle GameStateChangedHandle;
-
-	// ==== 전투 시스템 | BT 관련 ====
-protected:
-	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
-	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
-	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
-	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
-	
 };

@@ -4,7 +4,9 @@
 #include "Controller/Unit/PCUnitAIController.h"
 
 #include "BrainComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "Navigation/PathFollowingComponent.h"
 
 
@@ -20,7 +22,18 @@ void APCUnitAIController::OnPossess(APawn* InPawn)
 	}
 	
 	if (DefaultBT)
+	{
+		if (UBlackboardComponent* BB = GetBlackboardComponent())
+		{
+			if (GetWorld())
+			{
+				APCCombatGameState* CombatGS = GetWorld()->GetGameState<APCCombatGameState>();
+				BB->SetValueAsObject(TEXT("CombatGameState"), CombatGS);
+			}
+		}
+		
 		RunBehaviorTree(DefaultBT);
+	}
 }
 
 void APCUnitAIController::OnUnPossess()

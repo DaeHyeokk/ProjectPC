@@ -48,6 +48,9 @@ private:
 
 	UPROPERTY()
 	TSubclassOf<UPCHeroStatusBarWidget> DefaultHeroStatusBarWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
 	
 	// == 공통 AI / BT (전 유닛 공유) ==
 	UPROPERTY(EditAnywhere, Category="Spawner|AI")

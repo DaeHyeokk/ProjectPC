@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "KismetAnimationLibrary.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 
 void UPCUnitAnimInstance::PlayLevelStartMontage()
 {
@@ -29,12 +30,22 @@ void UPCUnitAnimInstance::NativeBeginPlay()
 
 		PlayLevelStartMontage();
 	}
+
+	if (GetWorld())
+	{
+		CachedCombatGameState = GetWorld()->GetGameState<APCCombatGameState>();
+	}
 }
 
 void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-
+	
+	if (!CachedCombatGameState.IsValid() && GetWorld())
+	{
+		CachedCombatGameState = GetWorld()->GetGameState<APCCombatGameState>();
+	}
+	
 	if (!CachedUnitCharacter.IsValid())
 	{
 		CachedUnitCharacter = Cast<APCBaseUnitCharacter>(TryGetPawnOwner());
@@ -44,13 +55,13 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			SetAnimSet(CachedUnitCharacter->GetUnitAnimSetDataAsset());
 		}
 	}
-	if (!CachedUnitCharacter.IsValid() || !CachedMovementComp.IsValid())
+	if (!CachedCombatGameState.IsValid() || !CachedUnitCharacter.IsValid() || !CachedMovementComp.IsValid())
 		return;
 
 	Speed = CachedUnitCharacter->GetVelocity().Size2D();
 	bIsFalling = CachedMovementComp->IsFalling();
 	bIsAccelerating = CachedUnitCharacter->GetVelocity().SizeSquared2D() > 0.1f;
-	bIsCombatActive = CachedUnitCharacter->IsCombatActive();
+	bIsCombatActive = CachedUnitCharacter->IsOnField() && CachedCombatGameState->IsCombatActive();
 	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedUnitCharacter->GetVelocity(), CachedUnitCharacter->GetActorRotation());
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
 }
