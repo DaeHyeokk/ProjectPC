@@ -69,6 +69,11 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 			{
 				TileManager->RemoveFromBench(BenchIndex, false);
 			}
+			else
+			{
+				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+				return;
+			}
 			
 			GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
 			Unit->Destroy();

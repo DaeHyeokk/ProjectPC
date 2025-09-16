@@ -7,8 +7,6 @@
 #include "GameFramework/HelpActor/PCTileType.h"
 #include "PCTileManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBenchUpdated);
-
 class APCCombatBoard;
 class APCBaseUnitCharacter;
 
@@ -52,10 +50,6 @@ class PROJECTPC_API UPCTileManager : public UActorComponent
 public:	
 	
 	UPCTileManager();
-	
-	// 벤치 바뀔 때 호출되는 델리게이트
-	UPROPERTY(BlueprintAssignable)
-	FOnBenchUpdated OnBenchUpdated;
 	
 	// 필드 타일 크기 ( 8 * 7 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
