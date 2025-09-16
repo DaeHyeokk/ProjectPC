@@ -63,7 +63,7 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 			
 			if (FieldGridPoint != FIntPoint::NoneValue)
 			{
-				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, Unit);
+				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
 			}
 			else if (BenchIndex != INDEX_NONE)
 			{
