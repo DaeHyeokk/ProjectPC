@@ -75,6 +75,8 @@ void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	ApplyGameInputMode();
+	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
+	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 	
 }
 
@@ -481,6 +483,7 @@ void APCCombatPlayerController::ApplyGameInputMode()
 	bEnableMouseOverEvents= true;
 }
 
+
 void APCCombatPlayerController::Client_ShowWidget_Implementation()
 {
 	ShowWidget();
@@ -545,7 +548,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	UPCTileManager* TM = GetTileManager();
 	if (!TM)
 	{
-		Client_DragConfirm(false, DragId, World);
+		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
@@ -557,49 +560,67 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 
 	if (!TM->WorldAnyTile(World, true, bIsField, Y, X, BenchIdx, Snap))
 	{
-		Client_DragConfirm(false,DragId, World);
+		Client_DragConfirm(false,DragId, World,nullptr);
 		return;
 	}
 
 	APCBaseUnitCharacter* Unit = bIsField ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
-
+	
 	if (!Unit || !CanControlUnit(Unit))
 	{
-		Client_DragConfirm(false, DragId, World);
+		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
 	CurrentDragId = DragId;
 	CurrentDragUnit = Unit;
 
-	Client_DragConfirm(true, DragId, Snap);
+	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
+	{
+		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
+	}
+	else
+	{
+		Client_DragConfirm(true, DragId, World, nullptr);
+	}
 	
 }
 
-void APCCombatPlayerController::Server_UpdateDrag_Implementation(FVector World, int32 DragId)
+void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
 	if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
+	{
+		Client_DragEndResult(false, World, DragId, nullptr);
 		return;
+	}
 
 	UPCTileManager* TM = GetTileManager();
 	if (!TM)
+	{
+		Client_DragEndResult(false, World, DragId, nullptr);
 		return;
+	}
+
 	bool bField = false;
 	int32 Y = -1;
 	int32 X = -1;
 	int32 BenchIdx = -1;
 	FVector Snap = World;
-
-	if (!TM->WorldAnyTile(World,true, bField, Y, X, BenchIdx, Snap))
+	
+	if (!TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
+	{
+		Client_DragEndResult(false, World, DragId, nullptr);
 		return;
+	}
 
 	APCBaseUnitCharacter* Unit = CurrentDragUnit.Get();
+
+	// 1) 유효성 판단
 	bool bValid = false;
 	
 	if (bField)
 	{
-		const bool bOk = IsAllowFieldY(Y);
-		if (bOk)
+		if (IsAllowFieldY(Y) && TM->IsInRange(Y,X))
 		{
 			bValid = TM->IsInRange(Y,X) && (TM->CanUse(Y,X,Unit) || TM->GetFieldUnit(Y,X) == Unit);
 		}
@@ -610,94 +631,73 @@ void APCCombatPlayerController::Server_UpdateDrag_Implementation(FVector World, 
 		bValid = (BenchUnit == nullptr || BenchUnit == Unit);
 	}
 
-	Client_DragHint(Snap, bValid, DragId);
-}
-
-void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
-{
-	if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
+	if (!bValid)
 	{
-		Client_DragEndResult(false, World, DragId);
+		Client_DragEndResult(false, Snap, DragId, nullptr);
 		return;
 	}
 
-	UPCTileManager* TM = GetTileManager();
-	if (!TM)
 	{
-		Client_DragEndResult(false, World, DragId);
-		return;
+		const FIntPoint CurGrid = TM->GetFieldUnitGridPoint(Unit);
+		if (CurGrid != FIntPoint::NoneValue)
+		{
+			TM->RemoveFromField(CurGrid.Y, CurGrid.X, true);
+		}
+		else
+		{
+			const int32 CurBench = TM->GetBenchUnitIndex(Unit);
+			if (CurBench != INDEX_NONE)
+			{
+				TM->RemoveFromBench(CurBench, true);
+			}
+		}
 	}
-
-	bool bField = false;
-	int32 Y = -1;
-	int32 X = -1;
-	int32 BenchIdx = -1;
-	FVector Snap = World;
-	if (!TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
-	{
-		Client_DragEndResult(false, World, DragId);
-		return;
-	}
-
-	APCBaseUnitCharacter* Unit = CurrentDragUnit.Get();
-
-	if (bField && !IsAllowFieldY(Y))
-	{
-		Client_DragEndResult(false, Snap, DragId);
-		return;
-	}
-	RemoveFromCurrentSlot(TM,Unit);
-
+	
 	bool bPlaced = false;
 	if (bField)
 	{
-		if (TM->IsInRange(Y,X) && TM->CanUse(Y,X,Unit) || TM->GetFieldUnit(Y,X) == Unit)
-		{
-			bPlaced = TM->PlaceUnitOnField(Y,X,Unit);
-		}
+		bPlaced = TM->PlaceUnitOnField(Y,X,Unit);
 	}
 	else
 	{
-		APCBaseUnitCharacter* BenchUnit = TM->GetBenchUnit(BenchIdx);
-		if (BenchUnit == nullptr || BenchUnit == Unit)
-		{
-			bPlaced = TM->PlaceUnitOnBench(BenchIdx,Unit);
-		}
+		bPlaced = TM->PlaceUnitOnBench(BenchIdx,Unit);
+	}
+	
+	if (bPlaced)
+	{
+		Multicast_LerpMove(Unit, Snap, LerpDuration);
+		Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
+	}
+	else
+	{
+		Client_DragEndResult(false, World, DragId, Cast<APCHeroUnitCharacter>(Unit));
 	}
 
-	Client_DragEndResult(bPlaced, bPlaced ? Snap : World, DragId);
+	
 	CurrentDragUnit = nullptr;
 	CurrentDragId = 0;
 }
 
-void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int32 DragId, FVector StartSnap)
+void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewHero)
 {
 	if (!IsLocalController())
 		return;
 
-	if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
+	if (bOk)
 	{
-		Board -> OnHism(true);
+		if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
+		{
+			Board -> OnHism(true);
+		}
 	}
 	
 	if (DragComponent)
 	{
-		DragComponent->OnServerDragConfirm(bOk, DragId, StartSnap);
+		DragComponent->OnServerDragConfirm(bOk, DragId, StartSnap, PreviewHero);
 	}
 }
 
-void APCCombatPlayerController::Client_DragHint_Implementation(FVector Snap, bool bValid, int32 DragId)
-{
-	if (!IsLocalController())
-		return;
-	
-	if (DragComponent)
-	{
-		DragComponent->OnServerDragHint(Snap, bValid, DragId);
-	}
-}
-
-void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSuccess, FVector FinalSnap, int32 DragId)
+void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit)
 {
 	if (!IsLocalController())
 		return;
@@ -709,7 +709,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	
 	if (DragComponent)
 	{
-		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId);
+		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
 }
 
@@ -773,4 +773,87 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 
 	APCCombatBoard* Board = FindBoardBySeatIndex(PS->SeatIndex);
 	return Board ? Board->TileManager : nullptr;
+}
+
+void APCCombatPlayerController::PollHover()
+{
+	if (DragComponent && DragComponent->IsDraggingOrPending())
+		return;
+
+	FHitResult HitResult;
+	if (!GetHitResultUnderCursor(ECC_Visibility, true, HitResult))
+	{
+		Server_QueryHoverFromWorld(FVector::ZeroVector);
+		return;
+	}
+
+	static FVector LastWorld(FLT_MAX, FLT_MAX, FLT_MAX);
+	static double LastTime = 0.0;
+	const double Now = GetWorld() ? GetWorld()->TimeSeconds:0.0;
+	if ((Now - LastTime) < 0.05 && FVector::DistSquared2D(LastWorld, HitResult.Location) < FMath::Square(8.f))
+		return;
+
+	LastWorld = HitResult.Location;
+	LastTime = Now;
+
+	Server_QueryHoverFromWorld(HitResult.Location);
+}
+
+void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const FVector& World)
+{
+	UPCTileManager* TileManager = GetTileManager();
+	if (!TileManager)
+	{
+		Client_TileHoverUnit(nullptr);
+		return;
+	}
+
+	bool bField = false;
+	int32 Y = -1;
+	int32 X = -1;
+	int32 BenchIdx = -1;
+	FVector Snap = World;
+	if (!TileManager->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
+	{
+		Client_TileHoverUnit(nullptr);
+		return;
+	}
+
+	APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx);
+	
+
+	Client_TileHoverUnit(Unit);
+}
+
+
+void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx)
+{
+	UPCTileManager* TM = GetTileManager();
+	if (!TM)
+	{
+		Client_TileHoverUnit(nullptr);
+		return;
+	}
+
+	APCBaseUnitCharacter* Unit = bIsFiled ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
+	Client_TileHoverUnit(Unit);
+}
+
+void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitCharacter* Unit)
+{
+	if (!IsLocalController())
+		return;
+
+	CachedHoverUnit = Unit;
+
+	// 안전하게 이름/팀 추출
+	const bool bValid = IsValid(Unit);
+	const FString UnitName   = bValid ? Unit->GetName() : TEXT("NULL");
+	const int32   TeamIndex  = bValid ? Unit->GetTeamIndex() : -1;
+	const ENetMode NetMode   = GetWorld() ? GetWorld()->GetNetMode() : NM_Standalone;
+	const float    Now       = GetWorld() ? GetWorld()->TimeSeconds : 0.f;
+
+	UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
+		Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
+	
 }

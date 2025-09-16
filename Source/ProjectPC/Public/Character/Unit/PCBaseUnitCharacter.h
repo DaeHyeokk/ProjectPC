@@ -111,9 +111,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsCombatActive() const { return bIsCombatActive; }
 
-	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
-	void ActionDrag(const bool IsStart);
-	
 protected:
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> OnCombatBoard;
