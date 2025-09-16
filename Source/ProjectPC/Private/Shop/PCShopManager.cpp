@@ -141,6 +141,7 @@ void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 		{
 			if (Unit.Tag == UnitTag)
 			{
+				UE_LOG(LogTemp, Warning, TEXT("Returned Unit : %s"), *Unit.UnitName.ToString());
 				Unit.UnitCount += 1;
 			}
 		}
