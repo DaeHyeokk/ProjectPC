@@ -33,6 +33,9 @@ public:
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
 	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
 
+	// 유닛 코스트에 따른 랜덤한 유닛 선택
+	FPCShopUnitData& SelectRandomUnitByCost(int32 UnitCost);
+	
 	// 유닛 태그를 통해 상점에 기물 반환
 	void ReturnUnitToShopByTag(FGameplayTag UnitTag);
 	// Carousel에서 선택받지 못한 유닛 상점에 기물 반환
@@ -41,7 +44,8 @@ public:
 	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
 
 	// Carousel에 차출할 유닛 태그 배열 리턴
-	// TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
+	TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
+	TArray<FGameplayTag> GetCarouselRandomUnitTagsByCost(int32 UnitCost, int32 CarouselCount);
 	
 #pragma endregion Shop
 
@@ -73,13 +77,12 @@ protected:
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
 
 public:
-	// Getter
 	const TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
 	
 	TArray<float> GetCostProbabilities(int32 PlayerLevel);
-	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	int32 GetUnitCostByTag(FGameplayTag UnitTag);
 	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
 	

@@ -69,29 +69,17 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 		int32 SelectedCost = 1;
 		WeightedRandomSelect<float>(CostProbabilities, 0.f, 1.f, SelectedCost);
 
-		// 상점에 남은 해당 코스트 모든 유닛 후보로 추가
-		auto& Candidates = GetShopUnitDataListByCost(SelectedCost);
-		TArray<int32> UnitCounts;
-		int32 TotalUnitCount = 0;
-		for (auto& Unit : Candidates)
-		{
-			UnitCounts.Add(Unit.UnitCount);
-			TotalUnitCount += Unit.UnitCount;
-		}
+		auto& Candidate =  SelectRandomUnitByCost(SelectedCost);
 
 		// 해당 코스트에 아무 기물도 존재하지 않을 때
-		if (TotalUnitCount == 0)
+		if (Candidate.UnitName == "Dummy")
 		{
 			--i;
-			// UE_LOG(LogTemp, Warning, TEXT("SelectedCost : %d Sold Out"), SelectedCost);
+			UE_LOG(LogTemp, Warning, TEXT("SelectedCost : %d Sold Out"), SelectedCost);
 			continue;
 		}
 		
-		// 누적합 범위에 따라 기물 선택
-		int32 SelectedUnit = 0;
-		WeightedRandomSelect<int32>(UnitCounts, 0, TotalUnitCount - 1, SelectedUnit);
-		Candidates[SelectedUnit].UnitCount -= 1;
-		NewShopSlots.Add(Candidates[SelectedUnit]);
+		NewShopSlots.Add(Candidate);
 	}
 	
 	TargetPlayer->SetShopSlots(NewShopSlots);
@@ -131,17 +119,44 @@ void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 	}
 }
 
+FPCShopUnitData& UPCShopManager::SelectRandomUnitByCost(int32 UnitCost)
+{
+	// 상점에 남은 해당 코스트 모든 유닛 후보로 추가
+	auto& Candidates = GetShopUnitDataListByCost(UnitCost);
+	TArray<int32> UnitCounts;
+	int32 TotalUnitCount = 0;
+	for (auto& Unit : Candidates)
+	{
+		UnitCounts.Add(Unit.UnitCount);
+		TotalUnitCount += Unit.UnitCount;
+	}
+	
+	// 해당 코스트에 아무 기물도 존재하지 않을 때
+	if (TotalUnitCount == 0)
+	{
+		FPCShopUnitData DummyData;
+		DummyData.UnitName = "Dummy";
+		return DummyData;
+	}
+
+	// 누적합 범위에 따라 기물 선택
+	int32 SelectedUnit = 0;
+	WeightedRandomSelect<int32>(UnitCounts, 0, TotalUnitCount - 1, SelectedUnit);
+	Candidates[SelectedUnit].UnitCount -= 1;
+	
+	return Candidates[SelectedUnit];
+}
+
 void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 {
 	auto UnitCost = GetUnitCostByTag(UnitTag);
 	if (UnitCost != 0)
 	{
-		auto UnitDataList = GetShopUnitDataListByCost(UnitCost);
-		for (auto Unit : UnitDataList)
+		auto& UnitDataList = GetShopUnitDataListByCost(UnitCost);
+		for (auto& Unit : UnitDataList)
 		{
 			if (Unit.Tag == UnitTag)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Returned Unit : %s"), *Unit.UnitName.ToString());
 				Unit.UnitCount += 1;
 			}
 		}
@@ -168,9 +183,54 @@ void UPCShopManager::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>
 	}
 }
 
-// TArray<FGameplayTag> UPCShopManager::GetCarouselUnitTags(int32 Round)
-// {
-// }
+TArray<FGameplayTag> UPCShopManager::GetCarouselUnitTags(int32 Round)
+{
+	TArray<FGameplayTag> ReturnTags = {};
+	switch (Round)
+	{
+	case 1:
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 9));
+		break;
+	case 2:
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 1));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(2, 4));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(3, 4));
+		break;
+	case 3:
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 1));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(2, 2));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(3, 3));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(4, 3));
+		break;
+	default:
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 1));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(2, 2));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(3, 2));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(4, 2));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(5, 2));
+		break;
+	}
+
+	return ReturnTags;
+}
+
+TArray<FGameplayTag> UPCShopManager::GetCarouselRandomUnitTagsByCost(int32 UnitCost, int32 CarouselCount)
+{
+	TArray<FGameplayTag> ReturnTags = {};
+	
+	for (int i = 0; i < CarouselCount; ++i)
+	{
+		auto& Unit = SelectRandomUnitByCost(UnitCost);
+		// 해당 코스트에 아무 기물도 안남았으면 Add 안함
+		if (Unit.UnitName != "Dummy")
+		{
+			Unit.UnitCount -= 1;
+			ReturnTags.Add(Unit.Tag);
+		}
+	}
+
+	return ReturnTags;
+}
 
 const TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataList()
 {
@@ -207,9 +267,9 @@ TArray<float> UPCShopManager::GetCostProbabilities(int32 PlayerLevel)
 	return CostProbabilities;
 }
 
-TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataListByCost(int32 Cost)
+TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataListByCost(int32 UnitCost)
 {
-	switch (Cost)
+	switch (UnitCost)
 	{
 	case 1:
 		return ShopUnitDataList_Cost1;
