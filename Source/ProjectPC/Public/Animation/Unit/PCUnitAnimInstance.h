@@ -9,6 +9,7 @@
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCUnitAnimInstance.generated.h"
 
+class APCCombatGameState;
 class APCBaseUnitCharacter;
 class UCharacterMovementComponent;
 class UPCDataAsset_UnitAnimSet;
@@ -44,6 +45,9 @@ public:
 	bool bFullBody = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bIsOnField;
+	
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
 	bool bIsCombatActive;
 	
 	UFUNCTION(BlueprintCallable)
@@ -56,6 +60,7 @@ protected:
 private:
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedUnitCharacter;
 	TWeakObjectPtr<UCharacterMovementComponent> CachedMovementComp;
+	TWeakObjectPtr<const APCCombatGameState> CachedCombatGameState;
 
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPCDataAsset_UnitAnimSet> CurrentAnimSet;

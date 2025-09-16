@@ -47,6 +47,9 @@ struct FSpawnSubsystemConfig
 
 	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
 	TSubclassOf<class APCPreviewHeroActor> DefaultPreviewHeroClass;
+
+	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
+	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
 };
 
 USTRUCT(BlueprintType)
@@ -84,7 +87,7 @@ DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
  * 
  */
 UCLASS()
-class PROJECTPC_API APCCombatGameState : public AGameStateBase
+class PROJECTPC_API APCCombatGameState : public AGameStateBase, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -277,28 +280,23 @@ public:
 #pragma endregion Unit
 
 public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatStateChanged, const FGameplayTag&);
-	FOnCombatStateChanged OnGameStateChanged;
-	
 	void SetGameStateTag(const FGameplayTag& InGameStateTag);
 	UFUNCTION(BlueprintPure)
 	const FGameplayTag& GetGameStateTag() const { return GameStateTag; }
-
+	bool IsCombatActive() const { return GameStateTag.MatchesTag(GameStateTags::Game_State_Combat); }
+	
 protected:
-	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)
+	UPROPERTY(Replicated)
 	FGameplayTag GameStateTag;
-
-	UFUNCTION()
-	void OnRep_GameStateTag() const;
 
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
-	// BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
-	// IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
-	// virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
-	// virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
-	// virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
-	// virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	//BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	//IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 	
 	// TEST CODE //
 public:
