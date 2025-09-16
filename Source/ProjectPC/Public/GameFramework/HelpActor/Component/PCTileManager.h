@@ -18,7 +18,7 @@ struct FTile
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	FIntPoint UnitIntPoint;
+	FIntPoint UnitIntPoint = FIntPoint();
 		
 	UPROPERTY(BlueprintReadWrite)
 	FVector Position = FVector::ZeroVector;

@@ -22,37 +22,10 @@ void APCCombatGameState::BeginPlay()
 	{
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
 	}
-	
-	if (ShopUnitDataTable && ShopUnitProbabilityDataTable && ShopUnitSellingPriceDataTable)
-	{
-		LoadDataTable<FPCShopUnitData>(ShopUnitDataTable, ShopUnitDataList, TEXT("Loading Shop Unit Data"));
-		LoadDataTable<FPCShopUnitProbabilityData>(ShopUnitProbabilityDataTable, ShopUnitProbabilityDataList, TEXT("Loading Shop Unit Probability Data"));
-		LoadDataTable<FPCLevelMaxXPData>(LevelMaxXPDataTable, LevelMaxXPDataList, TEXT("Loading Level MaxXP Data"));
-		LoadDataTableToMap<FPCShopUnitSellingPriceData>(ShopUnitSellingPriceDataTable, ShopUnitSellingPriceDataMap, TEXT("Loading Shop Unit Selling Price Data"));
-	}
 
-	for (auto Unit : ShopUnitDataList)
+	if (LevelMaxXPDataTable)
 	{
-		switch (Unit.UnitCost)
-		{
-		case 1:
-			ShopUnitDataList_Cost1.Add(Unit);
-			break;
-		case 2:
-			ShopUnitDataList_Cost2.Add(Unit);
-			break;
-		case 3:
-			ShopUnitDataList_Cost3.Add(Unit);
-			break;
-		case 4:
-			ShopUnitDataList_Cost4.Add(Unit);
-			break;
-		case 5:
-			ShopUnitDataList_Cost5.Add(Unit);
-			break;
-		default:
-			break;
-		}
+		LoadDataTable<FPCLevelMaxXPData>(LevelMaxXPDataTable, LevelMaxXPDataList, TEXT("Loading Level MaxXP Data"));
 	}
 }
 
@@ -133,148 +106,13 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	
 }
 
-const TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataList()
-{
-	return ShopUnitDataList;
-}
-
-const TArray<FPCShopUnitProbabilityData>& APCCombatGameState::GetShopUnitProbabilityDataList()
-{
-	return ShopUnitProbabilityDataList;
-}
-
-const TMap<TPair<int32, int32>, int32>& APCCombatGameState::GetShopUnitSellingPriceDataMap()
-{
-	return ShopUnitSellingPriceDataMap;
-}
-
-TArray<float> APCCombatGameState::GetCostProbabilities(int32 PlayerLevel)
-{
-	// 플레이어 레벨에 따라 DataList 탐색
-	const auto& ProbData = ShopUnitProbabilityDataList.FindByPredicate(
-		[PlayerLevel](const FPCShopUnitProbabilityData& Data)
-		{
-			return Data.PlayerLevel == PlayerLevel;
-		});
-	
-	TArray<float> CostProbabilities = {
-		ProbData->Probability_Cost1,
-		ProbData->Probability_Cost2,
-		ProbData->Probability_Cost3,
-		ProbData->Probability_Cost4,
-		ProbData->Probability_Cost5
-	};
-
-	return CostProbabilities;
-}
-
-TArray<FPCShopUnitData>& APCCombatGameState::GetShopUnitDataListByCost(int32 Cost)
-{
-	switch (Cost)
-	{
-	case 1:
-		return ShopUnitDataList_Cost1;
-	case 2:
-		return ShopUnitDataList_Cost2;
-	case 3:
-		return ShopUnitDataList_Cost3;
-	case 4:
-		return ShopUnitDataList_Cost4;
-	case 5:
-		return ShopUnitDataList_Cost5;
-	default:
-		break;
-	}
-
-	// Cost값이 1-5의 값이 아니면, 전체 배열 반환
-	return ShopUnitDataList;
-}
-
-int32 APCCombatGameState::GetUnitCostByTag(FGameplayTag UnitTag)
-{
-	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
-	{
-		if (UnitData.Tag == UnitTag)
-		{
-			return UnitData.UnitCost;
-		}
-	}
-
-	return 0;
-}
-
-int32 APCCombatGameState::GetSellingPrice(TPair<int32, int32> UnitLevelCostData)
-{
-	if (const int32* Price = ShopUnitSellingPriceDataMap.Find(UnitLevelCostData))
-	{
-		return *Price;
-	}
-
-	return 0;
-}
-
-void APCCombatGameState::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots)
-{
-	// 구매하지 않은 유닛 상점에 기물 반환
-	for (int32 i = 0; i < OldSlots.Num(); ++i)
-	{
-		if (PurchasedSlots.Contains(i)) continue;
-
-		const auto& OldSlot = OldSlots[i];
-		for (auto& Unit : GetShopUnitDataListByCost(OldSlot.UnitCost))
-		{
-			if (Unit.UnitName == OldSlot.UnitName)
-			{
-				Unit.UnitCount += 1;
-				break;
-			}
-		}
-	}
-}
-
-void APCCombatGameState::ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags)
-{
-	for (auto UnitTag : UnitTags)
-	{
-		auto UnitCost = GetUnitCostByTag(UnitTag);
-		if (UnitCost != 0)
-		{
-			auto UnitDataList = GetShopUnitDataListByCost(UnitCost);
-			for (auto Unit : UnitDataList)
-			{
-				if (Unit.Tag == UnitTag)
-				{
-					Unit.UnitCount += 1;
-				}
-			}
-		}
-	}
-}
-
-TArray<FGameplayTag> APCCombatGameState::GetCarouselUnitTags(int32 Round)
-{
-	TArray<FGameplayTag> ReturnTags;
-	
-	switch (Round)
-	{
-	case 1:
-		break;
-	case 2:
-		break;
-	case 3:
-		break;
-	case 4:
-		break;
-	default:
-		break;
-	}
-
-	return ReturnTags;
-}
-
 const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
-	if (PlayerLevel <= 0) return 0;
+	if (PlayerLevel <= 0 || LevelMaxXPDataList.IsEmpty())
+	{
+		return 0;
+	}
+	
 	return LevelMaxXPDataList[PlayerLevel - 1].MaxXP;
 }
 
@@ -293,22 +131,3 @@ void APCCombatGameState::OnRep_GameStateTag() const
 {
 	OnGameStateChanged.Broadcast(GameStateTag);
 }
-
-// void APCCombatGameState::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-// {
-// }
-//
-// bool APCCombatGameState::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
-// {
-// 	return IGameplayTagAssetInterface::HasMatchingGameplayTag(TagToCheck);
-// }
-//
-// bool APCCombatGameState::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
-// {
-// 	return IGameplayTagAssetInterface::HasAllMatchingGameplayTags(TagContainer);
-// }
-//
-// bool APCCombatGameState::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
-// {
-// 	return IGameplayTagAssetInterface::HasAnyMatchingGameplayTags(TagContainer);
-// }

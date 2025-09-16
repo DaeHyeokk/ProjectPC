@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Shop/PCShopUnitData.h"
+#include "Shop/PCShopUnitProbabilityData.h"
+#include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCShopManager.generated.h"
 
 class APCPlayerState;
@@ -18,15 +20,116 @@ class PROJECTPC_API UPCShopManager : public UActorComponent
 {
 	GENERATED_BODY()
 
+virtual void BeginPlay() override;
+	
+#pragma region Shop
+
 private:
 	uint8 NumSlots = 5;
 
 public:
+	// 각 상점 기능
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
 	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
+
+	// 유닛 태그를 통해 상점에 기물 반환
+	void ReturnUnitToShopByTag(FGameplayTag UnitTag);
+	// Carousel에서 선택받지 못한 유닛 상점에 기물 반환
+	void ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags);
+	// 구매하지 않은 유닛 상점에 기물 반환
+	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
+
+	// Carousel에 차출할 유닛 태그 배열 리턴
+	// TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
+	
+#pragma endregion Shop
+
+#pragma region Data
+
+protected:
+	// 유닛 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* ShopUnitDataTable;
+
+	// 유닛 확률 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* ShopUnitProbabilityDataTable;
+
+	// 유닛 판매 가격 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UDataTable* ShopUnitSellingPriceDataTable;
+
+	// 실제로 DataTable에서 가져온 정보를 저장할 배열
+	TArray<FPCShopUnitData> ShopUnitDataList;
+	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
+	TMap<TPair<int32, int32>, int32> ShopUnitSellingPriceDataMap;
+
+	// 유닛 코스트별 기물 현황
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost3;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost4;
+	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
+
+public:
+	// Getter
+	const TArray<FPCShopUnitData>& GetShopUnitDataList();
+	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
+	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
+	
+	TArray<float> GetCostProbabilities(int32 PlayerLevel);
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
+	int32 GetUnitCostByTag(FGameplayTag UnitTag);
+	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
+	
+#pragma endregion Data
+	
+#pragma region TemplateFunc
 	
 private:
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutDataList.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		// DataTable의 Row수만큼 메모리 미리 확보
+		OutDataList.Reserve(RowPtrs.Num());
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				OutDataList.Add(*Row);
+			}
+		}
+	}
+
+	// DataTable을 읽어 아웃파라미터로 TMap에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<int32, int32>, int32>& OutMap, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutMap.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				// Key는 (UnitCost, UnitLevel), 값은 UnitSellingPrice
+				TPair<int32, int32> Key(Row->UnitCost, Row->UnitLevel);
+				OutMap.Add(Key, Row->UnitSellingPrice);
+			}
+		}
+	}
+	
 	// 누적합을 통한 확률 구현
 	template<typename T>
 	const T& WeightedRandomSelect(const TArray<T>& Items, T MinValue, T MaxValue, int32& Index)
@@ -47,5 +150,7 @@ private:
 
 		return Items.Last();
 	}
+
+#pragma endregion TemplateFunc
 };
 

@@ -14,14 +14,21 @@ UPCGameplayAbility_BuyXP::UPCGameplayAbility_BuyXP()
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_BuyXP);
 }
 
-bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
 	}
 
+	return true;
+}
+
+bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle,
+                                         const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
 	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
 	{
 		if (static_cast<int32>(CostAttributeSet->GetPlayerLevel()) == 10)

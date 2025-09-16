@@ -417,7 +417,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
-		PlayerMainWidget->AddToViewport();
+		// PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
 		
 		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
@@ -431,7 +431,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	{
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
-			PlayerMainWidget->AddToViewport();
+			// PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
 		
 	}
@@ -441,13 +441,13 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget)
 			return;
-		ShopWidget->AddToViewport();
+		// ShopWidget->AddToViewport();
 	}
 	else
 	{
 		if (!ShopWidget->IsInViewport())
 		{
-			ShopWidget->AddToViewport();
+			// ShopWidget->AddToViewport();
 		}
 	}
 }

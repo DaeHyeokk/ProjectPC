@@ -22,8 +22,9 @@ UPCGameplayAbility_ShopRefresh::UPCGameplayAbility_ShopRefresh()
 	AbilityTriggers.Add(TriggerData);
 }
 
-bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+bool UPCGameplayAbility_ShopRefresh::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
@@ -33,8 +34,14 @@ bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle 
 	return true;
 }
 
+bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	return true;
+}
+
 void UPCGameplayAbility_ShopRefresh::ApplyCost(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+                                               const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
 	if (CostSpecHandle.IsValid())

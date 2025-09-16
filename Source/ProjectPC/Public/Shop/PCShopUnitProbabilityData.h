@@ -16,20 +16,20 @@ struct PROJECTPC_API FPCShopUnitProbabilityData : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PlayerLevel;
+	int32 PlayerLevel = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability_Cost1;
+	float Probability_Cost1 = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability_Cost2;
+	float Probability_Cost2 = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability_Cost3;
+	float Probability_Cost3 = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability_Cost4;
+	float Probability_Cost4 = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Probability_Cost5;
+	float Probability_Cost5 = 0.f;
 };
