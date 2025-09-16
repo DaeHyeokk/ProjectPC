@@ -20,7 +20,7 @@ public:
 	FName UnitName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitCost;
+	int32 UnitCost = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName UnitClass;
@@ -32,7 +32,7 @@ public:
 	TSoftObjectPtr<UTexture2D> UnitTexture;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitCount;
+	int32 UnitCount = 22;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag Tag;

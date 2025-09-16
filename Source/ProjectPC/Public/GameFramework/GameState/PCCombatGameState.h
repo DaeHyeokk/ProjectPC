@@ -9,9 +9,6 @@
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
-#include "Shop/PCShopUnitData.h"
-#include "Shop/PCShopUnitProbabilityData.h"
-#include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCCombatGameState.generated.h"
 
 class APCCombatBoard;
@@ -159,96 +156,12 @@ protected:
 	
 #pragma region Shop
 	
-private:
-	UPROPERTY()
+protected:
+	UPROPERTY(VisibleDefaultsOnly, Category = "ShopManager")
 	UPCShopManager* ShopManager;
 
 public:
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
-
-protected:
-	// 유닛 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
-	UDataTable* ShopUnitDataTable;
-
-	// 유닛 확률 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
-	UDataTable* ShopUnitProbabilityDataTable;
-
-	// 유닛 판매 가격 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
-	UDataTable* ShopUnitSellingPriceDataTable;
-	
-private:
-	// 실제로 DataTable에서 가져온 정보를 저장할 배열
-	TArray<FPCShopUnitData> ShopUnitDataList;
-	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
-	TMap<TPair<int32, int32>, int32> ShopUnitSellingPriceDataMap;
-
-	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
-	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
-	TArray<FPCShopUnitData> ShopUnitDataList_Cost3;
-	TArray<FPCShopUnitData> ShopUnitDataList_Cost4;
-	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
-
-	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
-	template<typename T>
-	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
-	{
-		if (DataTable == nullptr) return;
-		OutDataList.Reset();
-
-		TArray<T*> RowPtrs;
-		DataTable->GetAllRows(Context, RowPtrs);
-
-		// DataTable의 Row수만큼 메모리 미리 확보
-		OutDataList.Reserve(RowPtrs.Num());
-		for (const auto Row : RowPtrs)
-		{
-			if (Row)
-			{
-				OutDataList.Add(*Row);
-			}
-		}
-	}
-
-	// DataTable을 읽어 아웃파라미터로 TMap에 값을 넘기는 템플릿 함수
-	template<typename T>
-	void LoadDataTableToMap(UDataTable* DataTable, TMap<TPair<int32, int32>, int32>& OutMap, const FString& Context)
-	{
-		if (DataTable == nullptr) return;
-		OutMap.Reset();
-
-		TArray<T*> RowPtrs;
-		DataTable->GetAllRows(Context, RowPtrs);
-
-		for (const auto Row : RowPtrs)
-		{
-			if (Row)
-			{
-				// Key는 (UnitCost, UnitLevel), 값은 UnitSellingPrice
-				TPair<int32, int32> Key(Row->UnitCost, Row->UnitLevel);
-				OutMap.Add(Key, Row->UnitSellingPrice);
-			}
-		}
-	}
-	
-public:
-	const TArray<FPCShopUnitData>& GetShopUnitDataList();
-	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
-	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
-	
-	TArray<float> GetCostProbabilities(int32 PlayerLevel);
-	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 Cost);
-	int32 GetUnitCostByTag(FGameplayTag UnitTag);
-	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
-
-	// 상점 업데이트로 인한 유닛 반환
-	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
-	void ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTag);
-
-	// Carousel에 차출할 유닛 태그 배열 리턴
-	TArray<FGameplayTag> GetCarouselUnitTags(int32 Round);
 
 #pragma endregion Shop
 
@@ -302,4 +215,30 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
+
+#pragma region TemplateFunc
+	
+private:
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutDataList.Reset();
+
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		// DataTable의 Row수만큼 메모리 미리 확보
+		OutDataList.Reserve(RowPtrs.Num());
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				OutDataList.Add(*Row);
+			}
+		}
+	}
+
+#pragma endregion TemplateFunc
 };

@@ -19,6 +19,10 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero, "Unit.Type.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
 
 	// ==== Unit Damage Types

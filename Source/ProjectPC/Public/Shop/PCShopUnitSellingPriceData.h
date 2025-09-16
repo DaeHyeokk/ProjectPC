@@ -16,11 +16,11 @@ struct PROJECTPC_API FPCShopUnitSellingPriceData : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitCost;
+	int32 UnitCost = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitLevel;
+	int32 UnitLevel = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitSellingPrice;
+	int32 UnitSellingPrice = 1;
 };

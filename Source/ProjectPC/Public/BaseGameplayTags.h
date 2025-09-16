@@ -20,6 +20,10 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 
 	// ==== Unit Attack Types ====

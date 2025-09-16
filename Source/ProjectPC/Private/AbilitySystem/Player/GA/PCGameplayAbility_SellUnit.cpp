@@ -50,14 +50,26 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	}
 	
 	auto UnitTag = Unit->GetUnitTag();
-	auto UnitCost = GS->GetUnitCostByTag(UnitTag);
+	auto UnitCost = GS->GetShopManager()->GetUnitCostByTag(UnitTag);
 	auto UnitLevel = Unit->GetUnitLevel();
-	auto SellingPrice = GS->GetSellingPrice({UnitCost, UnitLevel});
+	auto SellingPrice = GS->GetShopManager()->GetSellingPrice({UnitCost, UnitLevel});
 
 	if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
 	{
 		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
 		{
+			auto FieldGridPoint = TileManager->GetFieldUnitGridPoint(Unit);
+			auto BenchIndex = TileManager->GetBenchUnitIndex(Unit);
+			
+			if (FieldGridPoint != FIntPoint::NoneValue)
+			{
+				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
+			}
+			else if (BenchIndex != INDEX_NONE)
+			{
+				TileManager->RemoveFromBench(BenchIndex, false);
+			}
+			
 			GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
 			Unit->Destroy();
 		}
