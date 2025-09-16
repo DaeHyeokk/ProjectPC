@@ -83,7 +83,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 		if (TotalUnitCount == 0)
 		{
 			--i;
-			UE_LOG(LogTemp, Warning, TEXT("SelectedCost : %d Sold Out"), SelectedCost);
+			// UE_LOG(LogTemp, Warning, TEXT("SelectedCost : %d Sold Out"), SelectedCost);
 			continue;
 		}
 		
