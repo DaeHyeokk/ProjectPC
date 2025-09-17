@@ -223,6 +223,15 @@ public:
 	UPCTileManager* GetTileManager() const ;
 
 	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
+
+	// 외곽선 관련
+	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;
+
+	// 드래그 중에는 하이라이트 고정
+	bool bKeepDragHighlight = false;
+
+	void SetHoverHighLight(APCBaseUnitCharacter* NewUnit);
+	void ClearHoverHighLight();
 	
 
 protected:

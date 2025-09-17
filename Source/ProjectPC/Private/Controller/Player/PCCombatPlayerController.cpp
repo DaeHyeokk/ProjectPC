@@ -419,7 +419,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
-		// PlayerMainWidget->AddToViewport();
+		PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
 		
 		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
@@ -433,7 +433,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	{
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
-			// PlayerMainWidget->AddToViewport();
+			PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
 		
 	}
@@ -443,13 +443,13 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
 		if (!ShopWidget)
 			return;
-		// ShopWidget->AddToViewport();
+		ShopWidget->AddToViewport();
 	}
 	else
 	{
 		if (!ShopWidget->IsInViewport())
 		{
-			// ShopWidget->AddToViewport();
+			ShopWidget->AddToViewport();
 		}
 	}
 }
@@ -775,6 +775,33 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 	return Board ? Board->TileManager : nullptr;
 }
 
+void APCCombatPlayerController::SetHoverHighLight(APCBaseUnitCharacter* NewUnit)
+{
+	if (LastHoverUnit.Get() == NewUnit)
+		return;
+	if (LastHoverUnit.IsValid())
+	{
+		LastHoverUnit->SetOutlineEnabled(false);
+	}
+
+	LastHoverUnit = NewUnit;
+
+	if (LastHoverUnit.IsValid())
+	{
+		LastHoverUnit->SetOutlineEnabled(true);
+	}
+}
+
+void APCCombatPlayerController::ClearHoverHighLight()
+{
+	if (LastHoverUnit.IsValid())
+	{
+		LastHoverUnit->SetOutlineEnabled(false);
+	}
+
+	LastHoverUnit = nullptr;
+}
+
 void APCCombatPlayerController::PollHover()
 {
 	if (DragComponent && DragComponent->IsDraggingOrPending())
@@ -783,8 +810,13 @@ void APCCombatPlayerController::PollHover()
 	FHitResult HitResult;
 	if (!GetHitResultUnderCursor(ECC_Visibility, true, HitResult))
 	{
-		Server_QueryHoverFromWorld(FVector::ZeroVector);
+		ClearHoverHighLight();
 		return;
+	}
+
+	if (CachedHoverUnit == nullptr)
+	{
+		ClearHoverHighLight();
 	}
 
 	static FVector LastWorld(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -801,6 +833,12 @@ void APCCombatPlayerController::PollHover()
 
 void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const FVector& World)
 {
+	if (World.IsNearlyZero())
+	{
+		Client_TileHoverUnit(nullptr);
+		return;
+	}
+	
 	UPCTileManager* TileManager = GetTileManager();
 	if (!TileManager)
 	{
@@ -844,8 +882,20 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 	if (!IsLocalController())
 		return;
 
-	CachedHoverUnit = Unit;
+	if (bKeepDragHighlight)
+		return;
 
+	if (Unit != nullptr)
+	{
+		CachedHoverUnit = Unit;
+		SetHoverHighLight(Unit);
+	}
+	else
+	{
+		CachedHoverUnit = nullptr;
+		ClearHoverHighLight();
+	}
+	
 	// 안전하게 이름/팀 추출
 	const bool bValid = IsValid(Unit);
 	const FString UnitName   = bValid ? Unit->GetName() : TEXT("NULL");

@@ -135,9 +135,6 @@ void APCBaseUnitCharacter::BeginPlay()
 			InitStatusBarWidget(W);
 		}
 	}
-
-	if (OutlineMID)
-		SetOutlineEnabled(true);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)

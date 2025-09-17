@@ -99,7 +99,6 @@ void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector
         return;
     if (!bOk)
     {
-        HideGhost(nullptr);
         State = EDragState::Idle;
         SetComponentTickEnabled(false);
         return;
@@ -108,6 +107,7 @@ void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector
     EnsureGhostAt(StartSnap, PreviewHero);
     ShowGhost(StartSnap, PreviewHero);
     PreviewHero->ActionDrag(true);
+    
 
     State = EDragState::Dragging;
     LastSnep = StartSnap;
@@ -125,7 +125,7 @@ void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& Final
     
     HideGhost(nullptr);
     PreviewHero->ActionDrag(false);
-
+    
     State = EDragState::Idle;
     SetComponentTickEnabled(false);
 }
