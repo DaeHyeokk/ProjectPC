@@ -188,24 +188,54 @@ public:
 	// === 클라→서버: 월드 좌표 기반 드래그 RPC ===
 	UFUNCTION(Server, Reliable)
 	void Server_StartDragFromWorld(FVector World, int32 DragId);
-	UFUNCTION(Server, Unreliable)
-	void Server_UpdateDrag(FVector World, int32 DragId);
 	UFUNCTION(Server, Reliable)
 	void Server_EndDrag(FVector World, int32 DragId);
 
+	// Hover 이벤트 질의 / 응답
+	FTimerHandle ThHoverPoll;
+
+	UPROPERTY(EditAnywhere, Category = "Hover")
+	float HoverPollHz = 15.f;
+
+	UFUNCTION()
+	void PollHover();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_QueryHoverFromWorld(const FVector& World);
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_QueryTileUnit(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx);
+
+	UFUNCTION(Client, Unreliable)
+	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
+
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
-	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap);
+	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewUnit = nullptr);
 	UFUNCTION(Client, Unreliable)
-	void Client_DragHint(FVector Snap, bool bValid, int32 DragId);
-	UFUNCTION(Client, Unreliable)
-	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId);
+	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit = nullptr);
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();
 	void OnMouse_Released();
 
+	UPCTileManager* GetTileManager() const ;
+
 	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
+	static bool IsAllowBenchIdx(int32 Idx) { return Idx <= 8;}
+
+	// 외곽선 관련
+	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;
+
+	// 드래그 중에는 하이라이트 고정
+	bool bKeepDragHighlight = false;
+
+	void SetHoverHighLight(APCBaseUnitCharacter* NewUnit);
+	void ClearHoverHighLight();
+	
 
 protected:
 	// 서버 상태
@@ -213,7 +243,6 @@ protected:
 	UPROPERTY(Transient) TWeakObjectPtr<APCBaseUnitCharacter> CurrentDragUnit;
 
 	// === 서버 헬퍼 ===
-	UPCTileManager* GetTileManager() const ;
 	bool CanControlUnit(const APCBaseUnitCharacter* Unit) const;
 	bool RemoveFromCurrentSlot(UPCTileManager* TM, APCBaseUnitCharacter* Unit) const;
 	

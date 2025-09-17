@@ -1,10 +1,9 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 
-#include "Components/SplineComponent.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Character/Unit/PCPreviewHeroActor.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "GameFramework/HelpActor/PCDragGhost.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
@@ -25,11 +24,9 @@ bool UPCDragComponent::OnMouse_Pressed(APCCombatPlayerController* PC)
     State = EDragState::Pending;
     ActiveDragId = ++LocalDragId;
 
-    EnsureGhostAt(World);
-    ShowGhost(World, /*bApproved=*/false, /*bValid=*/true);
-
-    LastSentWorld = World;
-    LastSendTime  = 0.0;
+    EnsureGhostAt(World, nullptr);
+    ShowGhost(World, nullptr);
+    
     SetComponentTickEnabled(true);
 
     // 서버가 타일/유닛을 찾아 승인/거절
@@ -44,7 +41,7 @@ void UPCDragComponent::OnMouse_Released(APCCombatPlayerController* PC)
 
     FVector World;
     if (!CursorHitWorld(PC, World))
-        World = LastSentWorld;
+        World = LastSnep;
 
     // 서버에 종료 요청(유효하면 이동 수행)
     PC->Server_EndDrag(World, ActiveDragId); // Reliable
@@ -57,7 +54,7 @@ void UPCDragComponent::OnMouse_Released(APCCombatPlayerController* PC)
 void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (State != EDragState::Dragging) return;
+    if (State != EDragState::Dragging && State != EDragState::Pending) return;
 
     auto* PC = Cast<APCCombatPlayerController>(GetOwner());
     if (!PC) return;
@@ -65,20 +62,42 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
     FVector World;
     if (!CursorHitWorld(PC, World)) return;
 
-    // 과도 전송 억제: 위치 변화 + 전송레이트 체크
-    const double Now = GetWorld()->TimeSeconds;
-    const bool bMovedEnough = FVector::DistSquared2D(World, LastSentWorld) > FMath::Square(8.f);
-    const bool bRateOK = (Now - LastSendTime) >= (1.0 / SendHz);
-
-    if (bMovedEnough && bRateOK)
+    FVector Snap = World;
+    if (UPCTileManager* TM = PC->GetTileManager())
     {
-        LastSentWorld = World;
-        LastSendTime  = Now;
-        PC->Server_UpdateDrag(World, ActiveDragId); // Unreliable
+        bool bField = false;
+        int32 Y = -1;
+        int32 X = -1;
+        int32 BenchIdx = -1;
+
+        if (TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
+        {
+            const bool bValid = bField ? PC->IsAllowFieldY(Y) : PC->IsAllowBenchIdx(BenchIdx);
+
+            if (bValid)
+            {
+                EnsureGhostAt(Snap,nullptr);
+                ShowGhost(Snap, nullptr);
+            }
+            
+            const bool bTileChanged = (bField != LastQuestion_bIsField) || (Y != LastQuestion_Y) || (X != LastQuestion_X) ||  (BenchIdx != LastQuestion_Bench);
+            if (bTileChanged)
+            {
+                LastQuestion_bIsField = bField;
+                LastQuestion_Y = Y;
+                LastQuestion_X = X;
+                LastQuestion_Bench = BenchIdx;
+                PC->Server_QueryTileUnit(bField, Y, X, BenchIdx);
+            }
+            return;
+        }
     }
+    
+    ShowGhost(Snap, nullptr);
+    LastSnep = World;
 }
 
-void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector& StartSnap)
+void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector& StartSnap, APCHeroUnitCharacter* PreviewHero)
 {
     if (DragId != ActiveDragId)
         return;
@@ -86,36 +105,45 @@ void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector
     {
         State = EDragState::Idle;
         SetComponentTickEnabled(false);
-        HideGhost();
         return;
     }
-
+ 
+    if (PreviewHero)
+    {
+        PreviewHero->ActionDrag(true);
+    }
+    
+    EnsureGhostAt(StartSnap, PreviewHero);
+    ShowGhost(StartSnap, PreviewHero);
+    
     State = EDragState::Dragging;
-    EnsureGhostAt(StartSnap);
-    ShowGhost(StartSnap, true, true);
+    LastSnep = StartSnap;
 }
 
-void UPCDragComponent::OnServerDragHint(const FVector& Snap, bool bValid, int32 DragId)
-{
-    if (DragId != ActiveDragId || State != EDragState::Dragging)
-        return;
-    EnsureGhostAt(Snap);
-    ShowGhost(Snap, true, bValid);
-}
-
-void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& FinalSnap, int32 DragId)
+void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewHero)
 {
     if (DragId != ActiveDragId)
         return;
     if (bSuccess)
     {
-        EnsureGhostAt(FinalSnap);
-        ShowGhost(FinalSnap, true, true);
+        EnsureGhostAt(FinalSnap, nullptr);
+        ShowGhost(FinalSnap, nullptr);
     }
-    HideGhost();
+    
+    if (PreviewHero)
+    {
+        PreviewHero->ActionDrag(false);
+    }
 
+    HideGhost(nullptr);
+    
     State = EDragState::Idle;
     SetComponentTickEnabled(false);
+}
+
+bool UPCDragComponent::IsDraggingOrPending()
+{
+    return State == EDragState::Pending || State == EDragState::Dragging;
 }
 
 
@@ -131,34 +159,44 @@ bool UPCDragComponent::CursorHitWorld(APCCombatPlayerController* PC, FVector& Ou
     return false;
 }
 
-void UPCDragComponent::EnsureGhostAt(const FVector& World)
+void UPCDragComponent::EnsureGhostAt(const FVector& World, APCHeroUnitCharacter* PreviewHero)
 {
-    if (!Ghost.IsValid())
+    if (Preview.IsValid())
     {
-        Ghost = APCDragGhost::SpawnGhost(GetWorld(), World);
+        Preview->UpdateLocation(World);
+        return;
+    }
+    
+    if (!Preview.IsValid())
+    {
+        if (PreviewHero)
+        {
+            if (UWorld* WorldPtr = GetWorld())
+            {
+                if (UPCUnitSpawnSubsystem* SubSystem = WorldPtr->GetSubsystem<UPCUnitSpawnSubsystem>())
+                {
+                    Preview = SubSystem->SpawnPreviewHeroBySourceHero(PreviewHero, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+                }
+            }
+        }
     }
     
 }
 
-void UPCDragComponent::ShowGhost(const FVector& World, bool bApproved, bool bValid)
+void UPCDragComponent::ShowGhost(const FVector& World, APCHeroUnitCharacter* PreviewHero)
 {
-    EnsureGhostAt(World);
-    if (Ghost.IsValid())
+    if (Preview.IsValid())
     {
-        Ghost->UpdateState(true, bApproved && bValid, World);
-    }
-
-
+        Preview->UpdateLocation(World);
+    }  
 }
 
-
-void UPCDragComponent::HideGhost()
+void UPCDragComponent::HideGhost(APCHeroUnitCharacter* PreviewHero)
 {
-    if (Ghost.IsValid())
-    {
-        Ghost->UpdateState(false, false, Ghost->GetActorLocation());
-        Ghost->Destroy();
-        Ghost = nullptr;
-    }
-}
+  if (Preview.IsValid())
+  {
+      Preview->TearDown();
+  }
 
+    Preview = nullptr;
+}
