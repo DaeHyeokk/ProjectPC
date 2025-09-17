@@ -106,7 +106,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	
 }
 
-const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
+int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
 	if (PlayerLevel <= 0 || LevelMaxXPDataList.IsEmpty())
 	{

@@ -93,8 +93,10 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
 		{
 			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
-						
-			GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
+			if (BenchIndex != -1)
+			{
+				GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
+			}
 		}
 	}
 	

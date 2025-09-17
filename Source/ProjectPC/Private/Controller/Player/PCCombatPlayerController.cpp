@@ -16,6 +16,7 @@
 //#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
@@ -201,19 +202,19 @@ void APCCombatPlayerController::ShopRequest_BuyXP()
 	}
 }
 
-void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
-{
-	if (IsLocalController())
-	{
-		Server_BuyUnit(SlotIndex);
-	}
-}
-
 void APCCombatPlayerController::ShopRequest_SellUnit()
 {
 	if (IsLocalController())
 	{
 		Server_SellUnit();
+	}
+}
+
+void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
+{
+	if (IsLocalController())
+	{
+		Server_BuyUnit(SlotIndex);
 	}
 }
 
@@ -246,24 +247,6 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 	}
 }
 
-void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
-{
-	if (auto PS = GetPlayerState<APCPlayerState>())
-	{
-		if (auto ASC = PS->GetAbilitySystemComponent())
-		{
-			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
-			FGameplayEventData EventData;
-			EventData.Instigator = PS;
-			EventData.Target = PS;
-			EventData.EventTag = GA_Tag;
-			EventData.EventMagnitude = static_cast<float>(SlotIndex);
-
-			ASC->HandleGameplayEvent(GA_Tag, &EventData);
-		}
-	}
-}
-
 void APCCombatPlayerController::Server_SellUnit_Implementation()
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
@@ -278,11 +261,54 @@ void APCCombatPlayerController::Server_SellUnit_Implementation()
 				EventData.Target = PS;
 				EventData.EventTag = GA_Tag;
 				EventData.OptionalObject = OverlappedUnit;
-	
+
 				ASC->HandleGameplayEvent(GA_Tag, &EventData);
+				OverlappedUnit = nullptr;
 			}
 		}
 	}
+}
+
+void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
+{
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (auto PS = GetPlayerState<APCPlayerState>())
+		{
+			if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+			{
+				if (Board->GetFirstEmptyBenchIndex() == -1)
+				{
+					return;
+				}
+			}
+			
+			if (auto ASC = PS->GetAbilitySystemComponent())
+			{
+				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
+				FGameplayEventData EventData;
+				EventData.Instigator = PS;
+				EventData.Target = PS;
+				EventData.EventTag = GA_Tag;
+				EventData.EventMagnitude = static_cast<float>(SlotIndex);
+				
+				ASC->HandleGameplayEvent(GA_Tag, &EventData);
+				
+				SetSlotHidden(SlotIndex);
+			}
+		}
+	}
+}
+
+void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)
+{
+	ShopWidget->SetSlotHidden(SlotIndex);
+}
+
+void APCCombatPlayerController::SetOverlappedUnit_Implementation(APCHeroUnitCharacter* NewUnit)
+{
+	OverlappedUnit = NewUnit;
+	UE_LOG(LogTemp, Warning, TEXT("Controller Hero Overlap"));
 }
 
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, int32 SeatIndex, float BlendTime)
@@ -293,12 +319,6 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	//FadeSwitchCamera(CarouselRing, 0.1f,0.05f,0,0.1f, false);
 	SetViewTargetWithBlend(CarouselRing,0);
 	
-}
-
-void APCCombatPlayerController::SetOverlappedUnit(APCHeroUnitCharacter* NewUnit)
-{
-	OverlappedUnit = NewUnit;
-	UE_LOG(LogTemp, Warning, TEXT("Controller Hero Overlap"));
 }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()

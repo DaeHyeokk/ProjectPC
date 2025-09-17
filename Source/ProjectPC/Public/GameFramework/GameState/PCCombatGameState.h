@@ -161,6 +161,8 @@ protected:
 	UPCShopManager* ShopManager;
 
 public:
+	// GameState 생성자에서 생성하므로, ShopManager가 nullptr인 경우 바로 크래시
+	// => 즉 GetShopManager()가 nullptr을 반환할 일은 없음
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
 
 #pragma endregion Shop
@@ -177,7 +179,7 @@ private:
 	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
 
 public:
-	const int32 GetMaxXP(int32 PlayerLevel) const;
+	int32 GetMaxXP(int32 PlayerLevel) const;
 
 #pragma endregion Attribute
 

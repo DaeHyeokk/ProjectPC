@@ -158,8 +158,7 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
 		Unit->ChangedOnTile(false);
 	}
-	
-	OnBenchUpdated.Broadcast();
+
 	return true;
 }
 
@@ -173,8 +172,6 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	}
 	Bench[BenchIndex].Unit = nullptr;
-
-	OnBenchUpdated.Broadcast();
 	
 	return true;
 }

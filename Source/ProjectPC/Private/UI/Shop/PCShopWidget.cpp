@@ -198,3 +198,11 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 		}
 	}
 }
+
+void UPCShopWidget::SetSlotHidden(int32 SlotIndex)
+{
+	if (auto SelectedSlot = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(SlotIndex)))
+	{
+		SelectedSlot->SetSlotHidden(true);
+	}
+}

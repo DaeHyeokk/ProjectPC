@@ -85,22 +85,25 @@ public:
 
 	void ShopRequest_ShopRefresh(float GoldCost);
 	void ShopRequest_BuyXP();
-	void ShopRequest_BuyUnit(int32 SlotIndex);
 	void ShopRequest_SellUnit();
+	void ShopRequest_BuyUnit(int32 SlotIndex);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh(float GoldCost);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyXP();
 	UFUNCTION(Server, Reliable)
-	void Server_BuyUnit(int32 SlotIndex);
-	UFUNCTION(Server, Reliable)
 	void Server_SellUnit();
+	UFUNCTION(Server, Reliable)
+	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Client, Reliable)
+	void SetSlotHidden(int32 SlotIndex);
 
 private:
 	APCHeroUnitCharacter* OverlappedUnit;
 
 public:
+	UFUNCTION(Server, Reliable)
 	void SetOverlappedUnit(APCHeroUnitCharacter* NewUnit);
 
 #pragma endregion Shop
@@ -173,7 +176,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
 #pragma endregion UI
-
 
 #pragma region Drag&Drop
 

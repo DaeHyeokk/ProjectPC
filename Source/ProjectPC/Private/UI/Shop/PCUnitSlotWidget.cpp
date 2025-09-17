@@ -25,11 +25,6 @@ bool UPCUnitSlotWidget::Initialize()
 	if (!Btn_UnitSlot) return false;
 	Btn_UnitSlot->OnClicked.AddDynamic(this, &UPCUnitSlotWidget::OnClickedUnitSlot);
 
-	if (auto TileManager = GetWorld()->GetGameState<APCCombatGameState>()->GetBoardBySeat(GetOwningPlayer()->GetPlayerState<APCPlayerState>()->SeatIndex)->TileManager)
-	{
-		TileManager->OnBenchUpdated.AddDynamic(this, &UPCUnitSlotWidget::SetupButton);
-	}
-
 	return true;
 }
 
@@ -90,19 +85,6 @@ void UPCUnitSlotWidget::SetupButton()
 	
 	if (auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>())
 	{
-		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
-		{
-			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
-			if (BenchIndex == -1)
-			{
-				Btn_UnitSlot->SetIsEnabled(false);
-			}
-			else
-			{
-				Btn_UnitSlot->SetIsEnabled(true);
-			}
-		}
-		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
 			if (static_cast<int32>(AttributeSet->GetPlayerGold()) < UnitCost)
@@ -120,6 +102,12 @@ void UPCUnitSlotWidget::OnClickedUnitSlot()
 	{
 		PC->ShopRequest_BuyUnit(SlotIndex);
 	}
-	
-	this->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
+{
+	if (IsHidden)
+	{
+		this->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
