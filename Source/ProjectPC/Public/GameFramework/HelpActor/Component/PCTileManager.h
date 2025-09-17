@@ -153,7 +153,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
-
+	
 	// 점유 관련 헬퍼
 
 	// 완전히 비어있는가? (점유, 예약 둘다 X)

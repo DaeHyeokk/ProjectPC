@@ -101,6 +101,14 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }
 
+int32 UPCShopManager::CheckUnitLevelUp(APCCombatBoard* Board, FGameplayTag UnitTag)
+{
+	if (!Board) return 0;
+	
+
+	return 1;
+}
+
 void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 {
 	auto GS = Cast<APCCombatGameState>(GetOwner());

@@ -9,6 +9,7 @@
 #include "Shop/PCShopUnitSellingPriceData.h"
 #include "PCShopManager.generated.h"
 
+class APCCombatBoard;
 class APCPlayerState;
 class APCCombatGameState;
 
@@ -31,6 +32,7 @@ public:
 	// 각 상점 기능
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
+	int32 CheckUnitLevelUp(APCCombatBoard* Board , FGameplayTag UnitTag);
 	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
 
 	// 유닛 코스트에 따른 랜덤한 유닛 선택

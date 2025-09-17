@@ -306,7 +306,6 @@ void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)
 void APCCombatPlayerController::SetOverlappedUnit_Implementation(APCHeroUnitCharacter* NewUnit)
 {
 	OverlappedUnit = NewUnit;
-	UE_LOG(LogTemp, Warning, TEXT("Controller Hero Overlap"));
 }
 
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, int32 SeatIndex, float BlendTime)
