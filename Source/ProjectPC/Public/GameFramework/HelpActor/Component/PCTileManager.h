@@ -7,6 +7,7 @@
 #include "GameFramework/HelpActor/PCTileType.h"
 #include "PCTileManager.generated.h"
 
+struct FGameplayTag;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBenchUpdated);
 
 class APCCombatBoard;
@@ -252,4 +253,14 @@ public:
 		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f) const;
 
 #pragma endregion Drag&Drop
+
+#pragma region LevelUp & Synergy
+
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag);
+	
+#pragma endregion LevelUp & Synergy
 };

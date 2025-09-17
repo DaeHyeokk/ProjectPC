@@ -223,6 +223,7 @@ public:
 	UPCTileManager* GetTileManager() const ;
 
 	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
+	static bool IsAllowBenchIdx(int32 Idx) { return Idx <= 8;}
 
 	// 외곽선 관련
 	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;

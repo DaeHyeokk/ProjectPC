@@ -617,18 +617,24 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
 	// 1) 유효성 판단
 	bool bValid = false;
+	APCBaseUnitCharacter* DstUnit = nullptr;
 	
 	if (bField)
 	{
 		if (IsAllowFieldY(Y) && TM->IsInRange(Y,X))
 		{
-			bValid = TM->IsInRange(Y,X) && (TM->CanUse(Y,X,Unit) || TM->GetFieldUnit(Y,X) == Unit);
+			DstUnit = TM->GetFieldUnit(Y,X);
+			bValid = (DstUnit == nullptr) || (DstUnit == Unit) || CanControlUnit(DstUnit);
 		}
 	}
 	else
 	{
-		APCBaseUnitCharacter* BenchUnit = TM->GetBenchUnit(BenchIdx);
-		bValid = (BenchUnit == nullptr || BenchUnit == Unit);
+		if (IsAllowBenchIdx(BenchIdx))
+		{
+			DstUnit = TM->GetBenchUnit(BenchIdx);
+			bValid = (DstUnit == nullptr || DstUnit == Unit || CanControlUnit(DstUnit));
+		}
+		
 	}
 
 	if (!bValid)
@@ -637,42 +643,95 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 		return;
 	}
 
+	const FIntPoint SrcGrid = TM->GetFieldUnitGridPoint(Unit);
+	const bool bSrcField = (SrcGrid != FIntPoint::NoneValue);
+	const int32 SrcBench = bSrcField ? INDEX_NONE : TM->GetBenchUnitIndex(Unit);
+
+	if (DstUnit == nullptr || DstUnit == Unit)
 	{
-		const FIntPoint CurGrid = TM->GetFieldUnitGridPoint(Unit);
-		if (CurGrid != FIntPoint::NoneValue)
+		if (bSrcField)
 		{
-			TM->RemoveFromField(CurGrid.Y, CurGrid.X, true);
+			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
+		}
+		else if (SrcBench != INDEX_NONE)
+		{
+			TM->RemoveFromBench(SrcBench, true);
+		}
+
+		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit) : TM->PlaceUnitOnBench(BenchIdx, Unit);
+
+		if (bPlaced)
+		{
+			Multicast_LerpMove(Unit, Snap, LerpDuration);
+			Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
 		}
 		else
 		{
-			const int32 CurBench = TM->GetBenchUnitIndex(Unit);
-			if (CurBench != INDEX_NONE)
-			{
-				TM->RemoveFromBench(CurBench, true);
-			}
+			Client_DragEndResult(false, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
 		}
+
+		CurrentDragUnit = nullptr;
+		CurrentDragId = 0;
+		return;
 	}
-	
-	bool bPlaced = false;
-	if (bField)
+
+	if (!CanControlUnit(DstUnit))
 	{
-		bPlaced = TM->PlaceUnitOnField(Y,X,Unit);
+		Client_DragEndResult(false, Snap, DragId, nullptr);
+	}
+
+	bool bSwapOK = false;
+	FVector OtherDestWorld = FVector::ZeroVector;
+
+	if (bSrcField && bField)
+	{
+		// 필드 -> 필드
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
+		TM->RemoveFromField(Y,X, true);
+
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+
+		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
+	}
+	else if (!bSrcField && bField)
+	{
+		// 벤치 -> 필드
+		TM->RemoveFromBench(SrcBench, true);
+		TM->RemoveFromField(Y,X,true);
+
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
+	}
+	else if (bSrcField && !bField)
+	{
+		// 필드 -> 벤치
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
+		TM->RemoveFromBench(BenchIdx, true);
+
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
 	}
 	else
 	{
-		bPlaced = TM->PlaceUnitOnBench(BenchIdx,Unit);
+		// 벤치 -> 벤치
+		TM->RemoveFromBench(SrcBench, true);
+		TM->RemoveFromBench(BenchIdx, true);
+
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+
+		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
 	}
-	
-	if (bPlaced)
+
+	if (bSwapOK)
 	{
 		Multicast_LerpMove(Unit, Snap, LerpDuration);
+		Multicast_LerpMove(DstUnit, OtherDestWorld, LerpDuration);
 		Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
 	}
 	else
 	{
-		Client_DragEndResult(false, World, DragId, Cast<APCHeroUnitCharacter>(Unit));
+		Client_DragEndResult(false, World, DragId, nullptr);
 	}
-
 	
 	CurrentDragUnit = nullptr;
 	CurrentDragId = 0;

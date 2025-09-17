@@ -72,10 +72,14 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
         if (TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
         {
-            const bool bValidY = bField ? PC->IsAllowFieldY(Y) : true;
-            EnsureGhostAt(Snap,nullptr);
-            ShowGhost(Snap, nullptr);
+            const bool bValid = bField ? PC->IsAllowFieldY(Y) : PC->IsAllowBenchIdx(BenchIdx);
 
+            if (bValid)
+            {
+                EnsureGhostAt(Snap,nullptr);
+                ShowGhost(Snap, nullptr);
+            }
+            
             const bool bTileChanged = (bField != LastQuestion_bIsField) || (Y != LastQuestion_Y) || (X != LastQuestion_X) ||  (BenchIdx != LastQuestion_Bench);
             if (bTileChanged)
             {
@@ -103,12 +107,15 @@ void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector
         SetComponentTickEnabled(false);
         return;
     }
+ 
+    if (PreviewHero)
+    {
+        PreviewHero->ActionDrag(true);
+    }
     
     EnsureGhostAt(StartSnap, PreviewHero);
     ShowGhost(StartSnap, PreviewHero);
-    PreviewHero->ActionDrag(true);
     
-
     State = EDragState::Dragging;
     LastSnep = StartSnap;
 }
@@ -123,8 +130,12 @@ void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& Final
         ShowGhost(FinalSnap, nullptr);
     }
     
+    if (PreviewHero)
+    {
+        PreviewHero->ActionDrag(false);
+    }
+
     HideGhost(nullptr);
-    PreviewHero->ActionDrag(false);
     
     State = EDragState::Idle;
     SetComponentTickEnabled(false);

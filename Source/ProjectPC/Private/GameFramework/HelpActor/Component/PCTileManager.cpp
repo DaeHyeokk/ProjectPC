@@ -747,7 +747,40 @@ bool UPCTileManager::WorldAnyTile(const FVector& World, bool bPreferField, bool&
 	OutBenchIndex = B;
 	OutSnapPos = Bench[B].Position;
 	return true;
-
 	
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+
+	// 필드 먼저
+	for (const FTile& FieldTile : Field)
+	{
+		AddIfMatch(FieldTile.Unit);
+	}
+
+	// 벤치
+	for (const FTile& BenchTile : Bench)
+	{
+		AddIfMatch(BenchTile.Unit);
+	}
+
+	return AllUnits;
 }
 
