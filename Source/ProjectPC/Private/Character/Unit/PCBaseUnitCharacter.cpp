@@ -23,8 +23,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	NetUpdateFrequency = 100.f;
-	MinNetUpdateFrequency = 66.f;
+	//NetUpdateFrequency = 100.f;
+	//MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -135,9 +135,6 @@ void APCBaseUnitCharacter::BeginPlay()
 			InitStatusBarWidget(W);
 		}
 	}
-
-	if (OutlineMID)
-		SetOutlineEnabled(true);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -250,6 +247,7 @@ void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
 	if (GetMesh())
 	{
 		GetMesh()->SetHiddenInGame(IsStart);
+		//StatusBarComp->SetHiddenInGame(IsStart);
 	}
 }
 

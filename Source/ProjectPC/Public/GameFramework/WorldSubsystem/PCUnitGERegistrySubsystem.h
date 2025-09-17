@@ -22,6 +22,6 @@ public:
 	TMap<FGameplayTag, TWeakObjectPtr<UClass>> CachedGEClasses;
 
 	void InitializeUnitGERegistry(UPCDataAsset_UnitGEDictionary* InUnitGEDict, const FGameplayTagContainer& PreloadGEClassKeys);
-	UClass* GetGEClass(const FGameplayTag& GEClassTag);
+	TSubclassOf<UGameplayEffect> GetGEClass(const FGameplayTag& GEClassTag);
 	UGameplayEffect* GetGE_CDO(const FGameplayTag& GEClassTag);
 };

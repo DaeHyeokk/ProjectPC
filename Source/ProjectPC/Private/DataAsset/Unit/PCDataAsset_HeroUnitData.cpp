@@ -15,7 +15,10 @@ UPCDataAsset_HeroUnitData::UPCDataAsset_HeroUnitData()
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetMaxHealthAttribute());
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetBaseDamageAttribute());
 
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetMaxManaAttribute());
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCritChanceAttribute(), 25.f);
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCritMultiplierAttribute(), 0.3f);
 }
 
 void UPCDataAsset_HeroUnitData::FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const

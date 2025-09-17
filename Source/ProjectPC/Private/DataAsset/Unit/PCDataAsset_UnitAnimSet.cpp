@@ -5,8 +5,13 @@
 
 #include "BaseGameplayTags.h"
 
-
-UAnimMontage* UPCDataAsset_UnitAnimSet::GetAnimMontageByTag(const FGameplayTag& MontageTag) const
+FMontageConfig UPCDataAsset_UnitAnimSet::GetMontageConfigByTag(const FGameplayTag& MontageTag) const
 {
-	return MontageByTagMap.FindRef(MontageTag);
+	return MontageConfigByTagMap.FindRef(MontageTag);
+}
+
+UAnimMontage* UPCDataAsset_UnitAnimSet::GetMontageByTag(const FGameplayTag& MontageTag) const
+{
+	const FMontageConfig& MontageConfig = MontageConfigByTagMap.FindRef(MontageTag);
+	return MontageConfig.Montage;
 }

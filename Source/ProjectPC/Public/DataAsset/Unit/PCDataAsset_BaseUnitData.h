@@ -21,6 +21,7 @@ struct FUnitStaticStatConfig
 
 	FUnitStaticStatConfig() : StatValue(0.f) {}
 	FUnitStaticStatConfig(const FGameplayAttribute& InStatAttribute) : StatAttribute(InStatAttribute), StatValue(0.f) {}
+	FUnitStaticStatConfig(const FGameplayAttribute& InStatAttribute, const float InStatValue) : StatAttribute(InStatAttribute), StatValue(InStatValue) {}
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayAttribute StatAttribute;
@@ -58,25 +59,17 @@ protected:
 	
 	// 기본 공격 평타 능력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> AttackAbilities;
+	TSubclassOf<UGameplayAbility> BasicAttackAbility;
 	
-	// 방어/패시브 계열 능력 (예: 피해감소, 마나재생 등)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
-
 	// 이동 관련 능력 (점프, 대쉬  등)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> MovementAbilities;
-
-	// 기타 특수 능력 (버프, 디버프, 스턴 등)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> MiscAbilities;
 
 	// Handle GameplayEvent를 통해 발동되는 능력 (Hit React 등)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> EventAbilities;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability Data")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability Datas")
 	TObjectPtr<UPCDataAsset_UnitAbilityConfig> AbilityConfigData;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animations")

@@ -3,44 +3,29 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BehaviorTree/BTDecorator.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTTask_FindTarget.generated.h"
+#include "BTTask_CheckTargetInRange.generated.h"
 
 class APCBaseUnitCharacter;
-
-UENUM(BlueprintType)
-enum class ETargetSearchMode : uint8
-{
-	// 사거리 내 가장 가까이 있는 적
-	NearestInRange,
-	// 사거리 내 가장 멀리 있는 적
-	FarthestInRange,
-	// 사거리 상관 없이 가장 멀리 있는 적
-	Farthest
-	// 추후에 서치 대상 추가가능 ex) LowestHP, HighestDamage
-};
-
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UBTTask_FindTarget : public UBTTaskNode
+class PROJECTPC_API UBTTask_CheckTargetInRange : public UBTTaskNode
 {
 	GENERATED_BODY()
 
 public:
-	UBTTask_FindTarget();
+	UBTTask_CheckTargetInRange();
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 	UPROPERTY(EditAnywhere, Category="Blackboard")
 	FBlackboardKeySelector TargetUnitKey;
-
-	UPROPERTY(EditAnywhere, Category="Data")
-	ETargetSearchMode TargetSearchMode = ETargetSearchMode::NearestInRange;
 	
-private:
 	void SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const;
+
 	void ClearTargetActorKey(UBlackboardComponent* BB) const;
 };

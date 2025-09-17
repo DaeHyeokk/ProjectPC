@@ -1,26 +1,29 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AI/Task/BTTask_FindTarget.h"
+#include "AI/Task/BTTask_CheckTargetInRange.h"
 
 #include "AbilitySystemComponent.h"
+#include "AIController.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
-#include "Containers/Queue.h"
-#include "Controller/Unit/PCUnitAIController.h"
 #include "Utility/PCUnitCombatUtils.h"
-#include "Algo/RandomShuffle.h"
 
-UBTTask_FindTarget::UBTTask_FindTarget()
+
+UBTTask_CheckTargetInRange::UBTTask_CheckTargetInRange()
 {
-	NodeName = TEXT("Find Target In Attack Range");
+	NodeName = TEXT("Is Valid Target");
 }
 
-EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* BB = OwnerComp.GetBlackboardComponent();
 	if (!BB)
+		return EBTNodeResult::Failed;
+
+	const APCBaseUnitCharacter* TargetUnit = Cast<APCBaseUnitCharacter>(BB->GetValueAsObject(TargetUnitKey.SelectedKeyName));
+	if (!TargetUnit)
 		return EBTNodeResult::Failed;
 	
 	AAIController* AIC = OwnerComp.GetAIOwner();
@@ -69,8 +72,6 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 	Q.Enqueue(FBfsData(StartPoint, 0));
 	Visited.Add(StartPoint);
 	
-	APCBaseUnitCharacter* Farthest = nullptr;
-	
 	while (!Q.IsEmpty())
 	{
 		FBfsData HereData;
@@ -83,30 +84,14 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		// 현재 유닛이 유효하고, 자기 자신이 아니며, 사거리 내에 있고, 적일 경우
 		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && PCUnitCombatUtils::IsHostile(OwnerUnit, HereUnit))
 		{
-			switch (TargetSearchMode)
-			{
-				// 가장 가까이 있는 적을 찾는거라면 바로 Succeeded 반환
-			case ETargetSearchMode::NearestInRange:
-				SetTargetActorKey(HereUnit, BB);
+			if (TargetUnit == HereUnit)
 				return EBTNodeResult::Succeeded;
-				
-				// 가장 멀리 있는 적을 찾는거라면 현재 적을 Target 후보에 추가
-			case ETargetSearchMode::FarthestInRange:
-				Farthest = HereUnit;
-				break;
-
-			default:
-				break;
-			}
 		}
 
 		// 현재까지 탐색한 거리가 Range보다 크거나 같다면 더 멀리 탐색하지 않음
-		if (TargetSearchMode != ETargetSearchMode::Farthest)
+		if (HereDist >= Range)
 		{
-			if (HereDist >= Range)
-			{
-				continue;
-			}
+			continue;
 		}
 		
 		// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여)
@@ -123,27 +108,18 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 			}
 		}
 	}
-
-	if (Farthest)
-	{
-		// 찾은 타겟이 있다면 타겟을 TargetActorKey에 할당하고 Succeeded 반환
-		SetTargetActorKey(Farthest, BB);
-		return EBTNodeResult::Succeeded;
-	}
-	else
-	{
-		// 찾은 타겟이 없다면 TargetActorKey를 클리어 하고 Failed 반환
-		ClearTargetActorKey(BB);
-		return EBTNodeResult::Failed;
-	}
+	
+	// 설정한 타겟이 사거리 내에 존재하지 않을 경우 false
+	ClearTargetActorKey(BB);
+	return EBTNodeResult::Failed;
 }
 
-void UBTTask_FindTarget::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
+void UBTTask_CheckTargetInRange::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
 {
 	BB->SetValueAsObject(TargetUnitKey.SelectedKeyName, Target);
 }
 
-void UBTTask_FindTarget::ClearTargetActorKey(UBlackboardComponent* BB) const
+void UBTTask_CheckTargetInRange::ClearTargetActorKey(UBlackboardComponent* BB) const
 {
 	BB->ClearValue(TargetUnitKey.SelectedKeyName);
 }

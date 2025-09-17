@@ -10,6 +10,22 @@
 class UBlendSpace1D;
 
 USTRUCT(BlueprintType)
+struct FMontageConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montage")
+	TObjectPtr<UAnimMontage> Montage = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
+	bool bHasWindup = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
+	bool bHasRecovery = false;
+	
+};
+
+USTRUCT(BlueprintType)
 struct FUnitLocomotionSet
 {
 	GENERATED_BODY()
@@ -48,8 +64,11 @@ public:
 	FUnitLocomotionSet LocomotionSet;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
-	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
+	TMap<FGameplayTag, FMontageConfig> MontageConfigByTagMap;
 	
 	UFUNCTION(BlueprintCallable)
-	UAnimMontage* GetAnimMontageByTag(const FGameplayTag& MontageTag) const;
+	FMontageConfig GetMontageConfigByTag(const FGameplayTag& MontageTag) const;
+
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetMontageByTag(const FGameplayTag& MontageTag) const;
 };

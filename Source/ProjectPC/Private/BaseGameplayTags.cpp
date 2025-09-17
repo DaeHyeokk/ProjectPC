@@ -98,18 +98,21 @@ namespace GameplayEffectTags
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
 
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_CurrentHealthChange, "GE.Caller.CurrentHealthChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_MaxHealthChange, "GE.Caller.MaxHealthChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_ManaChange, "GE.Caller.ManaChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_BaseDamageChange, "GE.Caller.BaseDamageChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_PhysicalDamageMultiplierChange, "GE.Caller.PhysicalDamageMultiplierChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_MagicDamageMultiplierChange, "GE.Caller.MagicDamageMultiplierChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_AttackSpeedChange, "GE.Caller.AttackSpeedChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_PhysicalDefenseChange, "GE.Caller.PhysicalDefenseChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_MagicDefenseChange, "GE.Caller.MagicDefenseChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_CritChanceChange, "GE.Caller.CritChangeChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_LifeStealChange, "GE.Caller.LifeStealChange")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_SpellVampChange, "GE.Caller.SpellVampChange")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Damage, "GE.Caller.Damage")
+	
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CurrentHealth, "GE.Caller.Stat.CurrentHealth")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MaxHealth, "GE.Caller.Stat.MaxHealth")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MaxMana, "GE.Caller.Stat.MaxMana")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CurrentMana, "GE.Caller.Stat.CurrentMana")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_BaseDamage, "GE.Caller.Stat.BaseDamage")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_PhysicalDamageMultiplier, "GE.Caller.Stat.PhysicalDamageMultiplier")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MagicDamageMultiplier, "GE.Caller.Stat.MagicDamageMultiplier")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_AttackSpeed, "GE.Caller.Stat.AttackSpeed")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_PhysicalDefense, "GE.Caller.Stat.PhysicalDefense")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MagicDefense, "GE.Caller.Stat.MagicDefense")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CritChance, "GE.Caller.Stat.CritChange")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_LifeSteal, "GE.Caller.Stat.LifeSteal")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_SpellVamp, "GE.Caller.Stat.SpellVamp")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Cooldown_BasicAttack, "GE.Caller.Cooldown.BasicAttack")
 }

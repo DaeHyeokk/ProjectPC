@@ -26,9 +26,9 @@ protected:
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 	
-	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const override;
+	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo) override;
 	virtual float GetMontagePlayRate(const UAnimMontage* Montage) override;
-	
+
 	virtual void ApplyGameplayEffect() override;
 
 	UPROPERTY(Transient)

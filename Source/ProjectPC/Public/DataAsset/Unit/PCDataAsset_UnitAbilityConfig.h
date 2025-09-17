@@ -5,10 +5,18 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_UnitAbilityConfig.generated.h"
 
 class UGameplayEffect;
+
+UENUM(BlueprintType)
+enum class EAbilityType : uint8
+{
+	Attack, 
+	Movement,
+};
 
 USTRUCT(BlueprintType)
 struct FAbilityConfig
@@ -35,6 +43,20 @@ struct FAbilityConfig
 	
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
 	FGameplayTag CooldownCallerTag;
+
+	// 어빌리티 발동 즉시 적용하는 GE 스펙
+	UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|Immediate")
+	TArray<TObjectPtr<UPCEffectSpec>> OnActivateEffectSpecs;
+
+	//UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|Notify")
+	//TMap<FGameplayTag, TArray<UPCEffectSpec>> OnNotifyEffectsMap;
+
+	UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|OnHit")
+	TArray<TObjectPtr<UPCEffectSpec>> OnHitEffectSpecs;
+
+	//UPROPERTY(EditDefaultsOnly,Instanced, Category="Projectile")
+	//TArray
+	
 };
 
 /**
@@ -51,6 +73,4 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Abilities")
 	TMap<FGameplayTag, FAbilityConfig> AbilityConfigMap;
-	
-	
 };

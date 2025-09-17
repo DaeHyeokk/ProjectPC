@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/GA/PCBaseUnitGameplayAbility.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCUnitBaseAttackGameplayAbility.generated.h"
 
 class UPCDataAsset_UnitAnimSet;
@@ -12,7 +13,7 @@ class UPCUnitAttributeSet;
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class PROJECTPC_API UPCUnitBaseAttackGameplayAbility : public UPCBaseUnitGameplayAbility
 {
 	GENERATED_BODY()
@@ -31,7 +32,7 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 
-	virtual UAnimMontage* GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const { return nullptr; }
+	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo) { }
 	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
 	
 	UPROPERTY(Transient)
@@ -40,18 +41,21 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<const UPCDataAsset_UnitAnimSet> UnitAnimSet;
 
+	UPROPERTY(Transient)
+	FMontageConfig AttackMontageConfig;
+	
+	void StartAttackCommitWaitTask();
+	void StartPlayMontageAndWaitTask(UAnimMontage* Montage);
 	
 protected:
 	virtual void ApplyGameplayEffect() { }
 	
 	UFUNCTION()
 	virtual void OnAttackCommit(FGameplayEventData Payload);
-
+	
 	UFUNCTION()
 	void OnMontageFinished();
-
-private:
-	bool bIsCommitted = false;
+	
 	
 protected:
 	// ==== 디버깅용 ====

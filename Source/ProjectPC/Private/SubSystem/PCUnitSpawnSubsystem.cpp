@@ -25,7 +25,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultCreepStatusBarWidgetClass =SpawnConfig.CreepStatusBarWidgetClass;
 	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass;
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass;
-	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass;
+	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass.LoadSynchronous();
 	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
 

@@ -29,9 +29,7 @@ void UPCDataAsset_BaseUnitData::FillInitStatMap(int32 Level,
 
 void UPCDataAsset_BaseUnitData::FillStartupAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const
 {
-	OutAbilities.Reset(
-		AttackAbilities.Num() + PassiveAbilities.Num() +
-				MovementAbilities.Num() + MiscAbilities.Num() + EventAbilities.Num());
+	OutAbilities.Reset();
 
 	auto AppendValidUnique = [&OutAbilities](const TArray<TSubclassOf<UGameplayAbility>>& Src)
 	{
@@ -44,10 +42,8 @@ void UPCDataAsset_BaseUnitData::FillStartupAbilities(TArray<TSubclassOf<UGamepla
 		}
 	};
 
-	AppendValidUnique(AttackAbilities);
-	AppendValidUnique(PassiveAbilities);
+	OutAbilities.Add(BasicAttackAbility);
 	AppendValidUnique(MovementAbilities);
-	AppendValidUnique(MiscAbilities);
 	AppendValidUnique(EventAbilities);
 }
 

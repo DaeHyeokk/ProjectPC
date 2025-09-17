@@ -5,7 +5,9 @@
 
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
+#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 UPCBaseUnitGameplayAbility::UPCBaseUnitGameplayAbility()
 {
@@ -15,6 +17,41 @@ UPCBaseUnitGameplayAbility::UPCBaseUnitGameplayAbility()
 	bReplicateInputDirectly = false;
 
 	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
+}
+
+void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilitySpec& Spec)
+{
+	Super::OnAvatarSet(ActorInfo, Spec);
+
+	if (const APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(ActorInfo->AvatarActor))
+	{
+		if (const UPCDataAsset_UnitAbilityConfig* ConfigData = Unit->GetUnitAbilityConfigDataAsset())
+		{
+			FAbilityConfig AbilityConfig;
+			if (ConfigData->TryFindAbilityConfigByTag(AbilityTags.Last(), AbilityConfig))
+			{
+				UPCUnitGERegistrySubsystem* GERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>();
+				if (!GERegistrySubsystem)
+					return;
+				
+				if (AbilityConfig.bUseCost)
+				{
+					CostGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CostGETag);
+					CostCallerTag = AbilityConfig.CostCallerTag;
+					CostGameplayAttribute = AbilityConfig.CostGameplayAttribute;
+				}
+
+				if (AbilityConfig.bUseCooldown)
+				{
+					CooldownGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CooldownGETag);
+					CooldownCallerTag = AbilityConfig.CooldownCallerTag;
+				}
+			}
+		}
+	}
+	
+	
 }
 
 // void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,

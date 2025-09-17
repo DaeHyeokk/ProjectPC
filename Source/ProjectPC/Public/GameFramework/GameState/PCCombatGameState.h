@@ -43,7 +43,7 @@ struct FSpawnSubsystemConfig
 	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
-	TSubclassOf<class APCPreviewHeroActor> DefaultPreviewHeroClass;
+	TSoftClassPtr<class APCPreviewHeroActor> DefaultPreviewHeroClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;

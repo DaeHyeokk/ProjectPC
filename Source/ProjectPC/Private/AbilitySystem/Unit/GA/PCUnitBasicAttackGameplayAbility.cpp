@@ -28,9 +28,6 @@ void UPCUnitBasicAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorI
 	if (!UnitGERegistrySubsystem)
 		return;
 
-	const FGameplayTag CooldownEffectTag = GameplayEffectTags::GE_Class_Cooldown_BasicAttack;
-	CooldownGameplayEffectClass = UnitGERegistrySubsystem->GetGEClass(CooldownEffectTag);
-
 	const FGameplayTag ManaGainEffectTag = GameplayEffectTags::GE_Class_Mana_Gain_Instant;
 	ManaGainEffectClass = UnitGERegistrySubsystem->GetGEClass(ManaGainEffectTag);
 }
@@ -57,10 +54,10 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 	}
 }
 
-UAnimMontage* UPCUnitBasicAttackGameplayAbility::GetMontage(const FGameplayAbilityActorInfo* ActorInfo) const
+void UPCUnitBasicAttackGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
 {
 	const FGameplayTag BasicAttackMontageTag = UnitGameplayTags::Unit_Montage_Attack_Basic;
-	return UnitAnimSet->GetAnimMontageByTag(BasicAttackMontageTag);
+	AttackMontageConfig = UnitAnimSet->GetMontageConfigByTag(BasicAttackMontageTag);
 }
 
 float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate(const UAnimMontage* Montage)
@@ -97,7 +94,7 @@ void UPCUnitBasicAttackGameplayAbility::ApplyGameplayEffect()
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(ManaGainEffectClass, 1.f);
 		if (SpecHandle.IsValid())
 		{
-			const FGameplayTag CallerTag = GameplayEffectTags::GE_Caller_ManaChange;
+			const FGameplayTag CallerTag = GameplayEffectTags::GE_Caller_Stat_CurrentMana;
 			SpecHandle.Data->SetSetByCallerMagnitude(CallerTag, ManaGainAmount);
 
 			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())

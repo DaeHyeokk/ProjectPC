@@ -136,8 +136,8 @@ void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 	auto UnitCost = GetUnitCostByTag(UnitTag);
 	if (UnitCost != 0)
 	{
-		auto UnitDataList = GetShopUnitDataListByCost(UnitCost);
-		for (auto Unit : UnitDataList)
+		auto& UnitDataList = GetShopUnitDataListByCost(UnitCost);
+		for (auto& Unit : UnitDataList)
 		{
 			if (Unit.Tag == UnitTag)
 			{

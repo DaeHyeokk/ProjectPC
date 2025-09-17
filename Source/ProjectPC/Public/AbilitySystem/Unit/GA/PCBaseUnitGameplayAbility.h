@@ -16,5 +16,17 @@ class PROJECTPC_API UPCBaseUnitGameplayAbility : public UGameplayAbility
 
 public:
 	UPCBaseUnitGameplayAbility();
+
+protected:
+	virtual void OnAvatarSet(
+		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Costs")
+	FGameplayAttribute CostGameplayAttribute;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Costs")
+	FGameplayTag CostCallerTag;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cooldown")
+	FGameplayTag CooldownCallerTag;
 };
