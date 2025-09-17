@@ -76,7 +76,6 @@ void APCBaseProjectile::SetTarget(AActor* TargetActor)
 	{
 		if (bIsHomingProjectile)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Homing Target : %s"), *TargetActor->GetName());
 			ProjectileMovement->bIsHomingProjectile = true;
 			ProjectileMovement->HomingAccelerationMagnitude = 15000.f;
 			ProjectileMovement->HomingTargetComponent = TargetActor->GetRootComponent();

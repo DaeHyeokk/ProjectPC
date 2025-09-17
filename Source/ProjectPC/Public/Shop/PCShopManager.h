@@ -10,8 +10,9 @@
 #include "PCShopManager.generated.h"
 
 class APCCombatBoard;
-class APCPlayerState;
 class APCCombatGameState;
+class APCHeroUnitCharacter;
+class APCPlayerState;
 
 /**
  * 
@@ -32,7 +33,8 @@ public:
 	// 각 상점 기능
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
-	int32 CheckUnitLevelUp(APCCombatBoard* Board , FGameplayTag UnitTag);
+	TMap<int32, int32> GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
+	void UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag);
 	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
 
 	// 유닛 코스트에 따른 랜덤한 유닛 선택
@@ -41,7 +43,7 @@ public:
 	// 유닛 태그를 통해 상점에 기물 반환
 	void ReturnUnitToShopByTag(FGameplayTag UnitTag);
 	// Carousel에서 선택받지 못한 유닛 상점에 기물 반환
-	void ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags);
+	void ReturnUnitsToShopByCarousel(const TArray<FGameplayTag>& UnitTags);
 	// 구매하지 않은 유닛 상점에 기물 반환
 	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
 
@@ -86,7 +88,7 @@ public:
 	TArray<float> GetCostProbabilities(int32 PlayerLevel);
 	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	int32 GetUnitCostByTag(FGameplayTag UnitTag);
-	int32 GetSellingPrice(TPair<int32, int32> UnitLevelCostData);
+	int32 GetSellingPrice(const TPair<int32, int32>& UnitLevelCostData);
 	
 #pragma endregion Data
 	
