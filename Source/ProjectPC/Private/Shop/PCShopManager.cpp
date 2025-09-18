@@ -101,8 +101,8 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
-
 	UnitLevelUp(TargetPlayer, UnitTag);
+	
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }
 
@@ -143,12 +143,46 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 		}
 	}
 
-	if (ShopAddUnitCount >= 1 && ShopAddUnitCount <= 3)
+	if (ShopAddUnitCount >= 1 && ShopAddUnitCount <= 2)
 	{
 		UnitCountByLevelMap.FindOrAdd(1) += ShopAddUnitCount;
 	}
+	if (ShopAddUnitCount == 3)
+	{
+		UnitCountByLevelMap.FindOrAdd(2) += 1;
+	}
 	
 	return UnitCountByLevelMap;
+}
+
+int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
+{
+	if (!TargetPlayer) return false;
+
+	auto UnitMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, 0);
+
+	int32 Level1Count = UnitMap.FindRef(1);
+	int32 Level2Count = UnitMap.FindRef(2);
+
+	if (Level1Count + ShopAddUnitCount >= 3)
+	{
+		if (Level1Count == 1)
+		{
+			return 2;
+		}
+
+		if (Level1Count == 2)
+		{
+			return 1;
+		}
+	}
+
+	if (Level2Count == 2 && ShopAddUnitCount >= 3)
+	{
+		return 3;
+	}
+
+	return 0; 
 }
 
 void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag)

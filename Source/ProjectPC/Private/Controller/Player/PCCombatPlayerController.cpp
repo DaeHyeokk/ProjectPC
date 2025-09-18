@@ -14,6 +14,8 @@
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 //#include "Character/Unit/PCBaseUnitCharacter.h"
+#include "AIController.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -22,6 +24,7 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Shop/PCShopManager.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
@@ -149,10 +152,18 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold)
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+		Server_MovetoLocation(CachedDestination);
 	}
 	
 	FollowTime = 0.f;
+}
+
+void APCCombatPlayerController::Server_MovetoLocation_Implementation(const FVector& Destination)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
+	}
 }
 
 void APCCombatPlayerController::OnBuyXPStarted()
@@ -184,6 +195,34 @@ void APCCombatPlayerController::LoadShopWidget()
 		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
 		ShopWidget->OpenMenu();
 	}
+}
+
+TArray<int32> APCCombatPlayerController::GetSameShopSlotIndices(int32 SlotIndex)
+{
+	TArray<int32> SlotIndices;
+	
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		auto ShopSlots = PS->GetShopSlots();
+		auto PurchasedSlots = PS->PurchasedSlots;
+		for (int i = 0; i < ShopSlots.Num(); i++)
+		{
+			if (i == SlotIndex)
+			{
+				continue;
+			}
+				
+			if (!PurchasedSlots.Contains(i))
+			{
+				if (ShopSlots[i].Tag == ShopSlots[SlotIndex].Tag)
+				{
+					SlotIndices.Add(i);
+				}
+			}
+		}
+	}
+	
+	return SlotIndices;
 }
 
 void APCCombatPlayerController::ShopRequest_ShopRefresh(float GoldCost)
@@ -271,33 +310,60 @@ void APCCombatPlayerController::Server_SellUnit_Implementation()
 
 void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 {
-	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+
+	auto ASC = PS->GetAbilitySystemComponent();
+	if (!ASC) return;
+	
+	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
+	if (!Board) return;
+
+	// 벤치가 꽉 찼을 때
+	if (Board->GetFirstEmptyBenchIndex() == -1)
 	{
-		if (auto PS = GetPlayerState<APCPlayerState>())
+		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
+		auto RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		
+		if (auto AttributeSet = PS->GetAttributeSet())
 		{
-			if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+			// 모두 구매가 가능한지 골드 확인
+			if (RequiredCount == 0 || AttributeSet->GetPlayerGold() < PS->GetShopSlots()[SlotIndex].UnitCost * RequiredCount)
 			{
-				if (Board->GetFirstEmptyBenchIndex() == -1)
-				{
-					return;
-				}
+				return;
 			}
-			
-			if (auto ASC = PS->GetAbilitySystemComponent())
+
+			// 클릭한 슬롯 제외 나머지 구매 처리
+			for (int i = 0; i < RequiredCount - 1; ++i)
 			{
 				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
 				FGameplayEventData EventData;
 				EventData.Instigator = PS;
 				EventData.Target = PS;
 				EventData.EventTag = GA_Tag;
-				EventData.EventMagnitude = static_cast<float>(SlotIndex);
-				
+				EventData.EventMagnitude = static_cast<float>(SameSlotIndices[i]);
+
 				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-				
-				SetSlotHidden(SlotIndex);
+
+				SetSlotHidden(SameSlotIndices[i]);
 			}
 		}
 	}
+
+	// 클릭한 슬롯 구매 처리
+	FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
+	FGameplayEventData EventData;
+	EventData.Instigator = PS;
+	EventData.Target = PS;
+	EventData.EventTag = GA_Tag;
+	EventData.EventMagnitude = static_cast<float>(SlotIndex);
+	
+	ASC->HandleGameplayEvent(GA_Tag, &EventData);
+	
+	SetSlotHidden(SlotIndex);
 }
 
 void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)

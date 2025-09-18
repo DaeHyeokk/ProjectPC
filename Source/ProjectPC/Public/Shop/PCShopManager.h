@@ -30,11 +30,16 @@ private:
 	uint8 NumSlots = 5;
 
 public:
-	// 각 상점 기능
+	// 상점 업데이트
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
+
+	// 유닛 구매
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
 	TMap<int32, int32> GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
+	int32 GetRequiredCountWithFullBench(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
 	void UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag);
+
+	// 유닛 판매
 	void SellUnit(FGameplayTag UnitTag, int32 UnitLevel);
 
 	// 유닛 코스트에 따른 랜덤한 유닛 선택

@@ -6,12 +6,15 @@
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 
 
 APCBaseProjectile::APCBaseProjectile()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	bAlwaysRelevant = true;
 	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -30,37 +33,44 @@ APCBaseProjectile::APCBaseProjectile()
 	TrailEffect->SetupAttachment(Mesh);
 }
 
-void APCBaseProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other,
-                                  class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal,
-                                  FVector NormalImpulse, const FHitResult& Hit)
+void APCBaseProjectile::BeginPlay()
 {
-	if (HitEffect)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, HitLocation, HitNormal.Rotation());
-	}
+	Super::BeginPlay();
 
-	Destroy();
+	SetReplicateMovement(true);
+}
+
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor)
+{
+	bIsUsing = true;
+	OnRep_bIsUsing();
+
+	SetActorTransform(SpawnTransform);
+	SetProjectileProperty(ProjectileData);
+	SetTarget(TargetActor);
 }
 
 void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& ProjectileData)
 {
 	if (ProjectileData.Mesh)
 	{
+		RepMesh = ProjectileData.Mesh;
 		Mesh->SetStaticMesh(ProjectileData.Mesh);
 	}
 	if (ProjectileData.TrailEffect)
 	{
+		RepTrailEffect = ProjectileData.TrailEffect;
 		TrailEffect->SetTemplate(ProjectileData.TrailEffect);
 	}
 	if (ProjectileData.HitEffect)
 	{
+		RepHitEffect = ProjectileData.HitEffect;
 		HitEffect = ProjectileData.HitEffect;
 	}
 
 	ProjectileMovement->InitialSpeed = ProjectileData.Speed;
 	ProjectileMovement->MaxSpeed = ProjectileData.Speed;
 	ProjectileMovement->Velocity = GetActorForwardVector();
-	InitialLifeSpan = ProjectileData.LifeTime;
 	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
 	bIsPenetrating = ProjectileData.bIsPenetrating;
 	
@@ -68,9 +78,14 @@ void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& Projectil
 	{
 		Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	}
+
+	if (ProjectileData.LifeTime > 0.f)
+	{
+		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
+	}
 }
 
-void APCBaseProjectile::SetTarget(AActor* TargetActor)
+void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 {
 	if (ProjectileMovement && TargetActor)
 	{
@@ -87,5 +102,76 @@ void APCBaseProjectile::SetTarget(AActor* TargetActor)
 
 			ProjectileMovement->Velocity = Direction * ProjectileMovement->InitialSpeed;
 		}
+	}
+}
+
+void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(APCBaseProjectile, bIsUsing);
+	DOREPLIFETIME(APCBaseProjectile, RepMesh);
+	DOREPLIFETIME(APCBaseProjectile, RepTrailEffect);
+	DOREPLIFETIME(APCBaseProjectile, RepHitEffect);
+}
+
+void APCBaseProjectile::OnRep_bIsUsing()
+{
+	SetActorHiddenInGame(!bIsUsing);
+	SetActorEnableCollision(bIsUsing);
+}
+
+void APCBaseProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other,
+                                  class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal,
+                                  FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (HitEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, HitLocation, HitNormal.Rotation());
+	}
+
+	bIsUsing = false;
+	OnRep_bIsUsing();
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+	}
+}
+
+void APCBaseProjectile::OnLifeTimeEnd()
+{
+	bIsUsing = false;
+	OnRep_bIsUsing();
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+	}
+
+	GetWorldTimerManager().ClearTimer(LifeTimer);
+}
+
+void APCBaseProjectile::OnRep_Mesh()
+{
+	if (RepMesh)
+	{
+		Mesh->SetStaticMesh(RepMesh);
+	}
+}
+
+void APCBaseProjectile::OnRep_TrailEffect()
+{
+	if (RepTrailEffect)
+	{
+		TrailEffect->SetTemplate(RepTrailEffect);
+	}
+}
+
+void APCBaseProjectile::OnRep_HitEffect()
+{
+	if (RepHitEffect)
+	{
+		HitEffect = RepHitEffect;
 	}
 }
