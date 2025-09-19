@@ -408,6 +408,7 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 		if (APawn* PGuest = FindPawnBySeat(GuestSeat))
 		{
 			TeleportPlayerToTransform(PGuest, Guest->GetPlayerSeatTransform());
+			PGuest->SetActorRotation(GuestRotation);
 		}
 	}
 

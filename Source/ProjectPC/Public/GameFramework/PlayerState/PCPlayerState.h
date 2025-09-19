@@ -46,6 +46,9 @@ public:
 	UPROPERTY(Replicated)
 	bool bIdentified = false;
 
+	UPROPERTY(Replicated)
+	int32 PlayerLevel = 30;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)

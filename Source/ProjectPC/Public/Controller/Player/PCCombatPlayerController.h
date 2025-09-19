@@ -36,6 +36,15 @@ struct FDragTile
 	UPROPERTY() int32 DragId = 0;
 };
 
+// ── 카메라 상태 enum 
+UENUM(BlueprintType)
+enum class ECameraFocusType : uint8
+{
+	None,
+	Carousel,
+	Board
+};
+
 UCLASS()
 class PROJECTPC_API APCCombatPlayerController : public APlayerController
 {
@@ -79,6 +88,8 @@ public:
 
 	UPROPERTY()
 	UPCShopWidget* ShopWidget;
+
+	FTimerHandle LoadShop;
 
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
@@ -127,6 +138,15 @@ protected:
 	
 public:
 
+	UPROPERTY()
+	ECameraFocusType CurrentCameraType = ECameraFocusType::None;
+
+	UPROPERTY()
+	int32 CurrentCarouselSeatIndex = -1;
+
+	UPROPERTY()
+	int32 CurrentBoardSeatIndex = -1;
+	
 	// 자기 보드 인덱스 저장
 	UFUNCTION(Client, Reliable)
 	void ClientSetHomeBoardIndex(int32 InHomeBoardIdx);
@@ -139,13 +159,24 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientCameraSetCarousel(APCCarouselRing* CarouselRing, int32 SeatIndex, float BlendTime);
 	
-	void FadeSwitchCamera(AActor* NewTarget, float FadeOutTime = 2.f, float HoldBlack = 0.1f, float BlendTime = 0.f,
-		float FadeInTime = 1.5f, bool bShowHUDAfter = true);
+	void SwitchCameraWhileBlack(AActor* NewTarget, float BlendTime, float FadeOutTime = 0.08f, float FadeInTime = 0.15f, float HoldBlack = 0.f);
+	void ClearAllCameraTimers();
 
 	FTimerHandle ThFadeSwitch;
 	FTimerHandle ThFadeIn;
+	bool bCameraFadeBusy = false;
 
 	APCCombatBoard* FindBoardBySeatIndex(int32 BoardSeatIndex) const;
+
+	// UI 가리기용 위젯
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> ScreenFadeClass;
+
+	UPROPERTY()
+	UUserWidget* ScreenFadeWidget = nullptr;
+
+	void EnsureScreenFade();
+	void SetScreenFadeVisible(bool bVisible, float Opacity = 1.f);
 
 
 #pragma endregion Camera

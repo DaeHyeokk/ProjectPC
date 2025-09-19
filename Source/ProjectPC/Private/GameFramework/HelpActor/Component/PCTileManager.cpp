@@ -37,25 +37,22 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const int32 i = Y * Rows + X;
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
+	
 	Field[i].Unit = Unit;
 
 	APCCombatBoard* CombatBoard = GetCombatBoard();
 	const FVector Loc = Field[i].Position;
+	
 	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
 	
-	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
+	if (CombatBoard && Unit->GetTeamIndex() != CombatBoard->BoardSeatIndex)
 	{
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocation(Field[i].Position);
-		Unit->ChangedOnTile(true);
+		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw +180.f);
 	}
-	else
-	{
-		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
-		Unit->ChangedOnTile(true);
-	}
+
+	Unit->SetOnCombatBoard(CombatBoard);
+	Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr, ETeleportType::ResetPhysics);
+	Unit->ChangedOnTile(true);
 	return true;
 }
 
@@ -141,24 +138,17 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 
 	APCCombatBoard* CombatBoard = GetCombatBoard();
 	const FVector Loc = Bench[BenchIndex].Position;
+	
 	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
 	
-	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
+	if (CombatBoard && Unit->GetTeamIndex() != CombatBoard->BoardSeatIndex)
 	{
-		Bench[BenchIndex].bIsField = false;
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocation(Loc);
-		Unit->ChangedOnTile(false);
-	}
-	else
-	{
-		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
-		Bench[BenchIndex].bIsField = false;
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
-		Unit->ChangedOnTile(false);
+		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw +180.f);
 	}
 
+	Unit->SetOnCombatBoard(CombatBoard);
+	Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr, ETeleportType::ResetPhysics);
+	Unit->ChangedOnTile(false);
 	return true;
 }
 

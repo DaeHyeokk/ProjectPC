@@ -2,6 +2,9 @@
 
 
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
+
+#include "NetworkMessage.h"
+#include "Engine/LevelScriptBlueprint.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
@@ -145,5 +148,15 @@ bool APCLobbyGameMode::AreAllReady() const
 
 void APCLobbyGameMode::DoTravel()
 {
-	GetWorld()->ServerTravel(GameMap.ToString());
+	if (!HasAuthority())
+		return;
+
+	if (LevelToTravel.IsNull())
+	{
+		return;
+	}
+
+	const FString LevelName = LevelToTravel.ToSoftObjectPath().GetLongPackageName();
+	GetWorld()->ServerTravel(LevelName, true);
+	
 }

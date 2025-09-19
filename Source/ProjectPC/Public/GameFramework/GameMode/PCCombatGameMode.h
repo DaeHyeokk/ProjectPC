@@ -47,13 +47,10 @@ public:
 
 	// 기본 보드 카메라 세팅
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float ShopFocusBlend = 0.6f;
+	float TravelCameraBlend = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float TravelCameraBlend = 0.4f;
-
-	UPROPERTY(EditAnywhere, Category="Camera")
-	float ReturnCameraBlend = 0.4f;
+	float ReturnCameraBlend = 0.f;
 
 protected:
 	virtual void BeginPlay() override;

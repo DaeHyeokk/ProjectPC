@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "GameplayTagAssetInterface.h"
-#include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"

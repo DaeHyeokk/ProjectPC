@@ -27,7 +27,6 @@ APCCombatGameMode::APCCombatGameMode()
 	GameStateClass = APCCombatGameState::StaticClass();
 	PlayerStateClass = APCPlayerState::StaticClass();
 	PlayerControllerClass = APCCombatPlayerController::StaticClass();
-	
 	bUseSeamlessTravel = true;
 }
 
@@ -249,13 +248,21 @@ void APCCombatGameMode::EndCurrentStep()
 	
 	if (FlatRoundSteps.IsValidIndex(Cursor))
 		BeginCurrentStep();
-
 	
 }
 
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
+
+	// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	// {
+	// 	if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+	// 	{
+	// 		PCCombatPlayerController->Client_HideWidget();
+	// 	}
+	// }
+	
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -263,16 +270,24 @@ void APCCombatGameMode::Step_Setup()
 	const int32 Stage = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
 	const int32 Round = FlatRoundIdx.IsValidIndex(Cursor) ? FlatRoundIdx[Cursor] : 0;
 
-	if (Stage == 1 && Round == 3)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
-			{
-				PCPlayerController->Client_ShowWidget();
-			}
+			PCPlayerController->Client_ShowWidget();
 		}
 	}
+
+	// if (Stage == 1 && Round == 3)
+	// {
+	// 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	// 	{
+	// 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+	// 		{
+	// 			PCPlayerController->Client_ShowWidget();
+	// 		}
+	// 	}
+	// }
 }
 
 void APCCombatGameMode::Step_Travel()
@@ -294,6 +309,11 @@ void APCCombatGameMode::Step_Travel()
 		}
 	case EPCStageType::Carousel:
 		{
+			if (CarouselRing)
+			{
+				CarouselRing->SpawnPickups();
+			}
+			
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();
 			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
@@ -303,6 +323,8 @@ void APCCombatGameMode::Step_Travel()
 					PCCombatPlayerController->Client_HideWidget();
 				}
 			}
+
+			
 			break;
 		}
 	case EPCStageType::PvE:
@@ -337,8 +359,6 @@ void APCCombatGameMode::Step_Return()
 		{
 			if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
 			{
-				if (!PCCombatPlayerController->ShopWidget)
-					return;
 				PCCombatPlayerController->Client_ShowWidget();
 			}
 		}
@@ -355,10 +375,6 @@ void APCCombatGameMode::Step_Return()
 					if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 					{
 						APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex);
-						const FVector UnitSpawnLoc = InCombatBoard->GetTileWorldLocation(0,1) + FVector(0,0,20);
-						const FVector UnitSpawnLoc2 = InCombatBoard->GetTileWorldLocation(1,1) + FVector(0,0,20);
-						const FTransform SpawnTransform2(FRotator::ZeroRotator, UnitSpawnLoc2, FVector::OneVector);
-						const FTransform SpawnTransform(FRotator::ZeroRotator, UnitSpawnLoc, FVector::OneVector);
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
 							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, PCPlayerState->SeatIndex);
@@ -383,7 +399,10 @@ void APCCombatGameMode::Step_Return()
 
 void APCCombatGameMode::Step_PvP()
 {
-	
+	if (APCCombatGameState* PCGameState = GetCombatGameState())
+	{
+		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
+	}
 }
 
 void APCCombatGameMode::Step_PvE()
@@ -407,6 +426,9 @@ void APCCombatGameMode::Step_CreepSpawn()
 
 void APCCombatGameMode::Step_Carousel()
 {
+	if (!CarouselRing) return;
+
+	// TODO 게이트 열리는 체력순으로 열리는 로직 추가
 }
 
 void APCCombatGameMode::InitializeHomeBoardsForPlayers()
@@ -502,7 +524,7 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 			Pawn->TeleportTo(Seat.GetLocation(), Pawn->GetActorRotation(), false, true);
 		}
 		
-		PlayerController->ClientFocusBoardBySeatIndex(BoardIdx, false, 0.1f);
+		PlayerController->ClientFocusBoardBySeatIndex(BoardIdx, false, 0);
 	}
 }
 

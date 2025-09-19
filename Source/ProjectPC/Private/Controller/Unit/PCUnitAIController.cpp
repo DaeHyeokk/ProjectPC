@@ -23,6 +23,8 @@ void APCUnitAIController::OnPossess(APawn* InPawn)
 	
 	if (DefaultBT)
 	{
+		RunBehaviorTree(DefaultBT);
+		
 		if (UBlackboardComponent* BB = GetBlackboardComponent())
 		{
 			if (GetWorld())
@@ -31,8 +33,6 @@ void APCUnitAIController::OnPossess(APawn* InPawn)
 				BB->SetValueAsObject(TEXT("CombatGameState"), CombatGS);
 			}
 		}
-		
-		RunBehaviorTree(DefaultBT);
 	}
 }
 
