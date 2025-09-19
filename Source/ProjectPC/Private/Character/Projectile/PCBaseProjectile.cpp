@@ -152,7 +152,6 @@ void APCBaseProjectile::OnLifeTimeEnd()
 
 void APCBaseProjectile::OnRep_ProjectileData()
 {
-	UE_LOG(LogTemp, Error, TEXT("OnRep ProjectileData Call"));
 	if (ProjectileData.Mesh)
 	{
 		MeshComp->SetStaticMesh(ProjectileData.Mesh);
