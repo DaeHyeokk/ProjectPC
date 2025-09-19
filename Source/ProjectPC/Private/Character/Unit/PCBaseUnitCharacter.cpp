@@ -73,6 +73,11 @@ const UPCDataAsset_UnitAbilityConfig* APCBaseUnitCharacter::GetUnitAbilityConfig
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAbilityConfigData() : nullptr;
 }
 
+UPCDataAsset_ProjectileData* APCBaseUnitCharacter::GetUnitProjectileDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetProjectileData() : nullptr;
+}
+
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
 {
 	return nullptr;

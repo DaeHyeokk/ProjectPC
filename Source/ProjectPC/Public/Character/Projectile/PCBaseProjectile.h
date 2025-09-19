@@ -66,6 +66,7 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_bIsUsing();
+	
 	UFUNCTION()
 	void OnRep_ProjectileData();
 };

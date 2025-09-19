@@ -135,6 +135,8 @@ void APCBaseProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Oth
 	{
 		ProjectileMovement->StopMovementImmediately();
 	}
+
+	GetWorldTimerManager().ClearTimer(LifeTimer);
 }
 
 void APCBaseProjectile::OnLifeTimeEnd()

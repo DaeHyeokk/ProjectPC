@@ -8,7 +8,10 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 {
@@ -142,7 +145,20 @@ void UPCUnitBaseAttackGameplayAbility::OnAttackCommit(FGameplayEventData Payload
 	// 발사체 생성 후 Payload EffectSpec 넘겨보냄
 	if (AbilityConfig.bSpawnProjectile)
 	{
-		//SpawnProjectileFromConfig();	
+		if (UPCProjectilePoolSubsystem* ProjectilePool = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+		{
+			FVector Loc = Unit->GetActorForwardVector() * 200.f;
+			FRotator Rot = UKismetMathLibrary::ComposeRotators(Unit->GetActorRotation(), FRotator(90.f,1.f,1.f));
+			FTransform Trans = FTransform::Identity;
+			Trans.SetLocation(Loc);
+			Trans.SetRotation(FQuat(Rot));
+
+			if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
+			{
+				FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
+				ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
+			}
+		}
 	}
 	else
 	{

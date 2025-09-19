@@ -31,6 +31,7 @@ public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
+	UPCDataAsset_ProjectileData* GetUnitProjectileDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;

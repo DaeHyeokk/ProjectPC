@@ -28,7 +28,7 @@ void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectil
 
 void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor)
 {
-	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
+ 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
 	
 	bool SpawnCheck = false;
 	for (auto Projectile : ProjectilePool)
@@ -43,7 +43,7 @@ void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransfor
 
 	if (!SpawnCheck)
 	{
-		if (auto Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
+		if (auto* Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 		{
 			ProjectilePool.Add(Projectile);
