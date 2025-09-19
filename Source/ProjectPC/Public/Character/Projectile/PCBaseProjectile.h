@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PCProjectileData.h"
 #include "GameFramework/Actor.h"
 #include "PCBaseProjectile.generated.h"
 
 class UProjectileMovementComponent;
-struct FPCProjectileData;
 
 UCLASS()
 class PROJECTPC_API APCBaseProjectile : public AActor
@@ -15,18 +15,21 @@ class PROJECTPC_API APCBaseProjectile : public AActor
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileData)
+	FPCProjectileData ProjectileData;
+	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
 	
 	UPROPERTY()
-	UStaticMeshComponent* Mesh;
+	UStaticMeshComponent* MeshComp;
 	
 	UPROPERTY()
-	UParticleSystemComponent* TrailEffect;
+	UParticleSystemComponent* TrailEffectComp;
 	
 	UPROPERTY()
 	UParticleSystem* HitEffect;
-
+	
 	bool bIsHomingProjectile = true;
 	bool bIsPenetrating = false;
 
@@ -34,16 +37,6 @@ protected:
 	bool bIsUsing = false;
 
 	FTimerHandle LifeTimer;
-
-	// 클라이언트 복제를 위한 캐싱
-	UPROPERTY(ReplicatedUsing = OnRep_Mesh)
-	UStaticMesh* RepMesh;
-
-	UPROPERTY(ReplicatedUsing = OnRep_TrailEffect)
-	UParticleSystem* RepTrailEffect;
-
-	UPROPERTY(ReplicatedUsing = OnRep_HitEffect)
-	UParticleSystem* RepHitEffect;
 	
 public:	
 	APCBaseProjectile();
@@ -56,10 +49,10 @@ public:
 	FORCEINLINE bool GetIsUsing() const { return bIsUsing; }
 
 	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor);
+	void ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor);
 	
 	UFUNCTION(BlueprintCallable)
-	void SetProjectileProperty(const FPCProjectileData& ProjectileData);
+	void SetProjectileProperty(const FPCProjectileData& NewProjectileData);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(const AActor* TargetActor);
@@ -74,9 +67,5 @@ protected:
 	UFUNCTION()
 	void OnRep_bIsUsing();
 	UFUNCTION()
-	void OnRep_Mesh();
-	UFUNCTION()
-	void OnRep_TrailEffect();
-	UFUNCTION()
-	void OnRep_HitEffect();
+	void OnRep_ProjectileData();
 };

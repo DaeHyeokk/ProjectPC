@@ -15,9 +15,12 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
-static FPCShopUnitData DummyData;
-
 class UPCUnitSpawnSubsystem;
+
+UPCShopManager::UPCShopManager()
+{
+	DummyData.UnitName = "Dummy";
+}
 
 void UPCShopManager::BeginPlay()
 {

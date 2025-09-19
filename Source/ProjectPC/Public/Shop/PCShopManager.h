@@ -21,13 +21,18 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCShopManager : public UActorComponent
 {
 	GENERATED_BODY()
-
+	
+public:
+	UPCShopManager();
+	
 virtual void BeginPlay() override;
 	
 #pragma region Shop
 
 private:
 	uint8 NumSlots = 5;
+
+	FPCShopUnitData DummyData;
 
 public:
 	// 상점 업데이트

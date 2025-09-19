@@ -16,11 +16,11 @@ APCBaseProjectile::APCBaseProjectile()
 	bReplicates = true;
 	bAlwaysRelevant = true;
 	
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-	RootComponent = Mesh;
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	RootComponent = MeshComp;
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovement->UpdatedComponent = RootComponent;
@@ -29,8 +29,8 @@ APCBaseProjectile::APCBaseProjectile()
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
 	
-	TrailEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
-	TrailEffect->SetupAttachment(Mesh);
+	TrailEffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
+	TrailEffectComp->SetupAttachment(MeshComp);
 }
 
 void APCBaseProjectile::BeginPlay()
@@ -40,46 +40,46 @@ void APCBaseProjectile::BeginPlay()
 	SetReplicateMovement(true);
 }
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor)
 {
 	bIsUsing = true;
 	OnRep_bIsUsing();
 
 	SetActorTransform(SpawnTransform);
-	SetProjectileProperty(ProjectileData);
+	SetProjectileProperty(NewProjectileData);
 	SetTarget(TargetActor);
 }
 
-void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& ProjectileData)
+void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& NewProjectileData)
 {
-	if (ProjectileData.Mesh)
+	if (NewProjectileData.Mesh)
 	{
-		RepMesh = ProjectileData.Mesh;
-		Mesh->SetStaticMesh(ProjectileData.Mesh);
+		ProjectileData.Mesh = NewProjectileData.Mesh;
+		MeshComp->SetStaticMesh(NewProjectileData.Mesh);
 	}
-	if (ProjectileData.TrailEffect)
+	if (NewProjectileData.TrailEffect)
 	{
-		RepTrailEffect = ProjectileData.TrailEffect;
-		TrailEffect->SetTemplate(ProjectileData.TrailEffect);
+		ProjectileData.TrailEffect = NewProjectileData.TrailEffect;
+		TrailEffectComp->SetTemplate(NewProjectileData.TrailEffect);
 	}
-	if (ProjectileData.HitEffect)
+	if (NewProjectileData.HitEffect)
 	{
-		RepHitEffect = ProjectileData.HitEffect;
-		HitEffect = ProjectileData.HitEffect;
+		ProjectileData.HitEffect = NewProjectileData.HitEffect;
+		HitEffect = NewProjectileData.HitEffect;
 	}
-
-	ProjectileMovement->InitialSpeed = ProjectileData.Speed;
-	ProjectileMovement->MaxSpeed = ProjectileData.Speed;
+	
+	ProjectileMovement->InitialSpeed = NewProjectileData.Speed;
+	ProjectileMovement->MaxSpeed = NewProjectileData.Speed;
 	ProjectileMovement->Velocity = GetActorForwardVector();
-	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
-	bIsPenetrating = ProjectileData.bIsPenetrating;
+	bIsHomingProjectile = NewProjectileData.bIsHomingProjectile;
+	bIsPenetrating = NewProjectileData.bIsPenetrating;
 	
 	if (bIsPenetrating)
 	{
-		Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	}
-
-	if (ProjectileData.LifeTime > 0.f)
+	
+	if (NewProjectileData.LifeTime > 0.f)
 	{
 		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
 	}
@@ -99,7 +99,7 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 		{
 			FVector TargetLocation = TargetActor->GetActorLocation();
 			FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
-
+	
 			ProjectileMovement->Velocity = Direction * ProjectileMovement->InitialSpeed;
 		}
 	}
@@ -110,9 +110,7 @@ void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(APCBaseProjectile, bIsUsing);
-	DOREPLIFETIME(APCBaseProjectile, RepMesh);
-	DOREPLIFETIME(APCBaseProjectile, RepTrailEffect);
-	DOREPLIFETIME(APCBaseProjectile, RepHitEffect);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileData);
 }
 
 void APCBaseProjectile::OnRep_bIsUsing()
@@ -152,26 +150,35 @@ void APCBaseProjectile::OnLifeTimeEnd()
 	GetWorldTimerManager().ClearTimer(LifeTimer);
 }
 
-void APCBaseProjectile::OnRep_Mesh()
+void APCBaseProjectile::OnRep_ProjectileData()
 {
-	if (RepMesh)
+	UE_LOG(LogTemp, Error, TEXT("OnRep ProjectileData Call"));
+	if (ProjectileData.Mesh)
 	{
-		Mesh->SetStaticMesh(RepMesh);
+		MeshComp->SetStaticMesh(ProjectileData.Mesh);
 	}
-}
-
-void APCBaseProjectile::OnRep_TrailEffect()
-{
-	if (RepTrailEffect)
+	if (ProjectileData.TrailEffect)
 	{
-		TrailEffect->SetTemplate(RepTrailEffect);
+		TrailEffectComp->SetTemplate(ProjectileData.TrailEffect);
 	}
-}
-
-void APCBaseProjectile::OnRep_HitEffect()
-{
-	if (RepHitEffect)
+	if (ProjectileData.HitEffect)
 	{
-		HitEffect = RepHitEffect;
+		HitEffect = ProjectileData.HitEffect;
+	}
+	
+	ProjectileMovement->InitialSpeed = ProjectileData.Speed;
+	ProjectileMovement->MaxSpeed = ProjectileData.Speed;
+	ProjectileMovement->Velocity = GetActorForwardVector();
+	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
+	bIsPenetrating = ProjectileData.bIsPenetrating;
+	
+	if (bIsPenetrating)
+	{
+		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	}
+	
+	if (ProjectileData.LifeTime > 0.f)
+	{
+		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
 	}
 }
