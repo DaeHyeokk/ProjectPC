@@ -7,6 +7,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectilePoolData.h"
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
@@ -217,6 +218,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
+#pragma region ObjectPool
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
+	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+	
+#pragma endregion ObjectPool
+	
 #pragma region TemplateFunc
 	
 private:

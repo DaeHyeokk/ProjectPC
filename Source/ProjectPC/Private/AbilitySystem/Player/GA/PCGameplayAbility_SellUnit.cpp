@@ -58,18 +58,7 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	{
 		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
 		{
-			auto FieldGridPoint = TileManager->GetFieldUnitGridPoint(Unit);
-			auto BenchIndex = TileManager->GetBenchUnitIndex(Unit);
-			
-			if (FieldGridPoint != FIntPoint::NoneValue)
-			{
-				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
-			}
-			else if (BenchIndex != INDEX_NONE)
-			{
-				TileManager->RemoveFromBench(BenchIndex, false);
-			}
-			else
+			if (!TileManager->RemoveFromBoard(Unit))
 			{
 				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 				return;
@@ -80,11 +69,11 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 		}
 	}
 			
-	FGameplayEffectSpecHandle XPSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerGoldChange, GetAbilityLevel());
-	if (XPSpecHandle.IsValid())
+	FGameplayEffectSpecHandle GoldSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerGoldChange, GetAbilityLevel());
+	if (GoldSpecHandle.IsValid())
 	{
-		XPSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*XPSpecHandle.Data.Get());
+		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
+		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

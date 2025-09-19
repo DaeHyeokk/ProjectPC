@@ -73,6 +73,9 @@ private:
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
+	UFUNCTION(Server, Reliable)
+	void Server_MovetoLocation(const FVector& Destination);
+
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();
@@ -93,6 +96,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
+
+	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
 
 	void ShopRequest_ShopRefresh(float GoldCost);
 	void ShopRequest_BuyXP();

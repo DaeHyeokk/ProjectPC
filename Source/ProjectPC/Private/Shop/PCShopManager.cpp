@@ -5,15 +5,22 @@
 
 #include "Engine/DataTable.h"
 
+#include "BaseGameplayTags.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
-
 class UPCUnitSpawnSubsystem;
+
+UPCShopManager::UPCShopManager()
+{
+	DummyData.UnitName = "Dummy";
+}
 
 void UPCShopManager::BeginPlay()
 {
@@ -85,7 +92,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, const int32 BenchIndex)
 {
 	if (!TargetPlayer) return;
 
@@ -97,8 +104,151 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
-
+	UnitLevelUp(TargetPlayer, UnitTag);
+	
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
+}
+
+TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
+{
+	TMap<int32, int32> UnitCountByLevelMap;
+	
+	if (!TargetPlayer) return UnitCountByLevelMap;
+
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return UnitCountByLevelMap;
+
+	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+	if (!Board) return UnitCountByLevelMap;
+	auto TileManager = Board->TileManager;
+
+	TArray<APCBaseUnitCharacter*> UnitList;
+	auto CurrentGameStateTag = GS->GetGameStateTag();
+
+	// 실제 게임 적용할 때는 주석 해제
+	// if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
+	// {
+	// 	UnitList = TileManager->GetAllUnitByTag(UnitTag);
+	// }
+	// else
+	// {
+	// 	UnitList = TileManager->GetBenchUnitByTag(UnitTag);
+	// }
+
+	// 테스트용, 실제 게임 적용할 때는 삭제
+	UnitList = TileManager->GetAllUnitByTag(UnitTag);
+	
+	for (auto Unit : UnitList)
+	{
+		if (auto HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
+		{
+			UnitCountByLevelMap.FindOrAdd(HeroUnit->GetUnitLevel())++;
+		}
+	}
+
+	if (ShopAddUnitCount >= 1 && ShopAddUnitCount <= 2)
+	{
+		UnitCountByLevelMap.FindOrAdd(1) += ShopAddUnitCount;
+	}
+	if (ShopAddUnitCount == 3)
+	{
+		UnitCountByLevelMap.FindOrAdd(2) += 1;
+	}
+	
+	return UnitCountByLevelMap;
+}
+
+int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
+{
+	if (!TargetPlayer) return false;
+
+	auto UnitMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, 0);
+
+	int32 Level1Count = UnitMap.FindRef(1);
+	int32 Level2Count = UnitMap.FindRef(2);
+
+	if (Level1Count + ShopAddUnitCount >= 3)
+	{
+		if (Level1Count == 1)
+		{
+			return 2;
+		}
+
+		if (Level1Count == 2)
+		{
+			return 1;
+		}
+	}
+
+	if (Level2Count == 2 && ShopAddUnitCount >= 3)
+	{
+		return 3;
+	}
+
+	return 0; 
+}
+
+void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag)
+{
+	if (!TargetPlayer) return;
+	
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+
+	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+	if (!Board) return;
+	auto TileManager = Board->TileManager;
+	
+	bool bIsOngoing = true;
+	while (bIsOngoing)
+	{
+		bIsOngoing = false;
+		
+		auto UnitCountByLevelMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, 0);
+		
+		for (auto& Pair : UnitCountByLevelMap)
+		{
+			auto UnitLevel = Pair.Key;
+			auto UnitCount = Pair.Value;
+
+			if (UnitCount >= 3)
+			{
+				TArray<APCHeroUnitCharacter*> HeroUnitList;
+				for (auto Unit : TileManager->GetAllUnitByTag(UnitTag))
+				{
+					auto HeroUnit = Cast<APCHeroUnitCharacter>(Unit);
+					if (!IsValid(HeroUnit) || HeroUnit->IsActorBeingDestroyed())
+					{
+						continue;
+					}
+					
+					if (HeroUnit->GetUnitLevel() == UnitLevel)
+					{
+						HeroUnitList.Add(HeroUnit);
+						if (HeroUnitList.Num() == 3)
+						{
+							break;
+						}
+					}
+				}
+
+				if (HeroUnitList.Num() == 3)
+				{
+					auto LevelUpUnit = HeroUnitList[0];
+					LevelUpUnit->SetUnitLevel(UnitLevel + 1);
+
+					for (int i = 1; i < 3; i++)
+					{
+						TileManager->RemoveFromBoard(HeroUnitList[i]);
+						HeroUnitList[i]->Destroy();
+					}
+				}
+
+				bIsOngoing = true;
+				break;
+			}
+		}
+	}
 }
 
 void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
@@ -134,7 +284,6 @@ FPCShopUnitData& UPCShopManager::SelectRandomUnitByCost(int32 UnitCost)
 	// 해당 코스트에 아무 기물도 존재하지 않을 때
 	if (TotalUnitCount == 0)
 	{
-		FPCShopUnitData DummyData;
 		DummyData.UnitName = "Dummy";
 		return DummyData;
 	}
@@ -163,7 +312,7 @@ void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 	}
 }
 
-void UPCShopManager::ReturnUnitsToShopByCarousel(TArray<FGameplayTag> UnitTags)
+void UPCShopManager::ReturnUnitsToShopByCarousel(const TArray<FGameplayTag>& UnitTags)
 {
 	for (auto UnitTag : UnitTags)
 	{
@@ -224,7 +373,6 @@ TArray<FGameplayTag> UPCShopManager::GetCarouselRandomUnitTagsByCost(int32 UnitC
 		// 해당 코스트에 아무 기물도 안남았으면 Add 안함
 		if (Unit.UnitName != "Dummy")
 		{
-			Unit.UnitCount -= 1;
 			ReturnTags.Add(Unit.Tag);
 		}
 	}
@@ -302,7 +450,7 @@ int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 	return 0;
 }
 
-int32 UPCShopManager::GetSellingPrice(TPair<int32, int32> UnitLevelCostData)
+int32 UPCShopManager::GetSellingPrice(const TPair<int32, int32>& UnitLevelCostData)
 {
 	if (const int32* Price = ShopUnitSellingPriceDataMap.Find(UnitLevelCostData))
 	{

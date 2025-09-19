@@ -4,6 +4,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -21,6 +22,14 @@ void APCCombatGameState::BeginPlay()
 	if (auto* UnitSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 	{
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
+	}
+
+	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		if (ProjectilePoolData)
+		{
+			ProjectilePoolSubsystem->InitializeProjectilePoolData(ProjectilePoolData->ProjectilePoolData);
+		}
 	}
 
 	if (LevelMaxXPDataTable)

@@ -156,6 +156,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
+	// 필드, 벤치 통합 제거
+	UFUNCTION(BlueprintCallable, Category = "Field/Bench")
+	bool RemoveFromBoard(APCBaseUnitCharacter* Unit);
+	
 	// 점유 관련 헬퍼
 
 	// 완전히 비어있는가? (점유, 예약 둘다 X)
@@ -253,9 +257,14 @@ public:
 
 
 public:
-
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
 	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag);
+
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetFieldUnitByTag(FGameplayTag UnitTag);
+	
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag);
 	
 #pragma endregion LevelUp & Synergy
 };

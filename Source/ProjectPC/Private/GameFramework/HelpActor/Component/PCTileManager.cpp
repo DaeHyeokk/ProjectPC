@@ -218,6 +218,25 @@ int32 UPCTileManager::GetBenchIndex(bool bEnemySide, int32 LocalIndex) const
 	return (bEnemySide ? N : 0) + LocalIndex;
 }
 
+bool UPCTileManager::RemoveFromBoard(APCBaseUnitCharacter* Unit)
+{
+	auto FieldGridPoint = GetFieldUnitGridPoint(Unit);
+	auto BenchIndex = GetBenchUnitIndex(Unit);
+			
+	if (FieldGridPoint != FIntPoint::NoneValue)
+	{
+		RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
+		return true;
+	}
+	else if (BenchIndex != INDEX_NONE)
+	{
+		RemoveFromBench(BenchIndex, false);
+		return true;
+	}
+
+	return false;
+}
+
 bool UPCTileManager::IsTileFree(int32 Y, int32 X) const
 {
 	int32 Index;
@@ -763,6 +782,60 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitT
 	}
 
 	// 벤치
+	for (const FTile& BenchTile : Bench)
+	{
+		AddIfMatch(BenchTile.Unit);
+	}
+
+	return AllUnits;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetFieldUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+	
+	for (const FTile& FieldTile : Field)
+	{
+		AddIfMatch(FieldTile.Unit);
+	}
+
+	return AllUnits;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+
 	for (const FTile& BenchTile : Bench)
 	{
 		AddIfMatch(BenchTile.Unit);
