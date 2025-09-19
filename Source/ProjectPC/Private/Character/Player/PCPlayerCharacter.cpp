@@ -40,5 +40,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
+
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 60.f;
 }
 

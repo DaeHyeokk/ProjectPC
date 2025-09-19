@@ -152,6 +152,7 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold)
 	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
 		Server_MovetoLocation(CachedDestination);
 	}
 	

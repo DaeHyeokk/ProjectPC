@@ -18,7 +18,9 @@ APCPlayerState::APCPlayerState()
 	
 	PlayerAbilitySystemComponent->SetIsReplicated(true);
 	PlayerAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
 	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 60.f;
 }
 
 void APCPlayerState::BeginPlay()
