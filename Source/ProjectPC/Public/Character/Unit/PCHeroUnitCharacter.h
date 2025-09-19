@@ -68,7 +68,8 @@ protected:
 	void OnRep_HeroLevel() const;
 
 	// 전투 관련 //
-
+	virtual void OnDeathMontageCompleted() override;
+	
 #pragma region Shop
 
 public:
@@ -76,4 +77,5 @@ public:
 	virtual void NotifyActorEndCursorOver() override;
 	
 #pragma endregion Shop
+	
 };

@@ -33,16 +33,22 @@ public:
 	EEffectTargetGroup TargetGroup = EEffectTargetGroup::Hostile;
 
 	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	FGameplayTag EffectKeyTag;
+	FGameplayTag EffectClassTag;
 
 	UPROPERTY(EditDefaultsOnly, Category="Effect")
 	FGameplayTag EffectCallerTag;
+
+	int32 DefaultLevel = 1.f;
 	
-	virtual void ApplyEffect(UAbilitySystemComponent* SourceASC, AActor* Context) PURE_VIRTUAL(UPCEffectSpec::ApplyEffect, );
+	void ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target);
+	void ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel);
 
 protected:
+	virtual void ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) PURE_VIRTUAL(UPCEffectSpec::ApplyEffectImpl, );	
+
 	UPROPERTY(Transient)
 	TSubclassOf<UGameplayEffect> CachedGEClass;
 
 	TSubclassOf<UGameplayEffect> ResolveGEClass(const UWorld* World);
+	bool IsTargetEligibleByGroup(const AActor* Source, const AActor* Target) const;
 };

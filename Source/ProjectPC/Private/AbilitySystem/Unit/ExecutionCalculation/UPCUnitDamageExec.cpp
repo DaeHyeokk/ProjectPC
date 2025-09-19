@@ -2,7 +2,6 @@
 
 
 #include "AbilitySystem/Unit/ExecutionCalculation/UPCUnitDamageExec.h"
-#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
@@ -20,13 +19,6 @@ static FGameplayEffectAttributeCaptureDefinition MakeCapture(const FGameplayAttr
 
 UPCUnitDamageExec::UPCUnitDamageExec()
 {
-	// PhysicalDamageTypeTag = UnitGameplayTags::Unit_DamageType_Physical;
-	// MagicDamageTypeTag = UnitGameplayTags::Unit_DamageType_Magic;
-	//
-	// DamageCallerTag = GameplayEffectTags::GE_Caller_Damage;
-	// HealCallerTag = GameplayEffectTags::GE_Caller_Stat_CurrentHealth;
-	// HealGEKeyTag = GameplayEffectTags::GE_Class_Health_Heal_Instant;
-
 	Captures.PhysicalDefense = MakeCapture(UPCUnitAttributeSet::GetPhysicalDefenseAttribute(),
 	EGameplayEffectAttributeCaptureSource::Target);
 	Captures.MagicDefense = MakeCapture(UPCUnitAttributeSet::GetMagicDefenseAttribute(),
@@ -127,32 +119,47 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		return;
 	}
 
+	float ManaGain = BaseDamage * 0.01f + FinalDamage * 0.07f;
+	ManaGain = FMath::Clamp(ManaGain, 0.f, 50.f);
+	
 	// Health에 음수로 적용
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
 		UPCUnitAttributeSet::GetCurrentHealthAttribute(),
 		EGameplayModOp::Additive,
 		-FinalDamage));
 
-	// 피흡/주문흡혈 적용 (영웅 전용)
-	float VampPct = 0.f;
-	GetMagnitude(bUsePhysical ? Captures.LifeSteal : Captures.SpellVamp, VampPct);
-	VampPct *= 0.01f;
-	
-	if (VampPct > 0.f)
+	// 감소전 피해량 & 감소후 피해량에 따라 마나 회복 (영웅 전용)
+	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
+	const bool bIsHeroTarget = (TargetASC && TargetASC->GetAttributeSet(UPCHeroUnitAttributeSet::StaticClass()) != nullptr);
+	if (bIsHeroTarget)
 	{
-		const float HealAmount = FinalDamage * VampPct;
-		if (HealAmount > KINDA_SMALL_NUMBER)
+		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
+			EGameplayModOp::Additive,
+			ManaGain));
+	
+	
+		// 공격자 피흡/주문흡혈 적용 (영웅 전용)
+		float VampPct = 0.f;
+		GetMagnitude(bUsePhysical ? Captures.LifeSteal : Captures.SpellVamp, VampPct);
+		VampPct *= 0.01f;
+	
+		if (VampPct > 0.f)
 		{
-			if (UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent())
+			const float HealAmount = FinalDamage * VampPct;
+			if (HealAmount > KINDA_SMALL_NUMBER)
 			{
-				if (const UGameplayEffect* HealGE = ResolveHealGE(SourceASC->GetWorld()))
+				if (UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent())
 				{
-					const FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
-					const FGameplayEffectSpecHandle HealSpec = SourceASC->MakeOutgoingSpec(HealGE->GetClass(), 1, Ctx);
-					if (HealSpec.IsValid())
+					if (const UGameplayEffect* HealGE = ResolveHealGE(SourceASC->GetWorld()))
 					{
-						HealSpec.Data->SetSetByCallerMagnitude(HealCallerTag, HealAmount);
-						SourceASC->ApplyGameplayEffectSpecToSelf(*HealSpec.Data.Get());
+						const FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+						const FGameplayEffectSpecHandle HealSpec = SourceASC->MakeOutgoingSpec(HealGE->GetClass(), 1, Ctx);
+						if (HealSpec.IsValid())
+						{
+							HealSpec.Data->SetSetByCallerMagnitude(HealCallerTag, HealAmount);
+							SourceASC->ApplyGameplayEffectSpecToSelf(*HealSpec.Data.Get());
+						}
 					}
 				}
 			}
@@ -166,7 +173,7 @@ const UGameplayEffect* UPCUnitDamageExec::ResolveHealGE(const UWorld* World) con
 		return nullptr;
 
 	if (UPCUnitGERegistrySubsystem* GERegistrySubsystem = World->GetSubsystem<UPCUnitGERegistrySubsystem>())
-		return GERegistrySubsystem->GetGE_CDO(HealGEKeyTag);
+		return GERegistrySubsystem->GetGE_CDO(HealthChangeGEKeyTag);
 	else
 		return nullptr;
 }

@@ -33,4 +33,5 @@ protected:
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 
 	// 전투 관련 //
+	virtual void OnDeathMontageCompleted() override;
 };

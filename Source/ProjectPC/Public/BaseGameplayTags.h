@@ -48,9 +48,11 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
 
 	// ==== Unit Action Ability Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Death)
 
 	// ==== Unit State Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Alive)
@@ -64,9 +66,14 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Death)
 
 	// ==== Unit GameplayEvent Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_BasicAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectile)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_HitSucceed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
 }
 
 namespace SynergyGameplayTags
@@ -92,10 +99,9 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Heal_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Damage_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Gain_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Spend_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_Damage_Instant)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
 

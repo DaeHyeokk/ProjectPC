@@ -247,21 +247,38 @@ void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
 	if (GetMesh())
 	{
 		GetMesh()->SetHiddenInGame(IsStart);
-		//StatusBarComp->SetHiddenInGame(IsStart);
 	}
 }
 
-// void APCBaseUnitCharacter::OnRep_IsOnField()
-// {
-// 	if (bIsOnField)
-// 	{
-// 		if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = GetUnitAnimSetDataAsset())
-// 		{
-// 			if (UAnimMontage* Montage = UnitAnimSet->GetAnimMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart))
-// 			{
-// 				if (Montage)
-// 					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
-// 			}
-// 		}
-// 	}
-// }
+void APCBaseUnitCharacter::Die()
+{
+	if (HasAuthority())
+	{
+		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+		if (ASC)
+		{
+			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+			{
+				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+			}
+			ASC->CancelAllAbilities();
+		}
+
+		Multicast_PlayDeathMontage();
+	}
+}
+
+void APCBaseUnitCharacter::Multicast_PlayDeathMontage_Implementation()
+{
+	UPCDataAsset_UnitAnimSet* AnimSet = GetUnitAnimSetDataAsset();
+	UAnimMontage* DeathMontage = AnimSet ? AnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_Death) : nullptr;
+	
+	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
+	}
+	else
+	{
+		OnDeathMontageCompleted();
+	}
+}

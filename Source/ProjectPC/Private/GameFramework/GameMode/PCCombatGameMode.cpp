@@ -47,9 +47,8 @@ void APCCombatGameMode::BeginPlay()
 	if (auto* UnitGERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>())
 	{
 		FGameplayTagContainer PreloadGEClassTag;
-		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Health_Damage_Instant);
-		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Mana_Gain_Instant);
-		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Mana_Spend_Instant);
+		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_HealthChange_Instant);
+		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_ManaChange_Instant);
 		
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}

@@ -117,6 +117,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
+
+	UFUNCTION(BlueprintCallable)
+	void Die();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnDeathMontageCompleted() { };
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDeathMontage();
 	
 protected:
 	UPROPERTY()

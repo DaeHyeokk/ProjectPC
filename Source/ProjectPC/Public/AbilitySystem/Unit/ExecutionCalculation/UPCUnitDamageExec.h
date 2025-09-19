@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "GameplayEffectExecutionCalculation.h"
 #include "UPCUnitDamageExec.generated.h"
 
@@ -17,11 +18,12 @@ class PROJECTPC_API UPCUnitDamageExec : public UGameplayEffectExecutionCalculati
 public:
 	UPCUnitDamageExec();
 
-	// static FGameplayTag PhysicalDamageTypeTag;
-	// static FGameplayTag MagicDamageTypeTag;
-	// static FGameplayTag DamageCallerTag;
-	// static FGameplayTag HealCallerTag;
-	// static FGameplayTag HealGEKeyTag;
+	FGameplayTag PhysicalDamageTypeTag = UnitGameplayTags::Unit_DamageType_Physical;
+	FGameplayTag MagicDamageTypeTag = UnitGameplayTags::Unit_DamageType_Magic;
+
+	FGameplayTag DamageCallerTag = GameplayEffectTags::GE_Caller_Damage;
+	FGameplayTag HealCallerTag = GameplayEffectTags::GE_Caller_Stat_CurrentHealth;
+	FGameplayTag HealthChangeGEKeyTag = GameplayEffectTags::GE_Class_HealthChange_Instant;
 	
 protected:
 	struct FCaptureDefs

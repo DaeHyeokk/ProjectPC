@@ -14,7 +14,9 @@ UPCDataAsset_HeroUnitData::UPCDataAsset_HeroUnitData()
 {
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetMaxHealthAttribute());
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetBaseDamageAttribute());
-
+	HeroScalableStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetUltimateDamageAttribute());
+	
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetUltimateCostAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetMaxManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCritChanceAttribute(), 25.f);

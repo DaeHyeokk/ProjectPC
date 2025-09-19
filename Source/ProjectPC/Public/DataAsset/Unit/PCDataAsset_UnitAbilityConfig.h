@@ -11,11 +11,14 @@
 
 class UGameplayEffect;
 
-UENUM(BlueprintType)
-enum class EAbilityType : uint8
+USTRUCT(BlueprintType)
+struct FPCEffectSpecList
 {
-	Attack, 
-	Movement,
+	GENERATED_BODY()
+
+	// Instanced는 여기에 달려 있어야 인라인 생성/저장이 됨
+	UPROPERTY(EditDefaultsOnly, Instanced)
+	TArray<TObjectPtr<UPCEffectSpec>> EffectSpecs;
 };
 
 USTRUCT(BlueprintType)
@@ -27,7 +30,7 @@ struct FAbilityConfig
 	bool bUseCost = false;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(EditCondition="bUseCost"))
-	FGameplayTag CostGETag;
+	FGameplayTag CostEffectClassTag;
 
 	UPROPERTY(EditDefaultsOnly, Category="Cost", meta=(EditCondition="bUseCost"))
 	FGameplayAttribute CostGameplayAttribute;
@@ -39,24 +42,20 @@ struct FAbilityConfig
 	bool bUseCooldown = false;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
-	FGameplayTag CooldownGETag;
+	FGameplayTag CooldownEffectClassTag;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
 	FGameplayTag CooldownCallerTag;
-
-	// 어빌리티 발동 즉시 적용하는 GE 스펙
-	UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|Immediate")
-	TArray<TObjectPtr<UPCEffectSpec>> OnActivateEffectSpecs;
-
-	//UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|Notify")
-	//TMap<FGameplayTag, TArray<UPCEffectSpec>> OnNotifyEffectsMap;
-
-	UPROPERTY(EditDefaultsOnly, Instanced, Category="Effect|OnHit")
-	TArray<TObjectPtr<UPCEffectSpec>> OnHitEffectSpecs;
-
-	//UPROPERTY(EditDefaultsOnly,Instanced, Category="Projectile")
-	//TArray
 	
+	UPROPERTY(EditDefaultsOnly, Category="Spawn")
+	bool bSpawnProjectile = false;
+	
+	// 어빌리티 발동 즉시 적용하는 GE 스펙
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Immediate")
+	FPCEffectSpecList OnActivatedEffectSpecs;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Notify")
+	TMap<FGameplayTag, FPCEffectSpecList> OnReceivedEventEffectsMap;
 };
 
 /**

@@ -47,9 +47,11 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Stat_Hero_SpellVamp, "Unit.Stat.Hero.SpellVamp")
 	
 	// ==== Unit Action Ability Tags
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Action, "Unit.Action")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack, "Unit.Action.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Basic, "Unit.Action.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Ultimate, "Unit.Action.Attack.Ultimate")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Death, "Unit.Action.Death")
 
 	// ==== Unit State Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Alive, "Unit.State.Combat.Alive")
@@ -63,9 +65,14 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_LevelStart, "Unit.Montage.LevelStart")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Attack_Basic, "Unit.Montage.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Attack_Ultimate, "Unit.Montage.Attack.Ultimate")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Death, "Unit.Montage.Death")
 
 	// ==== Unit GameplayEvent Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_BasicAttack, "Unit.Event.BasicAttack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_AttackCommit, "Unit.Event.AttackCommit")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_SpawnProjectile, "Unit.Event.SpawnProjectile")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_HitSucceed, "Unit.Event.HitSucceed")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_OnHit, "Unit.Event.OnHit")
 }
 
 namespace SynergyGameplayTags
@@ -91,10 +98,9 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Heal_Instant, "GE.Class.Health.Heal.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Damage_Instant, "GE.Class.Health.Damage.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Gain_Instant, "GE.Class.Mana.Gain.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Spend_Instant, "GE.Class.Mana.Spend.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange_Instant, "GE.Class.HealthChange.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange_Instant, "GE.Class.ManaChange.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_Damage_Instant, "GE.Class.Unit.Damage.Instant")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
 

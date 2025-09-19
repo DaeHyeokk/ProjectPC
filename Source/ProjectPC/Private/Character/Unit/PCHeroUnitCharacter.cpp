@@ -117,6 +117,16 @@ void APCHeroUnitCharacter::OnRep_HeroLevel() const
 	UpdateStatusBarUI();
 }
 
+void APCHeroUnitCharacter::OnDeathMontageCompleted()
+{
+	Super::OnDeathMontageCompleted();
+	
+	if (GetMesh())
+	{
+		GetMesh()->SetVisibility(false, true);
+	}
+}
+
 void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 {
 	// 레벨 데이터 직접적인 수정은 서버권한

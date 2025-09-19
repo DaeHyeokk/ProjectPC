@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "GameplayEffectExtension.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 void UPCUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -28,13 +29,20 @@ void UPCUnitAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute
 	}
 }
 
-void UPCUnitAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UPCUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
 	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
-		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.0f, GetMaxHealth()));
+		const float ClampedHealth = FMath::Clamp(GetCurrentHealth(), 0.0f, GetMaxHealth());
+		SetCurrentHealth(ClampedHealth);
+
+		if (ClampedHealth <= 0.f)
+		{
+			APCBaseUnitCharacter* OwnerUnit = Cast<APCBaseUnitCharacter>(GetOwningActor());
+			OwnerUnit->Die();
+		}
 	}
 }
 
