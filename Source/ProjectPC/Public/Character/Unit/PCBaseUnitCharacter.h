@@ -115,9 +115,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsOnField() const { return bIsOnField; }
 
-	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
-	void ActionDrag(const bool IsStart);
-
 	UFUNCTION(BlueprintCallable)
 	void Die();
 

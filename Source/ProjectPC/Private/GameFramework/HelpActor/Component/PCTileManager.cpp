@@ -145,6 +145,7 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 	
 	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
 	{
+		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocation(Loc);
 		Unit->ChangedOnTile(false);
@@ -152,12 +153,12 @@ bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Un
 	else
 	{
 		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
+		Bench[BenchIndex].bIsField = false;
 		Unit->SetOnCombatBoard(CombatBoard);
 		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
 		Unit->ChangedOnTile(false);
 	}
-	
-	OnBenchUpdated.Broadcast();
+
 	return true;
 }
 
@@ -171,8 +172,6 @@ bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	}
 	Bench[BenchIndex].Unit = nullptr;
-
-	OnBenchUpdated.Broadcast();
 	
 	return true;
 }
@@ -227,6 +226,25 @@ int32 UPCTileManager::GetBenchIndex(bool bEnemySide, int32 LocalIndex) const
 	if (LocalIndex < 0 || LocalIndex >= N)
 		return INDEX_NONE;
 	return (bEnemySide ? N : 0) + LocalIndex;
+}
+
+bool UPCTileManager::RemoveFromBoard(APCBaseUnitCharacter* Unit)
+{
+	auto FieldGridPoint = GetFieldUnitGridPoint(Unit);
+	auto BenchIndex = GetBenchUnitIndex(Unit);
+			
+	if (FieldGridPoint != FIntPoint::NoneValue)
+	{
+		RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
+		return true;
+	}
+	else if (BenchIndex != INDEX_NONE)
+	{
+		RemoveFromBench(BenchIndex, false);
+		return true;
+	}
+
+	return false;
 }
 
 bool UPCTileManager::IsTileFree(int32 Y, int32 X) const
@@ -745,7 +763,94 @@ bool UPCTileManager::WorldAnyTile(const FVector& World, bool bPreferField, bool&
 	OutBenchIndex = B;
 	OutSnapPos = Bench[B].Position;
 	return true;
-
 	
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+
+	// 필드 먼저
+	for (const FTile& FieldTile : Field)
+	{
+		AddIfMatch(FieldTile.Unit);
+	}
+
+	// 벤치
+	for (const FTile& BenchTile : Bench)
+	{
+		AddIfMatch(BenchTile.Unit);
+	}
+
+	return AllUnits;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetFieldUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+	
+	for (const FTile& FieldTile : Field)
+	{
+		AddIfMatch(FieldTile.Unit);
+	}
+
+	return AllUnits;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag UnitTag)
+{
+	TArray<APCBaseUnitCharacter*> AllUnits;
+	if (!UnitTag.IsValid())
+		return AllUnits;
+
+	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		{
+			if (!AllUnits.Contains(Unit))
+			{
+				AllUnits.Add(Unit);
+			}
+		}
+	};
+
+	for (const FTile& BenchTile : Bench)
+	{
+		AddIfMatch(BenchTile.Unit);
+	}
+
+	return AllUnits;
 }
 

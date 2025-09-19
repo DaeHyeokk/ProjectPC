@@ -7,7 +7,7 @@
 #include "GameFramework/HelpActor/PCTileType.h"
 #include "PCTileManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBenchUpdated);
+struct FGameplayTag;
 
 class APCCombatBoard;
 class APCBaseUnitCharacter;
@@ -52,10 +52,6 @@ class PROJECTPC_API UPCTileManager : public UActorComponent
 public:	
 	
 	UPCTileManager();
-	
-	// 벤치 바뀔 때 호출되는 델리게이트
-	UPROPERTY(BlueprintAssignable)
-	FOnBenchUpdated OnBenchUpdated;
 	
 	// 필드 타일 크기 ( 8 * 7 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
@@ -160,6 +156,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
+	// 필드, 벤치 통합 제거
+	UFUNCTION(BlueprintCallable, Category = "Field/Bench")
+	bool RemoveFromBoard(APCBaseUnitCharacter* Unit);
+	
 	// 점유 관련 헬퍼
 
 	// 완전히 비어있는가? (점유, 예약 둘다 X)
@@ -252,4 +252,19 @@ public:
 		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f) const;
 
 #pragma endregion Drag&Drop
+
+#pragma region LevelUp & Synergy
+
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag);
+
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetFieldUnitByTag(FGameplayTag UnitTag);
+	
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag);
+	
+#pragma endregion LevelUp & Synergy
 };

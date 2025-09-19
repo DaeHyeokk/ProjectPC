@@ -111,6 +111,18 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
+void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
+{
+	// 클라에서만 실행 (Listen Server 포함)
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+
+	if (GetMesh())
+	{
+		GetMesh()->SetHiddenInGame(IsStart);
+	}
+}
+
 void APCHeroUnitCharacter::OnRep_HeroLevel() const
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지

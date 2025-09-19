@@ -86,4 +86,7 @@ private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
+
+public:
+	void SetSlotHidden(int32 SlotIndex);
 };

@@ -8,6 +8,7 @@
 #include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectilePoolData.h"
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
@@ -161,6 +162,8 @@ protected:
 	UPCShopManager* ShopManager;
 
 public:
+	// GameState 생성자에서 생성하므로, ShopManager가 nullptr인 경우 바로 크래시
+	// => 즉 GetShopManager()가 nullptr을 반환할 일은 없음
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
 
 #pragma endregion Shop
@@ -177,7 +180,7 @@ private:
 	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
 
 public:
-	const int32 GetMaxXP(int32 PlayerLevel) const;
+	int32 GetMaxXP(int32 PlayerLevel) const;
 
 #pragma endregion Attribute
 
@@ -216,6 +219,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
+#pragma region ObjectPool
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
+	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+	
+#pragma endregion ObjectPool
+	
 #pragma region TemplateFunc
 	
 private:

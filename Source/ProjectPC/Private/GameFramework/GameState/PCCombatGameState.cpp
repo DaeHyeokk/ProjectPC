@@ -4,6 +4,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -21,6 +22,14 @@ void APCCombatGameState::BeginPlay()
 	if (auto* UnitSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 	{
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
+	}
+
+	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		if (ProjectilePoolData)
+		{
+			ProjectilePoolSubsystem->InitializeProjectilePoolData(ProjectilePoolData->ProjectilePoolData);
+		}
 	}
 
 	if (LevelMaxXPDataTable)
@@ -106,7 +115,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	
 }
 
-const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
+int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
 	if (PlayerLevel <= 0 || LevelMaxXPDataList.IsEmpty())
 	{

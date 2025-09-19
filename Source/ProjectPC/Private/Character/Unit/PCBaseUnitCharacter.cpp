@@ -35,7 +35,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = true;
 
-	GetCharacterMovement()->SetIsReplicated(true);
+	GetCharacterMovement()->SetIsReplicated(false);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = 200.f;
@@ -238,17 +238,6 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 	}
 }
 
-void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
-{
-	// 클라에서만 실행 (Listen Server 포함)
-	if (GetNetMode() == NM_DedicatedServer)
-		return;
-
-	if (GetMesh())
-	{
-		GetMesh()->SetHiddenInGame(IsStart);
-	}
-}
 
 void APCBaseUnitCharacter::Die()
 {

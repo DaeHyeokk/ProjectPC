@@ -60,4 +60,6 @@ public:
 	
 	UFUNCTION()
 	void OnClickedUnitSlot();
+
+	void SetSlotHidden(bool IsHidden);
 };
