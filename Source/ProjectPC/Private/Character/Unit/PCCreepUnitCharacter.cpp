@@ -9,6 +9,21 @@
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
 
 
+APCCreepUnitCharacter::APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer)
+{
+	UnitAbilitySystemComponent = CreateDefaultSubobject<UPCUnitAbilitySystemComponent>(TEXT("UnitAbilitySystemComponent"));
+
+	if (UnitAbilitySystemComponent)
+	{
+		UnitAbilitySystemComponent->SetIsReplicated(true);
+		UnitAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+		UPCUnitAttributeSet* UnitAttrSet = CreateDefaultSubobject<UPCUnitAttributeSet>(TEXT("HeroUnitAttributeSet"));
+		UnitAbilitySystemComponent->AddAttributeSetSubobject(UnitAttrSet);
+		UnitAttributeSet = UnitAbilitySystemComponent->GetSet<UPCUnitAttributeSet>();
+	}
+}
+
 UPCUnitAbilitySystemComponent* APCCreepUnitCharacter::GetUnitAbilitySystemComponent() const
 {
 	return UnitAbilitySystemComponent;
@@ -42,7 +57,6 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 
 void APCCreepUnitCharacter::OnDeathMontageCompleted()
 {
-	Super::OnDeathMontageCompleted();
 	if (HasAuthority())
 	{
 		Destroy();

@@ -22,11 +22,6 @@ UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Action_Attack);
 	
 	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
-
-	// FAbilityTriggerData Trig;
-	// Trig.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
-	// Trig.TriggerTag    = UnitGameplayTags::Unit_Event_BasicAttack;
-	// AbilityTriggers.Add(Trig);
 }
 
 void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
@@ -44,8 +39,6 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 		return;
 	}
-	
-	bDidCommit = false;
 		
 	if (UAnimMontage* Montage = MontageConfig.Montage)
 	{
@@ -58,15 +51,14 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 		}
 			
 		StartPlayMontageAndWaitTask(Montage);
-
-		if (MontageConfig.bHasWindup || AbilityConfig.bSpawnProjectile)
+		
+		if (AbilityConfig.bSpawnProjectile)
 		{
-			StartAttackCommitWaitTask();
+			StartProjectileSpawnSucceedWaitTask();
 		}
 		else
 		{
-			// Windup, Spawn Projectile 동작이 없으면 바로 커밋
-			OnAttackCommit(FGameplayEventData());
+			StartHitSucceedWaitTask();
 		}
 	}
 	else
@@ -90,17 +82,32 @@ void UPCUnitBaseAttackGameplayAbility::SetCurrentTarget(const AActor* Avatar)
 	}
 }
 
-void UPCUnitBaseAttackGameplayAbility::StartAttackCommitWaitTask()
+void UPCUnitBaseAttackGameplayAbility::StartHitSucceedWaitTask()
+{
+	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+	this,
+	HitSucceedTag,
+	nullptr,
+	true
+	);
+	if (WaitEventTask)
+	{
+		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnHitSucceed);
+		WaitEventTask->ReadyForActivation();
+	}
+}
+
+void UPCUnitBaseAttackGameplayAbility::StartProjectileSpawnSucceedWaitTask()
 {
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,
-		AttackCommitEventTag,
+		SpawnProjectileSucceedTag,
 		nullptr,
 		true
 		);
 	if (WaitEventTask)
 	{
-		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnAttackCommit);
+		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnSpawnProjectileSucceed);
 		WaitEventTask->ReadyForActivation();
 	}
 }
@@ -119,67 +126,7 @@ void UPCUnitBaseAttackGameplayAbility::StartPlayMontageAndWaitTask(UAnimMontage*
 	MontageTask->ReadyForActivation();
 }
 
-//공격이 완료 되었을 때 호출 (원거리: 발사체 생성, 근거리: Hit 타이밍)
-void UPCUnitBaseAttackGameplayAbility::OnAttackCommit(FGameplayEventData Payload)
-{
-	if (!bDidCommit)
-	{
-		if (!CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
-			return;
-		bDidCommit = true;
-	}
-	
-	// 자기자신한테 적용하는 GE Apply
-	if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
-	{
-		if (const FPCEffectSpecList* List = AbilityConfig.OnReceivedEventEffectsMap.Find(AttackCommitEventTag))
-		{
-			for (const auto& EffectSpec : List->EffectSpecs)
-			{
-				if (EffectSpec)
-					EffectSpec->ApplyEffect(ASC, GetAvatarActorFromActorInfo());
-			}
-		}
-	}
-	
-	// 발사체 생성 후 Payload EffectSpec 넘겨보냄
-	if (AbilityConfig.bSpawnProjectile)
-	{
-		if (UPCProjectilePoolSubsystem* ProjectilePool = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
-		{
-			FVector Loc = Unit->GetActorForwardVector() * 200.f;
-			FRotator Rot = UKismetMathLibrary::ComposeRotators(Unit->GetActorRotation(), FRotator(90.f,1.f,1.f));
-			FTransform Trans = FTransform::Identity;
-			Trans.SetLocation(Loc);
-			Trans.SetRotation(FQuat(Rot));
-
-			if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
-			{
-				FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
-				ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
-			}
-		}
-	}
-	else
-	{
-		DoMeleeImpactAndApply();
-	}
-	
-	// 후딜 없으면 바로 어빌리티 종료
-	if (!MontageConfig.bHasRecovery)
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-}
-
-void UPCUnitBaseAttackGameplayAbility::OnMontageFinished()
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-}
-
-void UPCUnitBaseAttackGameplayAbility::SpawnProjectileFromConfig()
-{
-}
-
-void UPCUnitBaseAttackGameplayAbility::DoMeleeImpactAndApply()
+void UPCUnitBaseAttackGameplayAbility::OnHitSucceed(FGameplayEventData Payload)
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent();
@@ -197,6 +144,62 @@ void UPCUnitBaseAttackGameplayAbility::DoMeleeImpactAndApply()
 			}
 		}
 	}
+
+	AttackCommit();
+}
+
+void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventData Payload)
+{
+	// 발사체 생성 후 Payload EffectSpec 넘겨보냄
+	if (UPCProjectilePoolSubsystem* ProjectilePool = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		FVector Loc = Unit->GetActorForwardVector() * 200.f;
+		FRotator Rot = UKismetMathLibrary::ComposeRotators(Unit->GetActorRotation(), FRotator(90.f,1.f,1.f));
+		FTransform Trans = FTransform::Identity;
+		Trans.SetLocation(Loc);
+		Trans.SetRotation(FQuat(Rot));
+
+		if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
+		{
+			FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
+			ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
+		}
+	}
+	
+	AttackCommit();
+}
+
+//공격이 완료 되었을 때 호출 (원거리: 발사체 생성, 근거리: Hit 타이밍)
+void UPCUnitBaseAttackGameplayAbility::AttackCommit()
+{
+	if (!CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+		return;
+	}
+	
+	// 공격 완료 즉시 자신에게 적용하는 GE Apply
+	if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
+	{
+		const FPCEffectSpecList& List = AbilityConfig.OnCommittedEffectSpecs;
+		if (List.EffectSpecs.Num() > 0)
+		{
+			for (const auto& EffectSpec : List.EffectSpecs)
+			{
+				if (EffectSpec)
+					EffectSpec->ApplyEffect(ASC, GetAvatarActorFromActorInfo());
+			}
+		}
+	}
+	
+	// 후딜 없으면 바로 어빌리티 종료
+	if (!MontageConfig.bHasRecovery)
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+}
+
+void UPCUnitBaseAttackGameplayAbility::OnMontageFinished()
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }
 
 // ==== 디버깅용 ====

@@ -117,11 +117,11 @@ public:
 	bool IsOnField() const { return bIsOnField; }
 
 	UFUNCTION(BlueprintCallable)
-	void Die();
+	virtual void Die();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void OnDeathMontageCompleted() { };
-
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayDeathMontage();
 	

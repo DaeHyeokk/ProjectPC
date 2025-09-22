@@ -17,6 +17,7 @@ class PROJECTPC_API APCCreepUnitCharacter : public APCBaseUnitCharacter
 	GENERATED_BODY()
 	
 public:
+	APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
 	virtual FGameplayTag GetUnitTypeTag() const override;
 
@@ -28,6 +29,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCUnitAbilitySystemComponent> UnitAbilitySystemComponent;
+
+	UPROPERTY(Transient)
+	TObjectPtr<const UPCUnitAttributeSet> UnitAttributeSet = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;

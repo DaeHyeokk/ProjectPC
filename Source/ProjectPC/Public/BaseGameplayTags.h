@@ -20,11 +20,13 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
 
 	// ==== Unit Attack Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
@@ -69,9 +71,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Death)
 
 	// ==== Unit GameplayEvent Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_BasicAttack)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectile)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectileSucceed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_HitSucceed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
 }

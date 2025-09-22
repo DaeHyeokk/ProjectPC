@@ -3,7 +3,6 @@
 
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 
-#include "BaseGameplayTags.h"
 #include "GameplayEffect.h"
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
@@ -54,4 +53,15 @@ FGameplayTag UPCDataAsset_HeroUnitData::GetJobSynergyTag() const
 FGameplayTag UPCDataAsset_HeroUnitData::GetSpeciesSynergyTag() const
 {
 	return SynergyTagConfig.SpeciesSynergyTag;
+}
+
+float UPCDataAsset_HeroUnitData::GetDefaultCurrentMana() const
+{
+	for (const FUnitStaticStatConfig& StatConfig : HeroStaticStatConfigs)
+	{
+		if (StatConfig.StatAttribute == UPCHeroUnitAttributeSet::GetCurrentManaAttribute())
+			return StatConfig.StatValue;
+	}
+
+	return 0.f;
 }
