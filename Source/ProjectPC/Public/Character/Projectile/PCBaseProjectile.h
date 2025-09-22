@@ -33,9 +33,6 @@ protected:
 	bool bIsHomingProjectile = true;
 	bool bIsPenetrating = false;
 
-	UPROPERTY(ReplicatedUsing = OnRep_bIsUsing)
-	bool bIsUsing = false;
-
 	FTimerHandle LifeTimer;
 	
 public:	
@@ -45,9 +42,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	FORCEINLINE void SetIsUsing(bool bNewUsing) { bIsUsing = bNewUsing; }
-	FORCEINLINE bool GetIsUsing() const { return bIsUsing; }
-
 	UFUNCTION(BlueprintCallable)
 	void ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor);
 	
@@ -57,15 +51,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(const AActor* TargetActor);
 
+	UFUNCTION(BlueprintCallable)
+	void ReturnToPool();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 protected:
-	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	void OnLifeTimeEnd();
 	
-	UFUNCTION()
-	void OnRep_bIsUsing();
 	UFUNCTION()
 	void OnRep_ProjectileData();
 };

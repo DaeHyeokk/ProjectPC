@@ -5,6 +5,7 @@
 
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -19,7 +20,7 @@ APCBaseProjectile::APCBaseProjectile()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	RootComponent = MeshComp;
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -37,15 +38,17 @@ void APCBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
 	SetReplicateMovement(true);
 }
 
 void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor)
 {
-	bIsUsing = true;
-	OnRep_bIsUsing();
-
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
 	SetActorTransform(SpawnTransform);
+	
 	SetProjectileProperty(NewProjectileData);
 	SetTarget(TargetActor);
 }
@@ -74,11 +77,6 @@ void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& NewProjec
 	bIsHomingProjectile = NewProjectileData.bIsHomingProjectile;
 	bIsPenetrating = NewProjectileData.bIsPenetrating;
 	
-	if (bIsPenetrating)
-	{
-		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	}
-	
 	if (NewProjectileData.LifeTime > 0.f)
 	{
 		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
@@ -105,49 +103,50 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 	}
 }
 
+void APCBaseProjectile::ReturnToPool()
+{
+	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		ProjectilePoolSubsystem->ReturnProjectile(this);
+	}
+}
+
 void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(APCBaseProjectile, bIsUsing);
 	DOREPLIFETIME(APCBaseProjectile, ProjectileData);
 }
 
-void APCBaseProjectile::OnRep_bIsUsing()
+void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	SetActorHiddenInGame(!bIsUsing);
-	SetActorEnableCollision(bIsUsing);
-}
+	Super::NotifyActorBeginOverlap(OtherActor);
 
-void APCBaseProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other,
-                                  class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal,
-                                  FVector NormalImpulse, const FHitResult& Hit)
-{
 	if (HitEffect)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, HitLocation, HitNormal.Rotation());
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
 	}
-
-	bIsUsing = false;
-	OnRep_bIsUsing();
 
 	if (ProjectileMovement)
 	{
 		ProjectileMovement->StopMovementImmediately();
 	}
+
+	if (!bIsPenetrating)
+	{
+		ReturnToPool();
+	}
 }
 
 void APCBaseProjectile::OnLifeTimeEnd()
 {
-	bIsUsing = false;
-	OnRep_bIsUsing();
-
 	if (ProjectileMovement)
 	{
 		ProjectileMovement->StopMovementImmediately();
 	}
 
 	GetWorldTimerManager().ClearTimer(LifeTimer);
+	ReturnToPool();
 }
 
 void APCBaseProjectile::OnRep_ProjectileData()
@@ -170,11 +169,6 @@ void APCBaseProjectile::OnRep_ProjectileData()
 	ProjectileMovement->Velocity = GetActorForwardVector();
 	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
 	bIsPenetrating = ProjectileData.bIsPenetrating;
-	
-	if (bIsPenetrating)
-	{
-		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	}
 	
 	if (ProjectileData.LifeTime > 0.f)
 	{

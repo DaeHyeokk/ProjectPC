@@ -22,8 +22,7 @@ protected:
 	UPROPERTY()
 	FPCProjectilePoolData ProjectilePoolData;
 
-	UPROPERTY()
-	TArray<APCBaseProjectile*> ProjectilePool;
+	TQueue<APCBaseProjectile*> ProjectilePool;
 	
 public:
 	UFUNCTION()
@@ -31,4 +30,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SpawnProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable)
+	void ReturnProjectile(APCBaseProjectile* ReturnedProjectile);
 };
