@@ -15,7 +15,7 @@ UPCUnitUltAttackGameplayAbility::UPCUnitUltAttackGameplayAbility()
 
 bool UPCUnitUltAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
                                                 const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
-{
+	{
 	if (!ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
 		return false;
 

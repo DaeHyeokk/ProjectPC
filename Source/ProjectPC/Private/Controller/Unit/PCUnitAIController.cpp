@@ -69,3 +69,16 @@ void APCUnitAIController::UpdateTeamId()
 		SetGenericTeamId(PawnTeam);
 	}
 }
+
+void APCUnitAIController::ClearBlackboardValue()
+{
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		if (GetWorld())
+		{
+			APCCombatGameState* CombatGS = GetWorld()->GetGameState<APCCombatGameState>();
+			BB->ClearValue(TEXT("TargetUnit"));
+			BB->ClearValue(TEXT("ApproachLocation"));
+		}
+	}
+}

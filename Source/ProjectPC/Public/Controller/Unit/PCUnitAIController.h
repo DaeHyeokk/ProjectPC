@@ -29,6 +29,7 @@ private:
 public:
 	void UpdateTeamId();
 	void SetMovePoint(const FIntPoint& MovePoint) { CachedMovePoint = MovePoint; }
+	void ClearBlackboardValue();
 	
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UBehaviorTree> DefaultBT;

@@ -29,9 +29,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EUnitClassType ClassType = EUnitClassType::Creep;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category="Mesh")
 	TObjectPtr<USkeletalMesh> Mesh;
 
+	// 유닛 타입을 AppearanceChange 지정할 경우 보여지는 속성 (레벨에 따라 변하는 Mesh)
+	UPROPERTY(EditDefaultsOnly, Category="Mesh", meta=(EditCondition="ClassType==EUnitClassType::Hero_AppearanceChange"))
+	TObjectPtr<USkeletalMesh> Mesh_Level2;
+	// 유닛 타입을 AppearanceChange 지정할 경우 보여지는 속성 (레벨에 따라 변하는 Mesh)
+	UPROPERTY(EditDefaultsOnly, Category="Mesh", meta=(EditCondition="ClassType==EUnitClassType::Hero_AppearanceChange"))
+	TObjectPtr<USkeletalMesh> Mesh_Level3;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UAnimInstance> AnimBP;
 

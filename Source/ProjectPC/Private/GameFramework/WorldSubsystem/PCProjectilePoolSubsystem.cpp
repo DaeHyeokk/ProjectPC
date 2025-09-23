@@ -55,7 +55,7 @@ APCBaseProjectile* UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform&
 void UPCProjectilePoolSubsystem::ReturnProjectile(APCBaseProjectile* ReturnedProjectile)
 {
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
-	
+
 	if (ReturnedProjectile)
 	{
 		ProjectilePool.Enqueue(ReturnedProjectile);

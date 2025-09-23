@@ -39,21 +39,25 @@ protected:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<const AActor> CurrentTarget;
 
-	const FGameplayTag AttackCommitEventTag = UnitGameplayTags::Unit_Event_AttackCommit;
+	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
 	const FGameplayTag HitSucceedTag = UnitGameplayTags::Unit_Event_HitSucceed;
-	bool bDidCommit = false;
 	
-	void StartAttackCommitWaitTask();
+	void StartHitSucceedWaitTask();
+	void StartProjectileSpawnSucceedWaitTask();
 	void StartPlayMontageAndWaitTask(UAnimMontage* Montage);
 	
 protected:
 	UFUNCTION()
-	virtual void OnAttackCommit(FGameplayEventData Payload);
+	void AttackCommit();
+	
+	UFUNCTION()
+	void OnHitSucceed(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnSpawnProjectileSucceed(FGameplayEventData Payload);
+	
 	UFUNCTION()
 	void OnMontageFinished();
-
-	void SpawnProjectileFromConfig();
-	void DoMeleeImpactAndApply();
 	
 protected:
 	// ==== 디버깅용 ====
@@ -66,3 +70,4 @@ protected:
 	// UFUNCTION()
 	// void OnMontageInterrupted();
 };
+

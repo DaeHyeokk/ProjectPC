@@ -10,6 +10,22 @@ FMontageConfig UPCDataAsset_UnitAnimSet::GetMontageConfigByTag(const FGameplayTa
 	return MontageConfigByTagMap.FindRef(MontageTag);
 }
 
+bool UPCDataAsset_UnitAnimSet::TryGetRandomBasicAttackMontageConfigByTag(FMontageConfig& OutConfig) const
+{
+	if (BasicAttackMontageConfigs.Num() > 0)
+	{
+		const int32 Idx = FMath::RandHelper(BasicAttackMontageConfigs.Num());
+		OutConfig = BasicAttackMontageConfigs[Idx];
+		return true;
+	}
+	UE_LOG(LogTemp, Warning,
+		TEXT("BasicAttackMontageConfigs is empty on %s"),
+		*GetName());
+
+	OutConfig = FMontageConfig();
+	return false;
+}
+
 UAnimMontage* UPCDataAsset_UnitAnimSet::GetMontageByTag(const FGameplayTag& MontageTag) const
 {
 	const FMontageConfig& MontageConfig = MontageConfigByTagMap.FindRef(MontageTag);

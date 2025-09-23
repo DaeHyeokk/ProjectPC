@@ -38,6 +38,29 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 	}
 }
 
+void UPCUnitBasicAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData* TriggerEventData)
+{
+	if (!HasAuthority(&ActivationInfo))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+		return;
+	}
+	
+	SetMontageConfig(ActorInfo);
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
+
+void UPCUnitBasicAttackGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
+{
+	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
+	{
+		const FGameplayTag MontageTag = GetMontageTag();
+		UnitAnimSet->TryGetRandomBasicAttackMontageConfigByTag(MontageConfig);
+	}
+}
+
 float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate(const UAnimMontage* Montage)
 {
 	UAbilitySystemComponent* ASC = Unit ? Unit->GetAbilitySystemComponent() : nullptr;

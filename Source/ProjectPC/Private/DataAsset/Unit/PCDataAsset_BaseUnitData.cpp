@@ -56,3 +56,8 @@ UPCDataAsset_UnitAbilityConfig* UPCDataAsset_BaseUnitData::GetAbilityConfigData(
 {
 	return AbilityConfigData;
 }
+
+UPCDataAsset_ProjectileData* UPCDataAsset_BaseUnitData::GetProjectileData() const
+{
+	return ProjectileData;
+}

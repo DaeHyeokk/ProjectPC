@@ -47,14 +47,22 @@ struct FAbilityConfig
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown", meta=(EditCondition="bUseCooldown"))
 	FGameplayTag CooldownCallerTag;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Spawn")
+	UPROPERTY(EditDefaultsOnly, Category="Projectile")
 	bool bSpawnProjectile = false;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Projectile", meta=(EditCondition="bSpawnProjectile"))
+	FPCEffectSpecList ProjectilePayloadEffectSpecs;
 	
 	// 어빌리티 발동 즉시 적용하는 GE 스펙
 	UPROPERTY(EditDefaultsOnly, Category="Effect|Immediate")
 	FPCEffectSpecList OnActivatedEffectSpecs;
+
+	// 어빌리티 커밋 시 적용하는 GE 스펙
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Immediate")
+	FPCEffectSpecList OnCommittedEffectSpecs;
 	
-	UPROPERTY(EditDefaultsOnly, Category="Effect|Notify")
+	// 어벌리티 발동 중 받는 이벤트에 따라 적용하는 GE 스펙
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Situation")
 	TMap<FGameplayTag, FPCEffectSpecList> OnReceivedEventEffectsMap;
 };
 

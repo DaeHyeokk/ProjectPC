@@ -23,6 +23,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -38,7 +39,6 @@ public:
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
 	
 	UFUNCTION(BlueprintCallable)
 	void LevelUp();
@@ -52,6 +52,8 @@ public:
 	FGameplayTag GetSpeciesSynergyTag() const;
 	
 protected:
+	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
@@ -65,10 +67,18 @@ protected:
 	int32 HeroLevel = 1;
 
 	UFUNCTION()
-	void OnRep_HeroLevel() const;
+	void OnRep_HeroLevel();
 
 	// 전투 관련 //
 	virtual void OnDeathMontageCompleted() override;
+	
+private:
+	void HandleGameStateChanged(const FGameplayTag NewStateTag);
+	FDelegateHandle GameStateChangedHandle;
+
+	void RestoreFromCombatEnd();
+	
+	void SetLifeState(const bool bDead) const;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")

@@ -3,15 +3,15 @@
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 
-#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
-#include "Controller/Player/PCCombatPlayerController.h"
+#include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 
 
@@ -35,10 +35,25 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		GameStateChangedHandle =
+			GS->OnGameStateTagChanged.AddUObject(
+				this, &ThisClass::HandleGameStateChanged);
+
+		HandleGameStateChanged(GS->GetGameStateTag());
+	}
+}
+
+void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+	}
 	
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	Super::EndPlay(EndPlayReason);
 }
 
 void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -111,6 +126,61 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
+void APCHeroUnitCharacter::RestoreFromCombatEnd()
+{
+	if (HasAuthority())
+	{
+		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
+			return;
+
+		// Max Health 값으로 Current Health 초기화
+		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
+			UPCUnitAttributeSet::GetCurrentHealthAttribute(),
+			EGameplayModOp::Override,
+			HeroUnitAttributeSet->GetMaxHealth());
+
+		if (!HeroUnitDataAsset)
+			return;
+
+		// 기본으로 가지는 Current Mana로 초기화
+		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
+			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
+			EGameplayModOp::Override,
+			HeroUnitDataAsset->GetDefaultCurrentMana());
+
+		// 이전 전투에서 사망했을 경우 사망 태그 제거
+		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+		{
+			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+		}
+
+		// 블랙보드 키값 초기화
+		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
+		{
+			AIC->ClearBlackboardValue();
+		}
+	}
+
+	SetLifeState(false);
+}
+
+void APCHeroUnitCharacter::SetLifeState(const bool bDead) const
+{
+	if (GetMesh())
+	{
+		if (bDead)
+		{
+			GetMesh()->SetVisibility(false, true);
+			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+		}
+		else
+		{
+			GetMesh()->SetVisibility(true, true);
+			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		}
+	}
+}
+
 void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 {
 	// 클라에서만 실행 (Listen Server 포함)
@@ -119,11 +189,11 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 
 	if (GetMesh())
 	{
-		GetMesh()->SetHiddenInGame(IsStart);
+		GetMesh()->SetOwnerNoSee(IsStart);
 	}
 }
 
-void APCHeroUnitCharacter::OnRep_HeroLevel() const
+void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
 	UpdateStatusBarUI();
@@ -132,10 +202,23 @@ void APCHeroUnitCharacter::OnRep_HeroLevel() const
 void APCHeroUnitCharacter::OnDeathMontageCompleted()
 {
 	Super::OnDeathMontageCompleted();
-	
-	if (GetMesh())
+
+	SetLifeState(true);
+}
+
+void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
+{
+	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
+	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
+	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
+
+	if (NewStateTag == CombatActiveTag)
 	{
-		GetMesh()->SetVisibility(false, true);
+		
+	}
+	else if (NewStateTag == CombatEndTag)
+	{
+		RestoreFromCombatEnd();
 	}
 }
 

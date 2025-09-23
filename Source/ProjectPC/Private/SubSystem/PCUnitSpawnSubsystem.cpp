@@ -57,7 +57,12 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
 	
 	APCBaseUnitCharacter* Unit = GetWorld()->SpawnActorDeferred<APCBaseUnitCharacter>(
-		SpawnClass, SpawnTransform, InOwner, InInstigator, HandlingMethod);
+		SpawnClass,
+		SpawnTransform,
+		InOwner,
+		InInstigator,
+		HandlingMethod);
+	
 	if (!Unit)
 		return nullptr;
 

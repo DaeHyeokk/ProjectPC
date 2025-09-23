@@ -153,7 +153,11 @@ void UPCUnitStatusBarWidget::ApplyToUI() const
 	
 	if (ManaBar && bHasMana)
 		ManaBar->SetPercent(CachedMP / CachedMaxMP);
-
+	else
+	{
+		ManaBar->SetPercent(0.f);
+	}
+	
 	HealthText->SetText(FText::FromString(
 		FString::Printf(TEXT("%.0f / %.0f"), CachedHP, CachedMaxHP)));
 }
