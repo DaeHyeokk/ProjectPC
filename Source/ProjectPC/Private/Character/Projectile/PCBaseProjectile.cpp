@@ -3,6 +3,7 @@
 
 #include "Character/Projectile/PCBaseProjectile.h"
 
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -67,10 +68,6 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 
 void APCBaseProjectile::SetProjectileProperty()
 {
-	if (!HasAuthority())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Client Set Property"));
-	}
 	if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
 	{
 		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
@@ -131,6 +128,11 @@ void APCBaseProjectile::ReturnToPool()
 		ProjectileMovement->HomingTargetComponent = nullptr;
 	}
 
+	if (Target)
+	{
+		Target = nullptr;
+	}
+
 	if (TrailEffectComp)
 	{
 		TrailEffectComp->SetActive(false);
@@ -175,6 +177,20 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 			Multicast_Overlap(OtherActor);
 		}
 
+		for (auto EffectSpec : EffectSpecs)
+		{
+			if (EffectSpec)
+			{
+				if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+				{
+					if (auto ASC = Unit->GetAbilitySystemComponent())
+					{
+						EffectSpec->ApplyEffect(ASC, Target);
+					}
+				}
+			}
+		}
+
 		if (!bIsPenetrating)
 		{
 			ReturnToPool();
@@ -184,35 +200,6 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 
 void APCBaseProjectile::OnRep_ProjectileDataTag()
 {
-	// if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
-	// {
-	// 	auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
-	// 	if (Projectile.Mesh && MeshComp)
-	// 	{
-	// 		MeshComp->SetStaticMesh(Projectile.Mesh);
-	// 	}
-	// 	if (Projectile.TrailEffect && TrailEffectComp)
-	// 	{
-	// 		TrailEffectComp->SetTemplate(Projectile.TrailEffect);
-	// 		TrailEffectComp->SetActive(true);
-	// 	}
-	// 	if (Projectile.HitEffect)
-	// 	{
-	// 		HitEffect = Projectile.HitEffect;
-	// 	}
-	//
-	// 	ProjectileMovement->InitialSpeed = Projectile.Speed;
-	// 	ProjectileMovement->MaxSpeed = Projectile.Speed;
-	// 	ProjectileMovement->Velocity = GetActorForwardVector();
-	// 	bIsHomingProjectile = Projectile.bIsHomingProjectile;
-	// 	bIsPenetrating = Projectile.bIsPenetrating;
-	//
-	// 	if (Projectile.LifeTime > 0.f)
-	// 	{
-	// 		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
-	// 	}
-	// }
-
 	SetProjectileProperty();
 }
 

@@ -98,18 +98,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_BuyXP();
 	UFUNCTION(Server, Reliable)
-	void Server_SellUnit();
+	void Server_SellUnit(APCBaseUnitCharacter* Unit);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyUnit(int32 SlotIndex);
 	UFUNCTION(Client, Reliable)
 	void SetSlotHidden(int32 SlotIndex);
-
-private:
-	APCHeroUnitCharacter* OverlappedUnit;
-
-public:
-	UFUNCTION(Server, Reliable)
-	void SetOverlappedUnit(APCHeroUnitCharacter* NewUnit);
 
 #pragma endregion Shop
 
@@ -211,11 +204,12 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void Server_QueryTileUnit(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx);
 
-	UFUNCTION(Client, Unreliable)
+	UFUNCTION(Client, Reliable)
 	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
 
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
+	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() { return CachedHoverUnit; }
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)

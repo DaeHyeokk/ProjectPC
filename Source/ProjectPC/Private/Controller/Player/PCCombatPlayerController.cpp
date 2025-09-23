@@ -16,6 +16,7 @@
 //#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "AIController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -246,7 +247,7 @@ void APCCombatPlayerController::ShopRequest_SellUnit()
 {
 	if (IsLocalController())
 	{
-		Server_SellUnit();
+		Server_SellUnit(CachedHoverUnit.Get());
 	}
 }
 
@@ -287,23 +288,24 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 	}
 }
 
-void APCCombatPlayerController::Server_SellUnit_Implementation()
+void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
-			if (OverlappedUnit)
+			if (Unit && !Unit->IsActorBeingDestroyed())
 			{
+				
 				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
 				FGameplayEventData EventData;
 				EventData.Instigator = PS;
 				EventData.Target = PS;
 				EventData.EventTag = GA_Tag;
-				EventData.OptionalObject = OverlappedUnit;
+				EventData.OptionalObject = Unit;
 
 				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-				OverlappedUnit = nullptr;
+				Unit = nullptr;
 			}
 		}
 	}
@@ -370,11 +372,6 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)
 {
 	ShopWidget->SetSlotHidden(SlotIndex);
-}
-
-void APCCombatPlayerController::SetOverlappedUnit_Implementation(APCHeroUnitCharacter* NewUnit)
-{
-	OverlappedUnit = NewUnit;
 }
 
 void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarouselRing* CarouselRing, int32 SeatIndex, float BlendTime)
@@ -833,6 +830,11 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
 		{
 			Board -> OnHism(true);
+			
+			if (ShopWidget)
+			{
+				ShopWidget->SwitchShopWidget();
+			}
 		}
 	}
 	
@@ -850,6 +852,20 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
 	{
 		Board -> OnHism(false);
+
+		if (ShopWidget)
+		{
+			float X, Y;
+			UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
+			FVector2D MousePos(X, Y);
+
+			if (ShopWidget->IsScreenPointInSellBox(MousePos))
+			{
+				Server_SellUnit(CachedHoverUnit.Get());
+			}
+			
+			ShopWidget->SwitchShopWidget();	
+		}
 	}
 	
 	if (DragComponent)
@@ -898,9 +914,8 @@ bool APCCombatPlayerController::RemoveFromCurrentSlot(UPCTileManager* TM, APCBas
 	return false;
 }
 
-
 void APCCombatPlayerController::Multicast_LerpMove_Implementation(APCBaseUnitCharacter* Unit, FVector Dest,
-	float Duration)
+                                                                  float Duration)
 {
 	if (!Unit || HasAuthority())
 		return;
@@ -1001,11 +1016,13 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 		Client_TileHoverUnit(nullptr);
 		return;
 	}
-
-	APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx);
 	
 
-	Client_TileHoverUnit(Unit);
+	if (APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx))
+	{
+		Client_TileHoverUnit(Unit);
+	}
+	
 }
 
 

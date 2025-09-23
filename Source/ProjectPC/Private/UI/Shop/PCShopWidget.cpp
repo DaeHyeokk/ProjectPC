@@ -5,6 +5,7 @@
 
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Overlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameplayEffectTypes.h"
@@ -14,6 +15,8 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/WidgetSwitcher.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -205,4 +208,28 @@ void UPCShopWidget::SetSlotHidden(int32 SlotIndex)
 	{
 		SelectedSlot->SetSlotHidden(true);
 	}
+}
+
+void UPCShopWidget::SwitchShopWidget() const
+{
+	if (!WidgetSwitcher) return;
+
+	if (WidgetSwitcher->GetActiveWidget() == PlayerShopBox)
+	{
+		WidgetSwitcher->SetActiveWidget(SellBox);
+	}
+	else
+	{
+		WidgetSwitcher->SetActiveWidget(PlayerShopBox);
+	}
+}
+
+bool UPCShopWidget::IsScreenPointInSellBox(const FVector2D& Point) const
+{
+	const FGeometry ViewportGeo = UWidgetLayoutLibrary::GetViewportWidgetGeometry(GetWorld());
+	const FVector2D AbsolutePos = ViewportGeo.LocalToAbsolute(Point);
+	
+	const FGeometry& GM = SellBox->GetCachedGeometry();
+
+	return GM.IsUnderLocation(AbsolutePos);
 }
