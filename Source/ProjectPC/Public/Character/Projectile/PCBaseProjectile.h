@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PCProjectileData.h"
+#include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "GameFramework/Actor.h"
 #include "PCBaseProjectile.generated.h"
@@ -18,6 +18,9 @@ class PROJECTPC_API APCBaseProjectile : public AActor
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
 	TMap<FGameplayTag, TObjectPtr<UPCDataAsset_ProjectileData>> ProjectileData;
+
+	UPROPERTY()
+	TArray<UPCEffectSpec*> EffectSpecs;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
 	FGameplayTag ProjectileDataUnitTag;

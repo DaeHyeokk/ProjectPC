@@ -25,24 +25,31 @@ void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectil
 	}
 }
 
-void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
+APCBaseProjectile* UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
-	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
-	if (!SpawnActor || !TargetActor) return;
-
-	APCBaseProjectile* SpawnedProjectile = nullptr;
-	if (!ProjectilePool.IsEmpty() && ProjectilePool.Dequeue(SpawnedProjectile))
+	if (GetWorld() && GetWorld()->GetNetMode() != NM_Client)
 	{
-		SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
-	}
-	else
-	{
-		if (SpawnedProjectile = GetWorld()->SpawnActor<APCBaseProjectile>(
-			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
+		if (SpawnActor && TargetActor)
 		{
-			SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
+			APCBaseProjectile* SpawnedProjectile = nullptr;
+			if (!ProjectilePool.IsEmpty() && ProjectilePool.Dequeue(SpawnedProjectile))
+			{
+				SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
+				return SpawnedProjectile;
+			}
+			else
+			{
+				if (SpawnedProjectile = GetWorld()->SpawnActor<APCBaseProjectile>(
+					ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
+				{
+					SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
+					return SpawnedProjectile;
+				}
+			}
 		}
 	}
+	
+	return nullptr;
 }
 
 void UPCProjectilePoolSubsystem::ReturnProjectile(APCBaseProjectile* ReturnedProjectile)

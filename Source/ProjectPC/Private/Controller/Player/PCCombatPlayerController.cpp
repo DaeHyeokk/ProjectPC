@@ -16,6 +16,7 @@
 //#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "AIController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -829,6 +830,11 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
 		{
 			Board -> OnHism(true);
+			
+			if (ShopWidget)
+			{
+				ShopWidget->SwitchShopWidget();
+			}
 		}
 	}
 	
@@ -846,6 +852,20 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
 	{
 		Board -> OnHism(false);
+
+		if (ShopWidget)
+		{
+			float X, Y;
+			UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
+			FVector2D MousePos(X, Y);
+
+			if (ShopWidget->IsScreenPointInSellBox(MousePos))
+			{
+				Server_SellUnit(CachedHoverUnit.Get());
+			}
+			
+			ShopWidget->SwitchShopWidget();	
+		}
 	}
 	
 	if (DragComponent)
@@ -894,9 +914,8 @@ bool APCCombatPlayerController::RemoveFromCurrentSlot(UPCTileManager* TM, APCBas
 	return false;
 }
 
-
 void APCCombatPlayerController::Multicast_LerpMove_Implementation(APCBaseUnitCharacter* Unit, FVector Dest,
-	float Duration)
+                                                                  float Duration)
 {
 	if (!Unit || HasAuthority())
 		return;

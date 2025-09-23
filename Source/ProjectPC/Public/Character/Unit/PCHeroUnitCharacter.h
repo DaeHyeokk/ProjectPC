@@ -71,7 +71,6 @@ protected:
 	virtual void OnDeathMontageCompleted() override;
 	
 public:
-	
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
 };

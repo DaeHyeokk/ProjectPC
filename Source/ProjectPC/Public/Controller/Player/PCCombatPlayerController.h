@@ -209,6 +209,7 @@ public:
 
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
+	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() { return CachedHoverUnit; }
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
