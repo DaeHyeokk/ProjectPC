@@ -675,8 +675,8 @@ void APCCombatManager::CheckPairVictory(int32 PairIndex)
 	if (Pair.GuestAlive <= 0)
 	{
 		ResolvePairResult(PairIndex, true);
-		return;
 	}
+	
 }
 
 void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
