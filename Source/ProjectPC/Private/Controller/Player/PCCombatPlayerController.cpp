@@ -23,8 +23,9 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
+#include "Net/NetworkMetricsDefs.h"
 #include "Shop/PCShopManager.h"
+#include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
 
@@ -41,7 +42,7 @@ APCCombatPlayerController::APCCombatPlayerController()
 	FollowTime = 0.f;
 
 	// 카메라 관련 초기화
-	bAutoManageActiveCameraTarget = true;
+	bAutoManageActiveCameraTarget = false;
 
 	DragComponent = CreateDefaultSubobject<UPCDragComponent>(TEXT("DragComponent"));
 }
@@ -80,7 +81,6 @@ void APCCombatPlayerController::BeginPlay()
 	ApplyGameInputMode();
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
@@ -103,13 +103,21 @@ void APCCombatPlayerController::BeginPlayingState()
 		}
 	}
 
+	if (PlayerCameraManager)
+	{
+		PlayerCameraManager->StartCameraFade(
+			/*From*/1.f, /*To*/0.f, /*Duration*/0.001f,
+			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
+	}
+
 	// 3) HUD/상점 생성 및 가시성 보정
 	EnsureMainHUDCreated();   // 내부에서 AddToViewport
 	if (IsValid(PlayerMainWidget))
 	{
 		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
-	//LoadShopWidget();
+
+	GetWorldTimerManager().SetTimer(LoadShop, this, &ThisClass::LoadShopWidget, 3.f , false, 0.1f);
 	
 }
 
@@ -183,6 +191,7 @@ void APCCombatPlayerController::OnSellUnitStarted()
 
 void APCCombatPlayerController::LoadShopWidget()
 {
+	GetWorldTimerManager().ClearTimer(LoadShop);
 	if (IsLocalController())
 	{
 		if (!ShopWidgetClass) return;
@@ -376,9 +385,16 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 {
 	if (!IsLocalController() || !IsValid(CarouselRing))
 		return;
-	//CarouselRing->ApplyCentralViewForSeat(this, CurrentFocusedSeatIndex, 0.f);
-	//FadeSwitchCamera(CarouselRing, 0.1f,0.05f,0,0.1f, false);
-	SetViewTargetWithBlend(CarouselRing,0);
+
+	if (CurrentCameraType == ECameraFocusType::Carousel && CurrentCarouselSeatIndex == SeatIndex)
+		return;
+
+	CurrentCameraType = ECameraFocusType::Carousel;
+	CurrentCarouselSeatIndex = SeatIndex;
+	CurrentBoardSeatIndex = -1;
+
+	CarouselRing->ApplyCentralViewForSeat(this, SeatIndex, 0.f);
+	SwitchCameraWhileBlack(CarouselRing, BlendTime, 0.08f,0.15f,0.5f);
 	
 }
 
@@ -415,74 +431,90 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 	return nullptr;
 }
 
-void APCCombatPlayerController::FadeSwitchCamera(AActor* NewTarget, float FadeOutTime, float HoldBlack, float BlendTime,
-	float FadeInTime, bool bShowHUDAfter)
+void APCCombatPlayerController::SwitchCameraWhileBlack(AActor* NewTarget, float BlendTime, float FadeOutTime,
+	float FadeInTime, float HoldBlack)
 {
-	if (!IsLocalController() || !NewTarget)
-	{
-		SetViewTargetWithBlend(NewTarget, BlendTime);
-		if (bShowHUDAfter)
-		{
-			PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
-			ShowWidget();
-		}
-		else
-		{
-			HideWidget();
-		}
-		return;
-	}
+	if (!NewTarget) return;
 
-	PlayerMainWidget->SetVisibility(ESlateVisibility::Hidden);
+    // 씬 페이드만으로는 UMG가 안가려지므로 오버레이도 같이 켠다
+    EnsureScreenFade();
+    SetScreenFadeVisible(true, 0.f); // 투명으로 켠 뒤…
+	
+    // 카메라: 씬 페이드 아웃
+    if (IsLocalController() && PlayerCameraManager)
+        PlayerCameraManager->StartCameraFade(0.f, 1.f, FadeOutTime, FLinearColor::Black, false, true);
 
+    // 오버레이도 동시에 알파 올리기 (간단히 타이머로 선형 보간)
+    // const int32 Steps = 5;
+    // const float StepDt = FMath::Max(0.01f, FadeOutTime / Steps);
+    // for (int32 i=1;i<=Steps;++i)
+    // {
+    //     GetWorldTimerManager().SetTimerForNextTick([this, i, Steps, StepDt]()
+    //     {
+    //         if (!ScreenFadeWidget) return;
+    //         const float A = i / Steps;
+    //         ScreenFadeWidget->SetRenderOpacity(A);
+    //     });
+    // }
+
+	ScreenFadeWidget->SetRenderOpacity(1.0f);
+
+    const float CutTime = FadeOutTime + FMath::Max(0.f, HoldBlack);
+
+    // 블랙 유지 중 카메라 블렌드
+    GetWorldTimerManager().SetTimer(ThFadeSwitch, [this, NewTarget, BlendTime, FadeInTime]()
+    {
+        SetViewTargetWithBlend(NewTarget, BlendTime);
+
+        // 블렌드가 끝나면 씬 페이드 인 + 오버레이 알파 내리기
+        GetWorldTimerManager().SetTimer(ThFadeIn, [this, FadeInTime]()
+        {
+            if (PlayerCameraManager)
+                PlayerCameraManager->StartCameraFade(1.f, 0.f, FadeInTime, FLinearColor::Black, false, false);
+
+            // 오버레이도 천천히 사라지게
+            const int32 Steps = 10;
+            const float StepDt = FMath::Max(0.01f, FadeInTime / Steps);
+            for (int32 i=1;i<=Steps;++i)
+            {
+                GetWorldTimerManager().SetTimerForNextTick([this, i, Steps]()
+                {
+                    if (!ScreenFadeWidget) return;
+                    const float A = 1.f - (float)i / (float)Steps;
+                    ScreenFadeWidget->SetRenderOpacity(A);
+                    if (i == Steps) SetScreenFadeVisible(false, 0.f);
+                });
+            }
+
+        }, FMath::Max(0.01f, BlendTime), false);
+
+    }, CutTime, false);
+}
+
+void APCCombatPlayerController::ClearAllCameraTimers()
+{
 	GetWorldTimerManager().ClearTimer(ThFadeSwitch);
 	GetWorldTimerManager().ClearTimer(ThFadeIn);
-	if (PlayerCameraManager)
+}
+
+void APCCombatPlayerController::EnsureScreenFade()
+{
+	if (ScreenFadeWidget || !ScreenFadeClass)
+		return;
+	ScreenFadeWidget = CreateWidget<UUserWidget>(this, ScreenFadeClass);
+	if (ScreenFadeWidget)
 	{
-		PlayerCameraManager->StartCameraFade(0.f,1.f,FadeOutTime,FLinearColor::Black,
-		false, true);
+		ScreenFadeWidget->AddToViewport(10000);
+		ScreenFadeWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
-	
-	const float CutTime = FadeOutTime + HoldBlack;
+}
 
-	GetWorldTimerManager().SetTimer(
-		ThFadeSwitch,
-		[this, NewTarget, BlendTime, FadeInTime, bShowHUDAfter]()
-		{
-			// 하드 컷으로 숨기고 싶으면 BlendTime=0로 호출하거나:
-			// PlayerCameraManager->SetGameCameraCutThisFrame();
-
-			SetViewTargetWithBlend(NewTarget, BlendTime);
-
-			// 3) 블랙을 유지한 채 블렌드가 끝나기를 기다렸다가 페이드 인 시작
-			GetWorldTimerManager().SetTimer(
-				ThFadeIn,
-				[this, FadeInTime, bShowHUDAfter]()
-				{
-					if (PlayerCameraManager)
-					{
-						PlayerCameraManager->StartCameraFade(
-							1.f, 0.f, FadeInTime,
-							FLinearColor::Black,
-							/*bFadeAudio*/false,
-							/*bHoldWhenFinished*/false
-						);
-					}
-					FTimerHandle VisibleWidget;
-					GetWorldTimerManager().SetTimer(
-						VisibleWidget,[this]()
-						{
-							PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
-						}, FMath::Max(0.f, FadeInTime), false);
-				},
-				FMath::Max(0.f, BlendTime),
-				false
-			);
-		},
-		CutTime,
-		false
-	);
-	
+void APCCombatPlayerController::SetScreenFadeVisible(bool bVisible, float Opacity)
+{
+	if (!ScreenFadeWidget)
+		return;
+	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
+	ScreenFadeWidget->SetRenderOpacity(bVisible ? Opacity : 0.f);
 }
 
 void APCCombatPlayerController::EnsureMainHUDCreated()
@@ -500,7 +532,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
-		// PlayerMainWidget->AddToViewport();
+		PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
 		
 		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
@@ -514,24 +546,8 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	{
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
-			// PlayerMainWidget->AddToViewport();
+			PlayerMainWidget->AddToViewport();
 		PlayerMainWidget->InitAndBind();
-		
-	}
-
-	if (!IsValid(ShopWidget))
-	{
-		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
-		if (!ShopWidget)
-			return;
-		// ShopWidget->AddToViewport();
-	}
-	else
-	{
-		if (!ShopWidget->IsInViewport())
-		{
-			// ShopWidget->AddToViewport();
-		}
 	}
 }
 
@@ -589,17 +605,18 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
 	bool bBattle, float Blend)
 {
-	if (CurrentFocusedSeatIndex == BoardSeatIndex)
-	{
+	if (CurrentCameraType == ECameraFocusType::Board && CurrentBoardSeatIndex == BoardSeatIndex)
 		return;
-	}
 
-	if (APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex))
-	{
-		const bool bShowHUDAfter = bBattle;
-		FadeSwitchCamera(CombatBoard,0.5f,0.05f,Blend,0.5f,bShowHUDAfter);
-		CurrentFocusedSeatIndex = BoardSeatIndex;
-	}
+	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
+	if (!CombatBoard)
+		return;
+
+	CurrentCameraType     = ECameraFocusType::Board;
+	CurrentBoardSeatIndex = BoardSeatIndex;
+	CurrentCarouselSeatIndex = -1;
+
+	SwitchCameraWhileBlack(CombatBoard, Blend,0.08f, 0.15f, 0.5f);
 }
 
 
@@ -659,6 +676,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
+		Client_CurrentDragUnit(Unit);
 	}
 	else
 	{
@@ -732,14 +750,14 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	{
 		if (bSrcField)
 		{
-			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
+			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
 		}
 		else if (SrcBench != INDEX_NONE)
 		{
-			TM->RemoveFromBench(SrcBench, true);
+			TM->RemoveFromBench(SrcBench, false);
 		}
 
-		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit) : TM->PlaceUnitOnBench(BenchIdx, Unit);
+		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) : TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto);
 
 		if (bPlaced)
 		{
@@ -767,38 +785,38 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	if (bSrcField && bField)
 	{
 		// 필드 -> 필드
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
-		TM->RemoveFromField(Y,X, true);
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
+		TM->RemoveFromField(Y,X, false);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
 
 		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
 	}
 	else if (!bSrcField && bField)
 	{
 		// 벤치 -> 필드
-		TM->RemoveFromBench(SrcBench, true);
-		TM->RemoveFromField(Y,X,true);
+		TM->RemoveFromBench(SrcBench, false);
+		TM->RemoveFromField(Y,X,false);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
 		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
 	}
 	else if (bSrcField && !bField)
 	{
 		// 필드 -> 벤치
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
-		TM->RemoveFromBench(BenchIdx, true);
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
+		TM->RemoveFromBench(BenchIdx, false);
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
 		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
 	}
 	else
 	{
 		// 벤치 -> 벤치
-		TM->RemoveFromBench(SrcBench, true);
-		TM->RemoveFromBench(BenchIdx, true);
+		TM->RemoveFromBench(SrcBench, false);
+		TM->RemoveFromBench(BenchIdx, false);
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
 
 		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
 	}
@@ -859,8 +877,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 
 			if (ShopWidget->IsScreenPointInSellBox(MousePos))
 			{
-				// Server_SellUnit(CurrentDragUnit.Get());
-				ShopRequest_SellUnit();
+				Server_SellUnit(CurrentDragUnit.Get());
 			}
 			
 			ShopWidget->SwitchShopWidget();	
@@ -1021,7 +1038,6 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	if (APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx))
 	{
 		Client_TileHoverUnit(Unit);
-		CachedHoverUnit = Unit;
 	}
 	
 }
@@ -1037,9 +1053,24 @@ void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFile
 	}
 
 	APCBaseUnitCharacter* Unit = bIsFiled ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
-	CachedHoverUnit = Unit;
 	Client_TileHoverUnit(Unit);
 }
+
+void APCCombatPlayerController::Client_CurrentDragUnit_Implementation(APCBaseUnitCharacter* Unit)
+{
+	if (!IsLocalController())
+		return;
+
+	if (Unit != nullptr)
+	{
+		CurrentDragUnit = Unit;
+	}
+	else
+	{
+		CurrentDragUnit = nullptr;
+	}
+}
+
 
 void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitCharacter* Unit)
 {

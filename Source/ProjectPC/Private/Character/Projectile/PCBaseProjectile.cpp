@@ -117,6 +117,11 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 	}
 }
 
+void APCBaseProjectile::SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs)
+{
+	EffectSpecs = InEffectSpecs;
+}
+
 void APCBaseProjectile::ReturnToPool()
 {
 	GetWorldTimerManager().ClearTimer(LifeTimer);

@@ -25,6 +25,8 @@ class APCAppearanceChangedHeroCharacter;
 class APCCreepUnitCharacter;
 class UPCDataAsset_UnitDefinitionReg;
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnUnitSpawnedNative, APCBaseUnitCharacter*, int32 );
+
 UCLASS()
 class PROJECTPC_API UPCUnitSpawnSubsystem : public UWorldSubsystem
 {
@@ -91,4 +93,10 @@ public:
 		APawn* InInstigator = nullptr,
 		ESpawnActorCollisionHandlingMethod HandlingMethod =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn) const;
+
+
+	// 전투중 스폰 델리게이트
+public:
+	FOnUnitSpawnedNative OnUnitSpawned;
+	
 };

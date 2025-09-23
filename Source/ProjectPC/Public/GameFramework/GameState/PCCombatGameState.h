@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "GameplayTagAssetInterface.h"
-#include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
 #include "DataAsset/Projectile/PCDataAsset_ProjectilePoolData.h"
@@ -122,6 +121,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
+
+	
 
 
 #pragma endregion GameLogic

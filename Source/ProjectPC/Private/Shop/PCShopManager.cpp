@@ -103,9 +103,13 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	if (!Board) return;
 	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
-	Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
-	UnitLevelUp(TargetPlayer, UnitTag);
+
+	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
+	{
+		Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+	}
 	
+	UnitLevelUp(TargetPlayer, UnitTag);
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }
 
@@ -126,17 +130,17 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
 	// 실제 게임 적용할 때는 주석 해제
-	// if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
-	// {
-	// 	UnitList = TileManager->GetAllUnitByTag(UnitTag);
-	// }
-	// else
-	// {
-	// 	UnitList = TileManager->GetBenchUnitByTag(UnitTag);
-	// }
+	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
+	{
+		UnitList = TileManager->GetAllUnitByTag(UnitTag);
+	}
+	else
+	{
+		UnitList = TileManager->GetBenchUnitByTag(UnitTag);
+	}
 
 	// 테스트용, 실제 게임 적용할 때는 삭제
-	UnitList = TileManager->GetAllUnitByTag(UnitTag);
+	// UnitList = TileManager->GetAllUnitByTag(UnitTag);
 	
 	for (auto Unit : UnitList)
 	{
@@ -338,7 +342,7 @@ TArray<FGameplayTag> UPCShopManager::GetCarouselUnitTags(int32 Round)
 	switch (Round)
 	{
 	case 1:
-		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 9));
+		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 8));
 		break;
 	case 2:
 		ReturnTags.Append(GetCarouselRandomUnitTagsByCost(1, 1));

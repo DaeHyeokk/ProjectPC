@@ -54,7 +54,12 @@ void UPCAnimNotify_SpawnProjectile::Notify(USkeletalMeshComponent* MeshComp, UAn
 		FGameplayEventData Payload;
 		Payload.EventTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
 		Payload.Instigator = Owner;
-		Payload.OptionalObject = Projectile;
+
+		FGameplayAbilityTargetDataHandle Handle;
+		FTargetData_Projectile* Data = new FTargetData_Projectile();
+		Data->Projectile = Projectile;
+		Handle.Add(Data);
+		Payload.TargetData = Handle;
 
 		ASC->HandleGameplayEvent(Payload.EventTag, &Payload);
 	}

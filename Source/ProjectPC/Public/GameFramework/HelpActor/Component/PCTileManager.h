@@ -43,6 +43,9 @@ struct FTile
 	}
 };
 
+UENUM()
+enum class ETileFacing : uint8 { Auto, Friendly, Enemy };
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCTileManager : public UActorComponent
@@ -52,6 +55,9 @@ class PROJECTPC_API UPCTileManager : public UActorComponent
 public:	
 	
 	UPCTileManager();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seat")
+	int32 BoardIndex;
 	
 	// 필드 타일 크기 ( 8 * 7 )
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Field")
@@ -105,10 +111,16 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor)
 	void QuickSetUp();
 
+	// 유닛 배치시 회전값
+	UPROPERTY(EditAnywhere, Category="Rotation")
+	float FacingYawOffsetDeg = 0.f;
+
+	FRotator CalcUnitRotation(APCBaseUnitCharacter* Unit, ETileFacing Facing) const;
+
 	// 필드 배치 / 삭제 / 조회
 	UFUNCTION(BlueprintCallable, Category = "Field")
-	bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
-
+	bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride = ETileFacing::Auto);
+	
 	UFUNCTION(BLueprintCallable, Category = "Field")
 	bool RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard);
 
@@ -132,9 +144,10 @@ public:
 	FVector GetTilePosition(int32 Y, int32 X) const { return GetTileWorldPosition(Y, X);}
 
 	// 벤치 배치 / 삭제 / 조회
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	bool PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit);
 
+	UFUNCTION(BlueprintCallable, Category = "Bench")
+	bool PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride = ETileFacing::Auto);
+	
 	UFUNCTION(BlueprintCallable, Category = "Bench")
 	bool RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard);
 
@@ -186,6 +199,9 @@ public:
 	// 유틸 함수
 	UFUNCTION(BlueprintCallable, category = "Util")
 	APCCombatBoard* GetCombatBoard() const;
+
+	UFUNCTION(BlueprintCallable, category = "Util")
+	int32 GetBoardIndex();
 	
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void ClearAll();
@@ -193,6 +209,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows = true, bool bMirrorCols = true, bool bIncludeBench = true );
 
+	bool EnsureExclusive(APCBaseUnitCharacter* InUnit);
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
@@ -267,4 +284,18 @@ public:
 	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag);
 	
 #pragma endregion LevelUp & Synergy
+
+#pragma region Win&Lose
+
+public:
+	void BindToUnit(APCBaseUnitCharacter* Unit);
+	void UnbindFromUnit(APCBaseUnitCharacter* Unit);
+
+	UFUNCTION()
+	void OnBoundUnitDied(APCBaseUnitCharacter* Unit);
+
+protected:
+	UPROPERTY()
+	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> DeathBoundUnits;
+#pragma endregion
 };

@@ -43,17 +43,14 @@ public:
 
 	// 회전초밥시 카메라 세팅
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float CentralCameraBlend = 0.4f;
+	float CentralCameraBlend = 0.f;
 
 	// 기본 보드 카메라 세팅
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float ShopFocusBlend = 0.6f;
+	float TravelCameraBlend = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float TravelCameraBlend = 0.4f;
-
-	UPROPERTY(EditAnywhere, Category="Camera")
-	float ReturnCameraBlend = 0.4f;
+	float ReturnCameraBlend = 0.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -61,7 +58,6 @@ protected:
 	virtual void PostSeamlessTravel() override;
 
 	// 좌석배정 유틸함수
-	void AssignSeatInitial();
 	int32 GetTotalSeatSlots() const;
 
 private:
@@ -72,6 +68,7 @@ private:
 	TArray<int32> FlatStepIdxInRound;
 	int32 Cursor = -1;
 
+	FTimerHandle StartTimer;
 	FTimerHandle RoundTimer;
 	FTimerHandle CameraSetupTimer;
 	FTimerHandle WaitAllPlayerController;
@@ -120,5 +117,17 @@ private:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
+
+
+
+	// 데이터 로딩
+
+private:
+	bool bSeatsFinalized = false;
+	FTimerHandle ThWaitReady;
+	bool IsRoundSystemReady(FString& WhyNot) const;
+	void StartWhenReady();
+	void AssignSeatDeterministicOnce();
+	
 };
 
