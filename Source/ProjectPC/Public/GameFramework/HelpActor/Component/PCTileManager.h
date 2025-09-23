@@ -105,7 +105,7 @@ public:
 
 	// 시계방향 배치 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bench")
-	bool bBenchClockwise = false;
+	bool bBenchClockwise = true;
 
 	// 에디터 원클릭 초기화
 	UFUNCTION(BlueprintCallable, CallInEditor)
@@ -167,6 +167,12 @@ public:
 	int32 MirrorBenchIndex(int32 Index) const;
 
 	UFUNCTION(BlueprintPure, Category = "Bench")
+	int32 MakeGlobalBenchIndex(bool bEnemySide, int32 LocalIndex) const;
+
+	UFUNCTION(BlueprintPure, Category = "Bench")
+	int32 GetLocalFromGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide) const;
+
+	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
 	// 필드, 벤치 통합 제거
@@ -205,16 +211,21 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void ClearAll();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows = true, bool bMirrorCols = true, bool bIncludeBench = true );
 
+	
+
+	
 	bool EnsureExclusive(APCBaseUnitCharacter* InUnit);
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Bench;
+
+	
 
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
