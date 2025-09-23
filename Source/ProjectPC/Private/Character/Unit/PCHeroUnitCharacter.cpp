@@ -13,6 +13,7 @@
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
+#include "UI/Unit/PCUnitStatusBarWidget.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -35,13 +36,13 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
 	{
 		GameStateChangedHandle =
 			GS->OnGameStateTagChanged.AddUObject(
 				this, &ThisClass::HandleGameStateChanged);
-
+	
 		HandleGameStateChanged(GS->GetGameStateTag());
 	}
 }
@@ -50,7 +51,10 @@ void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
 	{
-		GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+		if (GameStateChangedHandle.IsValid())
+		{
+			GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+		}
 	}
 	
 	Super::EndPlay(EndPlayReason);
@@ -95,8 +99,13 @@ void APCHeroUnitCharacter::LevelUp()
 	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
 
+	FGameplayCueParameters Params;
+	Params.TargetAttachComponent = GetMesh();
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Unit_LevelUp, Params);
+	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
+	
 	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
 		OnRep_HeroLevel();
@@ -128,6 +137,8 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
+	SetLifeState(false);
+	
 	if (HasAuthority())
 	{
 		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
@@ -152,6 +163,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+			bIsDead = false;
 		}
 
 		// 블랙보드 키값 초기화
@@ -160,22 +172,21 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 			AIC->ClearBlackboardValue();
 		}
 	}
-
-	SetLifeState(false);
 }
 
-void APCHeroUnitCharacter::SetLifeState(const bool bDead) const
+void APCHeroUnitCharacter::SetLifeState(const bool bDead)
 {
 	if (GetMesh())
 	{
 		if (bDead)
 		{
-			GetMesh()->SetVisibility(false, true);
+			// GetMesh()->SetVisibility(false, true);
 			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+			SetActorLocation(FVector(99999.f,99999.f,99999.f));
 		}
 		else
 		{
-			GetMesh()->SetVisibility(true, true);
+			//GetMesh()->SetVisibility(true, true);
 			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 		}
 	}
@@ -199,11 +210,14 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 	UpdateStatusBarUI();
 }
 
-void APCHeroUnitCharacter::OnDeathMontageCompleted()
+void APCHeroUnitCharacter::OnDeathAnimCompleted()
 {
-	Super::OnDeathMontageCompleted();
-
 	SetLifeState(true);
+}
+
+void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	Super::ChangedOnTile(IsOnField);
 }
 
 void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)

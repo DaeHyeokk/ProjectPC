@@ -55,7 +55,7 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 }
 
-void APCCreepUnitCharacter::OnDeathMontageCompleted()
+void APCCreepUnitCharacter::OnDeathAnimCompleted()
 {
 	if (HasAuthority())
 	{

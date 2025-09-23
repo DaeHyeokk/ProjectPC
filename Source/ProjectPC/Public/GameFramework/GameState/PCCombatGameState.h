@@ -80,7 +80,7 @@ struct FStageRuntimeState
 };
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, FGameplayTag);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 /**
  * 
  */

@@ -70,7 +70,10 @@ protected:
 	void OnRep_HeroLevel();
 
 	// 전투 관련 //
-	virtual void OnDeathMontageCompleted() override;
+	virtual void OnDeathAnimCompleted() override;
+
+public:
+	virtual void ChangedOnTile(const bool IsOnField) override;
 	
 private:
 	void HandleGameStateChanged(const FGameplayTag NewStateTag);
@@ -78,7 +81,7 @@ private:
 
 	void RestoreFromCombatEnd();
 	
-	void SetLifeState(const bool bDead) const;
+	void SetLifeState(const bool bDead);
 	
 public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")

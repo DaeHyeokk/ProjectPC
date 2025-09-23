@@ -16,10 +16,7 @@ struct FMontageConfig
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montage")
 	TObjectPtr<UAnimMontage> Montage = nullptr;
-
-	// UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
-	// bool bHasWindup = false;
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
 	bool bHasRecovery = false;
 	
@@ -50,6 +47,9 @@ struct FUnitLocomotionSet
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UAnimSequence> JumpRecovery;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UAnimSequence> Death;
 };
 /**
  * 

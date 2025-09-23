@@ -32,10 +32,14 @@ public:
 
 	UFUNCTION()
 	void CopyVariantBySourceStatusBar(const UPCHeroStatusBarWidget* SourceStatusBar) const;
-	
+
+	UFUNCTION()
+	void HandleVisibilityChanged(ESlateVisibility NewVis);
+
 protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UWidgetSwitcher> StatusSwitcher;
+
 	
 private:
 	void EnsureActiveVariantInitialized();

@@ -77,6 +77,11 @@ void UPCUnitStatusBarWidget::SetInstant(float CurrentHP, float MaxHP, float Curr
 	ApplyToUI();
 }
 
+void UPCUnitStatusBarWidget::UpdateUI() const
+{
+	ApplyToUI();
+}
+
 void UPCUnitStatusBarWidget::NativeDestruct()
 {
 	if (ASC.IsValid())
@@ -147,6 +152,7 @@ void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data
 
 void UPCUnitStatusBarWidget::ApplyToUI() const
 {
+	UE_LOG(LogTemp, Warning, TEXT("CurrentHealth: %f"), CachedHP);
 	// CachedMaxHP, MP는 항상 0보다 크다는 것이 보장돼있기 때문에 나누기 연산에서 안전함 (따로 체크 안해도됨)
 	if (HealthBar)
 		HealthBar->SetValues(CachedHP, CachedMaxHP);

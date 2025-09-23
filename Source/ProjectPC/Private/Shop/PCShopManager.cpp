@@ -239,7 +239,8 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 				if (HeroUnitList.Num() == 3)
 				{
 					auto LevelUpUnit = HeroUnitList[0];
-					LevelUpUnit->SetUnitLevel(UnitLevel + 1);
+					//LevelUpUnit->SetUnitLevel(UnitLevel + 1);
+					LevelUpUnit->LevelUp();
 
 					for (int i = 1; i < 3; i++)
 					{

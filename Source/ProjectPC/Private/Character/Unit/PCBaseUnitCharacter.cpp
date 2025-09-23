@@ -20,8 +20,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	//NetUpdateFrequency = 100.f;
-	//MinNetUpdateFrequency = 66.f;
+	// NetUpdateFrequency = 100.f;
+	// MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -141,6 +141,11 @@ void APCBaseUnitCharacter::BeginPlay()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+
+	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		UnitAnimInstance->PlayLevelStartMontage();
+	}
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -155,6 +160,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, UnitTag);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsDead);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -255,25 +261,10 @@ void APCBaseUnitCharacter::Die()
 			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+				bIsDead = true;
 			}
 			ASC->CancelAllAbilities();
+			OnUnitDied.Broadcast(this);
 		}
-
-		Multicast_PlayDeathMontage();
-	}
-}
-
-void APCBaseUnitCharacter::Multicast_PlayDeathMontage_Implementation()
-{
-	UPCDataAsset_UnitAnimSet* AnimSet = GetUnitAnimSetDataAsset();
-	UAnimMontage* DeathMontage = AnimSet ? AnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_Death) : nullptr;
-	
-	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
-	{
-		GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
-	}
-	else
-	{
-		OnDeathMontageCompleted();
 	}
 }

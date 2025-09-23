@@ -113,19 +113,19 @@ public:
 	FORCEINLINE APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
-	void ChangedOnTile(const bool IsOnField);
+	virtual void ChangedOnTile(const bool IsOnField);
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsOnField() const { return bIsOnField; }
 
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsDead() const { return bIsDead; }
+	
 	UFUNCTION(BlueprintCallable)
 	virtual void Die();
 
 	UFUNCTION(BlueprintCallable)
-	virtual void OnDeathMontageCompleted() { };
-	
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PlayDeathMontage();
+	virtual void OnDeathAnimCompleted() { };
 	
 protected:
 	UPROPERTY()
@@ -134,7 +134,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
 
-
+	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
+	bool bIsDead = false;
+	
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitDied OnUnitDied;

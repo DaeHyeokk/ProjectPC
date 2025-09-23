@@ -33,7 +33,8 @@ public:
 	// ASC 없이 수동 갱신하고 싶을 때
 	UFUNCTION()
 	void SetInstant(float CurrentHP, float MaxHP, float CurrentMP = 0.f, float MaxMP = 0.f);
-
+	void UpdateUI() const;
+	
 protected:
 	virtual void NativeDestruct() override;
 
