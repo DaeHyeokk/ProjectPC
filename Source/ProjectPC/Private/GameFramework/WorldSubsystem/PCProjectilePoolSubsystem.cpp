@@ -25,21 +25,22 @@ void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectil
 	}
 }
 
-void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor)
+void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
+	if (!SpawnActor || !TargetActor) return;
 
 	APCBaseProjectile* SpawnedProjectile = nullptr;
 	if (!ProjectilePool.IsEmpty() && ProjectilePool.Dequeue(SpawnedProjectile))
 	{
-		SpawnedProjectile->ActiveProjectile(SpawnTransform, ProjectileData, TargetActor);
+		SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
 	}
 	else
 	{
 		if (SpawnedProjectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 		{
-			SpawnedProjectile->ActiveProjectile(SpawnTransform, ProjectileData, TargetActor);
+			SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
 		}
 	}
 }

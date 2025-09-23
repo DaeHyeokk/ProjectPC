@@ -74,12 +74,4 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
-
-#pragma region Shop
-
-public:
-	virtual void NotifyActorBeginCursorOver() override;
-	virtual void NotifyActorEndCursorOver() override;
-
-#pragma endregion Shop
 };

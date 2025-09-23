@@ -15,13 +15,13 @@ struct PROJECTPC_API FPCProjectileData
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Mesh")
-	UStaticMesh* Mesh = nullptr;
+	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
-	UParticleSystem* TrailEffect = nullptr;
+	TObjectPtr<UParticleSystem> TrailEffect = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
-	UParticleSystem* HitEffect = nullptr;
+	TObjectPtr<UParticleSystem> HitEffect = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Speed")
 	float Speed = 2000.f;

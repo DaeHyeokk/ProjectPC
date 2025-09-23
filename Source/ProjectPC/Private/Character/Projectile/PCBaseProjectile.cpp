@@ -3,12 +3,13 @@
 
 #include "Character/Projectile/PCBaseProjectile.h"
 
-#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+
+#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCBaseProjectile::APCBaseProjectile()
@@ -29,6 +30,7 @@ APCBaseProjectile::APCBaseProjectile()
 	ProjectileMovement->MaxSpeed = 1000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
 	TrailEffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
 	TrailEffectComp->SetupAttachment(MeshComp);
@@ -43,43 +45,59 @@ void APCBaseProjectile::BeginPlay()
 	SetReplicateMovement(true);
 }
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
-	SetActorHiddenInGame(false);
-	SetActorEnableCollision(true);
-	SetActorTransform(SpawnTransform);
+	if (SpawnActor && TargetActor)
+	{
+		ProjectileDataUnitTag = UnitTag;
+		ProjectileDataTypeTag = TypeTag;
+		
+		SetInstigator(SpawnActor->GetInstigator());
+		
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		SetActorTransform(SpawnTransform);
 	
-	SetProjectileProperty(NewProjectileData);
-	SetTarget(TargetActor);
+		SetProjectileProperty();
+		SetTarget(TargetActor);
+		
+		Target = TargetActor;
+	}
 }
 
-void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& NewProjectileData)
+void APCBaseProjectile::SetProjectileProperty()
 {
-	if (NewProjectileData.Mesh)
+	if (!HasAuthority())
 	{
-		ProjectileData.Mesh = NewProjectileData.Mesh;
-		MeshComp->SetStaticMesh(NewProjectileData.Mesh);
+		UE_LOG(LogTemp, Error, TEXT("Client Set Property"));
 	}
-	if (NewProjectileData.TrailEffect)
+	if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
 	{
-		ProjectileData.TrailEffect = NewProjectileData.TrailEffect;
-		TrailEffectComp->SetTemplate(NewProjectileData.TrailEffect);
-	}
-	if (NewProjectileData.HitEffect)
-	{
-		ProjectileData.HitEffect = NewProjectileData.HitEffect;
-		HitEffect = NewProjectileData.HitEffect;
-	}
+		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
+		if (Projectile.Mesh && MeshComp)
+		{
+			MeshComp->SetStaticMesh(Projectile.Mesh);
+		}
+		if (Projectile.TrailEffect && TrailEffectComp)
+		{
+			TrailEffectComp->SetTemplate(Projectile.TrailEffect);
+			TrailEffectComp->SetActive(true);
+		}
+		if (Projectile.HitEffect)
+		{
+			HitEffect = Projectile.HitEffect;
+		}
+
+		ProjectileMovement->InitialSpeed = Projectile.Speed;
+		ProjectileMovement->MaxSpeed = Projectile.Speed;
+		ProjectileMovement->Velocity = GetActorForwardVector();
+		bIsHomingProjectile = Projectile.bIsHomingProjectile;
+		bIsPenetrating = Projectile.bIsPenetrating;
 	
-	ProjectileMovement->InitialSpeed = NewProjectileData.Speed;
-	ProjectileMovement->MaxSpeed = NewProjectileData.Speed;
-	ProjectileMovement->Velocity = GetActorForwardVector();
-	bIsHomingProjectile = NewProjectileData.bIsHomingProjectile;
-	bIsPenetrating = NewProjectileData.bIsPenetrating;
-	
-	if (NewProjectileData.LifeTime > 0.f)
-	{
-		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
+		if (Projectile.LifeTime > 0.f)
+		{
+			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
+		}
 	}
 }
 
@@ -97,7 +115,6 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 		{
 			FVector TargetLocation = TargetActor->GetActorLocation();
 			FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
-	
 			ProjectileMovement->Velocity = Direction * ProjectileMovement->InitialSpeed;
 		}
 	}
@@ -105,9 +122,30 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 
 void APCBaseProjectile::ReturnToPool()
 {
-	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	GetWorldTimerManager().ClearTimer(LifeTimer);
+	
+	if (ProjectileMovement)
 	{
-		ProjectilePoolSubsystem->ReturnProjectile(this);
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->bIsHomingProjectile = false;
+		ProjectileMovement->HomingTargetComponent = nullptr;
+	}
+
+	if (TrailEffectComp)
+	{
+		TrailEffectComp->SetActive(false);
+	}
+	
+	SetInstigator(nullptr);
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	if (HasAuthority())
+	{
+		if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+		{
+			ProjectilePoolSubsystem->ReturnProjectile(this);
+		}
 	}
 }
 
@@ -115,63 +153,73 @@ void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(APCBaseProjectile, ProjectileData);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataUnitTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataTypeTag);
 }
 
 void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
+	if (!HasAuthority()) return;
 	Super::NotifyActorBeginOverlap(OtherActor);
+	
+	if (OtherActor != GetInstigator())
+	{
+		if (bIsHomingProjectile && OtherActor != Target)
+		{
+			return;
+		}
+		
+		if (HitEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
+			Multicast_Overlap(OtherActor);
+		}
 
-	if (HitEffect)
+		if (!bIsPenetrating)
+		{
+			ReturnToPool();
+		}
+	}
+}
+
+void APCBaseProjectile::OnRep_ProjectileDataTag()
+{
+	// if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
+	// {
+	// 	auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
+	// 	if (Projectile.Mesh && MeshComp)
+	// 	{
+	// 		MeshComp->SetStaticMesh(Projectile.Mesh);
+	// 	}
+	// 	if (Projectile.TrailEffect && TrailEffectComp)
+	// 	{
+	// 		TrailEffectComp->SetTemplate(Projectile.TrailEffect);
+	// 		TrailEffectComp->SetActive(true);
+	// 	}
+	// 	if (Projectile.HitEffect)
+	// 	{
+	// 		HitEffect = Projectile.HitEffect;
+	// 	}
+	//
+	// 	ProjectileMovement->InitialSpeed = Projectile.Speed;
+	// 	ProjectileMovement->MaxSpeed = Projectile.Speed;
+	// 	ProjectileMovement->Velocity = GetActorForwardVector();
+	// 	bIsHomingProjectile = Projectile.bIsHomingProjectile;
+	// 	bIsPenetrating = Projectile.bIsPenetrating;
+	//
+	// 	if (Projectile.LifeTime > 0.f)
+	// 	{
+	// 		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
+	// 	}
+	// }
+
+	SetProjectileProperty();
+}
+
+void APCBaseProjectile::Multicast_Overlap_Implementation(AActor* OtherActor)
+{
+	if (HitEffect && OtherActor)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
-	}
-
-	if (ProjectileMovement)
-	{
-		ProjectileMovement->StopMovementImmediately();
-	}
-
-	if (!bIsPenetrating)
-	{
-		ReturnToPool();
-	}
-}
-
-void APCBaseProjectile::OnLifeTimeEnd()
-{
-	if (ProjectileMovement)
-	{
-		ProjectileMovement->StopMovementImmediately();
-	}
-
-	GetWorldTimerManager().ClearTimer(LifeTimer);
-	ReturnToPool();
-}
-
-void APCBaseProjectile::OnRep_ProjectileData()
-{
-	if (ProjectileData.Mesh)
-	{
-		MeshComp->SetStaticMesh(ProjectileData.Mesh);
-	}
-	if (ProjectileData.TrailEffect)
-	{
-		TrailEffectComp->SetTemplate(ProjectileData.TrailEffect);
-	}
-	if (ProjectileData.HitEffect)
-	{
-		HitEffect = ProjectileData.HitEffect;
-	}
-	
-	ProjectileMovement->InitialSpeed = ProjectileData.Speed;
-	ProjectileMovement->MaxSpeed = ProjectileData.Speed;
-	ProjectileMovement->Velocity = GetActorForwardVector();
-	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
-	bIsPenetrating = ProjectileData.bIsPenetrating;
-	
-	if (ProjectileData.LifeTime > 0.f)
-	{
-		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
 	}
 }

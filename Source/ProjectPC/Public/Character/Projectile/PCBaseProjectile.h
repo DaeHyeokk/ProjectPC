@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PCProjectileData.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "GameFramework/Actor.h"
 #include "PCBaseProjectile.generated.h"
 
@@ -15,8 +16,14 @@ class PROJECTPC_API APCBaseProjectile : public AActor
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(ReplicatedUsing = OnRep_ProjectileData)
-	FPCProjectileData ProjectileData;
+	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
+	TMap<FGameplayTag, TObjectPtr<UPCDataAsset_ProjectileData>> ProjectileData;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataUnitTag;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataTypeTag;
 	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
@@ -41,12 +48,16 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+private:
+	UPROPERTY()
+	const AActor* Target;
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor);
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
 	
 	UFUNCTION(BlueprintCallable)
-	void SetProjectileProperty(const FPCProjectileData& NewProjectileData);
+	void SetProjectileProperty();
 	
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(const AActor* TargetActor);
@@ -58,9 +69,10 @@ public:
 	
 protected:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-
-	void OnLifeTimeEnd();
 	
 	UFUNCTION()
-	void OnRep_ProjectileData();
+	void OnRep_ProjectileDataTag();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_Overlap(AActor* OtherActor);
 };

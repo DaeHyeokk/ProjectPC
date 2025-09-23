@@ -174,29 +174,3 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 	
 }
-
-void APCHeroUnitCharacter::NotifyActorBeginCursorOver()
-{
-	Super::NotifyActorBeginCursorOver();
-
-	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (PC->IsLocalController())
-		{
-			PC->SetOverlappedUnit(this);
-		}
-	}
-}
-
-void APCHeroUnitCharacter::NotifyActorEndCursorOver()
-{
-	Super::NotifyActorEndCursorOver();
-
-	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (PC->IsLocalController())
-		{
-			PC->SetOverlappedUnit(nullptr);
-		}
-	}
-}
