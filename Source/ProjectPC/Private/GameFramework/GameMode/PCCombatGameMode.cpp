@@ -5,11 +5,9 @@
 
 #include "BaseGameplayTags.h"
 #include "EngineUtils.h"
-#include "INodeAndChannelMappings.h"
+#include "ShaderPrintParameters.h"
 #include "Character/Player/PCPlayerCharacter.h"
-#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -20,6 +18,7 @@
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Shop/PCShopManager.h"
 
 
 APCCombatGameMode::APCCombatGameMode()
@@ -60,10 +59,10 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 	if (!NewPlayer) return;
-
+	
 	auto* PS = Cast<APCPlayerState>(NewPlayer->PlayerState);
 	if (!PS) return;
-
+	
 	bool Used[8] = {};
 	if (GameState)
 	{
@@ -72,13 +71,13 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 				if (P != PS && P->SeatIndex >= 0 && P->SeatIndex < 8)
 					Used[P->SeatIndex] = true;
 	}
-
+	
 	int32 Seat = 0; while (Seat < 8 && Used[Seat]) ++Seat;
 	if (Seat >= 8) Seat = PS->GetPlayerId() % 8;
-
+	
 	PS->SeatIndex = Seat;
 	
-
+	
 	PS->ForceNetUpdate();
 }
 
@@ -92,36 +91,6 @@ void APCCombatGameMode::PostSeamlessTravel()
 			{
 				PCPlayerState->bIsReady = false;
 			}
-	}
-
-
-	
-}
-
-void APCCombatGameMode::AssignSeatInitial()
-{
-	if (!GameState)
-		return;
-
-	TArray<APCPlayerState*> Players;
-	for (APlayerState* PlayerStateBase : GameState->PlayerArray)
-	{
-		if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerStateBase))
-		{
-			Players.Add(PCPlayerState);
-		}
-	}
-
-	Players.Sort([](const APCPlayerState& A, const APCPlayerState& B)
-	{
-		return A.GetPlayerId() < B.GetPlayerId();
-	});
-
-	const int32 MaxSeats = 8;
-	for (int32 i = 0; i < Players.Num(); ++i)
-	{
-		Players[i]->SeatIndex = ( i < MaxSeats) ? i : (i % MaxSeats);
-		Players[i]->ForceNetUpdate();
 	}
 	
 }
@@ -189,6 +158,7 @@ void APCCombatGameMode::BuildStageData()
 
 void APCCombatGameMode::StartFromBeginning()
 {
+	GetWorldTimerManager().ClearTimer(StartTimer);
 	Cursor = 0;
 	BeginCurrentStep();
 }
@@ -270,6 +240,11 @@ void APCCombatGameMode::Step_Setup()
 	const int32 Stage = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
 	const int32 Round = FlatRoundIdx.IsValidIndex(Cursor) ? FlatRoundIdx[Cursor] : 0;
 
+	if (APCCombatGameState* PCCombatGameState = GetCombatGameState())
+	{
+		PCCombatGameState->SetGameStateTag(GameStateTags::Game_State_NonCombat);
+	}
+
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
@@ -277,17 +252,6 @@ void APCCombatGameMode::Step_Setup()
 			PCPlayerController->Client_ShowWidget();
 		}
 	}
-
-	// if (Stage == 1 && Round == 3)
-	// {
-	// 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	// 	{
-	// 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
-	// 		{
-	// 			PCPlayerController->Client_ShowWidget();
-	// 		}
-	// 	}
-	// }
 }
 
 void APCCombatGameMode::Step_Travel()
@@ -299,11 +263,17 @@ void APCCombatGameMode::Step_Travel()
 	{
 	case EPCStageType::PvP:
 		{
+			
 			if (APCCombatManager* PCCombatManager = GetCombatManager())
 			{
 				PCCombatManager->BuildRandomPairs();
 				PCCombatManager->TravelPlayersForAllPairs(TravelCameraBlend);
 				PCCombatManager->StartAllBattle();
+			}
+
+			if (APCCombatGameState* PCGameState = GetCombatGameState())
+			{
+				PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
 			}
 			break;
 		}
@@ -329,7 +299,10 @@ void APCCombatGameMode::Step_Travel()
 		}
 	case EPCStageType::PvE:
 		{
-			
+			if (APCCombatGameState* PCGameState = GetCombatGameState())
+			{
+				PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
+			}
 		}
 		default:
 		break;
@@ -346,6 +319,12 @@ void APCCombatGameMode::Step_Return()
 	}
 	if (Prev->StageType == EPCStageType::PvP)
 	{
+
+		if (APCCombatGameState* PCGameState = GetCombatGameState())
+		{
+			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_End);
+		}
+		
 		if (APCCombatManager* PCCombatManager = GetCombatManager())
 		{
 			PCCombatManager->FinishAllBattle();
@@ -366,34 +345,34 @@ void APCCombatGameMode::Step_Return()
 	else if (Prev->StageType == EPCStageType::Start)
 	{
 		MovePlayersToBoardsAndCameraSet();
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		
+		if (APCCombatGameState* PCGameState = GetCombatGameState())
 		{
-			if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+			int32 SpawnIndex = 0;
+			auto ShopManager = PCGameState->GetShopManager();
+			TArray<FGameplayTag> SpawnTag = ShopManager->GetCarouselUnitTags(1);
+			PCGameState->SetGameStateTag(GameStateTags::Game_State_NonCombat);
+
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 			{
-				if (APCCombatGameState* PCGameState = GetCombatGameState())
+				if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
 				{
 					if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 					{
-						APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex);
+						
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, PCPlayerState->SeatIndex);
-							InCombatBoard->TileManager->PlaceUnitOnField(0,1, Unit);
-							APCBaseUnitCharacter* Unit2 = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow, PCPlayerState->SeatIndex);
-							InCombatBoard->TileManager->PlaceUnitOnField(1,1, Unit2);
-							InCombatBoard->TileManager->DebugLogField(true,true, TEXT("TileManager"));
+							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex);
+							if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
+							{
+								InCombatBoard->TileManager->PlaceUnitOnBench(0, Unit);
+							}
+							++SpawnIndex;
 						}
 					}
-							
 				}
-				
 			}
 		}
-		
-	}
-	else
-	{
-		
 	}
 }
 
@@ -445,11 +424,6 @@ void APCCombatGameMode::InitializeHomeBoardsForPlayers()
 		const int32 BoardIdx = ResolveBoardIndex(PCPlayerState);
 		APCCombatBoard* Board = CombatBoard.IsValidIndex(BoardIdx) ? CombatBoard[BoardIdx] : nullptr;
 		if (!Board) continue;
-
-		Board->SetReplicates(true);
-
-		// ★ 이 줄이 포인트: 보드 → 자신의 플레이어 컨트롤러를 Owner로 설정
-		Board->SetOwner(PCCombatPlayerController);
 		
 		PCCombatPlayerController->ClientSetHomeBoardIndex(BoardIdx);
 	}
@@ -473,9 +447,11 @@ void APCCombatGameMode::TryPlacePlayersAfterTravel()
 		return;
 
 	GetWorldTimerManager().ClearTimer(WaitAllPlayerController);
-	InitializeHomeBoardsForPlayers();
-			
-	StartFromBeginning();
+
+	AssignSeatDeterministicOnce();
+	
+	GetWorldTimerManager().SetTimer(ThWaitReady, this, &APCCombatGameMode::StartWhenReady,0.25f, true,0.0f);
+	
 }
 
 void APCCombatGameMode::PlaceAllPlayersOnCarousel()
@@ -596,4 +572,103 @@ APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
 		}
 	}
 	return nullptr;
+}
+
+
+bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
+{
+	const APCCombatGameState* GS = GetCombatGameState();
+	if (!IsValid(GS)) { WhyNot=TEXT("GameState null"); return false; }
+
+	int32 NumPlayers=0;
+	for (APlayerState* PSB : GS->PlayerArray)
+	{
+		const APCPlayerState* PS = Cast<APCPlayerState>(PSB);
+		if (!PS) continue;
+		++NumPlayers;
+
+		if (PS->SeatIndex < 0) { WhyNot = FString::Printf(TEXT("SeatIndex<0 PID=%d"), PS->GetPlayerId()); return false; }
+
+		APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex);
+		if (!IsValid(Board))  { WhyNot = FString::Printf(TEXT("No Board for Seat %d"), PS->SeatIndex); return false; }
+		if (!IsValid(Board->TileManager)) { WhyNot = FString::Printf(TEXT("No TileManager for Seat %d"), PS->SeatIndex); return false; }
+	}
+	if (NumPlayers==0) { WhyNot=TEXT("No players"); return false; }
+
+	if (!const_cast<APCCombatGameMode*>(this)->GetCombatManager())
+	{ WhyNot=TEXT("CombatManager null"); return false; }
+
+	if (!StageData) { WhyNot=TEXT("StageData null"); return false; }
+	
+	if (!IsValid(GS->GetShopManager()))
+	{
+		WhyNot = TEXT("Shop Manager null");
+		return false;
+	}
+	
+
+	return true;
+}
+
+void APCCombatGameMode::StartWhenReady()
+{
+	FString Why;
+	if (IsRoundSystemReady(Why))
+	{
+		GetWorldTimerManager().ClearTimer(ThWaitReady);
+		InitializeHomeBoardsForPlayers();
+		StartFromBeginning();
+		return;
+	}
+	UE_LOG(LogTemp, Error, TEXT("StartWhenReady wait : %s"), *Why);
+}
+
+void APCCombatGameMode::AssignSeatDeterministicOnce()
+{
+	if (bSeatsFinalized) return;
+
+	AGameStateBase* GS = GameState;
+	if (!GS) return;
+
+	TArray<APCPlayerState*> Players;
+	for (APlayerState* PSB : GS->PlayerArray)
+		if (auto* P = Cast<APCPlayerState>(PSB)) Players.Add(P);
+
+	// 1) 이미 배정된 좌석 중복 제거(중복이면 -1로 떨어뜨림), 사용 좌석 집계
+	TSet<int32> Used;
+	for (auto* P : Players)
+	{
+		if (P->SeatIndex >= 0)
+		{
+			if (Used.Contains(P->SeatIndex)) { P->SeatIndex = -1; }
+			else { Used.Add(P->SeatIndex); }
+		}
+	}
+
+	// 2) 결정적 순서(예: PlayerId)로 정렬 후 미배정 채우기
+	Players.Sort([](const APCPlayerState& A, const APCPlayerState& B){
+		return A.GetPlayerId() < B.GetPlayerId();
+	});
+
+	const int32 MaxSeats = FMath::Max(1, GetTotalSeatSlots()); // 보드/링 개수 기반
+	int32 next = 0;
+	auto NextFree = [&](){
+		while (Used.Contains(next)) ++next;
+		return next % MaxSeats;
+	};
+
+	for (auto* P : Players)
+	{
+		if (P->SeatIndex < 0)
+		{
+			P->SeatIndex = NextFree();
+			Used.Add(P->SeatIndex);
+			P->ForceNetUpdate();
+			UE_LOG(LogTemp, Warning, TEXT("Assigned SeatIndex=%d to PID=%d"), P->SeatIndex, P->GetPlayerId());
+		}
+	}
+
+	// 좌석→보드 맵 재구축
+	BuildHelperActor();
+	bSeatsFinalized = true;
 }

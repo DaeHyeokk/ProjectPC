@@ -7,6 +7,7 @@
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCCombatBoard::APCCombatBoard()
@@ -48,6 +49,13 @@ APCCombatBoard::APCCombatBoard()
 
 	// TIle Manger
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
+}
+
+void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APCCombatBoard, BoardSeatIndex);
 }
 
 

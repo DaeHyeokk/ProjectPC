@@ -76,6 +76,8 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 		
 	Unit->SetNetDormancy(DORM_Awake);
 	Unit->ForceNetUpdate();
+
+	OnUnitSpawned.Broadcast(Unit, TeamIndex);
 	
 	return Unit;
 }

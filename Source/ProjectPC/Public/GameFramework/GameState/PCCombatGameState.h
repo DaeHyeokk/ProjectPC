@@ -121,6 +121,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 
+	
+
 
 #pragma endregion GameLogic
 

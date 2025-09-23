@@ -148,15 +148,18 @@ bool APCLobbyGameMode::AreAllReady() const
 
 void APCLobbyGameMode::DoTravel()
 {
+
+	//GetWorld()->ServerTravel(GameMap.ToString(),false);
+	
 	if (!HasAuthority())
 		return;
-
+	
 	if (LevelToTravel.IsNull())
 	{
 		return;
 	}
-
+	
 	const FString LevelName = LevelToTravel.ToSoftObjectPath().GetLongPackageName();
-	GetWorld()->ServerTravel(LevelName, true);
+	GetWorld()->ServerTravel(LevelName);
 	
 }

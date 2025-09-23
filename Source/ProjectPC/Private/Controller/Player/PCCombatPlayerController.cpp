@@ -756,14 +756,14 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	{
 		if (bSrcField)
 		{
-			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
+			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
 		}
 		else if (SrcBench != INDEX_NONE)
 		{
-			TM->RemoveFromBench(SrcBench, true);
+			TM->RemoveFromBench(SrcBench, false);
 		}
 
-		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit) : TM->PlaceUnitOnBench(BenchIdx, Unit);
+		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) : TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto);
 
 		if (bPlaced)
 		{
@@ -791,38 +791,38 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	if (bSrcField && bField)
 	{
 		// 필드 -> 필드
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
-		TM->RemoveFromField(Y,X, true);
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
+		TM->RemoveFromField(Y,X, false);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
 
 		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
 	}
 	else if (!bSrcField && bField)
 	{
 		// 벤치 -> 필드
-		TM->RemoveFromBench(SrcBench, true);
-		TM->RemoveFromField(Y,X,true);
+		TM->RemoveFromBench(SrcBench, false);
+		TM->RemoveFromField(Y,X,false);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
 		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
 	}
 	else if (bSrcField && !bField)
 	{
 		// 필드 -> 벤치
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, true);
-		TM->RemoveFromBench(BenchIdx, true);
+		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
+		TM->RemoveFromBench(BenchIdx, false);
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit);
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
 		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
 	}
 	else
 	{
 		// 벤치 -> 벤치
-		TM->RemoveFromBench(SrcBench, true);
-		TM->RemoveFromBench(BenchIdx, true);
+		TM->RemoveFromBench(SrcBench, false);
+		TM->RemoveFromBench(BenchIdx, false);
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit) && TM->PlaceUnitOnBench(SrcBench, DstUnit);
+		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
 
 		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
 	}
