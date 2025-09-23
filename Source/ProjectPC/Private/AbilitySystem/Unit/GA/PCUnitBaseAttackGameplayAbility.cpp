@@ -159,11 +159,11 @@ void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventDa
 		Trans.SetLocation(Loc);
 		Trans.SetRotation(FQuat(Rot));
 
-		if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
-		{
-			FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
-			ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
-		}
+		// if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
+		// {
+		// 	FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
+		// 	ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
+		// }
 	}
 	
 	AttackCommit();

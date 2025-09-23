@@ -3,8 +3,8 @@
 
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
+
 #include "Character/Projectile/PCBaseProjectile.h"
-#include "Net/UnrealNetwork.h"
 
 
 void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectilePoolData& NewProjectilePoolData)
@@ -20,34 +20,37 @@ void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectil
 		if (auto Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 		{
-			Projectile->SetIsUsing(false);
-			ProjectilePool.Add(Projectile);
+			ProjectilePool.Enqueue(Projectile);
 		}
 	}
 }
 
-void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor)
+void UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
- 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
-	
-	bool SpawnCheck = false;
-	for (auto Projectile : ProjectilePool)
-	{
-		if (!Projectile->GetIsUsing())
-		{
-			Projectile->ActiveProjectile(SpawnTransform, ProjectileData, TargetActor);
-			SpawnCheck = true;
-			break;
-		}
-	}
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
+	if (!SpawnActor || !TargetActor) return;
 
-	if (!SpawnCheck)
+	APCBaseProjectile* SpawnedProjectile = nullptr;
+	if (!ProjectilePool.IsEmpty() && ProjectilePool.Dequeue(SpawnedProjectile))
 	{
-		if (auto* Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
+		SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
+	}
+	else
+	{
+		if (SpawnedProjectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 		{
-			ProjectilePool.Add(Projectile);
-			Projectile->ActiveProjectile(SpawnTransform, ProjectileData, TargetActor);
+			SpawnedProjectile->ActiveProjectile(SpawnTransform, UnitTag, TypeTag, SpawnActor, TargetActor);
 		}
+	}
+}
+
+void UPCProjectilePoolSubsystem::ReturnProjectile(APCBaseProjectile* ReturnedProjectile)
+{
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
+	
+	if (ReturnedProjectile)
+	{
+		ProjectilePool.Enqueue(ReturnedProjectile);
 	}
 }

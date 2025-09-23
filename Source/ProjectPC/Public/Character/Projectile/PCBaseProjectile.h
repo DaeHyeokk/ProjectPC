@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PCProjectileData.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "GameFramework/Actor.h"
 #include "PCBaseProjectile.generated.h"
 
@@ -15,8 +16,14 @@ class PROJECTPC_API APCBaseProjectile : public AActor
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(ReplicatedUsing = OnRep_ProjectileData)
-	FPCProjectileData ProjectileData;
+	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
+	TMap<FGameplayTag, TObjectPtr<UPCDataAsset_ProjectileData>> ProjectileData;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataUnitTag;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataTypeTag;
 	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
@@ -33,9 +40,6 @@ protected:
 	bool bIsHomingProjectile = true;
 	bool bIsPenetrating = false;
 
-	UPROPERTY(ReplicatedUsing = OnRep_bIsUsing)
-	bool bIsUsing = false;
-
 	FTimerHandle LifeTimer;
 	
 public:	
@@ -44,29 +48,31 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	FORCEINLINE void SetIsUsing(bool bNewUsing) { bIsUsing = bNewUsing; }
-	FORCEINLINE bool GetIsUsing() const { return bIsUsing; }
+private:
+	UPROPERTY()
+	const AActor* Target;
 
+public:
 	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor);
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
 	
 	UFUNCTION(BlueprintCallable)
-	void SetProjectileProperty(const FPCProjectileData& NewProjectileData);
+	void SetProjectileProperty();
 	
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(const AActor* TargetActor);
 
+	UFUNCTION(BlueprintCallable)
+	void ReturnToPool();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 protected:
-	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	
+	UFUNCTION()
+	void OnRep_ProjectileDataTag();
 
-	void OnLifeTimeEnd();
-	
-	UFUNCTION()
-	void OnRep_bIsUsing();
-	
-	UFUNCTION()
-	void OnRep_ProjectileData();
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_Overlap(AActor* OtherActor);
 };

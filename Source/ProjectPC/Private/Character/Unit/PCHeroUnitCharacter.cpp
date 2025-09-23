@@ -9,6 +9,7 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
+#include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
@@ -151,6 +152,12 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+		}
+
+		// 블랙보드 키값 초기화
+		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
+		{
+			AIC->ClearBlackboardValue();
 		}
 	}
 
