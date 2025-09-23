@@ -18,6 +18,8 @@ class UGameplayAbility;
 class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDied, APCBaseUnitCharacter*, Unit);
+
 UCLASS()
 class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
 										public IGenericTeamAgentInterface
@@ -131,4 +133,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
+
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitDied OnUnitDied;
 };

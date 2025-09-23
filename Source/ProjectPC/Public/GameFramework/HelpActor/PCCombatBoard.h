@@ -35,6 +35,8 @@ class PROJECTPC_API APCCombatBoard : public AActor
 public:	
 	APCCombatBoard();
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* SceneRoot;
 
@@ -45,7 +47,7 @@ public:
 	UCameraComponent* BoardCamera;
 
 	// 해당 보드 번호 (SeatIndex와 1:1)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Board")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Board")
 	int32 BoardSeatIndex = 0;
 
 	// SeatAnchor 소켓 부모를 에디터에서 지정

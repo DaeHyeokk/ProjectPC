@@ -149,4 +149,8 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_SellUnit, "Player.GA.Shop.SellUnit")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopRefresh, "Player.GA.Shop.ShopRefresh")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopLock, "Player.GA.Shop.ShopLock")
+
+	// ==== Player Damage Evnet Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Player_Event_Damage, "Player.Event.Damage")
+	
 }

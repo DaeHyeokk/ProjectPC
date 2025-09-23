@@ -61,6 +61,7 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 void UPCShopWidget::OpenMenu()
 {
 	this->AddToViewport(100);
+	this->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UPCShopWidget::CloseMenu()
@@ -113,7 +114,12 @@ void UPCShopWidget::SetupPlayerInfo()
 	auto PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
 	auto XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
-	XPBar->SetPercent(PlayerXP / PlayerMaxXP);
+	
+	if(!PlayerMaxXP == 0)
+	{
+		XPBar->SetPercent(PlayerXP / PlayerMaxXP);
+	}
+	
 
 	// 플레이어 정보 (골드) 세팅
 	auto PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());

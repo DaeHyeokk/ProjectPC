@@ -4,7 +4,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-
+#include "Windows/WindowsApplication.h"
 
 
 // Sets default values for this component's properties
@@ -20,6 +20,15 @@ APCCombatBoard* UPCTileManager::GetCombatBoard() const
 	return CachedCombatBoard ? CachedCombatBoard.Get() : Cast<APCCombatBoard>(GetOwner());
 }
 
+int32 UPCTileManager::GetBoardIndex()
+{
+	if (APCCombatBoard* MyBoard = GetCombatBoard())
+	{
+		BoardIndex = MyBoard->BoardSeatIndex;
+	}
+	return INDEX_NONE;
+}
+
 bool UPCTileManager::IsInRange(int32 Y, int32 X) const
 {
 	return (Y >= 0 && Y < Cols && X >= 0 && X < Rows);
@@ -32,30 +41,63 @@ void UPCTileManager::QuickSetUp()
 	CreateBench();
 }
 
-bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
+FRotator UPCTileManager::CalcUnitRotation(APCBaseUnitCharacter* Unit, ETileFacing Facing) const
+{
+	const APCCombatBoard* Board = GetCombatBoard();
+	float Yaw = Board ? Board->GetActorRotation().Yaw : 0;
+	Yaw += FacingYawOffsetDeg;
+
+	bool bEnemy = false;
+	switch (Facing)
+	{
+	case ETileFacing::Friendly : bEnemy = false;
+		break;
+	case ETileFacing::Enemy : bEnemy = true;
+		break;
+	case ETileFacing::Auto:
+		default:
+		bEnemy = (Board && Unit) ? (Unit->GetTeamIndex() != Board->BoardSeatIndex) : false;
+		break;
+	}
+	if (bEnemy) Yaw += 180.f;
+	return FRotator(0.f, FMath::UnwindDegrees(Yaw),0.f);
+}
+
+bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride)
 {
 	const int32 i = Y * Rows + X;
 	if (!Field.IsValidIndex(i) || !Unit || !Field[i].IsEmpty())
 		return false;
+
+	EnsureExclusive(Unit);
+
 	Field[i].Unit = Unit;
+	APCCombatBoard* Board = GetCombatBoard();
+	const FVector Loc = Field[i].Position;
+	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
+
+	Unit->SetOnCombatBoard(Board);
+	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
+	Unit->ChangedOnTile(true);
+	BindToUnit(Unit);
+
+	return true;
+}
+
+bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride)
+{
+	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty()) return false;
+
+	EnsureExclusive(Unit);
+	Bench[BenchIndex].Unit = Unit;
 
 	APCCombatBoard* CombatBoard = GetCombatBoard();
-	const FVector Loc = Field[i].Position;
-	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
-	
-	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
-	{
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocation(Field[i].Position);
-		Unit->ChangedOnTile(true);
-	}
-	else
-	{
-		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
-		Unit->ChangedOnTile(true);
-	}
+	const FVector  Loc = Bench[BenchIndex].Position;
+	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride); // ★ 동일
+
+	Unit->SetOnCombatBoard(CombatBoard);
+	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::ResetPhysics);
+	Unit->ChangedOnTile(false);
 	return true;
 }
 
@@ -65,10 +107,15 @@ bool UPCTileManager::RemoveFromField(int32 Y, int32 X, bool bPreserveUnitBoard)
 	if (!Field.IsValidIndex(i))
 		return false;
 
-	if (!bPreserveUnitBoard)
+	if (APCBaseUnitCharacter* Unit = Field[i].Unit)
 	{
-		Field[i].Unit->SetOnCombatBoard(nullptr);
+		UnbindFromUnit(Unit);
+		if (!bPreserveUnitBoard)
+		{
+			Field[i].Unit->SetOnCombatBoard(nullptr);
+		}
 	}
+		
 	Field[i].Unit = nullptr;
 	return true;
 }
@@ -132,45 +179,18 @@ FVector UPCTileManager::GetTileLocalPosition(int32 Y, int32 X) const
 	return GetOwner()->GetTransform().InverseTransformPosition(WorldPosition);
 }
 
-bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit)
-{
-	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty())
-		return false;
-
-	Bench[BenchIndex].Unit = Unit;
-
-	APCCombatBoard* CombatBoard = GetCombatBoard();
-	const FVector Loc = Bench[BenchIndex].Position;
-	FRotator Rot = CombatBoard ? CombatBoard->GetActorRotation() : FRotator::ZeroRotator;
-	
-	if (CombatBoard && Unit->GetTeamIndex() == CachedCombatBoard->BoardSeatIndex)
-	{
-		Bench[BenchIndex].bIsField = false;
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocation(Loc);
-		Unit->ChangedOnTile(false);
-	}
-	else
-	{
-		Rot.Yaw = FMath::UnwindDegrees(Rot.Yaw + 180.f);
-		Bench[BenchIndex].bIsField = false;
-		Unit->SetOnCombatBoard(CombatBoard);
-		Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr,ETeleportType::TeleportPhysics);
-		Unit->ChangedOnTile(false);
-	}
-
-	return true;
-}
 
 bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 {
 	if (!Bench.IsValidIndex(BenchIndex))
 		return false;
-
+	
 	if (!bPreserveUnitBoard)
 	{
 		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
 	}
+
+		
 	Bench[BenchIndex].Unit = nullptr;
 	
 	return true;
@@ -338,6 +358,9 @@ void UPCTileManager::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
 			Tile.ReservedUnit = nullptr;
 		}
 	}
+
+	InUnit->SetOnCombatBoard(nullptr);
+	UnbindFromUnit(InUnit);
 }
 
 // 타일 유효성 헬퍼
@@ -389,7 +412,6 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
 			}
 		}
 	}
-	
    
 
     // --- 벤치 캡쳐 ---
@@ -410,13 +432,24 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
                 CapturedBench.Add({i, U});
     }
 
+	UE_LOG(LogTemp, Warning, TEXT("CapturedField: %d, CapturedBench: %d"),
+	   CapturedField.Num(), CapturedBench.Num());
+	for (const auto& E : CapturedField)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  F %s (%d,%d)"), *E.Unit->GetName(), E.Col, E.Row);
+	}
+	for (const auto& E : CapturedBench)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  B %s (%d)"), *E.Unit->GetName(), E.Index);
+	}
+
     // --- 필드 이동 ---
     for (const auto& E : CapturedField)
     {
         const int32 nRow = bMirrorRows ? (Rows - 1 - E.Row) : E.Row;
         const int32 nCol = bMirrorCols ? (Cols - 1 - E.Col) : E.Col;
 
-       if (TargetField->PlaceUnitOnField(nCol, nRow, E.Unit.Get()))
+       if (TargetField->PlaceUnitOnField(nCol, nRow, E.Unit.Get(), ETileFacing::Enemy))
        {
 	       RemoveFromField(E.Col, E.Row, true);
        }
@@ -447,10 +480,30 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
                 }
             }
 
-            if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get()))
+            if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get(),ETileFacing::Enemy))
                 RemoveFromBench(E.Index, true);
         }
     }
+}
+
+bool UPCTileManager::EnsureExclusive(APCBaseUnitCharacter* InUnit)
+{
+	if (!InUnit) return false;
+
+	const FIntPoint GridPoint = GetFieldUnitGridPoint(InUnit);
+	if (GridPoint != FIntPoint::NoneValue)
+	{
+		RemoveFromField(GridPoint.Y, GridPoint.X, false);
+		return true;
+	}
+
+	const int32 BenchIdx = GetBenchUnitIndex(InUnit);
+	if (BenchIdx != INDEX_NONE)
+	{
+		RemoveFromBench(BenchIdx, false);
+		return true;
+	}
+	return false;
 }
 
 void UPCTileManager::CreateField()
@@ -789,12 +842,29 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitT
 	for (const FTile& FieldTile : Field)
 	{
 		AddIfMatch(FieldTile.Unit);
+
+		if (FieldTile.Unit)
+		{
+			int32 TeamIdx = FieldTile.Unit->GetTeamIndex();
+			int32 BoardIdx = GetCombatBoard()->BoardSeatIndex;
+
+			UE_LOG(LogTemp, Warning, TEXT("  TeamIdx : %d, BoardIndex : %d "), TeamIdx, BoardIndex);
+		}
+		
 	}
 
 	// 벤치
 	for (const FTile& BenchTile : Bench)
 	{
 		AddIfMatch(BenchTile.Unit);
+
+		if (BenchTile.Unit)
+		{
+			int32 TeamIdx = BenchTile.Unit->GetTeamIndex();
+			int32 BoardIdx = GetCombatBoard()->BoardSeatIndex;
+
+			UE_LOG(LogTemp, Warning, TEXT("  TeamIdx : %d, BoardIndex : %d "), TeamIdx, BoardIndex);
+		}
 	}
 
 	return AllUnits;
@@ -810,7 +880,7 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetFieldUnitByTag(FGameplayTag Uni
 	{
 		if (!IsValid(Unit)) return;
 
-		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag) && Unit->GetTeamIndex() == GetBoardIndex())
 		{
 			if (!AllUnits.Contains(Unit))
 			{
@@ -837,7 +907,7 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag Uni
 	{
 		if (!IsValid(Unit)) return;
 
-		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag) && Unit->GetTeamIndex() == GetBoardIndex())
 		{
 			if (!AllUnits.Contains(Unit))
 			{
@@ -852,5 +922,34 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag Uni
 	}
 
 	return AllUnits;
+}
+
+void UPCTileManager::BindToUnit(APCBaseUnitCharacter* Unit)
+{
+	if (!Unit) return;
+	if (DeathBoundUnits.Contains(Unit)) return;
+
+	Unit->OnUnitDied.AddDynamic(this, &UPCTileManager::OnBoundUnitDied);
+	DeathBoundUnits.Add(Unit);
+}
+
+void UPCTileManager::UnbindFromUnit(APCBaseUnitCharacter* Unit)
+{
+	if (!Unit) return;
+	if (!DeathBoundUnits.Contains(Unit)) return;
+
+	Unit->OnUnitDied.RemoveDynamic(this, &UPCTileManager::UPCTileManager::OnBoundUnitDied);
+	DeathBoundUnits.Remove(Unit);
+}
+
+void UPCTileManager::OnBoundUnitDied(APCBaseUnitCharacter* Unit)
+{
+	if (AActor* Owner = GetOwner())
+	{
+		if (!Owner->HasAuthority())
+			return;
+	}
+
+	ClearAllForUnit(Unit);
 }
 

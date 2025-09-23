@@ -18,14 +18,7 @@ void UStartMenuWidget::NativeConstruct()
 		Btn_Register->OnClicked.AddDynamic(this, &UStartMenuWidget::OnClicked_Register);
 	if (Btn_JoinLobby)
 		Btn_JoinLobby->OnClicked.AddDynamic(this, &UStartMenuWidget::OnClicked_JoinLobby);
-
-	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
-	{
-		const FString Addr = Profile->GetLobbyAddr();
-		if (EB_DisplayName)
-			EB_DisplayName->SetText(FText::FromString(Profile->GetDetailedInfo()));
-	}
-
+	
 	GetWorld()->GetTimerManager().SetTimer(UIRefreshTimer, this, &UStartMenuWidget::RefreshButtons, 0.3f, true, 0.0f);
 	RefreshButtons();
 	

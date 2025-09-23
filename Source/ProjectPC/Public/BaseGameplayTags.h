@@ -150,4 +150,7 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopRefresh)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopLock)
+
+	// ==== Player Event Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_Damage)
 }

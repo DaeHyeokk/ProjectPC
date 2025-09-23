@@ -18,6 +18,9 @@ class PROJECTPC_API APCLobbyGameMode : public AGameMode
 	
 public:
 	APCLobbyGameMode() { bUseSeamlessTravel = true;}
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
+	TSoftObjectPtr<UWorld> LevelToTravel;
 
 	UPROPERTY(EditDefaultsOnly)
 	FName GameMap;

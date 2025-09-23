@@ -85,4 +85,5 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, SeatIndex);
 	DOREPLIFETIME(APCPlayerState, bIdentified);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
+	DOREPLIFETIME(APCPlayerState, PlayerLevel);
 }
