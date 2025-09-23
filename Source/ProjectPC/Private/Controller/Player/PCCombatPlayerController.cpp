@@ -10,14 +10,12 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
-//#include "Character/Unit/PCBaseUnitCharacter.h"
-#include "AIController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -25,8 +23,8 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Shop/PCShopManager.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
+#include "Shop/PCShopManager.h"
 #include "UI/Shop/PCShopWidget.h"
 
 
@@ -861,7 +859,8 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 
 			if (ShopWidget->IsScreenPointInSellBox(MousePos))
 			{
-				Server_SellUnit(CachedHoverUnit.Get());
+				// Server_SellUnit(CurrentDragUnit.Get());
+				ShopRequest_SellUnit();
 			}
 			
 			ShopWidget->SwitchShopWidget();	
@@ -1011,6 +1010,7 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	int32 X = -1;
 	int32 BenchIdx = -1;
 	FVector Snap = World;
+	
 	if (!TileManager->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
 	{
 		Client_TileHoverUnit(nullptr);
@@ -1021,6 +1021,7 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	if (APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx))
 	{
 		Client_TileHoverUnit(Unit);
+		CachedHoverUnit = Unit;
 	}
 	
 }
@@ -1036,6 +1037,7 @@ void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFile
 	}
 
 	APCBaseUnitCharacter* Unit = bIsFiled ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
+	CachedHoverUnit = Unit;
 	Client_TileHoverUnit(Unit);
 }
 
