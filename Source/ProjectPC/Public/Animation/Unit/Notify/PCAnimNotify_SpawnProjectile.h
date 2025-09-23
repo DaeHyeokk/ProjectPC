@@ -4,12 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
+#include "Character/Projectile/PCBaseProjectile.h"
 #include "PCAnimNotify_SpawnProjectile.generated.h"
 
 /**
  * 
  */
+
+USTRUCT()
+struct FTargetData_Projectile : public FGameplayAbilityTargetData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseProjectile> Projectile;
+
+	virtual UScriptStruct* GetScriptStruct() const override { return StaticStruct(); }
+};
+
 UCLASS()
 class PROJECTPC_API UPCAnimNotify_SpawnProjectile : public UAnimNotify
 {

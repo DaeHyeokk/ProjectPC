@@ -65,6 +65,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(const AActor* TargetActor);
 
+	UFUNCTION()
+	void SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs);
+	
 	UFUNCTION(BlueprintCallable)
 	void ReturnToPool();
 

@@ -6,7 +6,9 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Animation/Unit/Notify/PCAnimNotify_SpawnProjectile.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/Projectile/PCBaseProjectile.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
@@ -150,21 +152,17 @@ void UPCUnitBaseAttackGameplayAbility::OnHitSucceed(FGameplayEventData Payload)
 
 void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventData Payload)
 {
-	// 발사체 생성 후 Payload EffectSpec 넘겨보냄
-	if (UPCProjectilePoolSubsystem* ProjectilePool = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	for (const TSharedPtr<FGameplayAbilityTargetData>& TD : Payload.TargetData.Data)
 	{
-		FVector Loc = Unit->GetActorForwardVector() * 200.f;
-		FRotator Rot = UKismetMathLibrary::ComposeRotators(Unit->GetActorRotation(), FRotator(90.f,1.f,1.f));
-		FTransform Trans = FTransform::Identity;
-		Trans.SetLocation(Loc);
-		Trans.SetRotation(FQuat(Rot));
-
-		// if (UPCDataAsset_ProjectileData* ProjectileDataAsset = Unit->GetUnitProjectileDataAsset())
-		// {
-		// 	FPCProjectileData ProjectileData = ProjectileDataAsset->ProjectileData.FindRef(UnitGameplayTags::Unit_Action_Attack_Ultimate);
-		// 	ProjectilePool->SpawnProjectile(Trans, ProjectileData, CurrentTarget.Get());	
-		// }
+		if (const FTargetData_Projectile* P = static_cast<FTargetData_Projectile*>(TD.Get()))
+		{
+			if (APCBaseProjectile* Projectile = P->Projectile.Get())
+			{
+				Projectile->SetEffectSpecs(AbilityConfig.ProjectilePayloadEffectSpecs.EffectSpecs);
+			}
+		}
 	}
+	
 	
 	AttackCommit();
 }
