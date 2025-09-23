@@ -68,8 +68,8 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 	TSet<FIntPoint> Visited;
 	Q.Enqueue(FBfsData(StartPoint, 0));
 	Visited.Add(StartPoint);
-
-	APCBaseUnitCharacter* BestTarget = nullptr;
+	
+	APCBaseUnitCharacter* Farthest = nullptr;
 	
 	while (!Q.IsEmpty())
 	{
@@ -92,7 +92,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 				
 				// 가장 멀리 있는 적을 찾는거라면 현재 적을 Target 후보에 추가
 			case ETargetSearchMode::FarthestInRange:
-				BestTarget = HereUnit;
+				Farthest = HereUnit;
 				break;
 
 			default:
@@ -124,10 +124,10 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		}
 	}
 
-	if (BestTarget)
+	if (Farthest)
 	{
 		// 찾은 타겟이 있다면 타겟을 TargetActorKey에 할당하고 Succeeded 반환
-		SetTargetActorKey(BestTarget, BB);
+		SetTargetActorKey(Farthest, BB);
 		return EBTNodeResult::Succeeded;
 	}
 	else
@@ -136,15 +136,14 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
 	}
-	
 }
 
 void UBTTask_FindTarget::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const
 {
-	BB->SetValueAsObject(TargetActorKey.SelectedKeyName, Target);
+	BB->SetValueAsObject(TargetUnitKey.SelectedKeyName, Target);
 }
 
 void UBTTask_FindTarget::ClearTargetActorKey(UBlackboardComponent* BB) const
 {
-	BB->ClearValue(TargetActorKey.SelectedKeyName);
+	BB->ClearValue(TargetUnitKey.SelectedKeyName);
 }

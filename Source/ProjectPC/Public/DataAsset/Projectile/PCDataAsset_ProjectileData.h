@@ -19,4 +19,7 @@ class PROJECTPC_API UPCDataAsset_ProjectileData : public UDataAsset
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
 	TMap<FGameplayTag, FPCProjectileData> ProjectileData;
+
+	UFUNCTION(BlueprintPure, Category = "ProjectileData")
+	const FPCProjectileData& GetProjectileData(FGameplayTag Tag) const;
 };

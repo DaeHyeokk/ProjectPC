@@ -7,24 +7,21 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
-#include "DSP/BufferDiagnostics.h"
-#include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
 APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	NetUpdateFrequency = 100.f;
-	MinNetUpdateFrequency = 66.f;
+	//NetUpdateFrequency = 100.f;
+	//MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -38,7 +35,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetCharacterMovement()->SetIsReplicated(false);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
-	GetCharacterMovement()->MaxWalkSpeed = 200.f;
+	GetCharacterMovement()->MaxWalkSpeed = 250.f;
 
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
@@ -71,6 +68,11 @@ UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
 const UPCDataAsset_UnitAbilityConfig* APCBaseUnitCharacter::GetUnitAbilityConfigDataAsset() const
 {
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAbilityConfigData() : nullptr;
+}
+
+UPCDataAsset_ProjectileData* APCBaseUnitCharacter::GetUnitProjectileDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetProjectileData() : nullptr;
 }
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
@@ -135,6 +137,10 @@ void APCBaseUnitCharacter::BeginPlay()
 			InitStatusBarWidget(W);
 		}
 	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -239,17 +245,35 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 }
 
 
-// void APCBaseUnitCharacter::OnRep_IsOnField()
-// {
-// 	if (bIsOnField)
-// 	{
-// 		if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = GetUnitAnimSetDataAsset())
-// 		{
-// 			if (UAnimMontage* Montage = UnitAnimSet->GetAnimMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart))
-// 			{
-// 				if (Montage)
-// 					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
-// 			}
-// 		}
-// 	}
-// }
+void APCBaseUnitCharacter::Die()
+{
+	if (HasAuthority())
+	{
+		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+		if (ASC)
+		{
+			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+			{
+				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+			}
+			ASC->CancelAllAbilities();
+		}
+
+		Multicast_PlayDeathMontage();
+	}
+}
+
+void APCBaseUnitCharacter::Multicast_PlayDeathMontage_Implementation()
+{
+	UPCDataAsset_UnitAnimSet* AnimSet = GetUnitAnimSetDataAsset();
+	UAnimMontage* DeathMontage = AnimSet ? AnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_Death) : nullptr;
+	
+	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
+	}
+	else
+	{
+		OnDeathMontageCompleted();
+	}
+}

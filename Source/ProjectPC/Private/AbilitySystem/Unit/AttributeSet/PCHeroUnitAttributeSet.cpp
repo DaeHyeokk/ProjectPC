@@ -13,9 +13,12 @@ void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MaxMana, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CurrentMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,UltimateDamage, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,UltimateCost, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MagicDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CritChance, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CritMultiplier, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,LifeSteal, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,SpellVamp, COND_None, REPNOTIFY_OnChanged);
 }
@@ -40,6 +43,16 @@ void UPCHeroUnitAttributeSet::OnRep_CurrentMana(const FGameplayAttributeData& Ol
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CurrentMana, OldCurrentMana);
 }
 
+void UPCHeroUnitAttributeSet::OnRep_UltimateDamage(const FGameplayAttributeData& OldUltimateDamage)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, UltimateDamage, OldUltimateDamage);
+}
+
+void UPCHeroUnitAttributeSet::OnRep_UltimateCost(const FGameplayAttributeData& OldUltimateCost)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, UltimateCost, OldUltimateCost);
+}
+
 void UPCHeroUnitAttributeSet::OnRep_PhysicalDamageMultiplier(const FGameplayAttributeData& OldPhysicalDamageMultiplier)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, PhysicalDamageMultiplier, OldPhysicalDamageMultiplier);
@@ -53,6 +66,11 @@ void UPCHeroUnitAttributeSet::OnRep_MagicDamageMultiplier(const FGameplayAttribu
 void UPCHeroUnitAttributeSet::OnRep_CritChance(const FGameplayAttributeData& OldCritChance)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CritChance, OldCritChance);
+}
+
+void UPCHeroUnitAttributeSet::OnRep_CritMultiplier(const FGameplayAttributeData& OldCritMultiplier)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CritMultiplier, OldCritMultiplier);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_LifeSteal(const FGameplayAttributeData& OldLifeSteal)

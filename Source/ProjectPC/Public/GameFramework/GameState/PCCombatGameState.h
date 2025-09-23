@@ -43,7 +43,7 @@ struct FSpawnSubsystemConfig
 	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
-	TSubclassOf<class APCPreviewHeroActor> DefaultPreviewHeroClass;
+	TSoftClassPtr<class APCPreviewHeroActor> DefaultPreviewHeroClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
@@ -80,6 +80,7 @@ struct FStageRuntimeState
 };
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, FGameplayTag);
 /**
  * 
  */
@@ -144,7 +145,8 @@ public:
 	EPCStageType GetCurrentStageType() const;
 
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
-
+	FOnGameStateTagChanged OnGameStateTagChanged;
+	
 protected:
 
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
@@ -203,12 +205,15 @@ public:
 	bool IsCombatActive() const { return GameStateTag.MatchesTag(GameStateTags::Game_State_Combat); }
 	
 protected:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)
 	FGameplayTag GameStateTag;
 
+	UFUNCTION()
+	void OnRep_GameStateTag();
+	
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
-	//BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	//BT Decorator에서 Game State Tag 정보 참조하기 위해
 	//IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;

@@ -33,6 +33,7 @@ public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
+	UPCDataAsset_ProjectileData* GetUnitProjectileDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
@@ -117,6 +118,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsOnField() const { return bIsOnField; }
 
+	UFUNCTION(BlueprintCallable)
+	virtual void Die();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnDeathMontageCompleted() { };
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDeathMontage();
+	
 protected:
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> OnCombatBoard;

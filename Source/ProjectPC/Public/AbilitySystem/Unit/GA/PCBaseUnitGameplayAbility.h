@@ -4,8 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCBaseUnitGameplayAbility.generated.h"
 
+class APCBaseUnitCharacter;
+class UPCUnitAttributeSet;
 /**
  * 
  */
@@ -16,5 +20,17 @@ class PROJECTPC_API UPCBaseUnitGameplayAbility : public UGameplayAbility
 
 public:
 	UPCBaseUnitGameplayAbility();
+
+protected:
+	virtual void OnAvatarSet(
+		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
+	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
+	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
+	
+	UPROPERTY(Transient)
+	TObjectPtr<APCBaseUnitCharacter> Unit;
+
+	FAbilityConfig AbilityConfig;
+	FMontageConfig MontageConfig;
 };

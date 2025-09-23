@@ -11,7 +11,7 @@
 
 void UPCUnitAnimInstance::PlayLevelStartMontage()
 {
-	UAnimMontage* LevelStart = CurrentAnimSet ? CurrentAnimSet->MontageByTagMap.FindRef(UnitGameplayTags::Unit_Montage_LevelStart) : nullptr;
+	UAnimMontage* LevelStart = CurrentAnimSet ? CurrentAnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart) : nullptr;
 	if (!LevelStart)
 		return;
 

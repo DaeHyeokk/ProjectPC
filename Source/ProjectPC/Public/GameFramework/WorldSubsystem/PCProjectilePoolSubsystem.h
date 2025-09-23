@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "PCProjectilePoolData.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "PCProjectilePoolSubsystem.generated.h"
@@ -22,13 +23,15 @@ protected:
 	UPROPERTY()
 	FPCProjectilePoolData ProjectilePoolData;
 
-	UPROPERTY()
-	TArray<APCBaseProjectile*> ProjectilePool;
+	TQueue<APCBaseProjectile*> ProjectilePool;
 	
 public:
 	UFUNCTION()
 	void InitializeProjectilePoolData(const FPCProjectilePoolData& NewProjectilePoolData);
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnProjectile(const FTransform& SpawnTransform, const FPCProjectileData& ProjectileData, const AActor* TargetActor);
+	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable)
+	void ReturnProjectile(APCBaseProjectile* ReturnedProjectile);
 };

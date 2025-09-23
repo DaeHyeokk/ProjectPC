@@ -37,22 +37,24 @@ void UPCUnitGERegistrySubsystem::InitializeUnitGERegistry(UPCDataAsset_UnitGEDic
 	}
 }
 
-UClass* UPCUnitGERegistrySubsystem::GetGEClass(const FGameplayTag& GEClassKey)
+TSubclassOf<UGameplayEffect> UPCUnitGERegistrySubsystem::GetGEClass(const FGameplayTag& GEClassKey)
 {
 	if (const TWeakObjectPtr<UClass>* Found = CachedGEClasses.Find(GEClassKey))
-		if (UClass* C = Found->Get())
-			return C;
+	{
+		if (Found->IsValid())
+			return Found->Get();
+		
+	}
 
 	if (!UnitGEDict)
 		return nullptr;
 
 	if (const TSoftClassPtr<UGameplayEffect>* GEClass = UnitGEDict->Entries.Find(GEClassKey))
 	{
-		UAssetManager::GetStreamableManager().RequestSyncLoad(GEClass->ToSoftObjectPath());
-		if (UClass* C = GEClass->Get())
+		if (UClass* Loaded = GEClass->LoadSynchronous())
 		{
-			CachedGEClasses.Add(GEClassKey, C);
-			return C;
+			CachedGEClasses.Add(GEClassKey, Loaded);
+			return Loaded;
 		}
 	}
 

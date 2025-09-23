@@ -25,7 +25,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultCreepStatusBarWidgetClass =SpawnConfig.CreepStatusBarWidgetClass;
 	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass;
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass;
-	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass;
+	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass.LoadSynchronous();
 	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
 
@@ -57,7 +57,12 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
 	
 	APCBaseUnitCharacter* Unit = GetWorld()->SpawnActorDeferred<APCBaseUnitCharacter>(
-		SpawnClass, SpawnTransform, InOwner, InInstigator, HandlingMethod);
+		SpawnClass,
+		SpawnTransform,
+		InOwner,
+		InInstigator,
+		HandlingMethod);
+	
 	if (!Unit)
 		return nullptr;
 

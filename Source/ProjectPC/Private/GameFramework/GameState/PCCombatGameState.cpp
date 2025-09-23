@@ -108,7 +108,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(APCCombatGameState, GameStateTag);
+	DOREPLIFETIME_CONDITION_NOTIFY(APCCombatGameState, GameStateTag, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
@@ -131,7 +131,14 @@ void APCCombatGameState::SetGameStateTag(const FGameplayTag& InGameStateTag)
 	if (HasAuthority() && GameStateTag != InGameStateTag)
 	{
 		GameStateTag = InGameStateTag;
+		OnGameStateTagChanged.Broadcast(GameStateTag);
 	}
+}
+
+// 클라에서 Game State 변경 알림 받기 위해 구현
+void APCCombatGameState::OnRep_GameStateTag()
+{
+	OnGameStateTagChanged.Broadcast(GameStateTag);
 }
 
 void APCCombatGameState::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const

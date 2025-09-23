@@ -3,11 +3,14 @@
 
 #include "Character/Projectile/PCBaseProjectile.h"
 
-#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
-#include "GameFramework/ProjectileMovementComponent.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+
+#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCBaseProjectile::APCBaseProjectile()
@@ -19,7 +22,7 @@ APCBaseProjectile::APCBaseProjectile()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	RootComponent = MeshComp;
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -28,6 +31,7 @@ APCBaseProjectile::APCBaseProjectile()
 	ProjectileMovement->MaxSpeed = 1000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
+	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
 	TrailEffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
 	TrailEffectComp->SetupAttachment(MeshComp);
@@ -37,51 +41,60 @@ void APCBaseProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
 	SetReplicateMovement(true);
 }
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const FPCProjectileData& NewProjectileData, const AActor* TargetActor)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
-	bIsUsing = true;
-	OnRep_bIsUsing();
-
-	SetActorTransform(SpawnTransform);
-	SetProjectileProperty(NewProjectileData);
-	SetTarget(TargetActor);
+	if (SpawnActor && TargetActor)
+	{
+		ProjectileDataUnitTag = UnitTag;
+		ProjectileDataTypeTag = TypeTag;
+		
+		SetInstigator(SpawnActor->GetInstigator());
+		
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		SetActorTransform(SpawnTransform);
+	
+		SetProjectileProperty();
+		SetTarget(TargetActor);
+		
+		Target = TargetActor;
+	}
 }
 
-void APCBaseProjectile::SetProjectileProperty(const FPCProjectileData& NewProjectileData)
+void APCBaseProjectile::SetProjectileProperty()
 {
-	if (NewProjectileData.Mesh)
+	if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
 	{
-		ProjectileData.Mesh = NewProjectileData.Mesh;
-		MeshComp->SetStaticMesh(NewProjectileData.Mesh);
-	}
-	if (NewProjectileData.TrailEffect)
-	{
-		ProjectileData.TrailEffect = NewProjectileData.TrailEffect;
-		TrailEffectComp->SetTemplate(NewProjectileData.TrailEffect);
-	}
-	if (NewProjectileData.HitEffect)
-	{
-		ProjectileData.HitEffect = NewProjectileData.HitEffect;
-		HitEffect = NewProjectileData.HitEffect;
-	}
+		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
+		if (Projectile.Mesh && MeshComp)
+		{
+			MeshComp->SetStaticMesh(Projectile.Mesh);
+		}
+		if (Projectile.TrailEffect && TrailEffectComp)
+		{
+			TrailEffectComp->SetTemplate(Projectile.TrailEffect);
+			TrailEffectComp->SetActive(true);
+		}
+		if (Projectile.HitEffect)
+		{
+			HitEffect = Projectile.HitEffect;
+		}
+
+		ProjectileMovement->InitialSpeed = Projectile.Speed;
+		ProjectileMovement->MaxSpeed = Projectile.Speed;
+		ProjectileMovement->Velocity = GetActorForwardVector();
+		bIsHomingProjectile = Projectile.bIsHomingProjectile;
+		bIsPenetrating = Projectile.bIsPenetrating;
 	
-	ProjectileMovement->InitialSpeed = NewProjectileData.Speed;
-	ProjectileMovement->MaxSpeed = NewProjectileData.Speed;
-	ProjectileMovement->Velocity = GetActorForwardVector();
-	bIsHomingProjectile = NewProjectileData.bIsHomingProjectile;
-	bIsPenetrating = NewProjectileData.bIsPenetrating;
-	
-	if (bIsPenetrating)
-	{
-		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	}
-	
-	if (NewProjectileData.LifeTime > 0.f)
-	{
-		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
+		if (Projectile.LifeTime > 0.f)
+		{
+			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
+		}
 	}
 }
 
@@ -99,8 +112,46 @@ void APCBaseProjectile::SetTarget(const AActor* TargetActor)
 		{
 			FVector TargetLocation = TargetActor->GetActorLocation();
 			FVector Direction = (TargetLocation - GetActorLocation()).GetSafeNormal();
-	
 			ProjectileMovement->Velocity = Direction * ProjectileMovement->InitialSpeed;
+		}
+	}
+}
+
+void APCBaseProjectile::SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs)
+{
+	EffectSpecs = InEffectSpecs;
+}
+
+void APCBaseProjectile::ReturnToPool()
+{
+	GetWorldTimerManager().ClearTimer(LifeTimer);
+	
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->bIsHomingProjectile = false;
+		ProjectileMovement->HomingTargetComponent = nullptr;
+	}
+
+	if (Target)
+	{
+		Target = nullptr;
+	}
+
+	if (TrailEffectComp)
+	{
+		TrailEffectComp->SetActive(false);
+	}
+	
+	SetInstigator(nullptr);
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	if (HasAuthority())
+	{
+		if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+		{
+			ProjectilePoolSubsystem->ReturnProjectile(this);
 		}
 	}
 }
@@ -109,76 +160,58 @@ void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(APCBaseProjectile, bIsUsing);
-	DOREPLIFETIME(APCBaseProjectile, ProjectileData);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataUnitTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataTypeTag);
 }
 
-void APCBaseProjectile::OnRep_bIsUsing()
+void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	SetActorHiddenInGame(!bIsUsing);
-	SetActorEnableCollision(bIsUsing);
-}
-
-void APCBaseProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other,
-                                  class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal,
-                                  FVector NormalImpulse, const FHitResult& Hit)
-{
-	if (HitEffect)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, HitLocation, HitNormal.Rotation());
-	}
-
-	bIsUsing = false;
-	OnRep_bIsUsing();
-
-	if (ProjectileMovement)
-	{
-		ProjectileMovement->StopMovementImmediately();
-	}
-}
-
-void APCBaseProjectile::OnLifeTimeEnd()
-{
-	bIsUsing = false;
-	OnRep_bIsUsing();
-
-	if (ProjectileMovement)
-	{
-		ProjectileMovement->StopMovementImmediately();
-	}
-
-	GetWorldTimerManager().ClearTimer(LifeTimer);
-}
-
-void APCBaseProjectile::OnRep_ProjectileData()
-{
-	UE_LOG(LogTemp, Error, TEXT("OnRep ProjectileData Call"));
-	if (ProjectileData.Mesh)
-	{
-		MeshComp->SetStaticMesh(ProjectileData.Mesh);
-	}
-	if (ProjectileData.TrailEffect)
-	{
-		TrailEffectComp->SetTemplate(ProjectileData.TrailEffect);
-	}
-	if (ProjectileData.HitEffect)
-	{
-		HitEffect = ProjectileData.HitEffect;
-	}
+	if (!HasAuthority()) return;
+	Super::NotifyActorBeginOverlap(OtherActor);
 	
-	ProjectileMovement->InitialSpeed = ProjectileData.Speed;
-	ProjectileMovement->MaxSpeed = ProjectileData.Speed;
-	ProjectileMovement->Velocity = GetActorForwardVector();
-	bIsHomingProjectile = ProjectileData.bIsHomingProjectile;
-	bIsPenetrating = ProjectileData.bIsPenetrating;
-	
-	if (bIsPenetrating)
+	if (OtherActor != GetInstigator())
 	{
-		MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+		if (bIsHomingProjectile && OtherActor != Target)
+		{
+			return;
+		}
+		
+		if (HitEffect)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
+			Multicast_Overlap(OtherActor);
+		}
+
+		for (auto EffectSpec : EffectSpecs)
+		{
+			if (EffectSpec)
+			{
+				if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+				{
+					if (auto ASC = Unit->GetAbilitySystemComponent())
+					{
+						EffectSpec->ApplyEffect(ASC, Target);
+					}
+				}
+			}
+		}
+
+		if (!bIsPenetrating)
+		{
+			ReturnToPool();
+		}
 	}
-	
-	if (ProjectileData.LifeTime > 0.f)
+}
+
+void APCBaseProjectile::OnRep_ProjectileDataTag()
+{
+	SetProjectileProperty();
+}
+
+void APCBaseProjectile::Multicast_Overlap_Implementation(AActor* OtherActor)
+{
+	if (HitEffect && OtherActor)
 	{
-		GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::OnLifeTimeEnd, ProjectileData.LifeTime, false);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
 	}
 }

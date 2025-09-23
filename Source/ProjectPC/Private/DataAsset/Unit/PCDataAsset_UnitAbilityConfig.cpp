@@ -8,6 +8,7 @@ bool UPCDataAsset_UnitAbilityConfig::TryFindAbilityConfigByTag(const FGameplayTa
 {
 	if (AbilityConfigMap.Contains(AbilityTag))
 	{
+		OutConfig = AbilityConfigMap.FindRef(AbilityTag);
 		return true;
 	}
 	else

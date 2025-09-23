@@ -53,8 +53,8 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	auto UnitCost = GS->GetShopManager()->GetUnitCostByTag(UnitTag);
 	auto UnitLevel = Unit->GetUnitLevel();
 	auto SellingPrice = GS->GetShopManager()->GetSellingPrice({UnitCost, UnitLevel});
-
-	if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+	
+	if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
 	{
 		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
 		{

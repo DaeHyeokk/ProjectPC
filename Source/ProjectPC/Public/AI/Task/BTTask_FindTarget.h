@@ -35,7 +35,7 @@ protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 	UPROPERTY(EditAnywhere, Category="Blackboard")
-	FBlackboardKeySelector TargetActorKey;
+	FBlackboardKeySelector TargetUnitKey;
 
 	UPROPERTY(EditAnywhere, Category="Data")
 	ETargetSearchMode TargetSearchMode = ETargetSearchMode::NearestInRange;
