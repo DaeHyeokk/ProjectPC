@@ -681,6 +681,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
+		Client_CurrentDragUnit(Unit);
 	}
 	else
 	{
@@ -881,7 +882,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 
 			if (ShopWidget->IsScreenPointInSellBox(MousePos))
 			{
-				Server_SellUnit(CachedHoverUnit.Get());
+				Server_SellUnit(CurrentDragUnit.Get());
 			}
 			
 			ShopWidget->SwitchShopWidget();	
@@ -1058,6 +1059,22 @@ void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFile
 	APCBaseUnitCharacter* Unit = bIsFiled ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
 	Client_TileHoverUnit(Unit);
 }
+
+void APCCombatPlayerController::Client_CurrentDragUnit_Implementation(APCBaseUnitCharacter* Unit)
+{
+	if (!IsLocalController())
+		return;
+
+	if (Unit != nullptr)
+	{
+		CurrentDragUnit = Unit;
+	}
+	else
+	{
+		CurrentDragUnit = nullptr;
+	}
+}
+
 
 void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitCharacter* Unit)
 {

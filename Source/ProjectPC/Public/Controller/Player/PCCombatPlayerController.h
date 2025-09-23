@@ -236,6 +236,9 @@ public:
 	void Server_QueryTileUnit(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx);
 
 	UFUNCTION(Client, Reliable)
+	void Client_CurrentDragUnit(APCBaseUnitCharacter* Unit);
+
+	UFUNCTION(Client, Reliable)
 	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
 
 	UPROPERTY()
