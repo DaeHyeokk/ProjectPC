@@ -7,6 +7,7 @@
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -56,17 +57,21 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	
 	if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
 	{
-		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
+		if (auto PC = Cast<APCCombatPlayerController>(PS->GetPlayerController()))
 		{
-			if (!TileManager->RemoveFromBoard(Unit))
+			if (auto TileManager = PC->GetTileManager())
 			{
-				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-				return;
-			}
+				if (!TileManager->RemoveFromBoard(Unit))
+				{
+					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+					return;
+				}
 			
-			GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
-			Unit->Destroy();
+				GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
+				Unit->Destroy();
+			}
 		}
+		
 	}
 			
 	FGameplayEffectSpecHandle GoldSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerGoldChange, GetAbilityLevel());

@@ -187,10 +187,13 @@ private:
 	void CheckPairVictory(int32 PairIndex);
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
+
 	// 전투중 구매
 	UFUNCTION()
 	void OnUnitSpawnedDuringBattle(APCBaseUnitCharacter* Unit, int32 SeatIndex);
-
+	
+public:
+	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;
 	int32 FindFirstFreeBenchIndex(UPCTileManager* TM, bool bEnemySide) const;
 

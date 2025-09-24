@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "GameFramework/PlayerController.h"
 #include "PCCombatPlayerController.generated.h"
 
@@ -268,7 +269,11 @@ public:
 
 	void SetHoverHighLight(APCBaseUnitCharacter* NewUnit);
 	void ClearHoverHighLight();
-	
+
+	static bool IsBattleTag(const FGameplayTag& Tag)
+	{
+		return Tag == GameStateTags::Game_State_Combat_Preparation || Tag == GameStateTags::Game_State_Combat_Active;
+	}
 
 protected:
 	// 서버 상태
