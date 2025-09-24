@@ -24,7 +24,7 @@ int32 UPCTileManager::GetBoardIndex()
 {
 	if (APCCombatBoard* MyBoard = GetCombatBoard())
 	{
-		BoardIndex = MyBoard->BoardSeatIndex;
+		return MyBoard->BoardSeatIndex;
 	}
 	return INDEX_NONE;
 }
@@ -726,10 +726,6 @@ bool UPCTileManager::WorldToField(const FVector& WorldLoc, int32& OutY, int32& O
 
 	OutY = BestY;
 	OutX = BestX;
-
-	// UE_LOG(LogTemp, Warning, TEXT("World: %s  Best (y=%d,x=%d) Pos:%s  d=%.1f"),
-	// *WorldLoc.ToString(), BestY, BestX, *Field[IndexOf(BestY,BestX)].Position.ToString(),
-	// FMath::Sqrt(BestD2));
 	
 	return true;
 	

@@ -101,6 +101,30 @@ UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) c
 	return nullptr;
 }
 
+APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	APCCombatManager* CombatManager = nullptr;
+	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	{
+		CombatManager = *It;
+		break;
+	}
+	if (!CombatManager) return nullptr;
+
+	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
+	if (PairIdx == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
+		return HostBoard;
+	return nullptr;
+}
+
 float APCCombatGameState::GetStageRemainingSeconds() const
 {
 	const float Now = GetServerWorldTimeSeconds();

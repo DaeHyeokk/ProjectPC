@@ -125,6 +125,8 @@ public:
 
 	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
 
+	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
+
 	
 
 
