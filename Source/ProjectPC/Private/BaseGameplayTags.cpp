@@ -18,8 +18,11 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero, "Unit.Type.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Raven, "Unit.Type.Hero.Raven")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Greystone, "Unit.Type.Hero.Greystone")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Yin, "Unit.Type.Hero.Yin")
+	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
@@ -128,7 +131,6 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerLevel, "Player.Stat.PlayerLevel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerXP, "Player.Stat.PlayerXP")
-	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerMaxXP, "Player.Stat.PlayerMaxXP")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerGold, "Player.Stat.PlayerGold")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerHP, "Player.Stat.PlayerHP")
 
@@ -136,12 +138,6 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Normal, "Player.State.Normal")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Carousel, "Player.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead")
-	
-	// ==== Player Stat Change GE Tags ====
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_LevelChange, "Player.GE.LevelChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_XPChange, "Player.GE.XPChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_GoldChange, "Player.GE.GoldChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_HPChange, "Player.GE.HPChange")
 
 	// ==== Player Shop Ability Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_BuyXP, "Player.GA.Shop.BuyXP")

@@ -124,7 +124,6 @@ public:
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 
 	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
-
 	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
 
 	
@@ -208,6 +207,8 @@ public:
 	UFUNCTION(BlueprintPure)
 	const FGameplayTag& GetGameStateTag() const { return GameStateTag; }
 	bool IsCombatActive() const { return GameStateTag.MatchesTag(GameStateTags::Game_State_Combat); }
+
+	bool bIsbattle() const { return GameStateTag == GameStateTags::Game_State_Combat_Preparation || GameStateTag == GameStateTags::Game_State_Combat_Active; }
 	
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)

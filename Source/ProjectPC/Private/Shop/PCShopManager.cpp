@@ -12,7 +12,6 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
-#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
@@ -93,27 +92,32 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, const int32 BenchIndex)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
 	if (!TargetPlayer) return;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
-	auto PC = Cast<APCCombatPlayerController>(TargetPlayer->GetPlayerController());
-	if (!PC) return;
-
-	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-	if (!Board) return;
+	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
+	if (!Board)
+	{
+		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+		if (!Board) return;
+	}
 	
-	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex,1, PC);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 
 	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
 	{
-		Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+		auto BenchIndex = Board->GetFirstEmptyBenchIndex(TargetPlayer->SeatIndex);
+		if (BenchIndex != INDEX_NONE)
+		{
+			Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+		}
 	}
 	
-	UnitLevelUp(TargetPlayer, UnitTag);
+	UnitLevelUp(TargetPlayer, UnitTag, 0);
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);
 }
 
@@ -126,17 +130,21 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return UnitCountByLevelMap;
 
-	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-	if (!Board) return UnitCountByLevelMap;
+	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
+	if (!Board)
+	{
+		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+		if (!Board) return UnitCountByLevelMap;
+	}
+	
 	auto TileManager = Board->TileManager;
 
 	TArray<APCBaseUnitCharacter*> UnitList;
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
-	// 실제 게임 적용할 때는 주석 해제
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
-		UnitList = TileManager->GetAllUnitByTag(UnitTag,TargetPlayer->SeatIndex);
+		UnitList = TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 	else
 	{
@@ -196,65 +204,76 @@ int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* Target
 	return 0; 
 }
 
-void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag)
+void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount)
 {
 	if (!TargetPlayer) return;
 	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
-	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-	if (!Board) return;
-	auto TileManager = Board->TileManager;
-	
-	bool bIsOngoing = true;
-	while (bIsOngoing)
+	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
+	if (!Board)
 	{
-		bIsOngoing = false;
-		
-		auto UnitCountByLevelMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, 0);
-		
-		for (auto& Pair : UnitCountByLevelMap)
+		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
+		if (!Board) return;
+	}
+	
+	auto TileManager = Board->TileManager;
+
+	TArray<APCBaseUnitCharacter*> UnitList;
+	auto CurrentGameStateTag = GS->GetGameStateTag();
+
+	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
+	{
+		UnitList = TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+	}
+	else
+	{
+		UnitList = TileManager->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+	}
+
+	auto AddShopUnitCountMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, ShopAddUnitCount);
+	
+	AddShopUnitCountMap.KeySort([](const int32 A, const int32 B){ return A < B; });
+
+	TArray<int32> LevelUp;
+	
+	// 레벨이 낮은 것부터 합치고 UnitCountByLevelMap 업데이트
+	for (auto& Pair : AddShopUnitCountMap)
+	{
+		auto UnitLevel = Pair.Key;
+		auto& UnitCount = Pair.Value;
+
+		if (UnitCount >= 3)
 		{
-			auto UnitLevel = Pair.Key;
-			auto UnitCount = Pair.Value;
+			UnitCount -= 3;
+			AddShopUnitCountMap.FindOrAdd(UnitLevel + 1)++;
+			LevelUp.Add(UnitLevel);
+		}
+	}
 
-			if (UnitCount >= 3)
+	for (int32 UnitLevel : LevelUp)
+	{
+		TArray<APCHeroUnitCharacter*> HeroUnitList;
+		for (auto Unit : UnitList)
+		{
+			if (auto* Hero = Cast<APCHeroUnitCharacter>(Unit))
 			{
-				TArray<APCHeroUnitCharacter*> HeroUnitList;
-				for (auto Unit : TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex))
+				if (IsValid(Hero) && !Hero->IsActorBeingDestroyed() && Hero->GetUnitLevel() == UnitLevel)
 				{
-					auto HeroUnit = Cast<APCHeroUnitCharacter>(Unit);
-					if (!IsValid(HeroUnit) || HeroUnit->IsActorBeingDestroyed())
-					{
-						continue;
-					}
-					
-					if (HeroUnit->GetUnitLevel() == UnitLevel)
-					{
-						HeroUnitList.Add(HeroUnit);
-						if (HeroUnitList.Num() == 3)
-						{
-							break;
-						}
-					}
+					HeroUnitList.Add(Hero);
 				}
-
-				if (HeroUnitList.Num() == 3)
-				{
-					auto LevelUpUnit = HeroUnitList[0];
-					LevelUpUnit->SetUnitLevel(UnitLevel + 1);
-
-					for (int i = 1; i < 3; i++)
-					{
-						TileManager->RemoveFromBoard(HeroUnitList[i]);
-						HeroUnitList[i]->Destroy();
-					}
-				}
-
-				bIsOngoing = true;
-				break;
 			}
+		}
+
+		APCHeroUnitCharacter* LevelUpUnit = HeroUnitList[0];
+		LevelUpUnit->SetUnitLevel(UnitLevel + 1);
+
+		int32 RemoveCount = FMath::Min(2, HeroUnitList.Num() - 1);
+		for (int32 i = 1; i <= RemoveCount; ++i)
+		{
+			TileManager->RemoveFromBoard(HeroUnitList[i]);
+			HeroUnitList[i]->Destroy();
 		}
 	}
 }

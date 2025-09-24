@@ -17,6 +17,11 @@
 UPCGameplayAbility_SellUnit::UPCGameplayAbility_SellUnit()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_SellUnit);
+
+	ActivationRequiredTags.AddTag(PlayerGameplayTags::Player_State_Normal);
+	
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	
 	FAbilityTriggerData TriggerData;;
 	TriggerData.TriggerTag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
@@ -24,13 +29,30 @@ UPCGameplayAbility_SellUnit::UPCGameplayAbility_SellUnit()
 	AbilityTriggers.Add(TriggerData);
 }
 
+bool UPCGameplayAbility_SellUnit::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
+	if (!ActorInfo->IsNetAuthority())
+	{
+		return false;
+	}
+	
+	return true;
+}
+
 void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                                  const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                                  const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (!ActorInfo->IsNetAuthority() || !TriggerEventData)
+	if (!TriggerEventData)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;

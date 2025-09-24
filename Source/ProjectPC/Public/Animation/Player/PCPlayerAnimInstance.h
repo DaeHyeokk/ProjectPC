@@ -21,13 +21,10 @@ protected:
 
 private:
 	UPROPERTY()
-	class ACharacter* OwnerCharacter;
-
-	// UPROPERTY()
-	// class UCharacterMovementComponent* OwnerMovementComponent;
+	ACharacter* OwnerCharacter;
 
 	float Speed;
-	// bool bIsEmoting;
+	bool bIsDead;
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
@@ -35,7 +32,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
     FORCEINLINE bool IsMoving() const { return Speed != 0; }
-	
-	// UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
-	// FORCEINLINE bool IsEmoting() const { return bIsEmoting; }
+
+	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
+	FORCEINLINE bool IsDead() const { return bIsDead; }
 };

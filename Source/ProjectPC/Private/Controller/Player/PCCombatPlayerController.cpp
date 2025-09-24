@@ -10,14 +10,12 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
-//#include "Character/Unit/PCBaseUnitCharacter.h"
-#include "AIController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -83,9 +81,6 @@ void APCCombatPlayerController::BeginPlay()
 	ApplyGameInputMode();
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-
-	
-	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
@@ -302,9 +297,11 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
-	auto* PS = GetPlayerState<APCPlayerState>();
-	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!PS || !GS) return;
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
 
 	// 팀 확인
 	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
@@ -321,16 +318,15 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 	{
 		if (Unit && !Unit->IsActorBeingDestroyed())
 		{
-				
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.OptionalObject = Unit;
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.OptionalObject = Unit;
 
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-				Unit = nullptr;
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
+			Unit = nullptr;
 		}
 	}
 	
@@ -347,14 +343,20 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto ASC = PS->GetAbilitySystemComponent();
 	if (!ASC) return;
 	
-	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
+	auto Board = GS->GetBattleBoardForSeat(PS->SeatIndex);
 	if (!Board)
-		
+	{
+		Board = GS->GetBoardBySeat(PS->SeatIndex);
+		if (!Board) return;
+	}
+
+	int32 RequiredCount = 0;
+
 	// 벤치가 꽉 찼을 때
 	if (Board->GetFirstEmptyBenchIndex(PS->SeatIndex) == INDEX_NONE)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
-		auto RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
 		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
@@ -365,18 +367,17 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 
 			// 클릭한 슬롯 제외 나머지 구매 처리
-			for (int i = 0; i < RequiredCount - 1; ++i)
+			if (RequiredCount >= 1)
 			{
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.EventMagnitude = static_cast<float>(SameSlotIndices[i]);
-
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-
-				SetSlotHidden(SameSlotIndices[i]);
+				for (int i = 0; i < RequiredCount - 1; ++i)
+				{
+					SetSlotHidden(SameSlotIndices[i]);
+					PS->PurchasedSlots.Add(SameSlotIndices[i]);
+				}
+			}
+			else
+			{
+				return;
 			}
 		}
 	}
@@ -387,7 +388,13 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	EventData.Instigator = PS;
 	EventData.Target = PS;
 	EventData.EventTag = GA_Tag;
-	EventData.EventMagnitude = static_cast<float>(SlotIndex);
+
+	FGameplayAbilityTargetDataHandle TargetDataHandle;
+	FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit();
+	NewData->HitResult.Location.X = SlotIndex;
+	NewData->HitResult.Location.Y = RequiredCount;
+	TargetDataHandle.Add(NewData);
+	EventData.TargetData = TargetDataHandle;
 	
 	ASC->HandleGameplayEvent(GA_Tag, &EventData);
 	
@@ -642,6 +649,7 @@ void APCCombatPlayerController::OnMouse_Released()
 	{
 		if (DragComponent)
 			DragComponent->OnMouse_Released(this);
+
 		CachedHoverUnit = nullptr;
 		ClearHoverHighLight();
 	}
@@ -1111,6 +1119,7 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	int32 X = -1;
 	int32 BenchIdx = -1;
 	FVector Snap = World;
+	
 	if (!TileManager->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
 	{
 		Client_TileHoverUnit(nullptr);

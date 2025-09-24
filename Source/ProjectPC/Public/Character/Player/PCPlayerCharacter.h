@@ -20,4 +20,16 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+	UPROPERTY(Replicated)
+	bool bIsDead;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool IsDead() const { return bIsDead; }
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerDie();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
