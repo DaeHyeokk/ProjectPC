@@ -19,8 +19,11 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
@@ -139,7 +142,6 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead)
 
 	// ==== Player Stat Change GE Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_LevelChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_XPChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_GoldChange)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_HPChange)

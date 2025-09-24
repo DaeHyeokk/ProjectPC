@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "BaseGameplayTags.h"
 #include "Shop/PCShopUnitData.h"
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
@@ -66,10 +67,21 @@ private:
 
 	UPROPERTY()
 	const class UPCPlayerAttributeSet* PlayerAttributeSet;
+
+	UPROPERTY()
+	FGameplayTagContainer AllStateTags;
+	
+	UPROPERTY()
+	FGameplayTag CurrentStateTag;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	const UPCPlayerAttributeSet* GetAttributeSet() const;
+	FGameplayTag GetCurrentStateTag() const;
+
+	void ChangeState(FGameplayTag NewStateTag);
+
+	void ApplyDamage(float Damage);
 
 #pragma endregion AbilitySystem
 

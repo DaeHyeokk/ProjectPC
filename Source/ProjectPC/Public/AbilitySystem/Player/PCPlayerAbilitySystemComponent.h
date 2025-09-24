@@ -23,4 +23,6 @@ public:
 	void ApplyInitializedEffects();
 	// Initial GA 적용
 	void ApplyInitializedAbilities();
+	// Tag에 따른 GE 적용
+	void ApplyPlayerEffects(FGameplayTag GE_Tag, float GE_Value);
 };

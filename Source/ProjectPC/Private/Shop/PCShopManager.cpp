@@ -93,7 +93,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 	TargetPlayer->SetShopSlots(NewShopSlots);
 }
 
-void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, const int32 BenchIndex)
+void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
 	if (!TargetPlayer) return;
 
@@ -107,7 +107,11 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 
 	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
 	{
-		Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+		auto BenchIndex = Board->GetFirstEmptyBenchIndex();
+		if (BenchIndex != -1)
+		{
+			Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+		}
 	}
 	
 	UnitLevelUp(TargetPlayer, UnitTag, 0);

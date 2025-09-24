@@ -9,6 +9,7 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "Shop/PCShopManager.h"
 
@@ -16,6 +17,11 @@
 UPCGameplayAbility_BuyUnit::UPCGameplayAbility_BuyUnit()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_BuyUnit);
+
+	ActivationRequiredTags.AddTag(PlayerGameplayTags::Player_State_Normal);
+
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 
 	FAbilityTriggerData TriggerData;;
 	TriggerData.TriggerTag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
@@ -47,7 +53,15 @@ void UPCGameplayAbility_BuyUnit::ApplyCost(const FGameplayAbilitySpecHandle Hand
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
 	if (CostSpecHandle.IsValid())
 	{
-		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -(UnitCost * BuyCount));
+		if (BuyCount == 0)
+		{
+			CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -UnitCost);
+		}
+		else
+		{
+			CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -(UnitCost * BuyCount));
+		}
+		
 		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
 	}
 }
@@ -64,14 +78,13 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		return;
 	}
 
-	auto* PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>();
+	auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get());
 	if (!PS)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
-	// SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
 	const auto* TargetData = TriggerEventData->TargetData.Get(0);
 	SlotIndex = TargetData->GetHitResult()->Location.X;
 	BuyCount = TargetData->GetHitResult()->Location.Y;
@@ -85,7 +98,7 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		return;
 	}
 
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -93,17 +106,13 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 
 	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
 	{
-		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+		if (BuyCount == 0)
 		{
-			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
-			if (BenchIndex != -1)
-			{
-				GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
-			}
-			else
-			{
-				GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
-			}
+			GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag);
+		}
+		else
+		{
+			GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
 		}
 	}
 	

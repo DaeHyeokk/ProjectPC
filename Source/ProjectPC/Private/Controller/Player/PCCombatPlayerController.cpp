@@ -297,9 +297,11 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
-	auto* PS = GetPlayerState<APCPlayerState>();
-	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!PS || !GS) return;
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
+
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
 
 	// 팀 확인
 	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
@@ -307,7 +309,7 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 
 	if (UPCTileManager* TM = GetTileManager())
 	{
-		if (TM->GetBenchUnitIndex(Unit) == INDEX_NONE)
+		if (TM->GetBenchUnitIndex(Unit) == INDEX_NONE && TM->GetFieldUnitGridPoint(Unit) == FIntPoint::NoneValue )
 			return;
 	}
 	
@@ -316,16 +318,15 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 	{
 		if (Unit && !Unit->IsActorBeingDestroyed())
 		{
-				
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.OptionalObject = Unit;
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.OptionalObject = Unit;
 
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-				Unit = nullptr;
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
+			Unit = nullptr;
 		}
 	}
 	
@@ -345,7 +346,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
 	if (!Board) return;
 
-	int32 RequiredCount = 1;
+	int32 RequiredCount = 0;
 
 	// 벤치가 꽉 찼을 때
 	if (Board->GetFirstEmptyBenchIndex() == -1)
@@ -362,12 +363,17 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 
 			// 클릭한 슬롯 제외 나머지 구매 처리
-			if (RequiredCount > 1)
+			if (RequiredCount >= 1)
 			{
 				for (int i = 0; i < RequiredCount - 1; ++i)
 				{
 					SetSlotHidden(SameSlotIndices[i]);
+					PS->PurchasedSlots.Add(SameSlotIndices[i]);
 				}
+			}
+			else
+			{
+				return;
 			}
 		}
 	}
@@ -378,7 +384,6 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	EventData.Instigator = PS;
 	EventData.Target = PS;
 	EventData.EventTag = GA_Tag;
-	// EventData.EventMagnitude = static_cast<float>(SlotIndex);
 
 	FGameplayAbilityTargetDataHandle TargetDataHandle;
 	FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit();

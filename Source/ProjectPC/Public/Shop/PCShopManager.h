@@ -39,7 +39,7 @@ public:
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
 
 	// 유닛 구매
-	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag, int32 BenchIndex);
+	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag);
 	TMap<int32, int32> GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
 	int32 GetRequiredCountWithFullBench(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
 	void UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount);

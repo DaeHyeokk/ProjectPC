@@ -12,12 +12,22 @@
 UPCGameplayAbility_BuyXP::UPCGameplayAbility_BuyXP()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_BuyXP);
+
+	ActivationRequiredTags.AddTag(PlayerGameplayTags::Player_State_Normal);
+
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 }
 
 bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
 	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
@@ -64,9 +74,6 @@ void UPCGameplayAbility_BuyXP::ActivateAbility(const FGameplayAbilitySpecHandle 
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
-	FGameplayEffectContextHandle EffectContext = MakeEffectContext(Handle, ActorInfo);
-	EffectContext.AddSourceObject(this);
 	
 	FGameplayEffectSpecHandle XPSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerXPChange, GetAbilityLevel());
 	if (XPSpecHandle.IsValid())
