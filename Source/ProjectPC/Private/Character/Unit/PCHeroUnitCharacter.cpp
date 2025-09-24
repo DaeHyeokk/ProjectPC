@@ -206,7 +206,7 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 
 void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
-	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
+	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
 }
 

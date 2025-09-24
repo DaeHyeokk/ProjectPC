@@ -36,12 +36,10 @@ public:
 	virtual bool HasLevelSystem() const override { return true; }
 	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 	virtual void SetUnitLevel(const int32 Level) override;
+	void LevelUp();
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-	
-	UFUNCTION(BlueprintCallable)
-	void LevelUp();
 
 	void UpdateStatusBarUI() const;
 	
@@ -67,7 +65,7 @@ protected:
 	int32 HeroLevel = 1;
 
 	UFUNCTION()
-	void OnRep_HeroLevel();
+	virtual void OnRep_HeroLevel();
 
 	// 전투 관련 //
 	virtual void OnDeathAnimCompleted() override;

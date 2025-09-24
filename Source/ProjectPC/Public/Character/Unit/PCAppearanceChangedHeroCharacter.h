@@ -14,7 +14,8 @@ class PROJECTPC_API APCAppearanceChangedHeroCharacter : public APCHeroUnitCharac
 {
 	GENERATED_BODY()
 	
-	
+protected:
+	virtual void OnRep_HeroLevel() override;
 	
 	
 };
