@@ -234,7 +234,7 @@ public:
 	void Server_QueryHoverFromWorld(const FVector& World);
 	
 	UFUNCTION(Server, Unreliable)
-	void Server_QueryTileUnit(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx);
+	void Server_QueryTileUnit(bool bIsField, int32 Y, int32 X, int32 BenchIdx);
 
 	UFUNCTION(Client, Reliable)
 	void Client_CurrentDragUnit(APCBaseUnitCharacter* Unit);
@@ -259,7 +259,7 @@ public:
 	UPCTileManager* GetTileManager() const ;
 
 	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
-	static bool IsAllowBenchIdx(int32 Idx) { return Idx <= 8;}
+	bool IsAllowBenchIdx(int32 Idx);
 
 	// 외곽선 관련
 	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;

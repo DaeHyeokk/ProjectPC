@@ -6,7 +6,6 @@
 #include "Engine/DataTable.h"
 
 #include "BaseGameplayTags.h"
-#include "ContentBrowserItemData.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"

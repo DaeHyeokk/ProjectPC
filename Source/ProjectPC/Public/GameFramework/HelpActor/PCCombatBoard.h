@@ -76,6 +76,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HISM")
 	void OnHism(bool bOn) const;
 
+	UFUNCTION(BLueprintCallable, Category = "HISM")
+	void OnEnemyHism(bool bEnemySide) const;
+
 	// 보드 좌석 스폰용 헬퍼
 	UFUNCTION(BlueprintCallable)
 	FTransform GetPlayerSeatTransform() const;
@@ -125,11 +128,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
 	USceneComponent* BenchRoot;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
+	USceneComponent* EnemyBenchRoot;
+
 	UPROPERTY(EditAnywhere, Category = "Markers")
 	FName FieldPrefix = TEXT("Field_");
 
 	UPROPERTY(EditAnywhere, Category = "Markers")
 	FName BenchPrefix = TEXT("Bench_");
+
+	UPROPERTY(EditAnywhere, Category = "Markers")
+	FName EnemyBenchPrefix = TEXT("Enemy_");
 
 	// HISM(필드/벤치)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
@@ -137,6 +146,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
 	UHierarchicalInstancedStaticMeshComponent* BenchHISM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
+	UHierarchicalInstancedStaticMeshComponent* EnemyHISM;
 
 	UPROPERTY(EditAnywhere, Category = "HISM")
 	UStaticMesh* HexTileMesh = nullptr;
@@ -161,7 +173,7 @@ public:
 	void RebuildTilesFromMarkers();
 
 	// 비어있는 벤치 중 가장 왼쪽의 인덱스를 받아오는 함수
-	int32 GetFirstEmptyBenchIndex() const;
+	int32 GetFirstEmptyBenchIndex(int32 SeatIndex) const;
 
 protected:
 	// 마커 수집
@@ -177,12 +189,16 @@ private:
 	TArray<FTileInfo> FieldTiles;
 	UPROPERTY()
 	TArray<FTileInfo> BenchTiles;
+	UPROPERTY()
+	TArray<FTileInfo> EnemyTiles;
 
 	// HISM 인덱스 / 논리 좌표
 	UPROPERTY()
 	TArray<FIntPoint> Field_InstanceToXY;
 	UPROPERTY()
 	TArray<FIntPoint> Bench_InstanceToXY;
+	UPROPERTY()
+	TArray<FIntPoint> Enemy_InstanceToXY;
 
 	// Tile Manager
 public:
