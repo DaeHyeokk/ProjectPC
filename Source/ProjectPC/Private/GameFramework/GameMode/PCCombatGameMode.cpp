@@ -249,6 +249,11 @@ void APCCombatGameMode::Step_Setup()
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
 			PCPlayerController->Client_ShowWidget();
+			PCPlayerController->ShopRequest_ShopRefresh(0);
+			// if (auto* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
+			// {
+			// 	PCPlayerState->Le
+			// }
 		}
 	}
 }
