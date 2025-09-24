@@ -90,14 +90,22 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 
 	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
 	{
-		if (auto Board = GS->GetBoardBySeat(PS->SeatIndex))
+		APCCombatBoard* Board = GS->GetBattleBoardForSeat(PS->SeatIndex);
+
+		if (!Board)
 		{
-			auto BenchIndex = Board->GetFirstEmptyBenchIndex();
-			if (BenchIndex != -1)
+			Board = GS->GetBoardBySeat(PS->SeatIndex);
+		}
+
+		if (Board)
+		{
+			auto BenchIndex = Board->GetFirstEmptyBenchIndex(PS->SeatIndex);
+			if (BenchIndex != INDEX_NONE)
 			{
 				GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
 			}
 		}
+		
 	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

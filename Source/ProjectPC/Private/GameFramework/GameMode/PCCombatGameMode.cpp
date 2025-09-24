@@ -394,11 +394,23 @@ void APCCombatGameMode::Step_PvE()
 
 void APCCombatGameMode::Step_CreepSpawn()
 {
-	if (APCCombatManager* PCCombatManager = GetCombatManager())
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		PCCombatManager->BuildRandomPairs();
-		PCCombatManager->TravelPlayersForAllPairs(TravelCameraBlend);
-		PCCombatManager->StartAllBattle();
+		if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
+			{
+				if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+				{
+					APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Creep_MinionLv1, PCPlayerState->SeatIndex, 1, PCCombatPlayerController);
+
+					// if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
+					// {
+					// 	InCombatBoard->TileManager->PlaceUnitOnField(5,6, Unit);
+					// }
+				}
+			}
+		}
 	}
 }
 

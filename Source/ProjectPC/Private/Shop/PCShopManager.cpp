@@ -136,11 +136,11 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	// 실제 게임 적용할 때는 주석 해제
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
-		UnitList = TileManager->GetAllUnitByTag(UnitTag);
+		UnitList = TileManager->GetAllUnitByTag(UnitTag,TargetPlayer->SeatIndex);
 	}
 	else
 	{
-		UnitList = TileManager->GetBenchUnitByTag(UnitTag);
+		UnitList = TileManager->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 
 	// 테스트용, 실제 게임 적용할 때는 삭제
@@ -222,7 +222,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 			if (UnitCount >= 3)
 			{
 				TArray<APCHeroUnitCharacter*> HeroUnitList;
-				for (auto Unit : TileManager->GetAllUnitByTag(UnitTag))
+				for (auto Unit : TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex))
 				{
 					auto HeroUnit = Cast<APCHeroUnitCharacter>(Unit);
 					if (!IsValid(HeroUnit) || HeroUnit->IsActorBeingDestroyed())
