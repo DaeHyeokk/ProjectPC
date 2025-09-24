@@ -343,8 +343,12 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto ASC = PS->GetAbilitySystemComponent();
 	if (!ASC) return;
 	
-	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
-	if (!Board) return;
+	auto Board = GS->GetBattleBoardForSeat(PS->SeatIndex);
+	if (!Board)
+	{
+		Board = GS->GetBoardBySeat(PS->SeatIndex);
+		if (!Board) return;
+	}
 
 	int32 RequiredCount = 0;
 
