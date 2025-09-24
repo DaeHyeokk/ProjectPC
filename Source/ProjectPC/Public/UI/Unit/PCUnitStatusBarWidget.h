@@ -41,9 +41,6 @@ protected:
 private:
 	UPROPERTY(meta=(BindWidget))
 	UPCUnitHealthProgressBar* HealthBar = nullptr;
-
-	UPROPERTY(meta=(BindWidget))
-	UTextBlock* HealthText = nullptr;
 	
 	UPROPERTY(meta=(BindWidget))
 	UProgressBar* ManaBar = nullptr;
