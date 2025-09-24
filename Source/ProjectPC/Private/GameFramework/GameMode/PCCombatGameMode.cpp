@@ -361,7 +361,7 @@ void APCCombatGameMode::Step_Return()
 						
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex);
+							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1, PCCombatPlayerController);
 							if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
 							{
 								InCombatBoard->TileManager->PlaceUnitOnBench(0, Unit);
@@ -577,7 +577,8 @@ APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
 bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 {
 	const APCCombatGameState* GS = GetCombatGameState();
-	if (!IsValid(GS)) { WhyNot=TEXT("GameState null"); return false; }
+	if (!IsValid(GS))
+		{ WhyNot=TEXT("GameState null"); return false; }
 
 	int32 NumPlayers=0;
 	for (APlayerState* PSB : GS->PlayerArray)
@@ -586,11 +587,14 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		if (!PS) continue;
 		++NumPlayers;
 
-		if (PS->SeatIndex < 0) { WhyNot = FString::Printf(TEXT("SeatIndex<0 PID=%d"), PS->GetPlayerId()); return false; }
+		if (PS->SeatIndex < 0)
+			{ WhyNot = FString::Printf(TEXT("SeatIndex<0 PID=%d"), PS->GetPlayerId()); return false; }
 
 		APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex);
-		if (!IsValid(Board))  { WhyNot = FString::Printf(TEXT("No Board for Seat %d"), PS->SeatIndex); return false; }
-		if (!IsValid(Board->TileManager)) { WhyNot = FString::Printf(TEXT("No TileManager for Seat %d"), PS->SeatIndex); return false; }
+		if (!IsValid(Board))
+			{ WhyNot = FString::Printf(TEXT("No Board for Seat %d"), PS->SeatIndex); return false; }
+		if (!IsValid(Board->TileManager))
+			{ WhyNot = FString::Printf(TEXT("No TileManager for Seat %d"), PS->SeatIndex); return false; }
 	}
 	if (NumPlayers==0) { WhyNot=TEXT("No players"); return false; }
 

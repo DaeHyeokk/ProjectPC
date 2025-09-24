@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
+class UPCTileManager;
 class APCCombatBoard;
 class UPCShopManager;
 class APCPlayerState;
@@ -121,6 +122,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
+
+	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
+
+	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
 
 	
 

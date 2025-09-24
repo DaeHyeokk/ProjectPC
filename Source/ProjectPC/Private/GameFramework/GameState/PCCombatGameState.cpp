@@ -3,7 +3,9 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "EngineUtils.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/PCCombatManager.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
@@ -73,6 +75,54 @@ void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
 	StageRuntimeState = NewState;
 
 	OnRep_StageRunTime();
+}
+
+UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	APCCombatManager* CombatManager = nullptr;
+	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	{
+		CombatManager = *It;
+		break;
+	}
+	if (!CombatManager) return nullptr;
+
+	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
+	if (PairIdx == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
+		return HostBoard->TileManager;
+	return nullptr;
+}
+
+APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	APCCombatManager* CombatManager = nullptr;
+	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	{
+		CombatManager = *It;
+		break;
+	}
+	if (!CombatManager) return nullptr;
+
+	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
+	if (PairIdx == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
+		return HostBoard;
+	return nullptr;
 }
 
 float APCCombatGameState::GetStageRemainingSeconds() const

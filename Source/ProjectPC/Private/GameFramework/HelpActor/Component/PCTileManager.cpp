@@ -24,7 +24,7 @@ int32 UPCTileManager::GetBoardIndex()
 {
 	if (APCCombatBoard* MyBoard = GetCombatBoard())
 	{
-		BoardIndex = MyBoard->BoardSeatIndex;
+		return MyBoard->BoardSeatIndex;
 	}
 	return INDEX_NONE;
 }
@@ -375,16 +375,30 @@ bool UPCTileManager::IsValidTile(int32 Y, int32 X, int32& OutIndex) const
 
 int32 UPCTileManager::MirrorBenchIndex(int32 Index) const
 {
+	bool bEnemy=false;
+	const int32 Local = GetLocalFromGlobalBenchIndex(Index, bEnemy);
+	if (Local == INDEX_NONE) return INDEX_NONE;
+	return MakeGlobalBenchIndex(!bEnemy, Local);
+}
+
+int32 UPCTileManager::MakeGlobalBenchIndex(bool bEnemySide, int32 LocalIndex) const
+{
 	const int32 N = BenchSlotsPerSide;
-	if (Index < 0 || Index >= 2*N)
-		return INDEX_NONE;
-	return(Index<N ? (Index+N) : (Index - N));
+	if (LocalIndex < 0 || LocalIndex >= N) return INDEX_NONE;
+	return (bEnemySide ? N : 0) + LocalIndex;
+}
+
+int32 UPCTileManager::GetLocalFromGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide) const
+{
+	const int32 N = BenchSlotsPerSide;
+	if (GlobalIndex < 0 || GlobalIndex >= 2*N) { bEnemySide=false; return INDEX_NONE; }
+	bEnemySide = (GlobalIndex >= N);
+	return bEnemySide ? (GlobalIndex - N) : GlobalIndex;
 }
 
 
-
 void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows, bool bMirrorCols,
-	bool bIncludeBench)
+                                         bool bIncludeBench)
 {
 	 if (!TargetField || Rows != TargetField->Rows || Cols != TargetField->Cols)
         return;
@@ -422,27 +436,18 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
     const int32 NTarget = TargetField->BenchSlotsPerSide;
     const int32 TSize   = TargetField->BenchSize;
 
-    const bool bDualBenchThis   = (Bench.Num()            == 2*NThis   && NThis   > 0);
-    const bool bDualBenchTarget = (TargetField->Bench.Num() == 2*NTarget && NTarget > 0);
-
+    
+	const bool bCanMirrorBench =
+		(NThis > 0) && (NTarget == NThis) &&
+		(Bench.Num() == 2*NThis) && (TargetField->Bench.Num() == 2*NTarget);
+	
     if (bIncludeBench)
     {
         for (int32 i = 0; i < Bench.Num(); ++i)
             if (APCBaseUnitCharacter* U = GetBenchUnit(i))
                 CapturedBench.Add({i, U});
     }
-
-	UE_LOG(LogTemp, Warning, TEXT("CapturedField: %d, CapturedBench: %d"),
-	   CapturedField.Num(), CapturedBench.Num());
-	for (const auto& E : CapturedField)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  F %s (%d,%d)"), *E.Unit->GetName(), E.Col, E.Row);
-	}
-	for (const auto& E : CapturedBench)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  B %s (%d)"), *E.Unit->GetName(), E.Index);
-	}
-
+	
     // --- 필드 이동 ---
     for (const auto& E : CapturedField)
     {
@@ -459,30 +464,30 @@ void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirr
     // --- 벤치 이동 ---
     if (bIncludeBench)
     {
-        for (const auto& E : CapturedBench)
-        {
-            int32 NewIndex = E.Index;
+    	for (const auto& E : CapturedBench)
+    	{
+    		int32 NewIndex = E.Index;
 
-            if (bMirrorCols)
-            {
-                if (bDualBenchThis && bDualBenchTarget && TSize > 0)
-                {
-                    const int32 capped = E.Index % TSize;
-                    NewIndex = TargetField->MirrorBenchIndex(capped); // 좌↔우 반쪽 스왑
-                }
-                else if (TSize > 0)
-                {
-                    NewIndex = TSize - 1 - (E.Index % TSize); // 폴백: 전체 역순
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("Skip bench mirror: Target BenchSize == 0"));
-                }
-            }
+    		if (bMirrorCols)
+    		{
+    			if (bCanMirrorBench)
+    			{
+    				// 사이드만 뒤집어서 “플1(0)→적1(N)” 보장. 즉 첫 적 칸은 항상 N(=9).
+    				NewIndex = TargetField->MirrorBenchIndex(E.Index);
+    			}
+    			else
+    			{
+    				// 폴백(가능하면 피하세요)
+    				const int32 TSizeTwo = TargetField->BenchSize;
+    				NewIndex = (TSizeTwo > 0) ? (TSizeTwo - 1 - (E.Index % TSizeTwo)) : E.Index;
+    			}
+    		}
 
-            if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get(),ETileFacing::Enemy))
-                RemoveFromBench(E.Index, true);
-        }
+    		if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get(), ETileFacing::Enemy))
+    		{
+    			RemoveFromBench(E.Index, /*bPreserveUnitBoard=*/true);
+    		}
+    	}
     }
 }
 
@@ -558,7 +563,7 @@ void UPCTileManager::CreateBench()
 
 	for (int32 i = 0; i < N; ++i)
 	{
-		const int32 dst = bBenchClockwise ? (N + i) : (N + (N - 1 - i));
+		const int32 dst = N + i;
 
 		Bench[dst].Position = FirstEnemyLoc + FVector(0.f, i * -BenchStepLocalY, 0.f);
 		Bench[dst].bIsField = false;
@@ -721,10 +726,6 @@ bool UPCTileManager::WorldToField(const FVector& WorldLoc, int32& OutY, int32& O
 
 	OutY = BestY;
 	OutX = BestX;
-
-	// UE_LOG(LogTemp, Warning, TEXT("World: %s  Best (y=%d,x=%d) Pos:%s  d=%.1f"),
-	// *WorldLoc.ToString(), BestY, BestX, *Field[IndexOf(BestY,BestX)].Position.ToString(),
-	// FMath::Sqrt(BestD2));
 	
 	return true;
 	

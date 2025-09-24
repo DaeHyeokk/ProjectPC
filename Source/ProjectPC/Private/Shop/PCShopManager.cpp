@@ -12,6 +12,7 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
@@ -99,10 +100,13 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
+	auto PC = Cast<APCCombatPlayerController>(TargetPlayer->GetPlayerController());
+	if (!PC) return;
+
 	auto Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
 	if (!Board) return;
 	
-	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex,1, PC);
 
 	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
 	{
