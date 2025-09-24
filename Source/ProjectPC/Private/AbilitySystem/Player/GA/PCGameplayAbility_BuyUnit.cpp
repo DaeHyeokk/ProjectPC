@@ -47,7 +47,7 @@ void UPCGameplayAbility_BuyUnit::ApplyCost(const FGameplayAbilitySpecHandle Hand
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CostGameplayEffectClass, GetAbilityLevel());
 	if (CostSpecHandle.IsValid())
 	{
-		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -UnitCost);
+		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -(UnitCost * BuyCount));
 		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
 	}
 }
@@ -58,7 +58,7 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
-	if (!TriggerEventData)
+	if (!TriggerEventData || !TriggerEventData->TargetData.IsValid(0))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -71,12 +71,15 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		return;
 	}
 
-	SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
+	// SlotIndex = static_cast<int32>(TriggerEventData->EventMagnitude);
+	const auto* TargetData = TriggerEventData->TargetData.Get(0);
+	SlotIndex = TargetData->GetHitResult()->Location.X;
+	BuyCount = TargetData->GetHitResult()->Location.Y;
 	UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
 	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 
 	const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
-	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost)
+	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost * BuyCount)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -96,6 +99,10 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 			if (BenchIndex != -1)
 			{
 				GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag, BenchIndex);
+			}
+			else
+			{
+				GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
 			}
 		}
 	}

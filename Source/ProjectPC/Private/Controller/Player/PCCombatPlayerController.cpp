@@ -332,11 +332,13 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
 	if (!Board) return;
 
+	int32 RequiredCount = 1;
+
 	// 벤치가 꽉 찼을 때
 	if (Board->GetFirstEmptyBenchIndex() == -1)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
-		auto RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
 		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
@@ -347,18 +349,12 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 
 			// 클릭한 슬롯 제외 나머지 구매 처리
-			for (int i = 0; i < RequiredCount - 1; ++i)
+			if (RequiredCount > 1)
 			{
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.EventMagnitude = static_cast<float>(SameSlotIndices[i]);
-
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-
-				SetSlotHidden(SameSlotIndices[i]);
+				for (int i = 0; i < RequiredCount - 1; ++i)
+				{
+					SetSlotHidden(SameSlotIndices[i]);
+				}
 			}
 		}
 	}
@@ -369,7 +365,14 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	EventData.Instigator = PS;
 	EventData.Target = PS;
 	EventData.EventTag = GA_Tag;
-	EventData.EventMagnitude = static_cast<float>(SlotIndex);
+	// EventData.EventMagnitude = static_cast<float>(SlotIndex);
+
+	FGameplayAbilityTargetDataHandle TargetDataHandle;
+	FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit();
+	NewData->HitResult.Location.X = SlotIndex;
+	NewData->HitResult.Location.Y = RequiredCount;
+	TargetDataHandle.Add(NewData);
+	EventData.TargetData = TargetDataHandle;
 	
 	ASC->HandleGameplayEvent(GA_Tag, &EventData);
 	
