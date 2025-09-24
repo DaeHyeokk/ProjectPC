@@ -4,7 +4,6 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 
 #include "GameplayEffect.h"
-#include "Abilities/GameplayAbility.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerAbilities.h"
 

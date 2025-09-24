@@ -7,6 +7,7 @@
 
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Character/Player/PCPlayerCharacter.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -69,15 +70,23 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 			PlayerAbilitySystemComponent->RemoveLooseGameplayTags(AllStateTags);
 			PlayerAbilitySystemComponent->AddLooseGameplayTag(NewStateTag);
 			CurrentStateTag = NewStateTag;
+
+			if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
+			{
+				if (const auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
+				{
+					PlayerCharacter->PlayerDie();
+				}
+			}
 		}
 	}
 }
 
-void APCPlayerState::ApplyDamage(float Damage)
+void APCPlayerState::AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Value) const
 {
 	if (PlayerAbilitySystemComponent && HasAuthority())
 	{
-		PlayerAbilitySystemComponent->ApplyPlayerEffects(PlayerGameplayTags::Player_GE_HPChange, Damage);
+		PlayerAbilitySystemComponent->ApplyPlayerEffects(PlayerStatTag, Value);
 	}
 }
 

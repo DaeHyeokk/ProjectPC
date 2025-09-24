@@ -79,9 +79,10 @@ public:
 	const UPCPlayerAttributeSet* GetAttributeSet() const;
 	FGameplayTag GetCurrentStateTag() const;
 
+	UFUNCTION(BlueprintCallable)
 	void ChangeState(FGameplayTag NewStateTag);
 
-	void ApplyDamage(float Damage);
+	void AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Value) const;
 
 #pragma endregion AbilitySystem
 
