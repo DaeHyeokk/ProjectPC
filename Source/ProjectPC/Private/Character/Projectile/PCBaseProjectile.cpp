@@ -43,7 +43,7 @@ APCBaseProjectile::APCBaseProjectile()
 	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
 	TrailEffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
-	TrailEffectComp->SetupAttachment(MeshComp);
+	TrailEffectComp->SetupAttachment(RootComponent);
 }
 
 void APCBaseProjectile::BeginPlay()
