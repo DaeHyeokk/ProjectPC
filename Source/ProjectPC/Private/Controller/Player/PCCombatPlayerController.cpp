@@ -9,8 +9,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
@@ -23,7 +23,6 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Net/NetworkMetricsDefs.h"
 #include "Shop/PCShopManager.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
@@ -149,7 +148,9 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 		if (FollowTime > PlayerInputData->ShortPressThreshold)
 		{
 			StopMovement();
+			Server_StopMovement();
 		}
+		
 		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
 		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
 	}
@@ -157,16 +158,36 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 
 void APCCombatPlayerController::OnSetDestinationReleased()
 {
-	if (FollowTime <= PlayerInputData->ShortPressThreshold)
+	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		Server_MovetoLocation(CachedDestination);
+		if (APawn* ControlledPawn = GetPawn())
+		{
+			//UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+			Server_MovetoLocation(CachedDestination);
+		}
 	}
 	
 	FollowTime = 0.f;
 }
 
+void APCCombatPlayerController::Server_StopMovement_Implementation()
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		StopMovement();
+	}
+}
+
 void APCCombatPlayerController::Server_MovetoLocation_Implementation(const FVector& Destination)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
+		Client_MovetoLocation(Destination);
+	}
+}
+
+void APCCombatPlayerController::Client_MovetoLocation_Implementation(const FVector& Destination)
 {
 	if (APawn* ControlledPawn = GetPawn())
 	{

@@ -75,7 +75,13 @@ private:
 	void OnSetDestinationReleased();
 
 	UFUNCTION(Server, Reliable)
+	void Server_StopMovement();
+	
+	UFUNCTION(Server, Reliable)
 	void Server_MovetoLocation(const FVector& Destination);
+
+	UFUNCTION(Client, Reliable)
+	void Client_MovetoLocation(const FVector& Destination);
 
 	// Shop
 	void OnBuyXPStarted();

@@ -20,7 +20,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
-
+	
 	UPROPERTY(Replicated)
 	bool bIsDead;
 
