@@ -170,7 +170,7 @@ public:
 	int32 MakeGlobalBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
 	UFUNCTION(BlueprintPure, Category = "Bench")
-	int32 GetLocalFromGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide) const;
+	bool SplitGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide, int32& Local) const;
 
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
@@ -214,18 +214,18 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows = true, bool bMirrorCols = true, bool bIncludeBench = true );
-
-	
-
 	
 	bool EnsureExclusive(APCBaseUnitCharacter* InUnit);
+
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Bench;
 
-	
+	UPROPERTY(BlueprintReadOnly, Category = "Data")
+	TArray<FTile> EnemyBench;
 
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
@@ -277,7 +277,7 @@ public:
 	// 월드 좌표 -> 필드/벤치 중 더 가까운 곳 스냅
 	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
 	bool WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
-		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f) const;
+		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f, bool bRequireUnit = false) const;
 
 #pragma endregion Drag&Drop
 
@@ -286,13 +286,13 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag);
+	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
 
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
 	TArray<APCBaseUnitCharacter*> GetFieldUnitByTag(FGameplayTag UnitTag);
 	
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag);
+	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
 	
 #pragma endregion LevelUp & Synergy
 

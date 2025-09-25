@@ -42,6 +42,7 @@ private:
 
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 	void CheckLevelUp();
+	void CheckPlayerDie();
 	
 public:
 	ATTRIBUTE_ACCESSORS(UPCPlayerAttributeSet, PlayerLevel)

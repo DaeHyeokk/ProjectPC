@@ -135,7 +135,6 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerLevel, "Player.Stat.PlayerLevel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerXP, "Player.Stat.PlayerXP")
-	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerMaxXP, "Player.Stat.PlayerMaxXP")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerGold, "Player.Stat.PlayerGold")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerHP, "Player.Stat.PlayerHP")
 
@@ -143,12 +142,6 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Normal, "Player.State.Normal")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Carousel, "Player.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead")
-	
-	// ==== Player Stat Change GE Tags ====
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_LevelChange, "Player.GE.LevelChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_XPChange, "Player.GE.XPChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_GoldChange, "Player.GE.GoldChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_HPChange, "Player.GE.HPChange")
 
 	// ==== Player Shop Ability Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_BuyXP, "Player.GA.Shop.BuyXP")

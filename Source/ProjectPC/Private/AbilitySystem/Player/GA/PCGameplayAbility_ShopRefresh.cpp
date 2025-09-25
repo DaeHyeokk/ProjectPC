@@ -15,6 +15,11 @@
 UPCGameplayAbility_ShopRefresh::UPCGameplayAbility_ShopRefresh()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_ShopRefresh);
+
+	ActivationRequiredTags.AddTag(PlayerGameplayTags::Player_State_Normal);
+	
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	
 	FAbilityTriggerData TriggerData;;
 	TriggerData.TriggerTag = PlayerGameplayTags::Player_GA_Shop_ShopRefresh;
@@ -26,6 +31,11 @@ bool UPCGameplayAbility_ShopRefresh::CanActivateAbility(const FGameplayAbilitySp
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
 	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
@@ -76,7 +86,7 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 
 			if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
 			{
-				if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+				if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
 				{
 					GS->GetShopManager()->UpdateShopSlots(PS);
 				}

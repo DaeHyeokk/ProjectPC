@@ -103,19 +103,22 @@ void APCCombatBoard::RebuildTilesFromMarkers()
 	BuildHISM();
 }
 
-int32 APCCombatBoard::GetFirstEmptyBenchIndex() const
+int32 APCCombatBoard::GetFirstEmptyBenchIndex(int32 SeatIndex) const
 {
 	// for (int32 Index = 0; Index < TileManager->BenchSize; ++Index)
 		// 헤더에는 TileManager의 BenchSize가 9지만, 런타임에 18이 되므로 임시로 하드 코딩
-	for (int32 Index = 0; Index < 9; ++Index)
-	{
-		if (TileManager->Bench[Index].IsEmpty())
-		{
-			return Index;
-		}
-	}
 
-	return -1;
+	if (!TileManager) return INDEX_NONE;
+
+	const bool bEnemySide = (SeatIndex != BoardSeatIndex); // 게스트면 enemy side
+	const int32 N = TileManager->BenchSlotsPerSide;
+	for (int32 local = 0; local < N; ++local)
+	{
+		const int32 gi = TileManager->MakeGlobalBenchIndex(bEnemySide, local);
+		if (TileManager->GetBenchUnit(gi) == nullptr)
+			return gi;
+	}
+	return INDEX_NONE;
 }
 
 static int32 NameSuffixToIndex(const FString& Name, const FString& Prefix)
