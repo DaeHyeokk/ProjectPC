@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
+class UPathFollowingComponent;
+
 UCLASS()
 class PROJECTPC_API APCPlayerCharacter : public ACharacter
 {

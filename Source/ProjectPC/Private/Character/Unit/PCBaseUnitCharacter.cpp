@@ -12,6 +12,7 @@
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -124,6 +125,15 @@ void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		GameStateChangedHandle =
+			GS->OnGameStateTagChanged.AddUObject(
+				this, &ThisClass::HandleGameStateChanged);
+	
+		HandleGameStateChanged(GS->GetGameStateTag());
+	}
+	
 	InitAbilitySystem();
 	SetAnimSetData();
 
@@ -146,6 +156,19 @@ void APCBaseUnitCharacter::BeginPlay()
 	{
 		UnitAnimInstance->PlayLevelStartMontage();
 	}
+}
+
+void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -253,10 +276,11 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 
 void APCBaseUnitCharacter::Die()
 {
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	
 	if (HasAuthority())
 	{
-		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-		if (ASC)
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
 			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 			{

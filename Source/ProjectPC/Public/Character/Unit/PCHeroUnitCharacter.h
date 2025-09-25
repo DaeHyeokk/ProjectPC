@@ -21,10 +21,6 @@ class PROJECTPC_API APCHeroUnitCharacter : public APCBaseUnitCharacter
 public:
 	APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -69,14 +65,12 @@ protected:
 
 	// 전투 관련 //
 	virtual void OnDeathAnimCompleted() override;
-
+	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) override;
+	
 public:
 	virtual void ChangedOnTile(const bool IsOnField) override;
 	
 private:
-	void HandleGameStateChanged(const FGameplayTag NewStateTag);
-	FDelegateHandle GameStateChangedHandle;
-
 	void RestoreFromCombatEnd();
 	
 	void SetLifeState(const bool bDead);

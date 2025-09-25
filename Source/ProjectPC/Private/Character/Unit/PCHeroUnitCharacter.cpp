@@ -33,33 +33,6 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 	}
 }
 
-void APCHeroUnitCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
-	{
-		GameStateChangedHandle =
-			GS->OnGameStateTagChanged.AddUObject(
-				this, &ThisClass::HandleGameStateChanged);
-	
-		HandleGameStateChanged(GS->GetGameStateTag());
-	}
-}
-
-void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
-	{
-		if (GameStateChangedHandle.IsValid())
-		{
-			GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
-		}
-	}
-	
-	Super::EndPlay(EndPlayReason);
-}
-
 void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -61,6 +61,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -126,8 +127,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void OnDeathAnimCompleted() { };
-	
+
 protected:
+	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) { };
+	FDelegateHandle GameStateChangedHandle;
+	
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	

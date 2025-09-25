@@ -13,23 +13,3 @@ UPCSynergyComponent::UPCSynergyComponent()
 
 	// ...
 }
-
-
-// Called when the game starts
-void UPCSynergyComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// ...
-	
-}
-
-
-// Called every frame
-void UPCSynergyComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
-

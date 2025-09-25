@@ -7,6 +7,7 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 APCCreepUnitCharacter::APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -61,4 +62,30 @@ void APCCreepUnitCharacter::OnDeathAnimCompleted()
 	{
 		Destroy();
 	}
+}
+
+void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
+{
+	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
+	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
+	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
+
+	if (NewStateTag == CombatActiveTag)
+	{
+		
+	}
+	else if (NewStateTag == CombatEndTag)
+	{
+		Destroy();
+	}
+}
+
+void APCCreepUnitCharacter::Die()
+{
+	if (OnCombatBoard)
+	{
+		
+	}
+	
+	Super::Die();
 }

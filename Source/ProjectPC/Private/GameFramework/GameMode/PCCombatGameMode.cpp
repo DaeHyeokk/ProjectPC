@@ -57,6 +57,7 @@ void APCCombatGameMode::BeginPlay()
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+	UE_LOG(LogTemp, Warning, TEXT("Call Post Login"));
 	if (!NewPlayer) return;
 	
 	auto* PS = Cast<APCPlayerState>(NewPlayer->PlayerState);
@@ -71,7 +72,8 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 					Used[P->SeatIndex] = true;
 	}
 	
-	int32 Seat = 0; while (Seat < 8 && Used[Seat]) ++Seat;
+	int32 Seat = 0;
+	while (Seat < 8 && Used[Seat]) ++Seat;
 	if (Seat >= 8) Seat = PS->GetPlayerId() % 8;
 	
 	PS->SeatIndex = Seat;
@@ -635,7 +637,13 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 
 	TArray<APCPlayerState*> Players;
 	for (APlayerState* PSB : GS->PlayerArray)
-		if (auto* P = Cast<APCPlayerState>(PSB)) Players.Add(P);
+		if (auto* P = Cast<APCPlayerState>(PSB))
+		{
+			Players.Add(P);
+			UE_LOG(LogTemp, Warning, TEXT("[Server Seat] %s PID=%d Seat=%d"),
+					*P->GetPlayerName(), P->GetPlayerId(), P->SeatIndex);
+		}
+	
 
 	// 1) 이미 배정된 좌석 중복 제거(중복이면 -1로 떨어뜨림), 사용 좌석 집계
 	TSet<int32> Used;
@@ -653,7 +661,8 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 		return A.GetPlayerId() < B.GetPlayerId();
 	});
 
-	const int32 MaxSeats = FMath::Max(1, GetTotalSeatSlots()); // 보드/링 개수 기반
+	//const int32 MaxSeats = FMath::Max(1, GetTotalSeatSlots()); // 보드/링 개수 기반
+	const int32 MaxSeats = 8;
 	int32 next = 0;
 	auto NextFree = [&](){
 		while (Used.Contains(next)) ++next;

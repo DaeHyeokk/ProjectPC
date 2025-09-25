@@ -3,7 +3,9 @@
 
 #include "AI/Task/BTTask_FindApproachLocation.h"
 
+#include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "BaseGameplayTags.h"
 #include "Algo/RandomShuffle.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
