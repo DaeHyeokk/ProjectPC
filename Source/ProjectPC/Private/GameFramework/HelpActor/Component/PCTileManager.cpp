@@ -379,6 +379,8 @@ void UPCTileManager::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("ClearAllForUnit"));
+
 	InUnit->SetOnCombatBoard(nullptr);
 	UnbindFromUnit(InUnit);
 }
