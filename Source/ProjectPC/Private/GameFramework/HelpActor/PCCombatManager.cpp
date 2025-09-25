@@ -18,6 +18,72 @@
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
 
+namespace
+{
+	// (Y,X) 로 받았으니 FIntPoint.X=Y, FIntPoint.Y=X 로 저장
+	static bool BuildCreepPoints(int32 StageOne, int32 RoundOne, TArray<FIntPoint>& Out)
+	{
+		Out.Reset();
+
+		switch (StageOne)
+		{
+		case 1:
+			switch (RoundOne)
+			{
+		case 2: Out = { FIntPoint(5,2), FIntPoint(5,4) }; return true;
+		case 3: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1) }; return true;
+		case 4: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1), FIntPoint(6,4) }; return true;
+		default: break;
+			}
+			break;
+
+		case 2:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(4,0), FIntPoint(4,5), FIntPoint(6,1) }; return true;
+		default: break;
+			}
+			break;
+
+		case 3:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3), FIntPoint(7,1), FIntPoint(7,2), FIntPoint(7,4), FIntPoint(7,5) }; return true;
+		default: break;
+			}
+			break;
+
+		case 4:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,1), FIntPoint(5,5), FIntPoint(6,1), FIntPoint(6,4), FIntPoint(7,3) }; return true;
+		default: break;
+			}
+			break;
+
+		case 5:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3) }; return true;
+		default: break;
+			}
+			break;
+
+		case 6:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3) }; return true;
+		default: break;
+			}
+			break;
+
+		default: break;
+		}
+		return false;
+	}
+}
+
+
 APCCombatManager::APCCombatManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -494,6 +560,232 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 	}
 }
 
+int32 APCCombatManager::StartPvEBattleForSeat(int32 HostSeatIndex)
+{
+	if (!IsAuthority()) return INDEX_NONE;
+
+    APCCombatBoard* HostBoard = FindBoardBySeatIndex(GetWorld(), HostSeatIndex);
+    if (!HostBoard || !HostBoard->TileManager) return INDEX_NONE;
+
+    // StageOne/RoundOne (1-based) 가져오기
+    int32 StageOne = 0, RoundOne = 0;
+    if (!GetCurrentStageRoundOne(StageOne, RoundOne))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("StartPvEBattleForSeat: Stage/Round runtime not available."));
+        return INDEX_NONE;
+    }
+
+    // (Y,X) 좌표 셋
+    TArray<FIntPoint> Points;
+    if (!BuildCreepPoints(StageOne, RoundOne, Points))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("StartPvEBattleForSeat: No creep points for Stage %d Round %d"), StageOne, RoundOne);
+    }
+
+    // Pair 생성
+    const int32 PairIndex = Pairs.AddDefaulted();
+    FCombatManager_Pair& Pair = Pairs[PairIndex];
+    Pair.ResetRuntime();
+    Pair.Host  = HostBoard;
+    Pair.Guest = nullptr;
+    Pair.bIsPvE = true;
+
+    // 스냅샷 저장(내 보드)
+    TakeSnapshot(HostBoard, Pair.HostSnapShot);
+
+    // 크립 스폰 & 배치 (GameMode 규칙 준수)
+    for (const FIntPoint& YX : Points)
+    {
+        if (APCBaseUnitCharacter* Creep = SpawnCreepAt(HostBoard, StageOne, RoundOne, YX))
+        {
+            // 죽음 이벤트 바인딩
+            if (!UnitToPairIndex.Contains(Creep))
+            {
+                Creep->OnUnitDied.AddDynamic(this, &APCCombatManager::OnAnyUnitDied);
+                UnitToPairIndex.Add(Creep, PairIndex);
+            }
+            Pair.PvECreeps.Add(Creep);
+        }
+    }
+
+    // 생존 수 계산
+    int32 HostCnt = 0;
+    int32 CreepCnt = 0;
+    UPCTileManager* TM = HostBoard->TileManager;
+
+    const int32 CreepTeam = GetCreepTeamIndexForBoard(HostBoard);
+
+    for (int32 y = 0; y < TM->Cols; ++y)
+    {
+        for (int32 x = 0; x < TM->Rows; ++x)
+        {
+            if (APCBaseUnitCharacter* U = TM->GetFieldUnit(y, x))
+            {
+                if (U->GetTeamIndex() == HostSeatIndex) ++HostCnt;
+                else if (U->GetTeamIndex() == CreepTeam) ++CreepCnt;
+            }
+        }
+    }
+
+    Pair.HostAlive  = HostCnt;
+    Pair.GuestAlive = CreepCnt;   // PvE에선 GuestAlive = 크립 수
+    Pair.bRunning   = true;
+
+    return PairIndex;
+}
+
+void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
+{
+	if (!IsAuthority()) return;
+
+	// Seat로 PairIndex 찾기
+	int32 PairIndex = INDEX_NONE;
+	for (int32 i = 0; i < Pairs.Num(); ++i)
+	{
+		if (!Pairs[i].bIsPvE) continue;
+		if (Pairs[i].Host.IsValid() && Pairs[i].Host->BoardSeatIndex == HostSeatIndex)
+		{
+			PairIndex = i; break;
+		}
+	}
+	if (PairIndex == INDEX_NONE) return;
+
+	FCombatManager_Pair& Pair = Pairs[PairIndex];
+	APCCombatBoard* Host = Pair.Host.Get();
+	if (!Host || !Host->TileManager) return;
+
+	UPCTileManager* TM = Host->TileManager;
+
+	// 1) 크립 제거
+	for (auto& WU : Pair.PvECreeps)
+	{
+		if (APCBaseUnitCharacter* Creep = WU.Get())
+		{
+			RemoveUnitFromAny(TM, Creep);
+		}
+	}
+
+	// 2) Host 스냅샷 원복
+	RestoreSnapshot(Pair.HostSnapShot);
+
+	// 3) 언바인드 및 런타임 정리
+	UnbindAllForPair(PairIndex);
+	Pair.ResetRuntime();
+}
+
+void APCCombatManager::FinishAllPve()
+{
+	if (!IsAuthority()) return;
+
+	// Pairs를 직접 순회하면서 PvE 페어만 종료
+	TArray<int32> Seats;
+	for (const auto& Pair : Pairs)
+	{
+		if (Pair.bIsPvE && Pair.Host.IsValid())
+		{
+			Seats.AddUnique(Pair.Host->BoardSeatIndex);
+		}
+	}
+	for (int32 Seat : Seats)
+	{
+		FinishPvEBattleForSeat(Seat);
+	}
+}
+
+bool APCCombatManager::GetCurrentStageRoundOne(int32& OutStageOne, int32& OutRoundOne) const
+{
+	if (APCCombatGameState* PCGS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		const auto& RT = PCGS->GetStageRunTime();
+		OutStageOne = RT.StageIdx;
+		OutRoundOne = RT.RoundIdx;
+		return (OutStageOne > 0 && OutRoundOne >0);
+	}
+	return false;
+}
+
+FGameplayTag APCCombatManager::GetCreepTagForStageRound(int32 StageOne, int32 RoundOne) const
+{
+	return UnitGameplayTags::Unit_Type_Creep_MinionLv1;
+}
+
+int32 APCCombatManager::GetCreepLevelForStageRound(int32 StageOne, int32 RoundOne) const
+{
+	return 1;
+}
+
+bool APCCombatManager::PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const
+{
+	if (!TM || !Creep)
+		return false;
+
+	// 정확한 자리 가능하면 바로 배치
+	if (TM->IsInRange(Y, X) && TM->IsTileFree(Y, X))
+	{
+		return TM->PlaceUnitOnField(Y, X, Creep, ETileFacing::Enemy);
+	}
+
+	// 못 놓으면 반경 확장하며 “십자-다이아” 형태로 인접 탐색
+	const int32 RadiusMax = 3; // 필요 시 조정
+	for (int32 R = 1; R <= RadiusMax; ++R)
+	{
+		for (int32 dy = -R; dy <= R; ++dy)
+		{
+			const int32 dxs[2] = { R - FMath::Abs(dy), -(R - FMath::Abs(dy)) };
+			for (int32 k = 0; k < 2; ++k)
+			{
+				const int32 ny = Y + dy;
+				const int32 nx = X + dxs[k];
+				if (TM->IsInRange(ny, nx) && TM->IsTileFree(ny, nx))
+					return TM->PlaceUnitOnField(ny, nx, Creep, ETileFacing::Enemy);
+			}
+		}
+	}
+
+	return false;
+}
+
+APCBaseUnitCharacter* APCCombatManager::SpawnCreepAt(APCCombatBoard* Board, int32 StageOne, int32 RoundOne,
+                                                     const FIntPoint& YX) const
+{
+	if (!Board || !IsValid(Board->TileManager))
+		return nullptr;
+
+	UPCTileManager* TM = Board->TileManager;
+
+	// GameMode 규칙과 동일:
+	const int32      CreepTeam = GetCreepTeamIndexForBoard(Board);
+	const FGameplayTag CreepTag = GetCreepTagForStageRound(StageOne, RoundOne);
+	const int32      CreepLevel = GetCreepLevelForStageRound(StageOne, RoundOne);
+
+	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
+	if (!SpawnSubsystem)
+		return nullptr;
+
+	// GameMode 예시: SpawnUnitByTag(CreepTag, CreepTeam, Level, Instigator)
+	// Instigator는 CombatManager(this)로 넘겨도 되고, nullptr로 두어도 됨 (서브시스템 시그니처에 맞춰 조정)
+	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(CreepTag, CreepTeam, CreepLevel);
+	if (!Unit)
+		return nullptr;
+
+	// 팀 보장
+	if (Unit->GetTeamIndex() != CreepTeam)
+		Unit->SetTeamIndex(CreepTeam);
+
+	Unit->SetActorHiddenInGame(false);
+	Unit->SetActorEnableCollision(true);
+
+	// (Y,X) 자리 또는 주변 빈칸에 배치 (적 방향)
+	if (!PlaceOrNearest(TM, YX.X, YX.Y, Unit))
+	{
+		// 자리가 끝내 없으면 정리
+		Unit->Destroy();
+		return nullptr;
+	}
+
+	return Unit;
+}
+
 void APCCombatManager::CountAliveOnHostBoardForPair(int32 PairIndex)
 {
 	auto& Pair = Pairs[PairIndex];
@@ -577,8 +869,7 @@ void APCCombatManager::UnbindAllForPair(int32 PairIndex)
 
 	auto TryUnbind = [&](APCBaseUnitCharacter* Unit)
 	{
-		if (!Unit)
-			return;
+		if (!Unit) return;
 		if (UnitToPairIndex.Remove(Unit) > 0)
 		{
 			Unit->OnUnitDied.RemoveDynamic(this, &APCCombatManager::OnAnyUnitDied);
@@ -593,7 +884,7 @@ void APCCombatManager::UnbindAllForPair(int32 PairIndex)
 			{
 				for (int32 x = 0; x < TM->Rows; ++x)
 				{
-					TryUnbind(TM->GetFieldUnit(y,x));
+					TryUnbind(TM->GetFieldUnit(y, x));
 				}
 			}
 		}
@@ -607,48 +898,67 @@ void APCCombatManager::UnbindAllForPair(int32 PairIndex)
 		}
 	}
 
+	// PvE 크립도 언바인드
+	for (const auto& WU : Pair.PvECreeps)
+	{
+		if (APCBaseUnitCharacter* Unit = WU.Get())
+		{
+			TryUnbind(Unit);
+		}
+	}
+
 	Pair.DeadUnits.Reset();
 }
 
 
 void APCCombatManager::OnAnyUnitDied(APCBaseUnitCharacter* Unit)
 {
-	if (!IsAuthority() || !Unit)
-		return;
+	if (!IsAuthority() || !Unit) return;
+
 	int32* PairIndexPtr = UnitToPairIndex.Find(Unit);
-	if (!PairIndexPtr)
-		return;
+	if (!PairIndexPtr) return;
 
 	const int32 PairIndex = *PairIndexPtr;
-	if (!Pairs.IsValidIndex(PairIndex))
-		return;
+	if (!Pairs.IsValidIndex(PairIndex)) return;
 
 	auto& Pair = Pairs[PairIndex];
-	if (!Pair.bRunning)
-		return;
+	if (!Pair.bRunning) return;
 
-	if (Pair.DeadUnits.Contains(Unit))
-		return;
-
+	if (Pair.DeadUnits.Contains(Unit)) return;
 	Pair.DeadUnits.Add(Unit);
 
-	APCCombatBoard* Host = Pair.Host.Get();
+	APCCombatBoard* Host  = Pair.Host.Get();
 	APCCombatBoard* Guest = Pair.Guest.Get();
+	if (!Host) return;
 
-	if (!Host)
-		return;
-
-	const int32 HostSeat = Host->BoardSeatIndex;
+	const int32 HostSeat  = Host->BoardSeatIndex;
 	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
 
-	const int32 Team = Unit->GetTeamIndex();
-	if (Team == HostSeat)
+	if (Pair.bIsPvE)
 	{
-		Pair.HostAlive = FMath::Max(0, Pair.HostAlive - 1);
+		const int32 CreepTeam = GetCreepTeamIndexForBoard(Host);
+		const int32 Team = Unit->GetTeamIndex();
+
+		if (Team == HostSeat)
+		{
+			Pair.HostAlive = FMath::Max(0, Pair.HostAlive - 1);
+		}
+		else if (Team == CreepTeam || Pair.PvECreeps.Contains(Unit))
+		{
+			Pair.GuestAlive = FMath::Max(0, Pair.GuestAlive - 1);
+		}
 	}
-	else if (Team == GuestSeat)
+	else
 	{
-		Pair.GuestAlive = FMath::Max(0, Pair.GuestAlive - 1);
+		const int32 Team = Unit->GetTeamIndex();
+		if (Team == HostSeat)
+		{
+			Pair.HostAlive = FMath::Max(0, Pair.HostAlive - 1);
+		}
+		else if (Team == GuestSeat)
+		{
+			Pair.GuestAlive = FMath::Max(0, Pair.GuestAlive - 1);
+		}
 	}
 
 	CheckPairVictory(PairIndex);
@@ -681,35 +991,42 @@ void APCCombatManager::CheckPairVictory(int32 PairIndex)
 
 void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 {
-	if (!HasAuthority() || !Pairs.IsValidIndex(PairIndex))
-		return;
-	
+	if (!HasAuthority() || !Pairs.IsValidIndex(PairIndex)) return;
+
 	auto& Pair = Pairs[PairIndex];
 
-	const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
+	// PvE는 데미지 이벤트 생략(필요 시 규칙 추가)
+	if (Pair.bIsPvE)
+	{
+		UnbindAllForPair(PairIndex);
+		Pair.bRunning = false;
+
+		const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
+		OnCombatPairResult.Broadcast(bHostWon ? HostSeat : INDEX_NONE,
+									 bHostWon ? INDEX_NONE : HostSeat,
+									 Pair.HostAlive, Pair.GuestAlive);
+		return;
+	}
+
+	// PvP
+	const int32 HostSeat  = Pair.Host.IsValid()  ? Pair.Host->BoardSeatIndex  : INDEX_NONE;
 	const int32 GuestSeat = Pair.Guest.IsValid() ? Pair.Guest->BoardSeatIndex : INDEX_NONE;
+	if (HostSeat == INDEX_NONE || GuestSeat == INDEX_NONE) return;
 
-	if (HostSeat == INDEX_NONE || GuestSeat == INDEX_NONE)
-		return;
+	APawn* AttackerPawn = FindPawnBySeat(bHostWon ? HostSeat : GuestSeat);
+	APawn* DefenderPawn = FindPawnBySeat(bHostWon ? GuestSeat : HostSeat);
+	if (!AttackerPawn || !DefenderPawn) return;
 
-	const int32 AttackerSeat = bHostWon ? HostSeat : GuestSeat;
-	const int32 DefenderSeat = bHostWon ? GuestSeat : HostSeat;
-
-	APawn* AttackerPawn = FindPawnBySeat(AttackerSeat);
-	APawn* DefenderPawn = FindPawnBySeat(DefenderSeat);
-	if (!AttackerPawn || !DefenderPawn)
-		return;
-
-	const int32 StageIndex = GetCurrentStageIndex();
+	const int32 StageIndex      = GetCurrentStageIndex();
 	const int32 StageBaseDamage = GetStageBaseDamageFromDT(StageIndex);
-	const int32 Alive = bHostWon ? Pair.HostAlive : Pair.GuestAlive;
-	const int32 Damage = FMath::Max(1, StageBaseDamage + Alive);
+	const int32 Alive           = bHostWon ? Pair.HostAlive : Pair.GuestAlive;
+	const int32 Damage          = FMath::Max(1, StageBaseDamage + Alive);
 
 	FGameplayEventData DamageData;
-	DamageData.EventTag = DamageEventTag;
+	DamageData.EventTag       = DamageEventTag;
 	DamageData.EventMagnitude = Damage;
-	DamageData.Instigator = AttackerPawn;
-	DamageData.Target = DefenderPawn;
+	DamageData.Instigator     = AttackerPawn;
+	DamageData.Target         = DefenderPawn;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AttackerPawn, DamageEventTag, DamageData);
 
@@ -717,7 +1034,7 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	Pair.bRunning = false;
 
 	const int32 WinnerSeat = bHostWon ? HostSeat : GuestSeat;
-	const int32 LoserSeat = bHostWon ? GuestSeat : HostSeat;
+	const int32 LoserSeat  = bHostWon ? GuestSeat : HostSeat;
 	OnCombatPairResult.Broadcast(WinnerSeat, LoserSeat, Pair.HostAlive, Pair.GuestAlive);
 }
 

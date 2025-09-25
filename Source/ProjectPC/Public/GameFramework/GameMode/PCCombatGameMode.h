@@ -7,10 +7,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
+
+
 /**
  * 
  */
 
+class APCBaseUnitCharacter;
+class UPCTileManager;
+struct FGameplayTag;
 class APCCombatManager;
 enum class EPCStageType : uint8;
 struct FRoundStep;
@@ -55,8 +60,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-	virtual void PostSeamlessTravel() override;
-
 	// 좌석배정 유틸함수
 	int32 GetTotalSeatSlots() const;
 
@@ -85,6 +88,9 @@ private:
 
 	// 개별 Step 처리
 	void Step_Start();
+
+	// Start 헬퍼 함수
+	void PlayerStartUnitSpawn();
 	void Step_Setup();
 	void Step_Travel();
 	void Step_Return();
@@ -113,6 +119,17 @@ private:
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
+	// 크립 스폰 관련 로직
+
+	void SpawnCreepsForBoardAndStageRound(APCCombatBoard* Board, int32 Stage, int32 Round);
+	bool GetCreepSpawnPoints_OnBased(int32 Stage, int32 Round, TArray<FIntPoint>& OutPoints) const;
+
+	// 크립 스폰 헬퍼
+	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
+	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);
+	static int32 GetCreepLevelForStageRound(int32 Stage, int32 Round);
+	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
+
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
@@ -128,6 +145,14 @@ private:
 	bool IsRoundSystemReady(FString& WhyNot) const;
 	void StartWhenReady();
 	void AssignSeatDeterministicOnce();
+
+	int32 ExpectedPlayers = 0;
+	int32 ArrivedPlayers = 0;
+	bool bTriggeredAfterTravel = false;
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	void OnOnePlayerArrived();
 	
 };
+
+
 

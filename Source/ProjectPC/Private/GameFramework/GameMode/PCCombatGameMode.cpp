@@ -5,10 +5,8 @@
 
 #include "BaseGameplayTags.h"
 #include "EngineUtils.h"
-#include "ShaderPrintParameters.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "GameFramework/GameState.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -20,13 +18,77 @@
 #include "Kismet/GameplayStatics.h"
 #include "Shop/PCShopManager.h"
 
+namespace
+{
+	// (Y,X) 로 받았으니 FIntPoint.X=Y, FIntPoint.Y=X 로 저장
+	static bool BuildCreepPoints(int32 StageOne, int32 RoundOne, TArray<FIntPoint>& Out)
+	{
+		Out.Reset();
+
+		switch (StageOne)
+		{
+		case 1:
+			switch (RoundOne)
+			{
+		case 2: Out = { FIntPoint(5,2), FIntPoint(5,4) }; return true;
+		case 3: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1) }; return true;
+		case 4: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1), FIntPoint(6,4) }; return true;
+		default: break;
+			}
+			break;
+
+		case 2:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(4,0), FIntPoint(4,5), FIntPoint(6,1) }; return true;
+		default: break;
+			}
+			break;
+
+		case 3:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3), FIntPoint(7,1), FIntPoint(7,2), FIntPoint(7,4), FIntPoint(7,5) }; return true;
+		default: break;
+			}
+			break;
+
+		case 4:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,1), FIntPoint(5,5), FIntPoint(6,1), FIntPoint(6,4), FIntPoint(7,3) }; return true;
+		default: break;
+			}
+			break;
+
+		case 5:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3) }; return true;
+		default: break;
+			}
+			break;
+
+		case 6:
+			switch (RoundOne)
+			{
+		case 7: Out = { FIntPoint(5,3) }; return true;
+		default: break;
+			}
+			break;
+
+		default: break;
+		}
+		return false;
+	}
+}
+
 
 APCCombatGameMode::APCCombatGameMode()
 {
 	GameStateClass = APCCombatGameState::StaticClass();
 	PlayerStateClass = APCPlayerState::StaticClass();
 	PlayerControllerClass = APCCombatPlayerController::StaticClass();
-	bUseSeamlessTravel = true;
 }
 
 void APCCombatGameMode::BeginPlay()
@@ -51,47 +113,45 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.5f);
+	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-	if (!NewPlayer) return;
-	
-	auto* PS = Cast<APCPlayerState>(NewPlayer->PlayerState);
+	APCPlayerState* PS = NewPlayer ? Cast<APCPlayerState>(NewPlayer->PlayerState) : nullptr;
 	if (!PS) return;
-	
-	bool Used[8] = {};
-	if (GameState)
+    
+	// 사용중인 좌석 체크
+	TArray<bool> UsedSeats;
+	UsedSeats.Init(false, 8);
+    
+	for (APlayerState* PlayerState : GameState->PlayerArray)
 	{
-		for (APlayerState* B : GameState->PlayerArray)
-			if (auto* P = Cast<APCPlayerState>(B))
-				if (P != PS && P->SeatIndex >= 0 && P->SeatIndex < 8)
-					Used[P->SeatIndex] = true;
-	}
-	
-	int32 Seat = 0; while (Seat < 8 && Used[Seat]) ++Seat;
-	if (Seat >= 8) Seat = PS->GetPlayerId() % 8;
-	
-	PS->SeatIndex = Seat;
-	
-	
-	PS->ForceNetUpdate();
-}
-
-void APCCombatGameMode::PostSeamlessTravel()
-{
-	Super::PostSeamlessTravel();
-	if (AGameState* GS = GetGameState<AGameState>())
-	{
-		for (APlayerState* PS : GS->PlayerArray)
-			if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PS))
+		if (APCPlayerState* OtherPS = Cast<APCPlayerState>(PlayerState))
+		{
+			if (OtherPS != PS && OtherPS->SeatIndex >= 0 && OtherPS->SeatIndex < 8)
 			{
-				PCPlayerState->bIsReady = false;
+				UsedSeats[OtherPS->SeatIndex] = true;
 			}
+		}
 	}
-	
+    
+	// 빈 좌석 찾기
+	int32 SeatIndex = 0;
+	for (int32 i = 0; i < 8; i++)
+	{
+		if (!UsedSeats[i])
+		{
+			SeatIndex = i;
+			break;
+		}
+	}
+    
+	PS->SeatIndex = SeatIndex;
+	PS->ForceNetUpdate();
+
+	OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -223,14 +283,6 @@ void APCCombatGameMode::EndCurrentStep()
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
-
-	// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	// {
-	// 	if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
-	// 	{
-	// 		PCCombatPlayerController->Client_HideWidget();
-	// 	}
-	// }
 	
 }
 
@@ -250,10 +302,11 @@ void APCCombatGameMode::Step_Setup()
 		{
 			PCPlayerController->Client_ShowWidget();
 			PCPlayerController->ShopRequest_ShopRefresh(0);
-			// if (auto* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
-			// {
-			// 	PCPlayerState->Le
-			// }
+
+			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
+			{
+				PCPlayerState->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerXP,2);
+			}
 		}
 	}
 }
@@ -349,33 +402,15 @@ void APCCombatGameMode::Step_Return()
 	else if (Prev->StageType == EPCStageType::Start)
 	{
 		MovePlayersToBoardsAndCameraSet();
+		PlayerStartUnitSpawn();
 		
+	}
+	else if (Prev->StageType == EPCStageType::PvE)
+	{
 		if (APCCombatGameState* PCGameState = GetCombatGameState())
 		{
-			int32 SpawnIndex = 0;
-			auto ShopManager = PCGameState->GetShopManager();
-			TArray<FGameplayTag> SpawnTag = ShopManager->GetCarouselUnitTags(1);
-			PCGameState->SetGameStateTag(GameStateTags::Game_State_NonCombat);
-
-			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-			{
-				if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
-				{
-					if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
-					{
-						
-						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
-						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1, PCCombatPlayerController);
-							if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
-							{
-								InCombatBoard->TileManager->PlaceUnitOnBench(0, Unit);
-							}
-							++SpawnIndex;
-						}
-					}
-				}
-			}
+			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_End);
+			CombatManager->FinishAllPve();
 		}
 	}
 }
@@ -392,27 +427,30 @@ void APCCombatGameMode::Step_PvE()
 {
 	if (APCCombatGameState* PCGameState = GetCombatGameState())
 	{
-		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
+		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active_Creep);
 	}
 }
 
 
 void APCCombatGameMode::Step_CreepSpawn()
 {
+	APCCombatGameState* PCGameState = GetCombatGameState();
+	if (!PCGameState) return;
+
+	PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation_Creep);
+	const int32 StageOne = PCGameState->GetCurrentStageType() != EPCStageType::Start ? (PCGameState->StageRuntimeState.StageIdx) : 1;
+	const int32 RoundOne = PCGameState->StageRuntimeState.RoundIdx + 1;
+
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+		if (APCCombatPlayerController* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
+			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+				if (APCCombatBoard* Board = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
 				{
-					APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Creep_MinionLv1, PCPlayerState->SeatIndex, 1, PCCombatPlayerController);
-
-					// if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
-					// {
-					// 	InCombatBoard->TileManager->PlaceUnitOnField(5,6, Unit);
-					// }
+					//SpawnCreepsForBoardAndStageRound(Board,StageOne,RoundOne);
+					CombatManager->StartPvEBattleForSeat(PCPlayerState->SeatIndex);
 				}
 			}
 		}
@@ -425,6 +463,38 @@ void APCCombatGameMode::Step_Carousel()
 
 	// TODO 게이트 열리는 체력순으로 열리는 로직 추가
 }
+
+void APCCombatGameMode::PlayerStartUnitSpawn()
+{
+	if (APCCombatGameState* PCGameState = GetCombatGameState())
+	{
+		int32 SpawnIndex = 0;
+		auto ShopManager = PCGameState->GetShopManager();
+		TArray<FGameplayTag> SpawnTag = ShopManager->GetCarouselUnitTags(1);
+		PCGameState->SetGameStateTag(GameStateTags::Game_State_NonCombat);
+
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+			{
+				if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
+				{
+						
+					if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+					{
+						APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1, PCCombatPlayerController);
+						if (APCCombatBoard* InCombatBoard = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
+						{
+							InCombatBoard->TileManager->PlaceUnitOnBench(0, Unit);
+						}
+						++SpawnIndex;
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void APCCombatGameMode::InitializeHomeBoardsForPlayers()
 {
@@ -562,6 +632,7 @@ APCCombatGameState* APCCombatGameMode::GetCombatGameState() const
 	return GetGameState<APCCombatGameState>();
 }
 
+
 APCCombatManager* APCCombatGameMode::GetCombatManager()
 {
 	if (CombatManager.IsValid())
@@ -691,4 +762,108 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 	// 좌석→보드 맵 재구축
 	BuildHelperActor();
 	bSeatsFinalized = true;
+}
+
+void APCCombatGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	const FString S = UGameplayStatics::ParseOption(Options, TEXT("ExpPlayers"));
+	ExpectedPlayers = S.IsEmpty() ? 0 : FCString::Atoi(*S);
+}
+
+void APCCombatGameMode::OnOnePlayerArrived()
+{
+	if (ExpectedPlayers <= 0 && GameState)
+		ExpectedPlayers = GameState->PlayerArray.Num(); // 보험
+
+	++ArrivedPlayers;
+
+	if (!bTriggeredAfterTravel && ExpectedPlayers > 0 && ArrivedPlayers >= ExpectedPlayers)
+	{
+		bTriggeredAfterTravel = true;
+		// Pawn/PS/보드 참조 안정화용 한 틱 딜레이
+		GetWorldTimerManager().SetTimerForNextTick([this]()
+		{
+			TryPlacePlayersAfterTravel();
+		});
+	}
+}
+
+void APCCombatGameMode::SpawnCreepsForBoardAndStageRound(APCCombatBoard* Board, int32 Stage, int32 Round)
+{
+	if (!Board || !IsValid(Board->TileManager))
+		return;
+
+	TArray<FIntPoint> Points;
+	if (!GetCreepSpawnPoints_OnBased(Stage, Round, Points))
+		return;
+
+	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
+	if (!SpawnSubsystem)
+		return;
+
+	const int32 CreepTeam = GetCreepTeamIndexForBoard(Board);
+	const FGameplayTag CreepTag = GetCreepTagForStageRound(Stage, Round);
+
+	for (const FIntPoint& YX : Points)
+	{
+		APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(CreepTag, CreepTeam, 1,this);
+
+		if (!Unit) continue;
+
+		if (!PlaceOrNearest(Board->TileManager, YX.X, YX.Y, Unit))
+		{
+			Unit->Destroy();
+		}
+	}
+	
+}
+
+bool APCCombatGameMode::GetCreepSpawnPoints_OnBased(int32 Stage, int32 Round, TArray<FIntPoint>& OutPoints) const
+{
+	return BuildCreepPoints(Stage, Round, OutPoints);
+}
+
+int32 APCCombatGameMode::GetCreepTeamIndexForBoard(const APCCombatBoard* Board)
+{
+	return Board ? (Board->BoardSeatIndex + 1000) : 1000;
+}
+
+FGameplayTag APCCombatGameMode::GetCreepTagForStageRound(int32 Stage, int32 Round)
+{
+	return UnitGameplayTags::Unit_Type_Creep_MinionLv1;
+}
+
+int32 APCCombatGameMode::GetCreepLevelForStageRound(int32 Stage, int32 Round)
+{
+	return 1;
+}
+
+bool APCCombatGameMode::PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const
+{
+	if (!TM || !Creep)
+		return false;
+
+	if (TM->IsInRange(Y, X) && TM->IsTileFree(Y,X))
+	{
+		return TM->PlaceUnitOnField(Y,X,Creep, ETileFacing::Enemy);
+	}
+
+	const int32 RadiusMax = 3;
+	for (int32 R=1; R<=RadiusMax; ++R)
+	{
+		for (int32 dy=-R; dy<=R; ++dy)
+		{
+			const int32 dxs[2] = { R - FMath::Abs(dy), -(R - FMath::Abs(dy)) };
+			for (int32 k=0;k<2;++k)
+			{
+				const int32 ny = Y + dy;
+				const int32 nx = X + dxs[k];
+				if (TM->IsInRange(ny, nx) && TM->IsTileFree(ny, nx))
+					return TM->PlaceUnitOnField(ny, nx, Creep, ETileFacing::Enemy);
+			}
+		}
+	}
+
+	return false;
 }

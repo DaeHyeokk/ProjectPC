@@ -150,11 +150,13 @@ public:
 
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
-	
-protected:
 
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
 	FStageRuntimeState StageRuntimeState;
+	
+protected:
+
+	
 	
 	UFUNCTION()
 	void OnRep_StageRunTime();

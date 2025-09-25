@@ -17,7 +17,7 @@ class PROJECTPC_API APCLobbyGameMode : public AGameMode
 	GENERATED_BODY()
 	
 public:
-	APCLobbyGameMode() { bUseSeamlessTravel = true;}
+	APCLobbyGameMode() { bUseSeamlessTravel = false;}
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Travel")
 	TSoftObjectPtr<UWorld> LevelToTravel;
