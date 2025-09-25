@@ -154,7 +154,7 @@ void APCHeroUnitCharacter::SetLifeState(const bool bDead)
 		if (bDead)
 		{
 			// GetMesh()->SetVisibility(false, true);
-			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+			//GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 			SetActorLocation(FVector(99999.f,99999.f,99999.f));
 		}
 		else
