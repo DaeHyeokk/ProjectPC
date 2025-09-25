@@ -11,6 +11,7 @@
 
 
 APCCreepUnitCharacter::APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	UnitAbilitySystemComponent = CreateDefaultSubobject<UPCUnitAbilitySystemComponent>(TEXT("UnitAbilitySystemComponent"));
 
@@ -56,14 +57,6 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 }
 
-void APCCreepUnitCharacter::OnDeathAnimCompleted()
-{
-	if (HasAuthority())
-	{
-		Destroy();
-	}
-}
-
 void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
 {
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
@@ -76,7 +69,10 @@ void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTa
 	}
 	else if (NewStateTag == CombatEndTag)
 	{
-		Destroy();
+		if (HasAuthority())
+		{
+			Destroy();
+		}
 	}
 }
 

@@ -731,41 +731,6 @@ void APCCombatGameMode::OnOnePlayerArrived()
 	}
 }
 
-void APCCombatGameMode::SpawnCreepsForBoardAndStageRound(APCCombatBoard* Board, int32 Stage, int32 Round)
-{
-	if (!Board || !IsValid(Board->TileManager))
-		return;
-
-	TArray<FIntPoint> Points;
-	if (!GetCreepSpawnPoints_OnBased(Stage, Round, Points))
-		return;
-
-	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
-	if (!SpawnSubsystem)
-		return;
-
-	const int32 CreepTeam = GetCreepTeamIndexForBoard(Board);
-	const FGameplayTag CreepTag = GetCreepTagForStageRound(Stage, Round);
-
-	for (const FIntPoint& YX : Points)
-	{
-		APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(CreepTag, CreepTeam, 1,this);
-
-		if (!Unit) continue;
-
-		if (!PlaceOrNearest(Board->TileManager, YX.X, YX.Y, Unit))
-		{
-			Unit->Destroy();
-		}
-	}
-	
-}
-
-bool APCCombatGameMode::GetCreepSpawnPoints_OnBased(int32 Stage, int32 Round, TArray<FIntPoint>& OutPoints) const
-{
-	return BuildCreepPoints(Stage, Round, OutPoints);
-}
-
 int32 APCCombatGameMode::GetCreepTeamIndexForBoard(const APCCombatBoard* Board)
 {
 	return Board ? (Board->BoardSeatIndex + 1000) : 1000;

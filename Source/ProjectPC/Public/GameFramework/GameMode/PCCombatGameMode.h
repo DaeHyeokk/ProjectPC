@@ -121,9 +121,6 @@ private:
 
 	// 크립 스폰 관련 로직
 
-	void SpawnCreepsForBoardAndStageRound(APCCombatBoard* Board, int32 Stage, int32 Round);
-	bool GetCreepSpawnPoints_OnBased(int32 Stage, int32 Round, TArray<FIntPoint>& OutPoints) const;
-
 	// 크립 스폰 헬퍼
 	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
 	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);

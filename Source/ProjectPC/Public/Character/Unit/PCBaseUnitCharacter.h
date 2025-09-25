@@ -126,7 +126,7 @@ public:
 	virtual void Die();
 
 	UFUNCTION(BlueprintCallable)
-	virtual void OnDeathAnimCompleted() { };
+	void OnDeathAnimCompleted();
 
 protected:
 	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) { };

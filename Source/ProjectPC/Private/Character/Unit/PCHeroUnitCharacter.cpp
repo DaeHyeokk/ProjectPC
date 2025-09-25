@@ -110,7 +110,7 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	SetLifeState(false);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	
 	if (HasAuthority())
 	{
@@ -147,24 +147,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 	}
 }
 
-void APCHeroUnitCharacter::SetLifeState(const bool bDead)
-{
-	if (GetMesh())
-	{
-		if (bDead)
-		{
-			// GetMesh()->SetVisibility(false, true);
-			//GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-			SetActorLocation(FVector(99999.f,99999.f,99999.f));
-		}
-		else
-		{
-			//GetMesh()->SetVisibility(true, true);
-			GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-		}
-	}
-}
-
 void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 {
 	// 클라에서만 실행 (Listen Server 포함)
@@ -181,11 +163,6 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
-}
-
-void APCHeroUnitCharacter::OnDeathAnimCompleted()
-{
-	SetLifeState(true);
 }
 
 void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
