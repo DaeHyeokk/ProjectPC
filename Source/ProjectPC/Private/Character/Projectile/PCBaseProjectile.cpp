@@ -31,7 +31,7 @@ APCBaseProjectile::APCBaseProjectile()
 	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	MeshComp->SetupAttachment(RootComponent);
-	MeshComp->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+	MeshComp->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
 	//MeshComp->SetRelativeLocationAndRotation(FVector(100.f,0.f,0.f), FRotator(0.f,-90.f,0.f));
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));

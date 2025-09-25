@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "PCSynergyComponent.generated.h"
 
@@ -13,7 +14,12 @@ class PROJECTPC_API UPCSynergyComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UPCSynergyComponent();
 
+	void RegisterSynergy();
+	
+protected:
+	TMap<FGameplayTag, int32> SynergyCountMap;
+	
+	
 };
