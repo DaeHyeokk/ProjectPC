@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "PCBaseProjectile.generated.h"
 
+class UArrowComponent;
 class UProjectileMovementComponent;
 
 UCLASS()
@@ -30,11 +31,17 @@ protected:
 	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	USceneComponent* RootComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UArrowComponent* ArrowComp;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* MeshComp;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	UParticleSystemComponent* TrailEffectComp;
 	
 	UPROPERTY()
@@ -50,7 +57,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	
 private:
 	UPROPERTY()
 	const AActor* Target;

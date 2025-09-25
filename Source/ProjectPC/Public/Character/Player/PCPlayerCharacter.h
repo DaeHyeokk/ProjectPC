@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
+class UPathFollowingComponent;
+
 UCLASS()
 class PROJECTPC_API APCPlayerCharacter : public ACharacter
 {
@@ -20,7 +22,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
-
+	
 	UPROPERTY(Replicated)
 	bool bIsDead;
 

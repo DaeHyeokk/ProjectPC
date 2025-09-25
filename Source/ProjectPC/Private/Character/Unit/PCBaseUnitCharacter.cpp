@@ -12,6 +12,7 @@
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -20,8 +21,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	//NetUpdateFrequency = 100.f;
-	//MinNetUpdateFrequency = 66.f;
+	// NetUpdateFrequency = 100.f;
+	// MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -124,6 +125,15 @@ void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		GameStateChangedHandle =
+			GS->OnGameStateTagChanged.AddUObject(
+				this, &ThisClass::HandleGameStateChanged);
+	
+		HandleGameStateChanged(GS->GetGameStateTag());
+	}
+	
 	InitAbilitySystem();
 	SetAnimSetData();
 
@@ -141,6 +151,24 @@ void APCBaseUnitCharacter::BeginPlay()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+
+	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		UnitAnimInstance->PlayLevelStartMontage();
+	}
+}
+
+void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -155,6 +183,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, UnitTag);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsDead);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -247,33 +276,19 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 
 void APCBaseUnitCharacter::Die()
 {
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	
 	if (HasAuthority())
 	{
-		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-		if (ASC)
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
 			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+				bIsDead = true;
 			}
 			ASC->CancelAllAbilities();
+			OnUnitDied.Broadcast(this);
 		}
-
-		Multicast_PlayDeathMontage();
-	}
-}
-
-void APCBaseUnitCharacter::Multicast_PlayDeathMontage_Implementation()
-{
-	UPCDataAsset_UnitAnimSet* AnimSet = GetUnitAnimSetDataAsset();
-	UAnimMontage* DeathMontage = AnimSet ? AnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_Death) : nullptr;
-	
-	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
-	{
-		GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
-	}
-	else
-	{
-		OnDeathMontageCompleted();
 	}
 }

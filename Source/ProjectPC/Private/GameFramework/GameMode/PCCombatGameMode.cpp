@@ -18,71 +18,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Shop/PCShopManager.h"
 
-namespace
-{
-	// (Y,X) 로 받았으니 FIntPoint.X=Y, FIntPoint.Y=X 로 저장
-	static bool BuildCreepPoints(int32 StageOne, int32 RoundOne, TArray<FIntPoint>& Out)
-	{
-		Out.Reset();
-
-		switch (StageOne)
-		{
-		case 1:
-			switch (RoundOne)
-			{
-		case 2: Out = { FIntPoint(5,2), FIntPoint(5,4) }; return true;
-		case 3: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1) }; return true;
-		case 4: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1), FIntPoint(6,4) }; return true;
-		default: break;
-			}
-			break;
-
-		case 2:
-			switch (RoundOne)
-			{
-		case 7: Out = { FIntPoint(4,0), FIntPoint(4,5), FIntPoint(6,1) }; return true;
-		default: break;
-			}
-			break;
-
-		case 3:
-			switch (RoundOne)
-			{
-		case 7: Out = { FIntPoint(5,3), FIntPoint(7,1), FIntPoint(7,2), FIntPoint(7,4), FIntPoint(7,5) }; return true;
-		default: break;
-			}
-			break;
-
-		case 4:
-			switch (RoundOne)
-			{
-		case 7: Out = { FIntPoint(5,1), FIntPoint(5,5), FIntPoint(6,1), FIntPoint(6,4), FIntPoint(7,3) }; return true;
-		default: break;
-			}
-			break;
-
-		case 5:
-			switch (RoundOne)
-			{
-		case 7: Out = { FIntPoint(5,3) }; return true;
-		default: break;
-			}
-			break;
-
-		case 6:
-			switch (RoundOne)
-			{
-		case 7: Out = { FIntPoint(5,3) }; return true;
-		default: break;
-			}
-			break;
-
-		default: break;
-		}
-		return false;
-	}
-}
-
 
 APCCombatGameMode::APCCombatGameMode()
 {
@@ -723,7 +658,13 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 
 	TArray<APCPlayerState*> Players;
 	for (APlayerState* PSB : GS->PlayerArray)
-		if (auto* P = Cast<APCPlayerState>(PSB)) Players.Add(P);
+		if (auto* P = Cast<APCPlayerState>(PSB))
+		{
+			Players.Add(P);
+			UE_LOG(LogTemp, Warning, TEXT("[Server Seat] %s PID=%d Seat=%d"),
+					*P->GetPlayerName(), P->GetPlayerId(), P->SeatIndex);
+		}
+	
 
 	// 1) 이미 배정된 좌석 중복 제거(중복이면 -1로 떨어뜨림), 사용 좌석 집계
 	TSet<int32> Used;
@@ -741,7 +682,8 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 		return A.GetPlayerId() < B.GetPlayerId();
 	});
 
-	const int32 MaxSeats = FMath::Max(1, GetTotalSeatSlots()); // 보드/링 개수 기반
+	//const int32 MaxSeats = FMath::Max(1, GetTotalSeatSlots()); // 보드/링 개수 기반
+	const int32 MaxSeats = 8;
 	int32 next = 0;
 	auto NextFree = [&](){
 		while (Used.Contains(next)) ++next;

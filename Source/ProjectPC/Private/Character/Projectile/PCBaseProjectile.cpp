@@ -4,6 +4,7 @@
 #include "Character/Projectile/PCBaseProjectile.h"
 
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -18,12 +19,20 @@ APCBaseProjectile::APCBaseProjectile()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+
+	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = RootComp;
+
+	ArrowComp = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
+	ArrowComp->SetupAttachment(RootComponent);
 	
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	RootComponent = MeshComp;
+	MeshComp->SetupAttachment(RootComponent);
+	MeshComp->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
+	//MeshComp->SetRelativeLocationAndRotation(FVector(100.f,0.f,0.f), FRotator(0.f,-90.f,0.f));
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovement->UpdatedComponent = RootComponent;
@@ -34,7 +43,7 @@ APCBaseProjectile::APCBaseProjectile()
 	ProjectileMovement->ProjectileGravityScale = 0.f;
 	
 	TrailEffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TrailEffect"));
-	TrailEffectComp->SetupAttachment(MeshComp);
+	TrailEffectComp->SetupAttachment(RootComponent);
 }
 
 void APCBaseProjectile::BeginPlay()
@@ -45,6 +54,7 @@ void APCBaseProjectile::BeginPlay()
 	SetActorEnableCollision(false);
 	SetReplicateMovement(true);
 }
+
 
 void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {

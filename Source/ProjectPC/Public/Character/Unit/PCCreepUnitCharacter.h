@@ -37,5 +37,10 @@ protected:
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 
 	// 전투 관련 //
-	virtual void OnDeathMontageCompleted() override;
+	virtual void OnDeathAnimCompleted() override;
+
+	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) override;
+
+public:
+	virtual void Die() override;
 };

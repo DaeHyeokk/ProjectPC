@@ -30,6 +30,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
 
@@ -59,7 +60,6 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Death)
 
 	// ==== Unit State Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Alive)
@@ -127,6 +127,11 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_SpellVamp)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Cooldown_BasicAttack)
+}
+
+namespace GameplayCueTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Unit_LevelUp)
 }
 
 namespace PlayerGameplayTags

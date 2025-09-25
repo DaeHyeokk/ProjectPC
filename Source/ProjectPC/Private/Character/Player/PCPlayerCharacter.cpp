@@ -9,7 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
 
 

@@ -18,23 +18,34 @@ void UPCUnitAnimInstance::PlayLevelStartMontage()
 	Montage_Play(LevelStart, 1.f);
 }
 
-void UPCUnitAnimInstance::NativeBeginPlay()
+void UPCUnitAnimInstance::NativeInitializeAnimation()
 {
-	Super::NativeBeginPlay();
+	Super::NativeInitializeAnimation();
 	
 	CachedUnitCharacter = Cast<APCBaseUnitCharacter>(TryGetPawnOwner());
 	if (CachedUnitCharacter.IsValid())
 	{
 		CachedMovementComp = CachedUnitCharacter->GetCharacterMovement();
 		SetAnimSet(CachedUnitCharacter->GetUnitAnimSetDataAsset());
-
-		PlayLevelStartMontage();
 	}
-
 	if (GetWorld())
 	{
 		CachedCombatGameState = GetWorld()->GetGameState<APCCombatGameState>();
 	}
+}
+
+void UPCUnitAnimInstance::NativeUninitializeAnimation()
+{
+	if (CachedUnitCharacter.IsValid())
+	{
+		CachedUnitCharacter.Reset();
+		CachedMovementComp.Reset();
+		CurrentAnimSet = nullptr;
+	}
+
+	CachedCombatGameState.Reset();
+	
+	Super::NativeUninitializeAnimation();
 }
 
 void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -64,6 +75,7 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsCombatActive = CachedUnitCharacter->IsOnField() && CachedCombatGameState->IsCombatActive();
 	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedUnitCharacter->GetVelocity(), CachedUnitCharacter->GetActorRotation());
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
+	bIsDead = CachedUnitCharacter->IsDead();
 }
 
 void UPCUnitAnimInstance::SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet)
@@ -84,4 +96,10 @@ void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();
 	JumpRecovery = AnimSet->LocomotionSet.JumpRecovery.LoadSynchronous();
+	Death = AnimSet->LocomotionSet.Death.LoadSynchronous();
 }
+
+// void UPCUnitAnimInstance::OnDeadTagChanged(const FGameplayTag Tag, const int32 NewCount)
+// {
+// 	bIsDead = (NewCount > 0);
+// }

@@ -58,7 +58,6 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack, "Unit.Action.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Basic, "Unit.Action.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Ultimate, "Unit.Action.Attack.Ultimate")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Death, "Unit.Action.Death")
 
 	// ==== Unit State Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_State_Combat_Alive, "Unit.State.Combat.Alive")
@@ -126,6 +125,11 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_SpellVamp, "GE.Caller.Stat.SpellVamp")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Cooldown_BasicAttack, "GE.Caller.Cooldown.BasicAttack")
+}
+
+namespace GameplayCueTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Unit_LevelUp, "GameplayCue.Unit.LevelUp")
 }
 
 namespace PlayerGameplayTags

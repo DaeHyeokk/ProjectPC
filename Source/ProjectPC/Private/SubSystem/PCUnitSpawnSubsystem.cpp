@@ -71,14 +71,14 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	Unit->SetUnitTag(UnitTag);
 	
 	ApplyDefinitionData(Unit, Definition);
-
+	
 	if (Unit->HasLevelSystem())
 	{
 		Unit->SetUnitLevel(UnitLevel);
 	}
 
 	UGameplayStatics::FinishSpawningActor(Unit, SpawnTransform);
-		
+	
 	Unit->SetNetDormancy(DORM_Awake);
 	Unit->ForceNetUpdate();
 

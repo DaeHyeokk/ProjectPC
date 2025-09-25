@@ -49,12 +49,15 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="CombatState")
 	bool bIsCombatActive;
+
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bIsDead;
 	
-	UFUNCTION(BlueprintCallable)
 	void PlayLevelStartMontage();
 	
 protected:
-	virtual void NativeBeginPlay() override;
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUninitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	
 private:
@@ -86,7 +89,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> JumpRecovery;
 
-	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> Death;
 
-	bool bPlayStartAnim = false;
+	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
 };
