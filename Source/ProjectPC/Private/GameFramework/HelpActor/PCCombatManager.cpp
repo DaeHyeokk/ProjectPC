@@ -675,8 +675,8 @@ void APCCombatManager::CheckPairVictory(int32 PairIndex)
 	if (Pair.GuestAlive <= 0)
 	{
 		ResolvePairResult(PairIndex, true);
-		return;
 	}
+	
 }
 
 void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
@@ -767,13 +767,11 @@ int32 APCCombatManager::FindRunningPairIndexBySeat(int32 SeatIndex) const
 
 int32 APCCombatManager::FindFirstFreeBenchIndex(UPCTileManager* TM, bool bEnemySide) const
 {
-	if (!TM)
-		return INDEX_NONE;
-
+	if (!TM) return INDEX_NONE;
 	const int32 N = TM->BenchSlotsPerSide;
 	for (int32 local = 0; local < N; ++local)
 	{
-		const int32 idx = TM->GetBenchIndex(bEnemySide, local);
+		const int32 idx = TM->MakeGlobalBenchIndex(bEnemySide, local); // ★ 중요
 		if (idx != INDEX_NONE && TM->GetBenchUnit(idx) == nullptr)
 			return idx;
 	}

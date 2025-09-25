@@ -24,7 +24,7 @@ int32 UPCTileManager::GetBoardIndex()
 {
 	if (APCCombatBoard* MyBoard = GetCombatBoard())
 	{
-		BoardIndex = MyBoard->BoardSeatIndex;
+		return MyBoard->BoardSeatIndex;
 	}
 	return INDEX_NONE;
 }
@@ -86,16 +86,20 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 
 bool UPCTileManager::PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride)
 {
-	if (!Bench.IsValidIndex(BenchIndex) || !Unit || !Bench[BenchIndex].IsEmpty()) return false;
+	bool bEnemy;
+	int32 Local;
+	if (!SplitGlobalBenchIndex(BenchIndex, bEnemy, Local)) return false;
+	TArray<FTile>& A = bEnemy ? EnemyBench : Bench;
+	if (!A.IsValidIndex(Local) || !Unit || !A[Local].IsEmpty()) return false;
 
 	EnsureExclusive(Unit);
-	Bench[BenchIndex].Unit = Unit;
+	A[Local].Unit = Unit;
 
-	APCCombatBoard* CombatBoard = GetCombatBoard();
-	const FVector  Loc = Bench[BenchIndex].Position;
-	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride); // ★ 동일
+	APCCombatBoard* Board = GetCombatBoard();
+	const FVector  Loc = A[Local].Position;
+	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
 
-	Unit->SetOnCombatBoard(CombatBoard);
+	Unit->SetOnCombatBoard(Board);
 	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::ResetPhysics);
 	Unit->ChangedOnTile(false);
 	return true;
@@ -182,28 +186,34 @@ FVector UPCTileManager::GetTileLocalPosition(int32 Y, int32 X) const
 
 bool UPCTileManager::RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard)
 {
-	if (!Bench.IsValidIndex(BenchIndex))
-		return false;
-	
-	if (!bPreserveUnitBoard)
-	{
-		Bench[BenchIndex].Unit->SetOnCombatBoard(nullptr);
-	}
+	bool bEnemy;
+	int32 Local;
+	if (!SplitGlobalBenchIndex(BenchIndex, bEnemy, Local)) return false;
+	TArray<FTile>& A = bEnemy ? EnemyBench : Bench;
+	if (!A.IsValidIndex(Local)) return false;
 
-		
-	Bench[BenchIndex].Unit = nullptr;
-	
+	if (!bPreserveUnitBoard && A[Local].Unit)
+		A[Local].Unit->SetOnCombatBoard(nullptr);
+
+	A[Local].Unit = nullptr;
 	return true;
 }
 
 APCBaseUnitCharacter* UPCTileManager::GetBenchUnit(int32 BenchIndex) const
 {
-	return Bench.IsValidIndex(BenchIndex) ? Bench[BenchIndex].Unit : nullptr;
+	bool bEnemy;
+	int32 Local;
+	if (!SplitGlobalBenchIndex(BenchIndex, bEnemy, Local)) return nullptr;
+	const TArray<FTile>& A = bEnemy ? EnemyBench : Bench;
+	return A.IsValidIndex(Local) ? A[Local].Unit : nullptr;
 }
 
 FVector UPCTileManager::GetBenchWorldPosition(int32 BenchIndex) const
 {
-	return Bench.IsValidIndex(BenchIndex) ? Bench[BenchIndex].Position : FVector::ZeroVector;
+	bool bEnemy; int32 Local;
+	if (!SplitGlobalBenchIndex(BenchIndex, bEnemy, Local)) return FVector::ZeroVector;
+	const TArray<FTile>& A = bEnemy ? EnemyBench : Bench;
+	return A.IsValidIndex(Local) ? A[Local].Position : FVector::ZeroVector;
 }
 
 FVector UPCTileManager::GetBenchLocalPosition(int32 BenchIndex) const
@@ -216,15 +226,20 @@ FVector UPCTileManager::GetBenchLocalPosition(int32 BenchIndex) const
 
 int32 UPCTileManager::GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const
 {
-	if (!Unit)
-		return INDEX_NONE;
-	for (int32 i = 0; i < BenchSize; ++i)
-	{
-		if (Bench[i].Unit == Unit)
-		{
-			return i;
-		}
-	}
+	if (!Unit) return INDEX_NONE;
+
+	const int32 N = BenchSlotsPerSide;
+
+	// Friendly 줄
+	for (int32 i = 0; i < N; ++i)
+		if (Bench.IsValidIndex(i) && Bench[i].Unit == Unit)
+			return MakeGlobalBenchIndex(/*bEnemySide=*/false, i);
+
+	// Enemy 줄
+	for (int32 i = 0; i < N; ++i)
+		if (EnemyBench.IsValidIndex(i) && EnemyBench[i].Unit == Unit)
+			return MakeGlobalBenchIndex(/*bEnemySide=*/true, i);
+
 	return INDEX_NONE;
 }
 
@@ -237,6 +252,11 @@ void UPCTileManager::ClearAll()
 	for (auto& BenchTile : Bench)
 	{
 		BenchTile.Unit = nullptr;
+	}
+
+	for (auto& EnemyBenchTile : EnemyBench)
+	{
+		EnemyBenchTile.Unit = nullptr;
 	}
 }
 
@@ -375,113 +395,101 @@ bool UPCTileManager::IsValidTile(int32 Y, int32 X, int32& OutIndex) const
 
 int32 UPCTileManager::MirrorBenchIndex(int32 Index) const
 {
-	const int32 N = BenchSlotsPerSide;
-	if (Index < 0 || Index >= 2*N)
+	bool bEnemy;
+	int32 Local;
+	if (!SplitGlobalBenchIndex(Index, bEnemy,Local))
+	{
 		return INDEX_NONE;
-	return(Index<N ? (Index+N) : (Index - N));
+	}
+	return MakeGlobalBenchIndex(!bEnemy, Local);
+}
+
+int32 UPCTileManager::MakeGlobalBenchIndex(bool bEnemySide, int32 LocalIndex) const
+{
+	const int32 N = BenchSlotsPerSide;
+	if (LocalIndex < 0 || LocalIndex >= N) return INDEX_NONE;
+	return bEnemySide ? (N + LocalIndex) : LocalIndex;
+}
+
+bool UPCTileManager::SplitGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide, int32& Local) const
+{
+	const int32 N = BenchSlotsPerSide;
+	if (GlobalIndex < 0 || GlobalIndex >= 2*N) return false;
+	bEnemySide = (GlobalIndex >= N);
+	Local = bEnemySide ? (GlobalIndex - N) : GlobalIndex;
+	return true;
 }
 
 
-
 void UPCTileManager::MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows, bool bMirrorCols,
-	bool bIncludeBench)
+                                         bool bIncludeBench)
 {
 	 if (!TargetField || Rows != TargetField->Rows || Cols != TargetField->Cols)
         return;
 
-    // --- 필드 캡쳐: (Col,Row) 순서로 보관 ---
-    struct FCapturedField
-    {
-        int32 Col;
-        int32 Row;
-        TWeakObjectPtr<APCBaseUnitCharacter> Unit;
-    };
+    // --- 필드 캡처
+    struct FCapturedField { int32 Col; int32 Row; TWeakObjectPtr<APCBaseUnitCharacter> Unit; };
+    TArray<FCapturedField> CF; CF.Reserve(Field.Num());
 
-    TArray<FCapturedField> CapturedField;
-    CapturedField.Reserve(Field.Num());
+    for (int32 r=0;r<Rows;++r)
+        for (int32 c=0;c<Cols;++c)
+            if (APCBaseUnitCharacter* U = GetFieldUnit(c, r))
+                CF.Add({c, r, U});
 
-	for (int32 row = 0; row < Rows; ++row)
-	{
-		for (int32 col = 0; col < Cols; ++col)
-		{
-			{
-				if (APCBaseUnitCharacter* U = GetFieldUnit(col, row)) 
-				{
-					CapturedField.Add({col, row, U});
-				}
-			}
-		}
-	}
-   
-
-    // --- 벤치 캡쳐 ---
-    struct FCapturedBench { int32 Index; TWeakObjectPtr<APCBaseUnitCharacter> Unit; };
-    TArray<FCapturedBench> CapturedBench;
+    // --- 벤치 캡처 (글로벌 인덱스)
+    struct FCapturedBench { int32 GlobalIndex; TWeakObjectPtr<APCBaseUnitCharacter> Unit; };
+    TArray<FCapturedBench> CB;
 
     const int32 NThis   = BenchSlotsPerSide;
     const int32 NTarget = TargetField->BenchSlotsPerSide;
-    const int32 TSize   = TargetField->BenchSize;
 
-    const bool bDualBenchThis   = (Bench.Num()            == 2*NThis   && NThis   > 0);
-    const bool bDualBenchTarget = (TargetField->Bench.Num() == 2*NTarget && NTarget > 0);
+    const bool bCanMirrorBench =
+        (NThis > 0) && (NTarget == NThis) &&
+        (Bench.Num() == NThis) && (EnemyBench.Num() == NThis) &&
+        (TargetField->Bench.Num() == NTarget) && (TargetField->EnemyBench.Num() == NTarget);
 
     if (bIncludeBench)
     {
-        for (int32 i = 0; i < Bench.Num(); ++i)
-            if (APCBaseUnitCharacter* U = GetBenchUnit(i))
-                CapturedBench.Add({i, U});
+        // 0..2N-1 글로벌 검색
+        for (int32 g=0; g<2*NThis; ++g)
+            if (APCBaseUnitCharacter* U = GetBenchUnit(g))
+                CB.Add({g, U});
     }
 
-	UE_LOG(LogTemp, Warning, TEXT("CapturedField: %d, CapturedBench: %d"),
-	   CapturedField.Num(), CapturedBench.Num());
-	for (const auto& E : CapturedField)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  F %s (%d,%d)"), *E.Unit->GetName(), E.Col, E.Row);
-	}
-	for (const auto& E : CapturedBench)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  B %s (%d)"), *E.Unit->GetName(), E.Index);
-	}
-
-    // --- 필드 이동 ---
-    for (const auto& E : CapturedField)
+    // --- 필드 이동
+    for (const auto& E : CF)
     {
         const int32 nRow = bMirrorRows ? (Rows - 1 - E.Row) : E.Row;
         const int32 nCol = bMirrorCols ? (Cols - 1 - E.Col) : E.Col;
 
-       if (TargetField->PlaceUnitOnField(nCol, nRow, E.Unit.Get(), ETileFacing::Enemy))
-       {
-	       RemoveFromField(E.Col, E.Row, true);
-       }
-    	
+        if (TargetField->PlaceUnitOnField(nCol, nRow, E.Unit.Get(), ETileFacing::Enemy))
+            RemoveFromField(E.Col, E.Row, /*preserve*/true);
     }
 
-    // --- 벤치 이동 ---
+    // --- 벤치 이동
     if (bIncludeBench)
     {
-        for (const auto& E : CapturedBench)
+        for (const auto& E : CB)
         {
-            int32 NewIndex = E.Index;
+            int32 NewGlobal = E.GlobalIndex;
 
             if (bMirrorCols)
             {
-                if (bDualBenchThis && bDualBenchTarget && TSize > 0)
+                if (bCanMirrorBench)
                 {
-                    const int32 capped = E.Index % TSize;
-                    NewIndex = TargetField->MirrorBenchIndex(capped); // 좌↔우 반쪽 스왑
-                }
-                else if (TSize > 0)
-                {
-                    NewIndex = TSize - 1 - (E.Index % TSize); // 폴백: 전체 역순
+                    // 사이드만 토글
+                    NewGlobal = TargetField->MirrorBenchIndex(E.GlobalIndex);
                 }
                 else
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("Skip bench mirror: Target BenchSize == 0"));
+                    // 폴백: 전체 2N 범위 안에서 좌우 반전
+                    const int32 TwoN = 2 * FMath::Max(1, NTarget);
+                    NewGlobal = (TwoN - 1) - (E.GlobalIndex % TwoN);
                 }
             }
 
-            if (TargetField->PlaceUnitOnBench(NewIndex, E.Unit.Get(),ETileFacing::Enemy))
-                RemoveFromBench(E.Index, true);
+            if (TargetField->PlaceUnitOnBench(NewGlobal, E.Unit.Get(), ETileFacing::Enemy))
+                RemoveFromBench(E.GlobalIndex, /*preserve*/true);
         }
     }
 }
@@ -541,11 +549,10 @@ void UPCTileManager::CreateField()
 void UPCTileManager::CreateBench()
 {
 	const int32 N = FMath::Max(0, BenchSlotsPerSide);
-	BenchSize = 2 * N;
-	Bench.SetNum(BenchSize);
+	Bench.SetNum(N);
+	EnemyBench.SetNum(N);
 
 	const FVector OwnerLoc = GetOwner() ? GetOwner()->GetActorLocation() : FVector::ZeroVector;
-
 	const FVector FirstPlayerLoc = OwnerLoc + FVector(BenchTilePlayerLocal.X, BenchTilePlayerLocal.Y, 0);
 	const FVector FirstEnemyLoc = OwnerLoc + FVector(BenchTileEnemyLocal.X, BenchTileEnemyLocal.Y, 0);
 
@@ -554,15 +561,10 @@ void UPCTileManager::CreateBench()
 		Bench[i].Position = FirstPlayerLoc + FVector(0.f, i * BenchStepLocalY, 0.f);
 		Bench[i].bIsField = false;
 		Bench[i].Unit = nullptr;
-	}
 
-	for (int32 i = 0; i < N; ++i)
-	{
-		const int32 dst = bBenchClockwise ? (N + i) : (N + (N - 1 - i));
-
-		Bench[dst].Position = FirstEnemyLoc + FVector(0.f, i * -BenchStepLocalY, 0.f);
-		Bench[dst].bIsField = false;
-		Bench[dst].Unit = nullptr;
+		EnemyBench[i].Position = FirstEnemyLoc  + FVector(0.f, i * -BenchStepLocalY, 0.f);
+		EnemyBench[i].bIsField = false;
+		EnemyBench[i].Unit = nullptr;
 	}
 }
 
@@ -721,10 +723,6 @@ bool UPCTileManager::WorldToField(const FVector& WorldLoc, int32& OutY, int32& O
 
 	OutY = BestY;
 	OutX = BestX;
-
-	// UE_LOG(LogTemp, Warning, TEXT("World: %s  Best (y=%d,x=%d) Pos:%s  d=%.1f"),
-	// *WorldLoc.ToString(), BestY, BestX, *Field[IndexOf(BestY,BestX)].Position.ToString(),
-	// FMath::Sqrt(BestD2));
 	
 	return true;
 	
@@ -734,140 +732,130 @@ bool UPCTileManager::WorldToField(const FVector& WorldLoc, int32& OutY, int32& O
 bool UPCTileManager::WorldToBench(const FVector& World, int32& OutBenchIndex, float MaxSnapDist) const
 {
 	OutBenchIndex = INDEX_NONE;
-	if (Bench.Num() <= 0)
-		return false;
+	const int32 N = BenchSlotsPerSide;
 
-	float BestD2 = TNumericLimits<float>::Max();
-	int32 BestIdx = INDEX_NONE;
+	float bestD2 = TNumericLimits<float>::Max();
+	int32 bestG  = INDEX_NONE;
 
-	for (int32 i = 0; i < Bench.Num(); ++i)
+	auto try_slot = [&](bool bEnemySide, int32 local, const FTile& T)
 	{
-		const float d2 = Dist2_2D(Bench[i].Position, World);
-		if (d2 < BestD2)
-		{
-			BestD2 = d2;
-			BestIdx = i;
-		}
-	}
+		const float d2 = (T.Position - World).SizeSquared2D();
+		if (d2 < bestD2) { bestD2 = d2; bestG = MakeGlobalBenchIndex(bEnemySide, local); }
+	};
 
-	if (BestIdx == INDEX_NONE)
-		return false;
+	for (int32 i=0;i<N;++i)
+		if (Bench.IsValidIndex(i)) try_slot(false, i, Bench[i]);
+	for (int32 i=0;i<N;++i)
+		if (EnemyBench.IsValidIndex(i))    try_slot(true,  i, EnemyBench[i]);
+
+	if (bestG == INDEX_NONE) return false;
 
 	const float DefSnap = (TileWidthX > 0.f) ? (TileWidthX * 0.6f) : 120.f;
-	const float Snap = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+	const float Snap    = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+	if (bestD2 > Snap*Snap) return false;
 
-	// ★ 제곱거리 비교
-	if (BestD2 > (Snap * Snap))
-		return false;
-
-	OutBenchIndex = BestIdx;
+	OutBenchIndex = bestG;
 	return true;
 }
 
-bool UPCTileManager::WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
-	int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField, float MaxSnapDistBench) const
+bool UPCTileManager::WorldAnyTile(const FVector& World, bool bPreferField,
+    bool& bOutIsField, int32& OutY, int32& OutX, int32& OutBenchIndex, FVector& OutSnapPos,
+    float MaxSnapDistField, float MaxSnapDistBench,
+    bool bRequireUnit) const
 {
-	bOutIsField = false;
-	OutY = INDEX_NONE;
-	OutX = INDEX_NONE;
-	OutBenchIndex = INDEX_NONE;
-	OutSnapPos = World;
+    bOutIsField   = false;
+    OutY = OutX   = INDEX_NONE;
+    OutBenchIndex = INDEX_NONE;
+    OutSnapPos    = World;
 
-	int32 Y, X, B;
-	const bool bField = WorldToField(World, Y, X, MaxSnapDistField);
-	const bool bBench = WorldToBench(World, B, MaxSnapDistBench);
+    int32 Y, X, B;
+    const bool bFieldHit = WorldToField(World, Y, X, MaxSnapDistField);
+    const bool bBenchHit = WorldToBench(World, B, MaxSnapDistBench);
 
-	if (!bField && !bBench)
-		return false;
+    if (!bFieldHit && !bBenchHit) return false;
 
-	if (bField && bBench)
-	{
-		const FVector PField = Field[IndexOf(Y, X)].Position;
-		const FVector PBench = Bench[B].Position;
+    // 필드 후보
+    bool bFieldCandidate = false; FVector PField(0);
+    if (bFieldHit)
+    {
+        const int32 Idx = IndexOf(Y, X);
+        if (Field.IsValidIndex(Idx))
+        {
+            const bool bHasUnit = (Field[Idx].Unit != nullptr);
+            if (!bRequireUnit || bHasUnit)
+            { bFieldCandidate = true; PField = Field[Idx].Position; }
+        }
+    }
 
-		const float df2 = Dist2_2D(PField, World);
-		const float db2 = Dist2_2D(PBench, World);
+    // 벤치 후보 (글로벌 → 사이드/로컬 쪼개서 올바른 배열 사용)
+    bool bBenchCandidate = false; FVector PBench(0);
+    if (bBenchHit)
+    {
+        bool bEnemy=false; int32 Local=-1;
+        if (SplitGlobalBenchIndex(B, bEnemy, Local))
+        {
+            const TArray<FTile>& A = bEnemy ? EnemyBench : Bench;
+            if (A.IsValidIndex(Local))
+            {
+                const bool bHasUnit = (A[Local].Unit != nullptr);
+                if (!bRequireUnit || bHasUnit)
+                { bBenchCandidate = true; PBench = A[Local].Position; }
+            }
+        }
+    }
 
-		const bool ChooseField = bPreferField ? (df2 <= db2 * 1.02f) : (df2 < db2);
-		if (ChooseField)
-		{
-			bOutIsField = true;
-			OutY = Y; OutX = X;
-			OutSnapPos = PField;
-		}
-		else
-		{
-			bOutIsField = false;
-			OutBenchIndex = B;
-			OutSnapPos = PBench;
-		}
-		return true;
-	}
+    if (!bFieldCandidate && !bBenchCandidate)
+        return false;
 
-	if (bField)
-	{
-		bOutIsField = true;
-		OutY = Y; OutX = X;
-		OutSnapPos = Field[IndexOf(Y, X)].Position;
-		return true;
-	}
+    if (bFieldCandidate && bBenchCandidate)
+    {
+        const float df2 = FVector::DistSquared2D(PField, World);
+        const float db2 = FVector::DistSquared2D(PBench, World);
+        constexpr float TieBias = 1.02f;
+        const bool ChooseField = bPreferField ? (df2 <= db2 * TieBias) : (df2 < db2);
 
-	bOutIsField = false;
-	OutBenchIndex = B;
-	OutSnapPos = Bench[B].Position;
-	return true;
-	
+        if (ChooseField)
+        {
+	        bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PField;
+        }
+        else
+        {
+	        bOutIsField = false; OutBenchIndex = B; OutSnapPos = PBench;
+        }
+        return true;
+    }
+
+    if (bFieldCandidate)
+    {
+    	bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PField;
+    	return true;
+    }
+    else
+    {
+	    bOutIsField = false; OutBenchIndex = B; OutSnapPos = PBench;
+    	return true;
+    }
 }
 
-TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitTag)
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllUnitByTag(FGameplayTag UnitTag, int32 TeamSeat)
 {
-	TArray<APCBaseUnitCharacter*> AllUnits;
-	if (!UnitTag.IsValid())
-		return AllUnits;
+	TArray<APCBaseUnitCharacter*> Out;
+	if (!UnitTag.IsValid()) return Out;
 
-	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
-	{
-		if (!IsValid(Unit)) return;
-
-		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag))
+	auto AddIf = [&](APCBaseUnitCharacter* U){
+		if (IsValid(U) && U->GetUnitTag().IsValid() && U->GetUnitTag().MatchesTag(UnitTag) && U->GetTeamIndex() == TeamSeat)
 		{
-			if (!AllUnits.Contains(Unit))
-			{
-				AllUnits.Add(Unit);
-			}
+			Out.AddUnique(U);
 		}
 	};
 
-	// 필드 먼저
-	for (const FTile& FieldTile : Field)
-	{
-		AddIfMatch(FieldTile.Unit);
-
-		if (FieldTile.Unit)
-		{
-			int32 TeamIdx = FieldTile.Unit->GetTeamIndex();
-			int32 BoardIdx = GetCombatBoard()->BoardSeatIndex;
-
-			UE_LOG(LogTemp, Warning, TEXT("  TeamIdx : %d, BoardIndex : %d "), TeamIdx, BoardIndex);
-		}
-		
-	}
-
-	// 벤치
-	for (const FTile& BenchTile : Bench)
-	{
-		AddIfMatch(BenchTile.Unit);
-
-		if (BenchTile.Unit)
-		{
-			int32 TeamIdx = BenchTile.Unit->GetTeamIndex();
-			int32 BoardIdx = GetCombatBoard()->BoardSeatIndex;
-
-			UE_LOG(LogTemp, Warning, TEXT("  TeamIdx : %d, BoardIndex : %d "), TeamIdx, BoardIndex);
-		}
-	}
-
-	return AllUnits;
+	// 필드
+	for (const auto& T : Field)
+		AddIf(T.Unit);
+	// 벤치 양쪽
+	for (const auto& T : Bench)
+		AddIf(T.Unit);
+	return Out;
 }
 
 TArray<APCBaseUnitCharacter*> UPCTileManager::GetFieldUnitByTag(FGameplayTag UnitTag)
@@ -897,31 +885,23 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetFieldUnitByTag(FGameplayTag Uni
 	return AllUnits;
 }
 
-TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag UnitTag)
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag UnitTag, int32 TeamSeat)
 {
-	TArray<APCBaseUnitCharacter*> AllUnits;
-	if (!UnitTag.IsValid())
-		return AllUnits;
+	TArray<APCBaseUnitCharacter*> Out;
+	if (!UnitTag.IsValid()) return Out;
 
-	auto AddIfMatch = [&](APCBaseUnitCharacter* Unit)
-	{
-		if (!IsValid(Unit)) return;
-
-		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag) && Unit->GetTeamIndex() == GetBoardIndex())
+	auto AddIf = [&](APCBaseUnitCharacter* U){
+		if (IsValid(U) && U->GetUnitTag().IsValid() &&
+			U->GetUnitTag().MatchesTag(UnitTag) &&
+			U->GetTeamIndex() == TeamSeat)
 		{
-			if (!AllUnits.Contains(Unit))
-			{
-				AllUnits.Add(Unit);
-			}
+			Out.AddUnique(U);
 		}
 	};
 
-	for (const FTile& BenchTile : Bench)
-	{
-		AddIfMatch(BenchTile.Unit);
-	}
-
-	return AllUnits;
+	for (const auto& T : Bench)      AddIf(T.Unit);
+	for (const auto& T : EnemyBench) AddIf(T.Unit);
+	return Out;
 }
 
 void UPCTileManager::BindToUnit(APCBaseUnitCharacter* Unit)

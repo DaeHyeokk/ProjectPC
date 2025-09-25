@@ -9,15 +9,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
-//#include "Character/Unit/PCBaseUnitCharacter.h"
-#include "AIController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Kismet/GameplayStatics.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -25,7 +23,6 @@
 #include "GameFramework/HelpActor/Component/PCDragComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Net/NetworkMetricsDefs.h"
 #include "Shop/PCShopManager.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
@@ -83,9 +80,6 @@ void APCCombatPlayerController::BeginPlay()
 	ApplyGameInputMode();
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-
-	
-	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
@@ -154,7 +148,9 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 		if (FollowTime > PlayerInputData->ShortPressThreshold)
 		{
 			StopMovement();
+			Server_StopMovement();
 		}
+		
 		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
 		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
 	}
@@ -162,16 +158,36 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 
 void APCCombatPlayerController::OnSetDestinationReleased()
 {
-	if (FollowTime <= PlayerInputData->ShortPressThreshold)
+	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		Server_MovetoLocation(CachedDestination);
+		if (APawn* ControlledPawn = GetPawn())
+		{
+			//UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+			Server_MovetoLocation(CachedDestination);
+		}
 	}
 	
 	FollowTime = 0.f;
 }
 
+void APCCombatPlayerController::Server_StopMovement_Implementation()
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		StopMovement();
+	}
+}
+
 void APCCombatPlayerController::Server_MovetoLocation_Implementation(const FVector& Destination)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
+		Client_MovetoLocation(Destination);
+	}
+}
+
+void APCCombatPlayerController::Client_MovetoLocation_Implementation(const FVector& Destination)
 {
 	if (APawn* ControlledPawn = GetPawn())
 	{
@@ -302,25 +318,39 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
-	if (auto PS = GetPlayerState<APCPlayerState>())
-	{
-		if (auto ASC = PS->GetAbilitySystemComponent())
-		{
-			if (Unit && !Unit->IsActorBeingDestroyed())
-			{
-				
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.OptionalObject = Unit;
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
 
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-				Unit = nullptr;
-			}
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+
+	// 팀 확인
+	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
+		return;
+
+	if (UPCTileManager* TM = GetTileManager())
+	{
+		if (TM->GetBenchUnitIndex(Unit) == INDEX_NONE && TM->GetFieldUnitGridPoint(Unit) == FIntPoint::NoneValue)
+			return;
+	}
+	
+	
+	if (auto ASC = PS->GetAbilitySystemComponent())
+	{
+		if (Unit && !Unit->IsActorBeingDestroyed())
+		{
+			FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
+			FGameplayEventData EventData;
+			EventData.Instigator = PS;
+			EventData.Target = PS;
+			EventData.EventTag = GA_Tag;
+			EventData.OptionalObject = Unit;
+
+			ASC->HandleGameplayEvent(GA_Tag, &EventData);
+			Unit = nullptr;
 		}
 	}
+	
 }
 
 void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
@@ -334,14 +364,20 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto ASC = PS->GetAbilitySystemComponent();
 	if (!ASC) return;
 	
-	auto Board = GS->GetBoardBySeat(PS->SeatIndex);
-	if (!Board) return;
+	auto Board = GS->GetBattleBoardForSeat(PS->SeatIndex);
+	if (!Board)
+	{
+		Board = GS->GetBoardBySeat(PS->SeatIndex);
+		if (!Board) return;
+	}
+
+	int32 RequiredCount = 0;
 
 	// 벤치가 꽉 찼을 때
-	if (Board->GetFirstEmptyBenchIndex() == -1)
+	if (Board->GetFirstEmptyBenchIndex(PS->SeatIndex) == INDEX_NONE)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
-		auto RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
 		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
@@ -352,18 +388,17 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 
 			// 클릭한 슬롯 제외 나머지 구매 처리
-			for (int i = 0; i < RequiredCount - 1; ++i)
+			if (RequiredCount >= 1)
 			{
-				FGameplayTag GA_Tag = PlayerGameplayTags::Player_GA_Shop_BuyUnit;
-				FGameplayEventData EventData;
-				EventData.Instigator = PS;
-				EventData.Target = PS;
-				EventData.EventTag = GA_Tag;
-				EventData.EventMagnitude = static_cast<float>(SameSlotIndices[i]);
-
-				ASC->HandleGameplayEvent(GA_Tag, &EventData);
-
-				SetSlotHidden(SameSlotIndices[i]);
+				for (int i = 0; i < RequiredCount - 1; ++i)
+				{
+					SetSlotHidden(SameSlotIndices[i]);
+					PS->PurchasedSlots.Add(SameSlotIndices[i]);
+				}
+			}
+			else
+			{
+				return;
 			}
 		}
 	}
@@ -374,7 +409,13 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	EventData.Instigator = PS;
 	EventData.Target = PS;
 	EventData.EventTag = GA_Tag;
-	EventData.EventMagnitude = static_cast<float>(SlotIndex);
+
+	FGameplayAbilityTargetDataHandle TargetDataHandle;
+	FGameplayAbilityTargetData_SingleTargetHit* NewData = new FGameplayAbilityTargetData_SingleTargetHit();
+	NewData->HitResult.Location.X = SlotIndex;
+	NewData->HitResult.Location.Y = RequiredCount;
+	TargetDataHandle.Add(NewData);
+	EventData.TargetData = TargetDataHandle;
 	
 	ASC->HandleGameplayEvent(GA_Tag, &EventData);
 	
@@ -448,20 +489,7 @@ void APCCombatPlayerController::SwitchCameraWhileBlack(AActor* NewTarget, float 
     // 카메라: 씬 페이드 아웃
     if (IsLocalController() && PlayerCameraManager)
         PlayerCameraManager->StartCameraFade(0.f, 1.f, FadeOutTime, FLinearColor::Black, false, true);
-
-    // 오버레이도 동시에 알파 올리기 (간단히 타이머로 선형 보간)
-    // const int32 Steps = 5;
-    // const float StepDt = FMath::Max(0.01f, FadeOutTime / Steps);
-    // for (int32 i=1;i<=Steps;++i)
-    // {
-    //     GetWorldTimerManager().SetTimerForNextTick([this, i, Steps, StepDt]()
-    //     {
-    //         if (!ScreenFadeWidget) return;
-    //         const float A = i / Steps;
-    //         ScreenFadeWidget->SetRenderOpacity(A);
-    //     });
-    // }
-
+	
 	ScreenFadeWidget->SetRenderOpacity(1.0f);
 
     const float CutTime = FadeOutTime + FMath::Max(0.f, HoldBlack);
@@ -642,12 +670,19 @@ void APCCombatPlayerController::OnMouse_Released()
 	{
 		if (DragComponent)
 			DragComponent->OnMouse_Released(this);
+
+		CachedHoverUnit = nullptr;
+		ClearHoverHighLight();
 	}
 	
 }
 
 void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector World, int32 DragId)
 {
+
+	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
+	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+		
 	UPCTileManager* TM = GetTileManager();
 	if (!TM)
 	{
@@ -667,6 +702,12 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 		return;
 	}
 
+	if (bInBattle && bIsField)
+	{
+		Client_DragConfirm(false, DragId, World, nullptr);
+		return;
+	}
+
 	APCBaseUnitCharacter* Unit = bIsField ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
 	
 	if (!Unit || !CanControlUnit(Unit))
@@ -681,6 +722,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
+		Client_CurrentDragUnit(Unit);
 	}
 	else
 	{
@@ -691,6 +733,9 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 
 void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
+	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
+	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+		
 	if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
 	{
 		Client_DragEndResult(false, World, DragId, nullptr);
@@ -713,6 +758,14 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	if (!TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
 	{
 		Client_DragEndResult(false, World, DragId, nullptr);
+		return;
+	}
+
+	if (bField && bInBattle)
+	{
+		Client_DragEndResult(false, World, DragId, nullptr);
+		CurrentDragUnit = nullptr;
+		CurrentDragId = 0;
 		return;
 	}
 
@@ -845,12 +898,17 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	if (!IsLocalController())
 		return;
 
+	APCPlayerState* PC = GetPlayerState<APCPlayerState>();
+	if (!PC)
+		return;
+	
+	
 	if (bOk)
 	{
-		if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
+		if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
 		{
-			Board -> OnHism(true);
-			
+			BattleBoard->OnHism(true);
+
 			if (ShopWidget)
 			{
 				ShopWidget->SwitchShopWidget();
@@ -868,25 +926,35 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 {
 	if (!IsLocalController())
 		return;
-	
-	if (const APCCombatBoard* Board = FindBoardBySeatIndex(HomeBoardSeatIndex))
+
+	APCPlayerState* PC = GetPlayerState<APCPlayerState>();
+	if (!PC)
+		return;
+
+	if (ShopWidget)
 	{
-		Board -> OnHism(false);
+		float X, Y;
+		UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
+		FVector2D MousePos(X, Y);
 
-		if (ShopWidget)
+		if (ShopWidget->IsScreenPointInSellBox(MousePos))
 		{
-			float X, Y;
-			UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
-			FVector2D MousePos(X, Y);
-
-			if (ShopWidget->IsScreenPointInSellBox(MousePos))
-			{
-				Server_SellUnit(CachedHoverUnit.Get());
-			}
-			
-			ShopWidget->SwitchShopWidget();	
+			Server_SellUnit(CurrentDragUnit.Get());
 		}
+			
+		ShopWidget->SwitchShopWidget();	
 	}
+
+	if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
+	{
+		BattleBoard->OnHism(false);
+	}	
+
+	
+	// if (bSuccess)
+	// {
+	// 			
+	// }
 	
 	if (DragComponent)
 	{
@@ -923,7 +991,8 @@ bool APCCombatPlayerController::RemoveFromCurrentSlot(UPCTileManager* TM, APCBas
 	}
 
 	// 벤치에서 찾기
-	for (int32 i=0; i<TM->BenchSize; ++i)
+	const int32 N2 = 2 * TM->BenchSlotsPerSide;
+	for (int32 i=0; i<N2; ++i)
 	{
 		if (TM->GetBenchUnit(i) == Unit)
 		{
@@ -946,13 +1015,53 @@ void APCCombatPlayerController::Multicast_LerpMove_Implementation(APCBaseUnitCha
 	}
 }
 
+
 UPCTileManager* APCCombatPlayerController::GetTileManager() const
 {
-	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return nullptr;
+	auto* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>(): nullptr;
 
-	APCCombatBoard* Board = FindBoardBySeatIndex(PS->SeatIndex);
-	return Board ? Board->TileManager : nullptr;
+	auto* PS = GetPlayerState<APCPlayerState>();
+	if (!GS || !PS) return nullptr;
+
+	const FGameplayTag Cur = GS->GetGameStateTag();
+
+	if (IsBattleTag(Cur))
+	{
+		if (UPCTileManager* BattleTM = GS->GetBattleTileManagerForSeat(PS->SeatIndex))
+			return BattleTM;
+	}
+
+	if (APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex))
+		return Board->TileManager;
+
+	return nullptr;
+}
+
+bool APCCombatPlayerController::IsAllowBenchIdx(int32 Idx)
+{
+	UPCTileManager* TM = GetTileManager();
+	if (!TM) return false;
+
+	bool bEnemySide = false; 
+	int32 Local = INDEX_NONE;
+	if (!TM->SplitGlobalBenchIndex(Idx, bEnemySide, Local)) 
+		return false;
+
+	// 로컬 범위도 확인(안전장치)
+	if (Local < 0 || Local >= TM->BenchSlotsPerSide) 
+		return false;
+
+	const APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	const APCCombatBoard* Board = TM->GetCombatBoard();
+	if (!PS || !Board) return false;
+
+	const bool bIAmHostOnThisTM = (PS->SeatIndex == Board->BoardSeatIndex);
+
+	// 내가 이 TM의 호스트면 내 벤치는 friendly(= !bEnemySide)
+	// 내가 게스트면 내 벤치는 enemy(=  bEnemySide)
+	// => XOR 한 줄로 정리
+	const bool bMySide = (bEnemySide ^ bIAmHostOnThisTM);
+	return bMySide;
 }
 
 void APCCombatPlayerController::SetHoverHighLight(APCBaseUnitCharacter* NewUnit)
@@ -1031,6 +1140,7 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	int32 X = -1;
 	int32 BenchIdx = -1;
 	FVector Snap = World;
+	
 	if (!TileManager->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
 	{
 		Client_TileHoverUnit(nullptr);
@@ -1042,11 +1152,17 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	{
 		Client_TileHoverUnit(Unit);
 	}
+	else
+	{
+		Client_TileHoverUnit(nullptr);
+	}
+
+	
 	
 }
 
 
-void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFiled, int32 Y, int32 X, int32 BenchIdx)
+void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsField, int32 Y, int32 X, int32 BenchIdx)
 {
 	UPCTileManager* TM = GetTileManager();
 	if (!TM)
@@ -1055,9 +1171,32 @@ void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFile
 		return;
 	}
 
-	APCBaseUnitCharacter* Unit = bIsFiled ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
-	Client_TileHoverUnit(Unit);
+	if (APCBaseUnitCharacter* Unit = bIsField ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx))
+	{
+		Client_TileHoverUnit(Unit);
+	}
+	else
+	{
+		Client_TileHoverUnit(nullptr);
+	}
+	
 }
+
+void APCCombatPlayerController::Client_CurrentDragUnit_Implementation(APCBaseUnitCharacter* Unit)
+{
+	if (!IsLocalController())
+		return;
+
+	if (Unit != nullptr)
+	{
+		CurrentDragUnit = Unit;
+	}
+	else
+	{
+		CurrentDragUnit = nullptr;
+	}
+}
+
 
 void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitCharacter* Unit)
 {

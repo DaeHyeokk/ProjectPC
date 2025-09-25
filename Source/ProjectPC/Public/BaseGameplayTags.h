@@ -137,7 +137,6 @@ namespace PlayerGameplayTags
 	// ==== Player Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerLevel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerXP)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerMaxXP)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerGold)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerHP)
 
@@ -145,12 +144,6 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Normal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead)
-
-	// ==== Player Stat Change GE Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_LevelChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_XPChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_GoldChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_HPChange)
 	
 	// ==== Player Shop Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyXP)

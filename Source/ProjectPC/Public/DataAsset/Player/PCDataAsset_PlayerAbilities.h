@@ -25,6 +25,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "GE")
 	TMap<FGameplayTag, float> InitializedEffectCallerValues;
 
+	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	TMap<FGameplayTag, TSubclassOf<UGameplayEffect>> PlayerEffects;
+
 	UPROPERTY(EditDefaultsOnly, Category = "GA")
 	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;
 };

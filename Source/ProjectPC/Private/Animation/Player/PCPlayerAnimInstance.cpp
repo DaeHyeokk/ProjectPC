@@ -5,15 +5,13 @@
 
 #include "GameFramework/Character.h"
 
+#include "Character/Player/PCPlayerCharacter.h"
+
 
 void UPCPlayerAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 	OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
-	// if (OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner()))
-	// {
-		// OwnerMovementComponent = OwnerCharacter->GetCharacterMovement();
-	// }
 }
 
 void UPCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -23,6 +21,11 @@ void UPCPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (OwnerCharacter)
 	{
 		Speed = OwnerCharacter->GetVelocity().Length();
+
+		if (const auto PlayerCharacter = Cast<APCPlayerCharacter>(OwnerCharacter))
+		{
+			bIsDead = PlayerCharacter->IsDead();
+		}
 	}
 }
 
