@@ -267,7 +267,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 		}
 
 		APCHeroUnitCharacter* LevelUpUnit = HeroUnitList[0];
-		LevelUpUnit->SetUnitLevel(UnitLevel + 1);
+		LevelUpUnit->LevelUp();
 
 		int32 RemoveCount = FMath::Min(2, HeroUnitList.Num() - 1);
 		for (int32 i = 1; i <= RemoveCount; ++i)
