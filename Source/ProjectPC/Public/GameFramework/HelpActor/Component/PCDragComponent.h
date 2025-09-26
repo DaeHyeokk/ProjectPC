@@ -65,5 +65,9 @@ private:
 
     // 커서 히트
     bool CursorHitWorld(APCCombatPlayerController* PC, FVector& OutWorld) const;
+
+
+protected:
+    virtual void BeginPlay() override;
 };
 

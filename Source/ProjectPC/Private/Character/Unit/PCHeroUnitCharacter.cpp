@@ -155,7 +155,7 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 	
 	if (GetMesh())
 	{
-		GetMesh()->SetVisibility(!IsStart, true);
+		//GetMesh()->SetVisibility(!IsStart, true);
 	}
 }
 

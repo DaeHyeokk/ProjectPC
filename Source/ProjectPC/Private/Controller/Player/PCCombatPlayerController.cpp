@@ -80,6 +80,8 @@ void APCCombatPlayerController::BeginPlay()
 	ApplyGameInputMode();
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
+
+//	APCCombatGameState* CombatGS = GetWorld() 
 }
 
 void APCCombatPlayerController::BeginPlayingState()
@@ -673,8 +675,12 @@ void APCCombatPlayerController::OnMouse_Released()
 
 		CachedHoverUnit = nullptr;
 		ClearHoverHighLight();
+
+		if (ShopWidget)
+		{
+			ShopWidget->ShowPlayerShopBox();
+		}
 	}
-	
 }
 
 void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector World, int32 DragId)
@@ -888,6 +894,10 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 	{
 		Client_DragEndResult(false, World, DragId, nullptr);
 	}
+
+	// 임시 코드
+	// if (APCHeroUnitCharacter* CurrentHero = Cast<APCHeroUnitCharacter>(CurrentDragUnit))
+	// 	CurrentHero->ActionDrag(false);
 	
 	CurrentDragUnit = nullptr;
 	CurrentDragId = 0;
@@ -931,20 +941,24 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	if (!PC)
 		return;
 
-	if (ShopWidget)
+	if (PreviewUnit)
 	{
-		float X, Y;
-		UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
-		FVector2D MousePos(X, Y);
-
-		if (ShopWidget->IsScreenPointInSellBox(MousePos))
+		if (ShopWidget)
 		{
-			Server_SellUnit(CurrentDragUnit.Get());
-		}
+			float X, Y;
+			UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
+			FVector2D MousePos(X, Y);
+
+			if (ShopWidget->IsScreenPointInSellBox(MousePos))
+			{
+				Server_SellUnit(CurrentDragUnit.Get());
+			}
 			
-		ShopWidget->ShowPlayerShopBox();	
+			ShopWidget->ShowPlayerShopBox();	
+		}
+
 	}
-	
+
 	
 	if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
 	{

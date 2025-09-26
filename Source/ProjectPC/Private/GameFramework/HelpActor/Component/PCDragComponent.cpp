@@ -161,6 +161,12 @@ bool UPCDragComponent::CursorHitWorld(APCCombatPlayerController* PC, FVector& Ou
     return false;
 }
 
+void UPCDragComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    
+}
+
 void UPCDragComponent::EnsureGhostAt(const FVector& World, APCHeroUnitCharacter* PreviewHero)
 {
     if (Preview.IsValid())

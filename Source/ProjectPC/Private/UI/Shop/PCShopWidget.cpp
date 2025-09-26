@@ -238,9 +238,13 @@ void UPCShopWidget::ShowSellBox() const
 
 bool UPCShopWidget::IsScreenPointInSellBox(const FVector2D& Point) const
 {
+	if (!WidgetSwitcher)
+		return false;
+	
 	const FGeometry ViewportGeo = UWidgetLayoutLibrary::GetViewportWidgetGeometry(GetWorld());
 	const FVector2D AbsolutePos = ViewportGeo.LocalToAbsolute(Point);
 	
+	//const FGeometry& GM = WidgetSwitcher->GetCachedGeometry();
 	const FGeometry& GM = SellBox->GetCachedGeometry();
 
 	return GM.IsUnderLocation(AbsolutePos);
