@@ -67,18 +67,13 @@ struct FCombatManager_FieldOnlySnapshot
 	GENERATED_BODY()
 
 	UPROPERTY()
-	APCCombatBoard* CombatBoard;
-
+	int32 SeatIndex = INDEX_NONE;           // ★ 복구용 키
 	UPROPERTY()
-	UPCTileManager* Tile;
-
-	UPROPERTY()
-	TArray<FCombatManager_FieldSlot> Field; // 기존 FieldSlot 재사용 (Col/Row/Unit)
+	TArray<FCombatManager_FieldSlot> Field; // (Col, Row, Unit)만 저장
 
 	void Reset()
 	{
-		CombatBoard = nullptr;
-		Tile = nullptr;
+		SeatIndex = INDEX_NONE;
 		Field.Reset();
 	}
 };
@@ -172,6 +167,9 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
+	TArray<FCombatManager_Pair> PvEPairs;
+
 	// 결과 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
 	FOnCombatPairResult OnCombatPairResult;
@@ -227,7 +225,7 @@ private:
 
 	// PvE 전투 스냅샷
 	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
-	void RestoreSnapShotPvE(UPCTileManager* TM, FCombatManager_FieldOnlySnapshot& Snap);
+	void RestoreSnapShotPvE(FCombatManager_FieldOnlySnapshot& Snap);
 
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)
