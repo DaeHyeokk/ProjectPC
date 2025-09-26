@@ -373,8 +373,8 @@ void APCCombatGameMode::Step_CreepSpawn()
 	if (!PCGameState) return;
 
 	PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation_Creep);
-	const int32 StageOne = PCGameState->GetCurrentStageType() != EPCStageType::Start ? (PCGameState->StageRuntimeState.StageIdx) : 1;
-	const int32 RoundOne = PCGameState->StageRuntimeState.RoundIdx + 1;
+	const int32 StageOne = PCGameState->GetCurrentStageType() != EPCStageType::Start ? (PCGameState->StageRuntimeState.StageIdx+1) : 1;
+	const int32 RoundOne = PCGameState->StageRuntimeState.RoundIdx + 2;
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
