@@ -911,7 +911,7 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 
 			if (ShopWidget)
 			{
-				ShopWidget->SwitchShopWidget();
+				ShopWidget->ShowSellBox();
 			}
 		}
 	}
@@ -942,7 +942,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 			Server_SellUnit(CurrentDragUnit.Get());
 		}
 			
-		ShopWidget->SwitchShopWidget();	
+		ShopWidget->ShowPlayerShopBox();	
 	}
 	
 	

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Slate/SObjectTableRow.h"
 #include "PCShopWidget.generated.h"
 
 struct FOnAttributeChangeData;
@@ -97,6 +96,7 @@ private:
 
 public:
 	void SetSlotHidden(int32 SlotIndex);
-	void SwitchShopWidget() const;
+	void ShowPlayerShopBox() const;
+	void ShowSellBox() const;
 	bool IsScreenPointInSellBox(const FVector2D& Point) const;
 };
