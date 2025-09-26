@@ -83,6 +83,7 @@ public:
 	void ChangeState(FGameplayTag NewStateTag);
 
 	void AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Value) const;
+	void ApplyRoundReward();
 
 #pragma endregion AbilitySystem
 
@@ -109,4 +110,20 @@ public:
 	const TArray<FPCShopUnitData>& GetShopSlots();
 
 #pragma endregion Shop
+
+#pragma region Combat
+
+private:
+	UPROPERTY()
+	int32 PlayerWinningStreak = 0;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void PlayerWin();
+	UFUNCTION(BlueprintCallable)
+	void PlayerLose();
+	UFUNCTION(BlueprintCallable)
+	int32 GetPlayerWinningStreak() const;
+	
+#pragma endregion Combat
 };

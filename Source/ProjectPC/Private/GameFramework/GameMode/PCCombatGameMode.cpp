@@ -235,13 +235,14 @@ void APCCombatGameMode::Step_Setup()
 	{
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			PCPlayerController->Client_ShowWidget();
-			PCPlayerController->ShopRequest_ShopRefresh(0);
-
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				PCPlayerState->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerXP,2);
+				// PCPlayerState->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerXP,2);
+				PCPlayerState->ApplyRoundReward();
 			}
+			
+			PCPlayerController->Client_ShowWidget();
+			PCPlayerController->Server_ShopRefresh(0);
 		}
 	}
 }

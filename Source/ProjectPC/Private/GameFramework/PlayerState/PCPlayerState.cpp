@@ -90,6 +90,14 @@ void APCPlayerState::AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Valu
 	}
 }
 
+void APCPlayerState::ApplyRoundReward()
+{
+	if (PlayerAbilitySystemComponent && HasAuthority())
+	{
+		PlayerAbilitySystemComponent->ApplyPlayerRoundRewardEffect();
+	}
+}
+
 void APCPlayerState::OnRep_ShopSlots()
 {
 	OnShopSlotsUpdated.Broadcast();
@@ -114,6 +122,35 @@ void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 {
 	return ShopSlots;
+}
+
+void APCPlayerState::PlayerWin()
+{
+	if (PlayerWinningStreak <= 0)
+	{
+		PlayerWinningStreak = 1;
+	}
+	else
+	{
+		PlayerWinningStreak++;
+	}
+}
+
+void APCPlayerState::PlayerLose()
+{
+	if (PlayerWinningStreak >= 0)
+	{
+		PlayerWinningStreak = -1;
+	}
+	else
+	{
+		PlayerWinningStreak--;
+	}
+}
+
+int32 APCPlayerState::GetPlayerWinningStreak() const
+{
+	return PlayerWinningStreak;
 }
 
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
