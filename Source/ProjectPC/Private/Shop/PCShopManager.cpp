@@ -124,6 +124,9 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
 {
 	TMap<int32, int32> UnitCountByLevelMap;
+	UnitCountByLevelMap.Add({1,0});
+	UnitCountByLevelMap.Add({2,0});
+	UnitCountByLevelMap.Add({3,0});
 	
 	if (!TargetPlayer) return UnitCountByLevelMap;
 
@@ -233,6 +236,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 	}
 
 	auto AddShopUnitCountMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, ShopAddUnitCount);
+	//auto TempAddShopUnitCountMap = AddShopUnitCountMap;
 	
 	AddShopUnitCountMap.KeySort([](const int32 A, const int32 B){ return A < B; });
 
@@ -243,12 +247,13 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 	{
 		auto UnitLevel = Pair.Key;
 		auto& UnitCount = Pair.Value;
-
+		
 		if (UnitCount >= 3)
 		{
 			UnitCount -= 3;
 			AddShopUnitCountMap.FindOrAdd(UnitLevel + 1)++;
 			LevelUp.Add(UnitLevel);
+			//LevelUpMap.FindOrAdd(UnitLevel + 1)++;
 		}
 	}
 

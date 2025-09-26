@@ -65,8 +65,7 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	
 	if (!Unit)
 		return nullptr;
-
-	Unit->SetOutlineMID(DefaultOutlineMaterial);
+	
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
 	
@@ -159,6 +158,8 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Uni
 
 	if (USkeletalMeshComponent* SKComp = Unit->GetMesh())
 	{
+		Unit->SetOutlineMID(DefaultOutlineMaterial);
+		
 		if (Definition->Mesh)
 			SKComp->SetSkeletalMesh(Definition->Mesh, true);
 		

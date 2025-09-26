@@ -33,6 +33,7 @@ APCPreviewHeroActor::APCPreviewHeroActor()
 	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetVisibility(true);
 	StatusBarComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StatusBarComp->SetPivot({0.5f, 1.f});
 }
 
 void APCPreviewHeroActor::SetupSourceSnapshot(FPoseSnapshot& OutSnapshot)
@@ -72,7 +73,8 @@ void APCPreviewHeroActor::InitializeFromSourceHero(APCHeroUnitCharacter* InSourc
 			MeshComponent,
 			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 			StatusBarSocketName);
-		StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
+
+		StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,60.f));
 
 		const UPCHeroStatusBarWidget* PreviewStatusBar = Cast<UPCHeroStatusBarWidget>(StatusBarComp->GetWidget());
 		const UPCHeroStatusBarWidget* SourceStatusBar = Cast<UPCHeroStatusBarWidget>(SourceHero->GetStatusBarComponent()->GetWidget());

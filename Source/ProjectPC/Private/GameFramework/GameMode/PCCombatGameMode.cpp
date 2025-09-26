@@ -730,3 +730,47 @@ void APCCombatGameMode::OnOnePlayerArrived()
 		});
 	}
 }
+
+int32 APCCombatGameMode::GetCreepTeamIndexForBoard(const APCCombatBoard* Board)
+{
+	return Board ? (Board->BoardSeatIndex + 1000) : 1000;
+}
+
+FGameplayTag APCCombatGameMode::GetCreepTagForStageRound(int32 Stage, int32 Round)
+{
+	return UnitGameplayTags::Unit_Type_Creep_MinionLv1;
+}
+
+int32 APCCombatGameMode::GetCreepLevelForStageRound(int32 Stage, int32 Round)
+{
+	return 1;
+}
+
+bool APCCombatGameMode::PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const
+{
+	if (!TM || !Creep)
+		return false;
+
+	if (TM->IsInRange(Y, X) && TM->IsTileFree(Y,X))
+	{
+		return TM->PlaceUnitOnField(Y,X,Creep, ETileFacing::Enemy);
+	}
+
+	const int32 RadiusMax = 3;
+	for (int32 R=1; R<=RadiusMax; ++R)
+	{
+		for (int32 dy=-R; dy<=R; ++dy)
+		{
+			const int32 dxs[2] = { R - FMath::Abs(dy), -(R - FMath::Abs(dy)) };
+			for (int32 k=0;k<2;++k)
+			{
+				const int32 ny = Y + dy;
+				const int32 nx = X + dxs[k];
+				if (TM->IsInRange(ny, nx) && TM->IsTileFree(ny, nx))
+					return TM->PlaceUnitOnField(ny, nx, Creep, ETileFacing::Enemy);
+			}
+		}
+	}
+
+	return false;
+}

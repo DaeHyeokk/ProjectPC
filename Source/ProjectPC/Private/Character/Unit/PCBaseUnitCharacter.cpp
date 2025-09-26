@@ -292,3 +292,8 @@ void APCBaseUnitCharacter::Die()
 		}
 	}
 }
+
+void APCBaseUnitCharacter::OnDeathAnimCompleted()
+{
+	SetActorLocation(FVector(99999.f,99999.f,99999.f));
+}
