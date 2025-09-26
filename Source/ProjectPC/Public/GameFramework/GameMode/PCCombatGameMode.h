@@ -118,18 +118,7 @@ private:
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
-
-	// 크립 스폰 관련 로직
-
-	void SpawnCreepsForBoardAndStageRound(APCCombatBoard* Board, int32 Stage, int32 Round);
-	bool GetCreepSpawnPoints_OnBased(int32 Stage, int32 Round, TArray<FIntPoint>& OutPoints) const;
-
-	// 크립 스폰 헬퍼
-	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
-	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);
-	static int32 GetCreepLevelForStageRound(int32 Stage, int32 Round);
-	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
-
+	
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")

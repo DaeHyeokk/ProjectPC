@@ -931,24 +931,20 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	if (!PC)
 		return;
 
-	if (PreviewUnit)
+	if (ShopWidget)
 	{
-		if (ShopWidget)
+		float X, Y;
+		UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
+		FVector2D MousePos(X, Y);
+
+		if (ShopWidget->IsScreenPointInSellBox(MousePos))
 		{
-			float X, Y;
-			UWidgetLayoutLibrary::GetMousePositionScaledByDPI(this, X, Y);
-			FVector2D MousePos(X, Y);
-
-			if (ShopWidget->IsScreenPointInSellBox(MousePos))
-			{
-				Server_SellUnit(CurrentDragUnit.Get());
-			}
-			
-			ShopWidget->SwitchShopWidget();	
+			Server_SellUnit(CurrentDragUnit.Get());
 		}
-
+			
+		ShopWidget->SwitchShopWidget();	
 	}
-
+	
 	
 	if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
 	{

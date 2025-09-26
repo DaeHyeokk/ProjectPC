@@ -20,6 +20,7 @@ USTRUCT()
 struct FCombatManager_FieldSlot
 {
 	GENERATED_BODY()
+	
 	UPROPERTY()
 	int32 Col = 0;
 	UPROPERTY()
@@ -60,6 +61,28 @@ struct FCombatManager_BoardSnapShot
 	}
 };
 
+USTRUCT()
+struct FCombatManager_FieldOnlySnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	APCCombatBoard* CombatBoard;
+
+	UPROPERTY()
+	UPCTileManager* Tile;
+
+	UPROPERTY()
+	TArray<FCombatManager_FieldSlot> Field; // 기존 FieldSlot 재사용 (Col/Row/Unit)
+
+	void Reset()
+	{
+		CombatBoard = nullptr;
+		Tile = nullptr;
+		Field.Reset();
+	}
+};
+
 USTRUCT(BlueprintType)
 struct FCombatManager_Pair
 {
@@ -84,6 +107,9 @@ struct FCombatManager_Pair
 	bool bIsPvE = false;
 	UPROPERTY()
 	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> PvECreeps;
+
+	UPROPERTY()
+	FCombatManager_FieldOnlySnapshot HostFieldSnapshot; // PvE 전용: 필드만
 
 	// 전투상태
 	UPROPERTY()
@@ -110,6 +136,9 @@ struct FCombatManager_Pair
 		bRunning = false;
 	}
 };
+
+
+
 
 UCLASS()
 class PROJECTPC_API APCCombatManager : public AActor
@@ -195,6 +224,10 @@ private:
 	static void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
 	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
+
+	// PvE 전투 스냅샷
+	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
+	void RestoreSnapShotPvE(UPCTileManager* TM, FCombatManager_FieldOnlySnapshot& Snap);
 
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)
