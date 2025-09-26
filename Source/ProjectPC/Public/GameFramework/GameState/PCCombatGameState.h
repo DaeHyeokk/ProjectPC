@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "GameplayTagAssetInterface.h"
-#include "IDetailTreeNode.h"
 #include "GameFramework/GameStateBase.h"
 #include "DataAsset/FrameWork/PCStageData.h"
+#include "DataAsset/Projectile/PCDataAsset_ProjectilePoolData.h"
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
+class UPCTileManager;
 class APCCombatBoard;
 class UPCShopManager;
 class APCPlayerState;
@@ -80,6 +81,7 @@ struct FStageRuntimeState
 };
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 /**
  * 
  */
@@ -121,6 +123,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 
+	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
+	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
+
+	
+
 
 #pragma endregion GameLogic
 
@@ -142,11 +149,14 @@ public:
 	EPCStageType GetCurrentStageType() const;
 
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
-
-protected:
+	FOnGameStateTagChanged OnGameStateTagChanged;
 
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
 	FStageRuntimeState StageRuntimeState;
+	
+protected:
+
+	
 	
 	UFUNCTION()
 	void OnRep_StageRunTime();
@@ -161,6 +171,8 @@ protected:
 	UPCShopManager* ShopManager;
 
 public:
+	// GameState 생성자에서 생성하므로, ShopManager가 nullptr인 경우 바로 크래시
+	// => 즉 GetShopManager()가 nullptr을 반환할 일은 없음
 	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
 
 #pragma endregion Shop
@@ -177,7 +189,7 @@ private:
 	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
 
 public:
-	const int32 GetMaxXP(int32 PlayerLevel) const;
+	int32 GetMaxXP(int32 PlayerLevel) const;
 
 #pragma endregion Attribute
 
@@ -197,14 +209,19 @@ public:
 	UFUNCTION(BlueprintPure)
 	const FGameplayTag& GetGameStateTag() const { return GameStateTag; }
 	bool IsCombatActive() const { return GameStateTag.MatchesTag(GameStateTags::Game_State_Combat); }
+
+	bool bIsbattle() const { return GameStateTag == GameStateTags::Game_State_Combat_Preparation || GameStateTag == GameStateTags::Game_State_Combat_Active; }
 	
 protected:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_GameStateTag)
 	FGameplayTag GameStateTag;
 
+	UFUNCTION()
+	void OnRep_GameStateTag();
+	
 	// ==== 전투 시스템 | BT 관련 ====
 protected:
-	//BT Decorator에서 ASC에 부여된 GameplayTag 정보 참조하기 위해
+	//BT Decorator에서 Game State Tag 정보 참조하기 위해
 	//IGameplayTagAssetInterface 상속 받아서 오버라이드한 함수
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
@@ -216,6 +233,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
+#pragma region ObjectPool
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
+	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+	
+#pragma endregion ObjectPool
+	
 #pragma region TemplateFunc
 	
 private:

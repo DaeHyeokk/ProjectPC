@@ -7,24 +7,22 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
-#include "DSP/BufferDiagnostics.h"
-#include "EntitySystem/MovieSceneComponentDebug.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
 
 
 APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	// 네트워크 설정
-	//NetUpdateFrequency = 100.f;
-	//MinNetUpdateFrequency = 66.f;
+	// NetUpdateFrequency = 100.f;
+	// MinNetUpdateFrequency = 66.f;
 	
 	bReplicates = true;
 	SetReplicates(true);
@@ -35,10 +33,10 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = true;
 
-	GetCharacterMovement()->SetIsReplicated(true);
+	GetCharacterMovement()->SetIsReplicated(false);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
-	GetCharacterMovement()->MaxWalkSpeed = 200.f;
+	GetCharacterMovement()->MaxWalkSpeed = 250.f;
 
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
@@ -71,6 +69,11 @@ UPCDataAsset_UnitAnimSet* APCBaseUnitCharacter::GetUnitAnimSetDataAsset() const
 const UPCDataAsset_UnitAbilityConfig* APCBaseUnitCharacter::GetUnitAbilityConfigDataAsset() const
 {
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetAbilityConfigData() : nullptr;
+}
+
+UPCDataAsset_ProjectileData* APCBaseUnitCharacter::GetUnitProjectileDataAsset() const
+{
+	return GetUnitDataAsset() ? GetUnitDataAsset()->GetProjectileData() : nullptr;
 }
 
 const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
@@ -122,6 +125,15 @@ void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		GameStateChangedHandle =
+			GS->OnGameStateTagChanged.AddUObject(
+				this, &ThisClass::HandleGameStateChanged);
+	
+		HandleGameStateChanged(GS->GetGameStateTag());
+	}
+	
 	InitAbilitySystem();
 	SetAnimSetData();
 
@@ -135,6 +147,28 @@ void APCBaseUnitCharacter::BeginPlay()
 			InitStatusBarWidget(W);
 		}
 	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+
+	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		UnitAnimInstance->PlayLevelStartMontage();
+	}
+}
+
+void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		if (GameStateChangedHandle.IsValid())
+		{
+			GS->OnGameStateTagChanged.Remove(GameStateChangedHandle);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void APCBaseUnitCharacter::PossessedBy(AController* NewController)
@@ -149,6 +183,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, UnitTag);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsDead);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -238,30 +273,27 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 	}
 }
 
-void APCBaseUnitCharacter::ActionDrag(const bool IsStart)
-{
-	// 클라에서만 실행 (Listen Server 포함)
-	if (GetNetMode() == NM_DedicatedServer)
-		return;
 
-	if (GetMesh())
+void APCBaseUnitCharacter::Die()
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
+	
+	if (HasAuthority())
 	{
-		GetMesh()->SetHiddenInGame(IsStart);
-		//StatusBarComp->SetHiddenInGame(IsStart);
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+			{
+				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+				bIsDead = true;
+			}
+			ASC->CancelAllAbilities();
+			OnUnitDied.Broadcast(this);
+		}
 	}
 }
 
-// void APCBaseUnitCharacter::OnRep_IsOnField()
-// {
-// 	if (bIsOnField)
-// 	{
-// 		if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = GetUnitAnimSetDataAsset())
-// 		{
-// 			if (UAnimMontage* Montage = UnitAnimSet->GetAnimMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart))
-// 			{
-// 				if (Montage)
-// 					GetMesh()->GetAnimInstance()->Montage_Play(Montage);
-// 			}
-// 		}
-// 	}
-// }
+void APCBaseUnitCharacter::OnDeathAnimCompleted()
+{
+	SetActorLocation(FVector(99999.f,99999.f,99999.f));
+}

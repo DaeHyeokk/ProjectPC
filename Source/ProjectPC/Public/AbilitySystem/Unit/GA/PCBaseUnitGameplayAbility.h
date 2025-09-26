@@ -4,8 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCBaseUnitGameplayAbility.generated.h"
 
+class APCBaseUnitCharacter;
+class UPCUnitAttributeSet;
 /**
  * 
  */
@@ -21,12 +25,12 @@ protected:
 	virtual void OnAvatarSet(
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Costs")
-	FGameplayAttribute CostGameplayAttribute;
+	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
+	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
+	
+	UPROPERTY(Transient)
+	TObjectPtr<APCBaseUnitCharacter> Unit;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Costs")
-	FGameplayTag CostCallerTag;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cooldown")
-	FGameplayTag CooldownCallerTag;
+	FAbilityConfig AbilityConfig;
+	FMontageConfig MontageConfig;
 };

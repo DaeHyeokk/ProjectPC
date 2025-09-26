@@ -7,6 +7,7 @@
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -16,6 +17,11 @@
 UPCGameplayAbility_SellUnit::UPCGameplayAbility_SellUnit()
 {
 	AbilityTags.AddTag(PlayerGameplayTags::Player_GA_Shop_SellUnit);
+
+	ActivationRequiredTags.AddTag(PlayerGameplayTags::Player_State_Normal);
+	
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	
 	FAbilityTriggerData TriggerData;;
 	TriggerData.TriggerTag = PlayerGameplayTags::Player_GA_Shop_SellUnit;
@@ -23,13 +29,30 @@ UPCGameplayAbility_SellUnit::UPCGameplayAbility_SellUnit()
 	AbilityTriggers.Add(TriggerData);
 }
 
+bool UPCGameplayAbility_SellUnit::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
+	if (!ActorInfo->IsNetAuthority())
+	{
+		return false;
+	}
+	
+	return true;
+}
+
 void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                                  const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                                  const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (!ActorInfo->IsNetAuthority() || !TriggerEventData)
+	if (!TriggerEventData)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -53,33 +76,31 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	auto UnitCost = GS->GetShopManager()->GetUnitCostByTag(UnitTag);
 	auto UnitLevel = Unit->GetUnitLevel();
 	auto SellingPrice = GS->GetShopManager()->GetSellingPrice({UnitCost, UnitLevel});
-
-	if (auto PS = ActorInfo->PlayerController->GetPlayerState<APCPlayerState>())
+	
+	if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
 	{
-		if (auto TileManager = GS->GetBoardBySeat(PS->SeatIndex)->TileManager)
+		if (auto PC = Cast<APCCombatPlayerController>(PS->GetPlayerController()))
 		{
-			auto FieldGridPoint = TileManager->GetFieldUnitGridPoint(Unit);
-			auto BenchIndex = TileManager->GetBenchUnitIndex(Unit);
-			
-			if (FieldGridPoint != FIntPoint::NoneValue)
+			if (auto TileManager = PC->GetTileManager())
 			{
-				TileManager->RemoveFromField(FieldGridPoint.X, FieldGridPoint.Y, false);
-			}
-			else if (BenchIndex != INDEX_NONE)
-			{
-				TileManager->RemoveFromBench(BenchIndex, false);
-			}
+				if (!TileManager->RemoveFromBoard(Unit))
+				{
+					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+					return;
+				}
 			
-			GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
-			Unit->Destroy();
+				GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
+				Unit->Destroy();
+			}
 		}
+		
 	}
 			
-	FGameplayEffectSpecHandle XPSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerGoldChange, GetAbilityLevel());
-	if (XPSpecHandle.IsValid())
+	FGameplayEffectSpecHandle GoldSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerGoldChange, GetAbilityLevel());
+	if (GoldSpecHandle.IsValid())
 	{
-		XPSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*XPSpecHandle.Data.Get());
+		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
+		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

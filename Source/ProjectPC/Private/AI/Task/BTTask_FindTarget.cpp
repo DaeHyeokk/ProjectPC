@@ -120,7 +120,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 				// 새롭게 탐색할 좌표를 큐에 넣고 Visited 방문 체크
 				Q.Enqueue(FBfsData(NextPoint, HereDist + 1));
 				Visited.Add(NextPoint);
-			}
+			}	
 		}
 	}
 

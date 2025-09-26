@@ -4,14 +4,12 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 
 #include "GameplayEffect.h"
-#include "Abilities/GameplayAbility.h"
 
 #include "DataAsset/Player/PCDataAsset_PlayerAbilities.h"
 
 
 void UPCPlayerAbilitySystemComponent::ApplyInitializedEffects()
 {
-	// GetOwner()가 유효하지 않거나, 서버가 아니라면 return
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 	if (!PlayerAbilityData || !PlayerAbilityData->InitializedEffect) return;
 
@@ -30,12 +28,27 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedEffects()
 
 void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 {
-	// GetOwner()가 유효하지 않거나, 서버가 아니라면 return
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
 	for (const auto& InitialGAClass : PlayerAbilityData->InitializedAbilities)
 	{
 		auto AbilitySpec = FGameplayAbilitySpec(InitialGAClass, 0, INDEX_NONE, nullptr);
 		GiveAbility(AbilitySpec);
+	}
+}
+
+void UPCPlayerAbilitySystemComponent::ApplyPlayerEffects(FGameplayTag GE_Tag, float GE_Value)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!PlayerAbilityData) return;
+
+	if (auto PlayerGEClass = PlayerAbilityData->PlayerEffects.Find(GE_Tag))
+	{
+		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingSpec(*PlayerGEClass, 1, MakeEffectContext());
+		if (!EffectSpecHandle.IsValid()) return;
+		
+		EffectSpecHandle.Data->SetSetByCallerMagnitude(GE_Tag, GE_Value);
+	
+		ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 	}
 }

@@ -18,21 +18,18 @@ public:
 	UPCUnitBasicAttackGameplayAbility();
 
 protected:
-	virtual void OnAvatarSet(
-		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
-	
 	virtual void ApplyCooldown(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 	
+	virtual void ActivateAbility(
+	const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo,
+	const FGameplayEventData* TriggerEventData) override;
+	
 	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo) override;
+	virtual FGameplayTag GetMontageTag() override { return UnitGameplayTags::Unit_Montage_Attack_Basic; }
 	virtual float GetMontagePlayRate(const UAnimMontage* Montage) override;
-
-	virtual void ApplyGameplayEffect() override;
-
-	UPROPERTY(Transient)
-	TSubclassOf<UGameplayEffect> ManaGainEffectClass;
-
-	float ManaGainAmount = 10.f;
 };

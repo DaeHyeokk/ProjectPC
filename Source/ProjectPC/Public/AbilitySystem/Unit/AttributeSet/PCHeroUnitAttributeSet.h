@@ -21,6 +21,7 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, CurrentMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, UltimateDamage);
+	ATTRIBUTE_ACCESSORS(ThisClass, UltimateCost);
 	ATTRIBUTE_ACCESSORS(ThisClass, PhysicalDamageMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, MagicDamageMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, CritChance);
@@ -36,6 +37,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_UltimateDamage)
 	FGameplayAttributeData UltimateDamage;
+
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_UltimateCost)
+	FGameplayAttributeData UltimateCost;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_PhysicalDamageMultiplier)
 	FGameplayAttributeData PhysicalDamageMultiplier;
@@ -61,7 +65,9 @@ protected:
 	void OnRep_CurrentMana(const FGameplayAttributeData& OldCurrentMana);
 
 	UFUNCTION()
-	void OnRep_UltimateDamage(const FGameplayAttributeData& OldUltDamage);
+	void OnRep_UltimateDamage(const FGameplayAttributeData& OldUltimateDamage);
+	UFUNCTION()
+	void OnRep_UltimateCost(const FGameplayAttributeData& OldUltimateCost);
 
 	UFUNCTION()
 	void OnRep_PhysicalDamageMultiplier(const FGameplayAttributeData& OldPhysicalDamageMultiplier);

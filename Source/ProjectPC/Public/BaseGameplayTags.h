@@ -10,7 +10,9 @@ namespace GameStateTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_NonCombat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active)	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_End)
 }
 
@@ -19,12 +21,18 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
+	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
 
 	// ==== Unit Attack Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
@@ -48,6 +56,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
 
 	// ==== Unit Action Ability Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action_Attack_Ultimate)
@@ -64,9 +73,12 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_LevelStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Death)
 
 	// ==== Unit GameplayEvent Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_AttackCommit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectileSucceed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_HitSucceed)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
 }
 
 namespace SynergyGameplayTags
@@ -92,10 +104,9 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Heal_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Health_Damage_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Gain_Instant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Mana_Spend_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_HealthChange_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_ManaChange_Instant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_Damage_Instant)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
 
@@ -118,12 +129,16 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Cooldown_BasicAttack)
 }
 
+namespace GameplayCueTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Unit_LevelUp)
+}
+
 namespace PlayerGameplayTags
 {
 	// ==== Player Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerLevel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerXP)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerMaxXP)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerGold)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerHP)
 
@@ -131,12 +146,6 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Normal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead)
-
-	// ==== Player Stat Change GE Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_LevelChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_XPChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_GoldChange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GE_HPChange)
 	
 	// ==== Player Shop Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyXP)
@@ -144,4 +153,7 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopRefresh)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopLock)
+
+	// ==== Player Event Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_Damage)
 }

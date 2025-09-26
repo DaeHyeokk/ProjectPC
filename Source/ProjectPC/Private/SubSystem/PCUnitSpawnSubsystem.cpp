@@ -57,16 +57,20 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
 	
 	APCBaseUnitCharacter* Unit = GetWorld()->SpawnActorDeferred<APCBaseUnitCharacter>(
-		SpawnClass, SpawnTransform, InOwner, InInstigator, HandlingMethod);
+		SpawnClass,
+		SpawnTransform,
+		InOwner,
+		InInstigator,
+		HandlingMethod);
+	
 	if (!Unit)
 		return nullptr;
-
-	Unit->SetOutlineMID(DefaultOutlineMaterial);
+	
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
 	
 	ApplyDefinitionData(Unit, Definition);
-
+	
 	if (Unit->HasLevelSystem())
 	{
 		Unit->SetUnitLevel(UnitLevel);
@@ -76,6 +80,8 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	
 	Unit->SetNetDormancy(DORM_Awake);
 	Unit->ForceNetUpdate();
+
+	OnUnitSpawned.Broadcast(Unit, TeamIndex);
 	
 	return Unit;
 }
@@ -152,6 +158,8 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Uni
 
 	if (USkeletalMeshComponent* SKComp = Unit->GetMesh())
 	{
+		Unit->SetOutlineMID(DefaultOutlineMaterial);
+		
 		if (Definition->Mesh)
 			SKComp->SetSkeletalMesh(Definition->Mesh, true);
 		

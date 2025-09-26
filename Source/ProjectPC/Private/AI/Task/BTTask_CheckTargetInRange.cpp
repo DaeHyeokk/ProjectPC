@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AIController.h"
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
@@ -24,11 +25,21 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 
 	const APCBaseUnitCharacter* TargetUnit = Cast<APCBaseUnitCharacter>(BB->GetValueAsObject(TargetUnitKey.SelectedKeyName));
 	if (!TargetUnit)
+	{
+		ClearTargetActorKey(BB);
 		return EBTNodeResult::Failed;
+	}
+
+	const UAbilitySystemComponent* TargetASC = TargetUnit->GetAbilitySystemComponent();
+	// 타겟이 죽었을 경우 타겟 리셋
+	if (!TargetASC || TargetASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+	{
+		ClearTargetActorKey(BB);
+		return EBTNodeResult::Failed;
+	}
 	
 	AAIController* AIC = OwnerComp.GetAIOwner();
 	APCBaseUnitCharacter* OwnerUnit = AIC ? Cast<APCBaseUnitCharacter>(AIC->GetPawn()) : nullptr;
-	
 	if (!OwnerUnit)
 	{
 		ClearTargetActorKey(BB);

@@ -8,8 +8,10 @@ namespace GameStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Game_State, "Game.State")	
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_NonCombat, "Game.State.NonCombat")	
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat, "Game.State.Combat")	
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation, "Game.State.Combat.Preparation")	
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active, "Game.State.Combat.Active")	
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation, "Game.State.Combat.Preparation")
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation_Creep, "Game.State.Combat.Preparation.Creep")
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active, "Game.State.Combat.Active")
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active_Creep, "Game.State.Combat.Active.Creep")	
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_End, "Game.State.Combat.End")	
 }
 
@@ -18,12 +20,17 @@ namespace UnitGameplayTags
 	// ==== Unit Types ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero, "Unit.Type.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Raven, "Unit.Type.Hero.Raven")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Greystone, "Unit.Type.Hero.Greystone")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Yin, "Unit.Type.Hero.Yin")
+	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_MinionLv1, "Unit.Type.Creep.MinionLv1")
 
 	// ==== Unit Damage Types
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageType_Physical, "Unit.DamageType.Physical")
@@ -47,6 +54,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Stat_Hero_SpellVamp, "Unit.Stat.Hero.SpellVamp")
 	
 	// ==== Unit Action Ability Tags
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Action, "Unit.Action")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack, "Unit.Action.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Basic, "Unit.Action.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Action_Attack_Ultimate, "Unit.Action.Attack.Ultimate")
@@ -63,9 +71,12 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_LevelStart, "Unit.Montage.LevelStart")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Attack_Basic, "Unit.Montage.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Attack_Ultimate, "Unit.Montage.Attack.Ultimate")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Montage_Death, "Unit.Montage.Death")
 
 	// ==== Unit GameplayEvent Tags ====
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_AttackCommit, "Unit.Event.AttackCommit")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_SpawnProjectileSucceed, "Unit.Event.SpawnProjectileSucceed")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_HitSucceed, "Unit.Event.HitSucceed")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Event_OnHit, "Unit.Event.OnHit")
 }
 
 namespace SynergyGameplayTags
@@ -91,10 +102,9 @@ namespace SynergyGameplayTags
 
 namespace GameplayEffectTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Heal_Instant, "GE.Class.Health.Heal.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Health_Damage_Instant, "GE.Class.Health.Damage.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Gain_Instant, "GE.Class.Mana.Gain.Instant")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Mana_Spend_Instant, "GE.Class.Mana.Spend.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_HealthChange_Instant, "GE.Class.HealthChange.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_ManaChange_Instant, "GE.Class.ManaChange.Instant")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_Damage_Instant, "GE.Class.Unit.Damage.Instant")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
 
@@ -117,12 +127,16 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Cooldown_BasicAttack, "GE.Caller.Cooldown.BasicAttack")
 }
 
+namespace GameplayCueTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Unit_LevelUp, "GameplayCue.Unit.LevelUp")
+}
+
 namespace PlayerGameplayTags
 {
 	// ==== Player Stat Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerLevel, "Player.Stat.PlayerLevel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerXP, "Player.Stat.PlayerXP")
-	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerMaxXP, "Player.Stat.PlayerMaxXP")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerGold, "Player.Stat.PlayerGold")
 	UE_DEFINE_GAMEPLAY_TAG(Player_Stat_PlayerHP, "Player.Stat.PlayerHP")
 
@@ -130,12 +144,6 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Normal, "Player.State.Normal")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Carousel, "Player.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead")
-	
-	// ==== Player Stat Change GE Tags ====
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_LevelChange, "Player.GE.LevelChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_XPChange, "Player.GE.XPChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_GoldChange, "Player.GE.GoldChange")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GE_HPChange, "Player.GE.HPChange")
 
 	// ==== Player Shop Ability Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_BuyXP, "Player.GA.Shop.BuyXP")
@@ -143,4 +151,8 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_SellUnit, "Player.GA.Shop.SellUnit")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopRefresh, "Player.GA.Shop.ShopRefresh")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopLock, "Player.GA.Shop.ShopLock")
+
+	// ==== Player Damage Evnet Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Player_Event_Damage, "Player.Event.Damage")
+	
 }

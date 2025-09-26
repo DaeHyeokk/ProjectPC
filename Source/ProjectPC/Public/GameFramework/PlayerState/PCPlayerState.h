@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "BaseGameplayTags.h"
 #include "Shop/PCShopUnitData.h"
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
@@ -46,6 +47,9 @@ public:
 	UPROPERTY(Replicated)
 	bool bIdentified = false;
 
+	UPROPERTY(Replicated)
+	int32 PlayerLevel = 30;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
@@ -63,10 +67,22 @@ private:
 
 	UPROPERTY()
 	const class UPCPlayerAttributeSet* PlayerAttributeSet;
+
+	UPROPERTY()
+	FGameplayTagContainer AllStateTags;
+	
+	UPROPERTY()
+	FGameplayTag CurrentStateTag;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	const UPCPlayerAttributeSet* GetAttributeSet() const;
+	FGameplayTag GetCurrentStateTag() const;
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeState(FGameplayTag NewStateTag);
+
+	void AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Value) const;
 
 #pragma endregion AbilitySystem
 

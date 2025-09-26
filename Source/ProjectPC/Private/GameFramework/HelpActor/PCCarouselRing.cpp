@@ -7,11 +7,14 @@
 #include "Camera/CameraComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/RotatingMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Shop/PCShopManager.h"
 
 
 APCCarouselRing::APCCarouselRing()
@@ -65,6 +68,7 @@ void APCCarouselRing::BeginPlay()
 	BuildGates();
 }
 
+#if WITH_EDITOR
 void APCCarouselRing::OnConstruction(const FTransform& transform)
 {
 	Super::OnConstruction(transform);
@@ -86,6 +90,7 @@ void APCCarouselRing::OnConstruction(const FTransform& transform)
 		DrawDebugBox(GetWorld(), T.GetLocation(), B->GetUnscaledBoxExtent(), T.GetRotation(), DebugColorGate, false, 0.f, 0, 1.5f);
 	}
 }
+#endif
 
 FVector APCCarouselRing::GetRingCenterWorld(const USceneComponent* Root) const
 {
@@ -130,7 +135,7 @@ FTransform APCCarouselRing::GetUnitSlotTransformWorld(int32 Index) const
 	const float Angle = UnitRingRotationRateYawDeg + Step * Index;
 	const FVector Center = GetRingCenterWorld(UnitRingRoot);
 	const FVector Dir = FRotator(0.f, Angle, 0.f).Vector();
-	const FVector Pos = Center + Dir * UnitRingRadius + FVector(0,0,PlayerRingHeight);
+	const FVector Pos = Center + Dir * UnitRingRadius + FVector(0,0,UnitRingHeight);
 	const FRotator Rot = MakeFacingRotToCenter(Pos,0.f);
 	return FTransform(Rot,Pos, FVector::ZeroVector);
 }
@@ -150,24 +155,59 @@ void APCCarouselRing::ClearPickups()
 void APCCarouselRing::SpawnPickups()
 {
 	ClearPickups();
-	if (!PickupUnit)
-		return;
+
+	TArray<FGameplayTag> SpawnTag;
+
+	if ( APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		auto ShopManager = PCGameState->GetShopManager();
+		SpawnTag = ShopManager->GetCarouselUnitTags(1);
+	}
+
+	// 부모(부착 대상) 스케일이 0이면 자식 월드스케일도 0 됩니다.
+	UnitRingRoot->SetWorldScale3D(FVector(1.f));
+	UnitRingRoot->SetRelativeScale3D(FVector(1.f));
 
 	const int32 Count = FMath::Max(0, NumPickupsToSpawn);
-	for (int32 i = 0; i < Count; ++i)
+	for (int32 i = 0; i < SpawnTag.Num(); ++i)
 	{
-		const FTransform PickupTransform = GetPlayerSlotTransformWorld(i);
-		FTransform Transform = PickupTransform;
-		Transform.AddToTranslation(PickupLocalOffset);
-
+		FTransform Slot = GetUnitSlotTransformWorld(i);
+		FTransform T = Slot;
+		T.AddToTranslation(PickupLocalOffset);
+		
 		if (UPCUnitSpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 		{
-			
-			if (APCBaseUnitCharacter* SpawnedUnit = SpawnSystem->SpawnUnitByTag(UnitGameplayTags::Unit_Type_Hero_Sparrow,-1))
-			{
-				SpawnedUnit->AttachToComponent(UnitRingRoot, FAttachmentTransformRules::KeepWorldTransform);
-				SpawnedPickups.Add(SpawnedUnit);
-			}
+			if (APCBaseUnitCharacter* Unit = SpawnSystem->SpawnUnitByTag(SpawnTag[i]))
+				{
+					if (Unit)
+					{
+						// FinishSpawning 내부에서 완료됨(Subsystem 코드)
+						Unit->SetActorHiddenInGame(false);
+
+						// 월드 트랜스폼 먼저
+						Unit->SetActorTransform(T, false, nullptr, ETeleportType::TeleportPhysics);
+
+						// 컴포넌트 스케일/가시성 보정
+						if (UCapsuleComponent* Cap = Unit->GetCapsuleComponent())
+						{
+							Cap->SetWorldScale3D(FVector(1.f));
+						}
+						if (USkeletalMeshComponent* SK = Unit->GetMesh())
+						{
+							SK->SetWorldScale3D(FVector(1.f));
+							SK->SetHiddenInGame(false);
+						}
+
+						// 부착
+						Unit->AttachToComponent(UnitRingRoot, FAttachmentTransformRules::KeepWorldTransform);
+
+						// 최종 로그
+						UE_LOG(LogTemp, Warning, TEXT("RingRoot=%s  Unit=%s  Mesh=%s"),
+							*UnitRingRoot->GetComponentTransform().GetScale3D().ToString(),
+							*Unit->GetActorScale3D().ToString(),
+							Unit->GetMesh()? *Unit->GetMesh()->GetComponentScale().ToString() : TEXT("NoMesh"));
+					}
+				}
 		}
 	}
 }
@@ -256,16 +296,14 @@ void APCCarouselRing::OpenAllGates(bool bOpen)
 void APCCarouselRing::ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime,
 	float ExtraYawDeg)
 {
-	if (!PC) return;
-	
-	const float SeatYaw = GetPlayerSeatAngelDeg(SeatIndex);
-	const float CamYaw = FMath::UnwindDegrees(SeatYaw + 180.f + ExtraYawDeg);
+	if (!PC || !SpringArm) return;
 
-	FRotator Rotator = CameraArmLocalRotation;
-	Rotator.Yaw = CamYaw;
+	const float Step = 360.f / 8.f;           // 45°
+	const float Pitch = -60.f;                 // 원래 쓰던 값
+	const float CamYaw =  SeatIndex * Step + ExtraYawDeg;
 
-	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
-	SpringArm->SetRelativeRotation(Rotator);
+	SpringArm->TargetArmLength = 4000.f;       // 원래 쓰던 값
+	SpringArm->SetRelativeRotation(FRotator(Pitch, CamYaw, 0.f));
 	
 }
 

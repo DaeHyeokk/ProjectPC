@@ -5,6 +5,7 @@
 
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Overlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameplayEffectTypes.h"
@@ -14,6 +15,8 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/WidgetSwitcher.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -58,6 +61,7 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 void UPCShopWidget::OpenMenu()
 {
 	this->AddToViewport(100);
+	this->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UPCShopWidget::CloseMenu()
@@ -110,7 +114,12 @@ void UPCShopWidget::SetupPlayerInfo()
 	auto PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
 	auto XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
-	XPBar->SetPercent(PlayerXP / PlayerMaxXP);
+	
+	if(!PlayerMaxXP == 0)
+	{
+		XPBar->SetPercent(PlayerXP / PlayerMaxXP);
+	}
+	
 
 	// 플레이어 정보 (골드) 세팅
 	auto PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());
@@ -197,4 +206,49 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 			UnitSlotWidget->SetupButton();
 		}
 	}
+}
+
+void UPCShopWidget::SetSlotHidden(int32 SlotIndex)
+{
+	if (auto SelectedSlot = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(SlotIndex)))
+	{
+		SelectedSlot->SetSlotHidden(true);
+	}
+}
+
+void UPCShopWidget::ShowPlayerShopBox() const
+{
+	if (!WidgetSwitcher) return;
+
+	if (WidgetSwitcher->GetActiveWidget() == SellBox)
+	{
+		WidgetSwitcher->SetActiveWidget(PlayerShopBox);
+	}
+}
+
+void UPCShopWidget::ShowSellBox() const
+{
+	if (!WidgetSwitcher) return;
+
+	if (WidgetSwitcher->GetActiveWidget() == PlayerShopBox)
+	{
+		WidgetSwitcher->SetActiveWidget(SellBox);
+	}
+}
+
+bool UPCShopWidget::IsScreenPointInSellBox(const FVector2D& Point) const
+{
+	if (!WidgetSwitcher || !PlayerShopBox || !SellBox) return false;
+	
+	const FGeometry ViewportGeo = UWidgetLayoutLibrary::GetViewportWidgetGeometry(GetWorld());
+	const FVector2D AbsolutePos = ViewportGeo.LocalToAbsolute(Point);
+
+	if (WidgetSwitcher->GetActiveWidget() == PlayerShopBox)
+	{
+		const FGeometry& PlayerShopBoxGeo = PlayerShopBox->GetCachedGeometry();
+		return PlayerShopBoxGeo.IsUnderLocation(AbsolutePos);
+	}
+	
+	const FGeometry& SellBoxGeo = SellBox->GetCachedGeometry();
+	return SellBoxGeo.IsUnderLocation(AbsolutePos);
 }

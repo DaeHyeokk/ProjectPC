@@ -7,6 +7,7 @@
 #include "Engine/DataAsset.h"
 #include "PCDataAsset_BaseUnitData.generated.h"
 
+class UPCDataAsset_ProjectileData;
 class UPCDataAsset_UnitAbilityConfig;
 class UPCDataAsset_UnitAnimSet;
 class UAbilitySystemComponent;
@@ -52,6 +53,9 @@ public:
 
 	UFUNCTION()
 	UPCDataAsset_UnitAbilityConfig* GetAbilityConfigData() const;
+
+	UFUNCTION()
+	UPCDataAsset_ProjectileData* GetProjectileData() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")
@@ -74,4 +78,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Animations")
 	TObjectPtr<UPCDataAsset_UnitAnimSet> AnimSetData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Projectile")
+	TObjectPtr<UPCDataAsset_ProjectileData> ProjectileData;
 };

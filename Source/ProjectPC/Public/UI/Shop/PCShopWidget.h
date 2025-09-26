@@ -9,6 +9,7 @@
 struct FOnAttributeChangeData;
 
 class UHorizontalBox;
+class UOverlay;
 class UButton;
 class UTextBlock;
 class UWidgetSwitcher;
@@ -34,7 +35,13 @@ public:
 protected:
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UHorizontalBox* PlayerShopBox;
+	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* ShopBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UOverlay* SellBox;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_BuyXP;
@@ -86,4 +93,10 @@ private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
+
+public:
+	void SetSlotHidden(int32 SlotIndex);
+	void ShowPlayerShopBox() const;
+	void ShowSellBox() const;
+	bool IsScreenPointInSellBox(const FVector2D& Point) const;
 };

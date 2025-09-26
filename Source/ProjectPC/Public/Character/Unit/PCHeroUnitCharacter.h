@@ -21,9 +21,6 @@ class PROJECTPC_API APCHeroUnitCharacter : public APCBaseUnitCharacter
 public:
 	APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-protected:
-	virtual void BeginPlay() override;
-	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -35,13 +32,10 @@ public:
 	virtual bool HasLevelSystem() const override { return true; }
 	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 	virtual void SetUnitLevel(const int32 Level) override;
+	void LevelUp();
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
-	
-	UFUNCTION(BlueprintCallable)
-	void LevelUp();
 
 	void UpdateStatusBarUI() const;
 	
@@ -52,6 +46,8 @@ public:
 	FGameplayTag GetSpeciesSynergyTag() const;
 	
 protected:
+	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
 
@@ -65,15 +61,18 @@ protected:
 	int32 HeroLevel = 1;
 
 	UFUNCTION()
-	void OnRep_HeroLevel() const;
+	virtual void OnRep_HeroLevel();
 
 	// 전투 관련 //
-
-#pragma region Shop
-
-public:
-	virtual void NotifyActorBeginCursorOver() override;
-	virtual void NotifyActorEndCursorOver() override;
+	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) override;
 	
-#pragma endregion Shop
+public:
+	virtual void ChangedOnTile(const bool IsOnField) override;
+	
+private:
+	void RestoreFromCombatEnd();
+	
+public:
+	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
+	void ActionDrag(const bool IsStart);
 };

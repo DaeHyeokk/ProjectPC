@@ -48,6 +48,7 @@ public:
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 	FGameplayTag GetJobSynergyTag() const;
 	FGameplayTag GetSpeciesSynergyTag() const;
+	float GetDefaultCurrentMana() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Scalable")
@@ -62,4 +63,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Synergy")
 	FHeroSynergyTagConfig SynergyTagConfig;
+
+	UPROPERTY()
+	float CachedDefaultCurrentMana = 0.f;
 };

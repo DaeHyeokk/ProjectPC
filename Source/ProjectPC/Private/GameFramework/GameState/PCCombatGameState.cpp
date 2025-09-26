@@ -3,7 +3,10 @@
 
 #include "GameFramework/GameState/PCCombatGameState.h"
 
+#include "EngineUtils.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/PCCombatManager.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -21,6 +24,14 @@ void APCCombatGameState::BeginPlay()
 	if (auto* UnitSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 	{
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
+	}
+
+	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		if (ProjectilePoolData)
+		{
+			ProjectilePoolSubsystem->InitializeProjectilePoolData(ProjectilePoolData->ProjectilePoolData);
+		}
 	}
 
 	if (LevelMaxXPDataTable)
@@ -66,6 +77,54 @@ void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
 	OnRep_StageRunTime();
 }
 
+UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	APCCombatManager* CombatManager = nullptr;
+	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	{
+		CombatManager = *It;
+		break;
+	}
+	if (!CombatManager) return nullptr;
+
+	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
+	if (PairIdx == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
+		return HostBoard->TileManager;
+	return nullptr;
+}
+
+APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return nullptr;
+
+	APCCombatManager* CombatManager = nullptr;
+	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	{
+		CombatManager = *It;
+		break;
+	}
+	if (!CombatManager) return nullptr;
+
+	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
+	if (PairIdx == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
+		return HostBoard;
+	return nullptr;
+}
+
 float APCCombatGameState::GetStageRemainingSeconds() const
 {
 	const float Now = GetServerWorldTimeSeconds();
@@ -99,14 +158,14 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(APCCombatGameState, GameStateTag);
+	DOREPLIFETIME_CONDITION_NOTIFY(APCCombatGameState, GameStateTag, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	
 }
 
-const int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
+int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
 {
 	if (PlayerLevel <= 0 || LevelMaxXPDataList.IsEmpty())
 	{
@@ -122,7 +181,14 @@ void APCCombatGameState::SetGameStateTag(const FGameplayTag& InGameStateTag)
 	if (HasAuthority() && GameStateTag != InGameStateTag)
 	{
 		GameStateTag = InGameStateTag;
+		OnGameStateTagChanged.Broadcast(GameStateTag);
 	}
+}
+
+// 클라에서 Game State 변경 알림 받기 위해 구현
+void APCCombatGameState::OnRep_GameStateTag()
+{
+	OnGameStateTagChanged.Broadcast(GameStateTag);
 }
 
 void APCCombatGameState::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const

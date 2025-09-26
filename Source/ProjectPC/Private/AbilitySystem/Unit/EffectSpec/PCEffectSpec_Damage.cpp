@@ -6,34 +6,40 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 
-
-void UPCEffectSpec_Damage::ApplyEffect(UAbilitySystemComponent* SourceASC, AActor* Context)
+void UPCEffectSpec_Damage::ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel)
 {
-//	Super::ApplyEffect(SourceASC, Context);
-
-	if (!SourceASC)
+	if (!SourceASC || !Target || !Target->HasAuthority())
+		return;
+	
+	if (!IsTargetEligibleByGroup(SourceASC->GetAvatarActor(), Target))
 		return;
 	
 	const float BaseDamage = SourceASC->GetNumericAttribute(DamageAttribute);
 	if (BaseDamage <= 0.f)
 		return;
 
-	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Context);
+	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
 	if (!TargetASC)
 		return;
 
-	TSubclassOf<UGameplayEffect> GEClass = ResolveGEClass(SourceASC->GetWorld());
+	const TSubclassOf<UGameplayEffect> GEClass = ResolveGEClass(SourceASC->GetWorld());
 	if (!GEClass)
 		return;
 	
-	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GEClass, 1.f, SourceASC->MakeEffectContext());
+	const int32 Level = (EffectLevel > 0) ? EffectLevel : DefaultLevel;
+	const FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
+	const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GEClass, Level, Ctx);
 	if (!SpecHandle.IsValid())
 		return;
 	
 	SpecHandle.Data->SetSetByCallerMagnitude(EffectCallerTag, BaseDamage);
-
 	if (DamageType.IsValid())
 		SpecHandle.Data->AddDynamicAssetTag(DamageType);
 
 	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
+	FGameplayEventData Data;
+	Data.EventTag = HitEventTag;
+	Data.Instigator = SourceASC->GetAvatarActor();
+	Data.Target = Target;
+	TargetASC->HandleGameplayEvent(HitEventTag, &Data);
 }

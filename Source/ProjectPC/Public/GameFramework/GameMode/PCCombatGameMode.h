@@ -7,10 +7,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
+
+
 /**
  * 
  */
 
+class APCBaseUnitCharacter;
+class UPCTileManager;
+struct FGameplayTag;
 class APCCombatManager;
 enum class EPCStageType : uint8;
 struct FRoundStep;
@@ -43,25 +48,19 @@ public:
 
 	// 회전초밥시 카메라 세팅
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float CentralCameraBlend = 0.4f;
+	float CentralCameraBlend = 0.f;
 
 	// 기본 보드 카메라 세팅
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float ShopFocusBlend = 0.6f;
+	float TravelCameraBlend = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Camera")
-	float TravelCameraBlend = 0.4f;
-
-	UPROPERTY(EditAnywhere, Category="Camera")
-	float ReturnCameraBlend = 0.4f;
+	float ReturnCameraBlend = 0.f;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-	virtual void PostSeamlessTravel() override;
-
 	// 좌석배정 유틸함수
-	void AssignSeatInitial();
 	int32 GetTotalSeatSlots() const;
 
 private:
@@ -72,6 +71,7 @@ private:
 	TArray<int32> FlatStepIdxInRound;
 	int32 Cursor = -1;
 
+	FTimerHandle StartTimer;
 	FTimerHandle RoundTimer;
 	FTimerHandle CameraSetupTimer;
 	FTimerHandle WaitAllPlayerController;
@@ -88,6 +88,9 @@ private:
 
 	// 개별 Step 처리
 	void Step_Start();
+
+	// Start 헬퍼 함수
+	void PlayerStartUnitSpawn();
 	void Step_Setup();
 	void Step_Travel();
 	void Step_Return();
@@ -116,9 +119,37 @@ private:
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
+	// 크립 스폰 관련 로직
+
+	// 크립 스폰 헬퍼
+	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
+	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);
+	static int32 GetCreepLevelForStageRound(int32 Stage, int32 Round);
+	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
+
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
+
+
+
+	// 데이터 로딩
+
+private:
+	bool bSeatsFinalized = false;
+	FTimerHandle ThWaitReady;
+	bool IsRoundSystemReady(FString& WhyNot) const;
+	void StartWhenReady();
+	void AssignSeatDeterministicOnce();
+
+	int32 ExpectedPlayers = 0;
+	int32 ArrivedPlayers = 0;
+	bool bTriggeredAfterTravel = false;
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	void OnOnePlayerArrived();
+	
 };
+
+
 

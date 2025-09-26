@@ -9,7 +9,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Navigation/PathFollowingComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCPlayerCharacter::APCPlayerCharacter()
@@ -40,5 +41,24 @@ APCPlayerCharacter::APCPlayerCharacter()
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
+
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 60.f;
+
+	bIsDead = false;
 }
+
+void APCPlayerCharacter::PlayerDie()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player Die"));
+	bIsDead = true;
+}
+
+void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APCPlayerCharacter, bIsDead);
+}
+
 

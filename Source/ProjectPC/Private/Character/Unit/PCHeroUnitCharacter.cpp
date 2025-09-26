@@ -3,16 +3,17 @@
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 
-#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
-#include "Controller/Player/PCCombatPlayerController.h"
+#include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
+#include "UI/Unit/PCUnitStatusBarWidget.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -30,15 +31,6 @@ APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectIniti
 		HeroUnitAbilitySystemComponent->AddAttributeSetSubobject(HeroAttrSet);
 		HeroUnitAttributeSet = HeroUnitAbilitySystemComponent->GetSet<UPCHeroUnitAttributeSet>();
 	}
-}
-
-void APCHeroUnitCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 }
 
 void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -80,8 +72,13 @@ void APCHeroUnitCharacter::LevelUp()
 	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
 
+	FGameplayCueParameters Params;
+	Params.TargetAttachComponent = GetMesh();
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Unit_LevelUp, Params);
+	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
+	
 	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
 		OnRep_HeroLevel();
@@ -111,10 +108,82 @@ FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
 }
 
-void APCHeroUnitCharacter::OnRep_HeroLevel() const
+void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	// 클라에서 플레이어에게 보여주는 로직 ex)레벨업 이펙트, Status Bar UI 체인지
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+	
+	if (HasAuthority())
+	{
+		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
+			return;
+
+		// Max Health 값으로 Current Health 초기화
+		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
+			UPCUnitAttributeSet::GetCurrentHealthAttribute(),
+			EGameplayModOp::Override,
+			HeroUnitAttributeSet->GetMaxHealth());
+
+		if (!HeroUnitDataAsset)
+			return;
+
+		// 기본으로 가지는 Current Mana로 초기화
+		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
+			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
+			EGameplayModOp::Override,
+			HeroUnitDataAsset->GetDefaultCurrentMana());
+
+		// 이전 전투에서 사망했을 경우 사망 태그 제거
+		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+		{
+			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+			bIsDead = false;
+		}
+
+		// 블랙보드 키값 초기화
+		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
+		{
+			AIC->ClearBlackboardValue();
+		}
+	}
+}
+
+void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
+{
+	// 클라에서만 실행 (Listen Server 포함)
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+	
+	if (GetMesh())
+	{
+		//GetMesh()->SetVisibility(!IsStart, true);
+	}
+}
+
+void APCHeroUnitCharacter::OnRep_HeroLevel()
+{
+	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
+}
+
+void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	Super::ChangedOnTile(IsOnField);
+}
+
+void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
+{
+	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
+	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
+	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
+
+	if (NewStateTag == CombatActiveTag)
+	{
+		
+	}
+	else if (NewStateTag == CombatEndTag)
+	{
+		RestoreFromCombatEnd();
+	}
 }
 
 void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
@@ -151,30 +220,4 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 			HeroLevel);
 	}
 	
-}
-
-void APCHeroUnitCharacter::NotifyActorBeginCursorOver()
-{
-	Super::NotifyActorBeginCursorOver();
-
-	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (PC->IsLocalController())
-		{
-			PC->SetOverlappedUnit(this);
-		}
-	}
-}
-
-void APCHeroUnitCharacter::NotifyActorEndCursorOver()
-{
-	Super::NotifyActorEndCursorOver();
-
-	if (auto PC = Cast<APCCombatPlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		if (PC->IsLocalController())
-		{
-			PC->SetOverlappedUnit(nullptr);
-		}
-	}
 }

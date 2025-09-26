@@ -16,10 +16,7 @@ struct FMontageConfig
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montage")
 	TObjectPtr<UAnimMontage> Montage = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
-	bool bHasWindup = false;
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
 	bool bHasRecovery = false;
 	
@@ -50,6 +47,9 @@ struct FUnitLocomotionSet
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UAnimSequence> JumpRecovery;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UAnimSequence> Death;
 };
 /**
  * 
@@ -66,9 +66,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
 	TMap<FGameplayTag, FMontageConfig> MontageConfigByTagMap;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
+	TArray<FMontageConfig> BasicAttackMontageConfigs;
+	
 	UFUNCTION(BlueprintCallable)
 	FMontageConfig GetMontageConfigByTag(const FGameplayTag& MontageTag) const;
 
+	UFUNCTION(BlueprintCallable)
+	bool TryGetRandomBasicAttackMontageConfigByTag(FMontageConfig& OutConfig) const;
+	
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetMontageByTag(const FGameplayTag& MontageTag) const;
 };

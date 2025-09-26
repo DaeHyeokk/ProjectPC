@@ -53,9 +53,12 @@ void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 	{
 		if (OwnerUnit)
 		{
-			const FIntPoint LastPoint = OwnerUnit->GetOnCombatBoard()->GetFieldUnitPoint(OwnerUnit);
-			OwnerUnit->GetOnCombatBoard()->SetTileState(LastPoint.Y, LastPoint.X, OwnerUnit, ETileAction::Release);
-			OwnerUnit->GetOnCombatBoard()->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit, ETileAction::Occupy);
+			if (const APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
+			{
+				const FIntPoint LastPoint = OwnerBoard->GetFieldUnitPoint(OwnerUnit);
+				OwnerUnit->GetOnCombatBoard()->SetTileState(LastPoint.Y, LastPoint.X, OwnerUnit, ETileAction::Release);
+				OwnerUnit->GetOnCombatBoard()->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit, ETileAction::Occupy);
+			}
 		}
 	}
 		
@@ -67,5 +70,18 @@ void APCUnitAIController::UpdateTeamId()
 	{
 		const FGenericTeamId PawnTeam = Unit->GetGenericTeamId();
 		SetGenericTeamId(PawnTeam);
+	}
+}
+
+void APCUnitAIController::ClearBlackboardValue()
+{
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		if (GetWorld())
+		{
+			APCCombatGameState* CombatGS = GetWorld()->GetGameState<APCCombatGameState>();
+			BB->ClearValue(TEXT("TargetUnit"));
+			BB->ClearValue(TEXT("ApproachLocation"));
+		}
 	}
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "GameFramework/PlayerController.h"
 #include "PCCombatPlayerController.generated.h"
 
@@ -36,6 +37,15 @@ struct FDragTile
 	UPROPERTY() int32 DragId = 0;
 };
 
+// ── 카메라 상태 enum 
+UENUM(BlueprintType)
+enum class ECameraFocusType : uint8
+{
+	None,
+	Carousel,
+	Board
+};
+
 UCLASS()
 class PROJECTPC_API APCCombatPlayerController : public APlayerController
 {
@@ -64,6 +74,15 @@ private:
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
+	UFUNCTION(Server, Reliable)
+	void Server_StopMovement();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_MovetoLocation(const FVector& Destination);
+
+	UFUNCTION(Client, Reliable)
+	void Client_MovetoLocation(const FVector& Destination);
+
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();
@@ -80,28 +99,28 @@ public:
 	UPROPERTY()
 	UPCShopWidget* ShopWidget;
 
+	FTimerHandle LoadShop;
+
 	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
 
+	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
+
 	void ShopRequest_ShopRefresh(float GoldCost);
 	void ShopRequest_BuyXP();
-	void ShopRequest_BuyUnit(int32 SlotIndex);
 	void ShopRequest_SellUnit();
+	void ShopRequest_BuyUnit(int32 SlotIndex);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh(float GoldCost);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyXP();
 	UFUNCTION(Server, Reliable)
-	void Server_BuyUnit(int32 SlotIndex);
+	void Server_SellUnit(APCBaseUnitCharacter* Unit);
 	UFUNCTION(Server, Reliable)
-	void Server_SellUnit();
-
-private:
-	APCHeroUnitCharacter* OverlappedUnit;
-
-public:
-	void SetOverlappedUnit(APCHeroUnitCharacter* NewUnit);
+	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Client, Reliable)
+	void SetSlotHidden(int32 SlotIndex);
 
 #pragma endregion Shop
 
@@ -124,6 +143,15 @@ protected:
 	
 public:
 
+	UPROPERTY()
+	ECameraFocusType CurrentCameraType = ECameraFocusType::None;
+
+	UPROPERTY()
+	int32 CurrentCarouselSeatIndex = -1;
+
+	UPROPERTY()
+	int32 CurrentBoardSeatIndex = -1;
+	
 	// 자기 보드 인덱스 저장
 	UFUNCTION(Client, Reliable)
 	void ClientSetHomeBoardIndex(int32 InHomeBoardIdx);
@@ -136,13 +164,24 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientCameraSetCarousel(APCCarouselRing* CarouselRing, int32 SeatIndex, float BlendTime);
 	
-	void FadeSwitchCamera(AActor* NewTarget, float FadeOutTime = 2.f, float HoldBlack = 0.1f, float BlendTime = 0.f,
-		float FadeInTime = 1.5f, bool bShowHUDAfter = true);
+	void SwitchCameraWhileBlack(AActor* NewTarget, float BlendTime, float FadeOutTime = 0.08f, float FadeInTime = 0.15f, float HoldBlack = 0.f);
+	void ClearAllCameraTimers();
 
 	FTimerHandle ThFadeSwitch;
 	FTimerHandle ThFadeIn;
+	bool bCameraFadeBusy = false;
 
 	APCCombatBoard* FindBoardBySeatIndex(int32 BoardSeatIndex) const;
+
+	// UI 가리기용 위젯
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> ScreenFadeClass;
+
+	UPROPERTY()
+	UUserWidget* ScreenFadeWidget = nullptr;
+
+	void EnsureScreenFade();
+	void SetScreenFadeVisible(bool bVisible, float Opacity = 1.f);
 
 
 #pragma endregion Camera
@@ -174,7 +213,6 @@ private:
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
 #pragma endregion UI
 
-
 #pragma region Drag&Drop
 
 public:
@@ -186,24 +224,69 @@ public:
 	// === 클라→서버: 월드 좌표 기반 드래그 RPC ===
 	UFUNCTION(Server, Reliable)
 	void Server_StartDragFromWorld(FVector World, int32 DragId);
-	UFUNCTION(Server, Unreliable)
-	void Server_UpdateDrag(FVector World, int32 DragId);
 	UFUNCTION(Server, Reliable)
 	void Server_EndDrag(FVector World, int32 DragId);
 
+	// Hover 이벤트 질의 / 응답
+	FTimerHandle ThHoverPoll;
+
+	UPROPERTY(EditAnywhere, Category = "Hover")
+	float HoverPollHz = 15.f;
+
+	UFUNCTION()
+	void PollHover();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_QueryHoverFromWorld(const FVector& World);
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_QueryTileUnit(bool bIsField, int32 Y, int32 X, int32 BenchIdx);
+
+	UFUNCTION(Client, Reliable)
+	void Client_CurrentDragUnit(APCBaseUnitCharacter* Unit);
+
+	UFUNCTION(Client, Reliable)
+	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
+	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() { return CachedHoverUnit; }
+
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
-	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap);
+	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewUnit = nullptr);
 	UFUNCTION(Client, Unreliable)
-	void Client_DragHint(FVector Snap, bool bValid, int32 DragId);
-	UFUNCTION(Client, Unreliable)
-	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId);
+	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit = nullptr);
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();
 	void OnMouse_Released();
 
+	UPCTileManager* GetTileManager() const ;
+
 	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
+	bool IsAllowBenchIdx(int32 Idx);
+
+	// 외곽선 관련
+	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;
+
+	// 드래그 중에는 하이라이트 고정
+	bool bKeepDragHighlight = false;
+
+	void SetHoverHighLight(APCBaseUnitCharacter* NewUnit);
+	void ClearHoverHighLight();
+
+	static bool IsBattleTag(const FGameplayTag& Tag)
+	{
+		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active);
+	}
+
+	static bool IsBattleCreep(const FGameplayTag& Tag)
+	{
+		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
+	}
+
+	
 
 protected:
 	// 서버 상태
@@ -211,7 +294,6 @@ protected:
 	UPROPERTY(Transient) TWeakObjectPtr<APCBaseUnitCharacter> CurrentDragUnit;
 
 	// === 서버 헬퍼 ===
-	UPCTileManager* GetTileManager() const ;
 	bool CanControlUnit(const APCBaseUnitCharacter* Unit) const;
 	bool RemoveFromCurrentSlot(UPCTileManager* TM, APCBaseUnitCharacter* Unit) const;
 	

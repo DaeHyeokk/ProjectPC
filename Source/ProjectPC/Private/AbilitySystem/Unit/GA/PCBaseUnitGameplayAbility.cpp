@@ -24,11 +24,11 @@ void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* Ac
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
 
-	if (const APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(ActorInfo->AvatarActor))
+	Unit = Cast<APCBaseUnitCharacter>(ActorInfo->AvatarActor);
+	if (Unit)
 	{
 		if (const UPCDataAsset_UnitAbilityConfig* ConfigData = Unit->GetUnitAbilityConfigDataAsset())
 		{
-			FAbilityConfig AbilityConfig;
 			if (ConfigData->TryFindAbilityConfigByTag(AbilityTags.Last(), AbilityConfig))
 			{
 				UPCUnitGERegistrySubsystem* GERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>();
@@ -37,21 +37,30 @@ void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* Ac
 				
 				if (AbilityConfig.bUseCost)
 				{
-					CostGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CostGETag);
-					CostCallerTag = AbilityConfig.CostCallerTag;
-					CostGameplayAttribute = AbilityConfig.CostGameplayAttribute;
+					CostGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CostEffectClassTag);
 				}
 
 				if (AbilityConfig.bUseCooldown)
 				{
-					CooldownGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CooldownGETag);
-					CooldownCallerTag = AbilityConfig.CooldownCallerTag;
+					CooldownGameplayEffectClass = GERegistrySubsystem->GetGEClass(AbilityConfig.CooldownEffectClassTag);
 				}
 			}
 		}
+		
+		if (Unit && Unit->GetUnitAnimSetDataAsset())
+			SetMontageConfig(ActorInfo);
 	}
 	
 	
+}
+
+void UPCBaseUnitGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
+{
+	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
+	{
+		const FGameplayTag MontageTag = GetMontageTag();
+		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
+	}
 }
 
 // void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,

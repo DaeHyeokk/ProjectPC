@@ -4,6 +4,7 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 
 #include "BaseGameplayTags.h"
+#include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
@@ -38,7 +39,7 @@ void UPCUnitAbilitySystemComponent::ApplyInitBaseStat()
 	{
 		SetNumericAttributeBase(KV.Key, KV.Value);
 	}
-
+	//SetNumericAttributeBase(UPCHeroUnitAttributeSet::GetLifeStealAttribute(), 80.f);
 	bInitBaseStatsApplied = true;
 }
 

@@ -20,28 +20,28 @@ class PROJECTPC_API UPCDataAsset_PlayerInput : public UDataAsset
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputMappingContext* BasicInputMappingContext;
+	TObjectPtr<UInputMappingContext> BasicInputMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* SetDestination;
+	TObjectPtr<UInputAction> SetDestination;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* BuyXP;
+	TObjectPtr<UInputAction> BuyXP;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* ShopRefresh;
+	TObjectPtr<UInputAction> ShopRefresh;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* SellUnit;
+	TObjectPtr<UInputAction> SellUnit;
 	
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-    UNiagaraSystem* FXCursor;
+    TObjectPtr<UNiagaraSystem> FXCursor;
 	
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
     float ShortPressThreshold;
 
 	// Drag&Drop
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputAction* IA_LeftMouse;
+	TObjectPtr<UInputAction> IA_LeftMouse;
 	
 };

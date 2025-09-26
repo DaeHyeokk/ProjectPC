@@ -19,6 +19,7 @@ public:
 
 protected:
 	int32 SlotIndex;
+	int32 BuyCount;
 	float UnitCost;
 	FGameplayTag UnitTag;
 	

@@ -18,6 +18,8 @@ class UGameplayAbility;
 class UPCUnitAttributeSet;
 class UPCUnitAbilitySystemComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDied, APCBaseUnitCharacter*, Unit);
+
 UCLASS()
 class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
 										public IGenericTeamAgentInterface
@@ -31,6 +33,7 @@ public:
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const;
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
+	UPCDataAsset_ProjectileData* GetUnitProjectileDataAsset() const;
 	virtual FGameplayTag GetUnitTypeTag() const;
 	
 	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
@@ -58,6 +61,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -110,18 +114,34 @@ public:
 	FORCEINLINE APCCombatBoard* GetOnCombatBoard() const { return OnCombatBoard.Get(); }
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
-	void ChangedOnTile(const bool IsOnField);
+	virtual void ChangedOnTile(const bool IsOnField);
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsOnField() const { return bIsOnField; }
 
-	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
-	void ActionDrag(const bool IsStart);
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsDead() const { return bIsDead; }
 	
+	UFUNCTION(BlueprintCallable)
+	virtual void Die();
+
+	UFUNCTION(BlueprintCallable)
+	void OnDeathAnimCompleted();
+
 protected:
+	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) { };
+	FDelegateHandle GameStateChangedHandle;
+	
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> OnCombatBoard;
 	
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
+
+	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
+	bool bIsDead = false;
+	
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitDied OnUnitDied;
 };

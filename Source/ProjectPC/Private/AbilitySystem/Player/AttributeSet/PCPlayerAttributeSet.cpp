@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 void UPCPlayerAttributeSet::OnRep_PlayerLevel(const FGameplayAttributeData& OldValue)
@@ -37,6 +38,11 @@ void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 	{
 		CheckLevelUp();
 	}
+
+	if (Data.EvaluatedData.Attribute == GetPlayerHPAttribute())
+	{
+		CheckPlayerDie();
+	}
 }
 
 void UPCPlayerAttributeSet::CheckLevelUp()
@@ -61,6 +67,26 @@ void UPCPlayerAttributeSet::CheckLevelUp()
 	{
 		SetPlayerLevel(PlayerCurrentLevel + 1);
 		SetPlayerXP(PlayerCurrentXP - RequiredXP);
+	}
+}
+
+void UPCPlayerAttributeSet::CheckPlayerDie()
+{
+	auto ASC = GetOwningAbilitySystemComponent();
+	if (!ASC) return;
+
+	auto OwningActor = ASC->GetOwnerActor();
+	if (!OwningActor || !OwningActor->HasAuthority()) return;
+	
+	if (GetPlayerHP() <= 0)
+	{
+		if (auto PC = Cast<APCPlayerState>(OwningActor))
+		{
+			if (PC->GetCurrentStateTag() != PlayerGameplayTags::Player_State_Dead)
+			{
+				PC->ChangeState(PlayerGameplayTags::Player_State_Dead);
+			}
+		}
 	}
 }
 

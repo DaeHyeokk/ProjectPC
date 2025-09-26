@@ -30,7 +30,7 @@ public:
 	float PlayerRingRadius = 900.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
-	float PlayerRingHeight = 20.f;
+	float PlayerRingHeight = 30.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
 	float PlayerRingStartAngleDeg = 180.f;
@@ -41,13 +41,13 @@ public:
 
 	// 안쪽 유닛 회전 링
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
-	int32 UnitRingNumSlots = 10;
+	int32 UnitRingNumSlots = 9;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
 	float UnitRingRadius = 400.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
-	float UnitRingHeight = 0.f;
+	float UnitRingHeight = 80.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
 	float UnitRingStartAngleDeg = 90.f;
@@ -63,7 +63,7 @@ public:
 	TSubclassOf<APCBaseUnitCharacter> PickupUnit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
-	int32 NumPickupsToSpawn = 10;
+	int32 NumPickupsToSpawn = 9;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
 	FVector PickupLocalOffset = FVector(0,0,30);
@@ -95,16 +95,28 @@ public:
 	bool bCameraInheritActorRotation = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float CameraArmLength = 3000.f;
+	float CameraArmLength = 4000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FVector CameraArmLocalLocation = FVector(-200,0,0);
+	FVector CameraArmLocalLocation = FVector(0,0,0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FRotator CameraArmLocalRotation = FRotator(-50,0,0);
+	FRotator CameraArmLocalRotation = FRotator(-70,0,0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float CameraFov = 50.f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	FVector CameraPivotOffset = FVector(0.f,0.f,0.f);
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float CameraPitchDeg = -60.f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float CamYawBiasDeg = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float FramingPushUpZ = 200.f;
 
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime = 0.0f, float ExtraYawDeg = 0.f );
