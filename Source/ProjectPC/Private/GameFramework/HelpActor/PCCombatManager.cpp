@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EngineUtils.h"
+#include "IContentBrowserSingleton.h"
 #include "Abilities/GameplayAbilityTypes.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
@@ -400,6 +401,59 @@ bool APCCombatManager::RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUni
 	return false;
 }
 
+void APCCombatManager::TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap)
+{
+	OutSnap.Reset();
+	if (!Board || !Board->TileManager) return;
+
+	OutSnap.CombatBoard = Board;
+	OutSnap.Tile = Board->TileManager;
+
+	const int32 Rows = Board->TileManager->Rows;
+	const int32 Cols = Board->TileManager->Cols;
+
+	for (int32 r = 0; r < Rows; ++r)
+	{
+		for (int32 c = 0; c < Cols; ++c)
+		{
+			if (APCBaseUnitCharacter* InUnit = Board->TileManager->GetFieldUnit(c, r))
+			{
+				FCombatManager_FieldSlot Slot;
+				Slot.Col = c;
+				Slot.Row = r;
+				Slot.Unit = InUnit;
+				OutSnap.Field.Add(Slot);
+			}
+		}
+	}
+}
+
+void APCCombatManager::RestoreSnapShotPvE(UPCTileManager* TM, FCombatManager_FieldOnlySnapshot& Snap)
+{
+	if (!TM) return;
+
+	// 1) 현 필드 비우기
+	for (int32 r = 0; r < TM->Rows; ++r)
+	{
+		for (int32 c = 0; c < TM->Cols; ++c)
+		{
+			if (TM->GetFieldUnit(c, r))
+			{
+				TM->RemoveFromField(c, r, false);
+			}
+		}
+	}
+
+	// 2) 스냅샷에 있는 필드 유닛 원복
+	for (const auto& FS : Snap.Field)
+	{
+		if (APCBaseUnitCharacter* Unit = FS.Unit.Get())
+		{
+			TM->PlaceUnitOnField(FS.Col, FS.Row, Unit, ETileFacing::Friendly);
+		}
+	}
+}
+
 // 좌석 기반 조회 헬퍼
 APCPlayerState* APCCombatManager::FindPlayerStateBySeat(int32 SeatIndex) const
 {
@@ -564,88 +618,84 @@ int32 APCCombatManager::StartPvEBattleForSeat(int32 HostSeatIndex)
 {
 	if (!IsAuthority()) return INDEX_NONE;
 
-    APCCombatBoard* HostBoard = FindBoardBySeatIndex(GetWorld(), HostSeatIndex);
-    if (!HostBoard || !HostBoard->TileManager) return INDEX_NONE;
+	APCCombatBoard* HostBoard = FindBoardBySeatIndex(GetWorld(), HostSeatIndex);
+	if (!HostBoard || !HostBoard->TileManager) return INDEX_NONE;
 
-    // StageOne/RoundOne (1-based) 가져오기
-    int32 StageOne = 0, RoundOne = 0;
-    if (!GetCurrentStageRoundOne(StageOne, RoundOne))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("StartPvEBattleForSeat: Stage/Round runtime not available."));
-        return INDEX_NONE;
-    }
+	// StageOne/RoundOne 가져오기
+	int32 StageOne = 0, RoundOne = 0;
+	if (!GetCurrentStageRoundOne(StageOne, RoundOne))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("StartPvEBattleForSeat: Stage/Round runtime not available."));
+		return INDEX_NONE;
+	}
 
-    // (Y,X) 좌표 셋
-    TArray<FIntPoint> Points;
-    if (!BuildCreepPoints(StageOne, RoundOne, Points))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("StartPvEBattleForSeat: No creep points for Stage %d Round %d"), StageOne, RoundOne);
-    }
+	// 크립 배치 좌표 가져오기
+	TArray<FIntPoint> Points;
+	BuildCreepPoints(StageOne, RoundOne, Points);
 
-    // Pair 생성
-    const int32 PairIndex = Pairs.AddDefaulted();
-    FCombatManager_Pair& Pair = Pairs[PairIndex];
-    Pair.ResetRuntime();
-    Pair.Host  = HostBoard;
-    Pair.Guest = nullptr;
-    Pair.bIsPvE = true;
+	// Pair 생성
+	const int32 PairIndex = Pairs.AddDefaulted();
+	FCombatManager_Pair& Pair = Pairs[PairIndex];
+	Pair.ResetRuntime();
+	Pair.Host = HostBoard;
+	Pair.Guest = nullptr;
+	Pair.bIsPvE = true;
 
-    // 스냅샷 저장(내 보드)
-    TakeSnapshot(HostBoard, Pair.HostSnapShot);
+	// 필드만 스냅샷 저장
+	TakeSnapShotPvE(HostBoard, Pair.HostFieldSnapshot);
 
-    // 크립 스폰 & 배치 (GameMode 규칙 준수)
-    for (const FIntPoint& YX : Points)
-    {
-        if (APCBaseUnitCharacter* Creep = SpawnCreepAt(HostBoard, StageOne, RoundOne, YX))
-        {
-            // 죽음 이벤트 바인딩
-            if (!UnitToPairIndex.Contains(Creep))
-            {
-                Creep->OnUnitDied.AddDynamic(this, &APCCombatManager::OnAnyUnitDied);
-                UnitToPairIndex.Add(Creep, PairIndex);
-            }
-            Pair.PvECreeps.Add(Creep);
-        }
-    }
+	// 크립 스폰 & 배치
+	for (const FIntPoint& YX : Points)
+	{
+		if (APCBaseUnitCharacter* Creep = SpawnCreepAt(HostBoard, StageOne, RoundOne, YX))
+		{
+			if (!UnitToPairIndex.Contains(Creep))
+			{
+				Creep->OnUnitDied.AddDynamic(this, &APCCombatManager::OnAnyUnitDied);
+				UnitToPairIndex.Add(Creep, PairIndex);
+			}
+			Pair.PvECreeps.Add(Creep);
+		}
+	}
 
-    // 생존 수 계산
-    int32 HostCnt = 0;
-    int32 CreepCnt = 0;
-    UPCTileManager* TM = HostBoard->TileManager;
+	// 생존 수 계산
+	int32 HostCnt = 0;
+	int32 CreepCnt = 0;
+	UPCTileManager* TM = HostBoard->TileManager;
+	const int32 CreepTeam = GetCreepTeamIndexForBoard(HostBoard);
 
-    const int32 CreepTeam = GetCreepTeamIndexForBoard(HostBoard);
+	for (int32 r = 0; r < TM->Rows; ++r)
+	{
+		for (int32 c = 0; c < TM->Cols; ++c)
+		{
+			if (APCBaseUnitCharacter* U = TM->GetFieldUnit(c, r))
+			{
+				if (U->GetTeamIndex() == HostSeatIndex) ++HostCnt;
+				else if (U->GetTeamIndex() == CreepTeam) ++CreepCnt;
+			}
+		}
+	}
 
-    for (int32 y = 0; y < TM->Cols; ++y)
-    {
-        for (int32 x = 0; x < TM->Rows; ++x)
-        {
-            if (APCBaseUnitCharacter* U = TM->GetFieldUnit(y, x))
-            {
-                if (U->GetTeamIndex() == HostSeatIndex) ++HostCnt;
-                else if (U->GetTeamIndex() == CreepTeam) ++CreepCnt;
-            }
-        }
-    }
+	Pair.HostAlive = HostCnt;
+	Pair.GuestAlive = CreepCnt;
+	Pair.bRunning = true;
 
-    Pair.HostAlive  = HostCnt;
-    Pair.GuestAlive = CreepCnt;   // PvE에선 GuestAlive = 크립 수
-    Pair.bRunning   = true;
-
-    return PairIndex;
+	return PairIndex;
 }
 
 void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 {
 	if (!IsAuthority()) return;
 
-	// Seat로 PairIndex 찾기
+	// PairIndex 찾기
 	int32 PairIndex = INDEX_NONE;
 	for (int32 i = 0; i < Pairs.Num(); ++i)
 	{
 		if (!Pairs[i].bIsPvE) continue;
 		if (Pairs[i].Host.IsValid() && Pairs[i].Host->BoardSeatIndex == HostSeatIndex)
 		{
-			PairIndex = i; break;
+			PairIndex = i;
+			break;
 		}
 	}
 	if (PairIndex == INDEX_NONE) return;
@@ -665,12 +715,14 @@ void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 		}
 	}
 
-	// 2) Host 스냅샷 원복
-	RestoreSnapshot(Pair.HostSnapShot);
+	// 2) Host 필드 원복
+	RestoreSnapShotPvE(TM,Pair.HostFieldSnapshot);
 
 	// 3) 언바인드 및 런타임 정리
 	UnbindAllForPair(PairIndex);
-	Pair.ResetRuntime();
+	Pair.HostFieldSnapshot.Reset();
+	Pair.bRunning = false;
+	
 }
 
 void APCCombatManager::FinishAllPve()

@@ -216,17 +216,23 @@ void UPCShopWidget::SetSlotHidden(int32 SlotIndex)
 	}
 }
 
-void UPCShopWidget::SwitchShopWidget() const
+void UPCShopWidget::ShowPlayerShopBox() const
+{
+	if (!WidgetSwitcher) return;
+
+	if (WidgetSwitcher->GetActiveWidget() == SellBox)
+	{
+		WidgetSwitcher->SetActiveWidget(PlayerShopBox);
+	}
+}
+
+void UPCShopWidget::ShowSellBox() const
 {
 	if (!WidgetSwitcher) return;
 
 	if (WidgetSwitcher->GetActiveWidget() == PlayerShopBox)
 	{
 		WidgetSwitcher->SetActiveWidget(SellBox);
-	}
-	else
-	{
-		WidgetSwitcher->SetActiveWidget(PlayerShopBox);
 	}
 }
 
