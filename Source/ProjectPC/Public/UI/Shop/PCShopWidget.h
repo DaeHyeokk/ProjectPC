@@ -33,6 +33,11 @@ public:
 	void BindToPlayerState(class APCPlayerState* NewPlayerState);
 
 protected:
+	int32 PlayerLevel;
+	int32 PlayerMaxXP;
+	int32 PlayerXP;
+	int32 PlayerGold;
+	
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* PlayerShopBox;

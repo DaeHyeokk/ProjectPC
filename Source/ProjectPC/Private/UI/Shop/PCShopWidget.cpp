@@ -99,30 +99,31 @@ void UPCShopWidget::SetupPlayerInfo()
 
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS) return;
+	
 	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
 	if (!PS) return;
-	auto AttributeSet = PS->GetAttributeSet();
+	
+	const auto AttributeSet = PS->GetAttributeSet();
 	if (!AttributeSet) return;
 
 	// 플레이어 정보 (레벨) 세팅
-	auto PlayerLevel = static_cast<int32>(AttributeSet->GetPlayerLevel());
+	PlayerLevel = static_cast<int32>(AttributeSet->GetPlayerLevel());
 	auto LevelText = FString::Printf(TEXT("Lv. %d"), PlayerLevel);
 	Level->SetText(FText::FromString(LevelText));
 
 	// 플레이어 정보 (경험치) 세팅
-	auto PlayerXP = static_cast<int32>(AttributeSet->GetPlayerXP());
-	auto PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
+	PlayerXP = static_cast<int32>(AttributeSet->GetPlayerXP());
+	PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
 	auto XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
 	
 	if(!PlayerMaxXP == 0)
 	{
-		XPBar->SetPercent(PlayerXP / PlayerMaxXP);
+		XPBar->SetPercent(static_cast<float>(PlayerXP) / static_cast<float>(PlayerMaxXP));
 	}
 	
-
 	// 플레이어 정보 (골드) 세팅
-	auto PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());
+	PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());
 	GoldBalance->SetText(FText::AsNumber(PlayerGold));
 	
 	// 코스트 확률 정보 Text 세팅
@@ -156,17 +157,30 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 {
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS || !Level) return;
-	
-	auto LevelText = FString::Printf(TEXT("Lv. %d"), static_cast<int32>(Data.NewValue));
+
+	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
+	if (!PS || !XP || !XPBar) return;
+
+	PlayerLevel = static_cast<int32>(Data.NewValue);
+	auto LevelText = FString::Printf(TEXT("Lv. %d"), PlayerLevel);
 	Level->SetText(FText::FromString(LevelText));
 
-	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(static_cast<int32>(Data.NewValue));
+	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(PlayerLevel);
 	TArray<UTextBlock*> CostTextBlocks = { Cost1, Cost2, Cost3, Cost4, Cost5 };
 	for (int32 i = 0; i < CostTextBlocks.Num(); ++i)
 	{
 		int32 Percent = FMath::RoundToInt(CostProbabilities[i] * 100);
 		FString Text = FString::Printf(TEXT("%d%%"), Percent);
 		CostTextBlocks[i]->SetText(FText::FromString(Text));
+	}
+
+	PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
+	FString XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
+	XP->SetText(FText::FromString(XPText));
+
+	if(!PlayerMaxXP == 0)
+	{
+		XPBar->SetPercent(static_cast<float>(PlayerXP) / static_cast<float>(PlayerMaxXP));	
 	}
 }
 
@@ -178,15 +192,15 @@ void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
 	if (!PS || !XP || !XPBar) return;
 
-	auto AttributeSet = PS->GetAttributeSet();
-	if (!AttributeSet) return;
-
-	auto PlayerLevel = static_cast<int32>(AttributeSet->GetPlayerLevel());
-	int32 MaxXP = GS->GetMaxXP(PlayerLevel);
-	FString XPText = FString::Printf(TEXT("%d/%d"), static_cast<int32>(Data.NewValue), MaxXP);
+	PlayerXP = static_cast<int32>(Data.NewValue);
+	
+	FString XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
 
-	XPBar->SetPercent(Data.NewValue / MaxXP);
+	if(!PlayerMaxXP == 0)
+	{
+		XPBar->SetPercent(static_cast<float>(PlayerXP) / static_cast<float>(PlayerMaxXP));
+	}
 }
 
 void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
