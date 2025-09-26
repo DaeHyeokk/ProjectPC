@@ -99,21 +99,24 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 2, {
             S(EPCStageType::Setup,  3.f),
             S(EPCStageType::CreepSpawn, 3.f),
-            S(EPCStageType::PvE,   20.f)
+            S(EPCStageType::PvE,   20.f),
+        	S(EPCStageType::Return, 2.f)
         });
 
         // 1-3 : Setup 15, Travel 3, PvE 30
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 3, {
             S(EPCStageType::Setup,  15.f),
             S(EPCStageType::CreepSpawn, 3.f),
-            S(EPCStageType::PvE,    30.f)
+            S(EPCStageType::PvE,    30.f),
+        	S(EPCStageType::Return, 2.f)
         });
 
         // 1-4 : Setup 20, Travel 3, PvE 30
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 4, {
             S(EPCStageType::Setup,  20.f),
             S(EPCStageType::CreepSpawn, 3.f),
-            S(EPCStageType::PvE,    30.f)
+            S(EPCStageType::PvE,    30.f),
+        	S(EPCStageType::Return, 2.f)
         });
     }
 

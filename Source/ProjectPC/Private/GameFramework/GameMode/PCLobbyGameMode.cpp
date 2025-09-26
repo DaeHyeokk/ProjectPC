@@ -147,19 +147,11 @@ bool APCLobbyGameMode::AreAllReady() const
 }
 
 void APCLobbyGameMode::DoTravel()
-{
+{	
+	if (!HasAuthority() || LevelToTravel.IsNull()) return;
 
-	//GetWorld()->ServerTravel(GameMap.ToString(),false);
-	
-	if (!HasAuthority())
-		return;
-	
-	if (LevelToTravel.IsNull())
-	{
-		return;
-	}
-	
+	const int32 Expected = GetGameState<AGameStateBase>()->PlayerArray.Num(); // or Ready 인원
 	const FString LevelName = LevelToTravel.ToSoftObjectPath().GetLongPackageName();
-	GetWorld()->ServerTravel(LevelName);
-	
+	const FString Url = FString::Printf(TEXT("%s?listen?ExpPlayers=%d"), *LevelName, Expected);
+	GetWorld()->ServerTravel(Url);
 }

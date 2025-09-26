@@ -7,10 +7,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
+
+
 /**
  * 
  */
 
+class APCBaseUnitCharacter;
+class UPCTileManager;
+struct FGameplayTag;
 class APCCombatManager;
 enum class EPCStageType : uint8;
 struct FRoundStep;
@@ -55,8 +60,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-	virtual void PostSeamlessTravel() override;
-
 	// 좌석배정 유틸함수
 	int32 GetTotalSeatSlots() const;
 
@@ -85,6 +88,9 @@ private:
 
 	// 개별 Step 처리
 	void Step_Start();
+
+	// Start 헬퍼 함수
+	void PlayerStartUnitSpawn();
 	void Step_Setup();
 	void Step_Travel();
 	void Step_Return();
@@ -112,7 +118,7 @@ private:
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
-
+	
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
@@ -128,6 +134,14 @@ private:
 	bool IsRoundSystemReady(FString& WhyNot) const;
 	void StartWhenReady();
 	void AssignSeatDeterministicOnce();
+
+	int32 ExpectedPlayers = 0;
+	int32 ArrivedPlayers = 0;
+	bool bTriggeredAfterTravel = false;
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	void OnOnePlayerArrived();
 	
 };
+
+
 

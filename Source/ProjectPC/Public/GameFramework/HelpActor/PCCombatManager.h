@@ -20,6 +20,7 @@ USTRUCT()
 struct FCombatManager_FieldSlot
 {
 	GENERATED_BODY()
+	
 	UPROPERTY()
 	int32 Col = 0;
 	UPROPERTY()
@@ -60,6 +61,28 @@ struct FCombatManager_BoardSnapShot
 	}
 };
 
+USTRUCT()
+struct FCombatManager_FieldOnlySnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	APCCombatBoard* CombatBoard;
+
+	UPROPERTY()
+	UPCTileManager* Tile;
+
+	UPROPERTY()
+	TArray<FCombatManager_FieldSlot> Field; // 기존 FieldSlot 재사용 (Col/Row/Unit)
+
+	void Reset()
+	{
+		CombatBoard = nullptr;
+		Tile = nullptr;
+		Field.Reset();
+	}
+};
+
 USTRUCT(BlueprintType)
 struct FCombatManager_Pair
 {
@@ -79,6 +102,15 @@ struct FCombatManager_Pair
 	// 전투 중 새로 생성된 유닛(구매/합성 등) 기록 : Seat -> Units
 	TMap<int32, TArray<TWeakObjectPtr<APCBaseUnitCharacter>>> NewUnitDuringBattle;
 
+	// PVE 지원
+	UPROPERTY()
+	bool bIsPvE = false;
+	UPROPERTY()
+	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> PvECreeps;
+
+	UPROPERTY()
+	FCombatManager_FieldOnlySnapshot HostFieldSnapshot; // PvE 전용: 필드만
+
 	// 전투상태
 	UPROPERTY()
 	int32 HostAlive = 0;
@@ -92,7 +124,21 @@ struct FCombatManager_Pair
 	// 중복 집계 방지
 	UPROPERTY()
 	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> DeadUnits;
+
+	void ResetRuntime()
+	{
+		MovedUnits.Reset();
+		NewUnitDuringBattle.Reset();
+		PvECreeps.Reset();
+		DeadUnits.Reset();
+		HostAlive = 0;
+		GuestAlive = 0;
+		bRunning = false;
+	}
 };
+
+
+
 
 UCLASS()
 class PROJECTPC_API APCCombatManager : public AActor
@@ -118,6 +164,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Match")
 	bool bReseedEveryRound = true;
 
+	// PvE 스폰용 기본 크립 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|PvE")
+	TSubclassOf<APCBaseUnitCharacter> DefaultCreepClass;
+
 	// 현재 라운드 페어링
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
@@ -126,6 +176,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
 	FOnCombatPairResult OnCombatPairResult;
 
+	// PvP 흐름
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void BuildRandomPairs();
 
@@ -154,6 +205,18 @@ public:
 	void ReturnPlayersForPair(int32 PairIndex, float Blend = 0.35f);
 	
 
+	// ===== PvE: 크립 스폰/원복 =====
+	// 현재 스테이지/라운드를 읽고 BuildCreepPoints를 사용해 좌표 생성 → 크립 스폰/배치/바인딩
+	UFUNCTION(BlueprintCallable, Category="Combat|PvE")
+	int32 StartPvEBattleForSeat(int32 HostSeatIndex);
+
+	// 크립 정리 + Host 스냅샷 원복 + 언바인드
+	UFUNCTION(BlueprintCallable, Category="Combat|PvE")
+	void FinishPvEBattleForSeat(int32 HostSeatIndex);
+
+	UFUNCTION(BLueprintCallable, Category="Combat|PvE")
+	void FinishAllPve();
+	
 private:
 	bool IsAuthority() const { return GetLocalRole() == ROLE_Authority; }
 
@@ -161,6 +224,10 @@ private:
 	static void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
 	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
+
+	// PvE 전투 스냅샷
+	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
+	void RestoreSnapShotPvE(UPCTileManager* TM, FCombatManager_FieldOnlySnapshot& Snap);
 
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)
@@ -215,5 +282,20 @@ protected:
 	int32 GetStageBaseDamageFromDT(int32 StageIdx) const;
 	int32 GetStageBaseDamageDefault(int32 StageIdx) const;
 	
-	
+	// StageOne/RoundOne(1-기준) 조회
+	bool GetCurrentStageRoundOne(int32& OutStageOne, int32& OutRoundOne) const;
+
+	// ===== PvE 유틸 =====
+	static constexpr int32 CREEP_TEAM_BASE = 1000;
+	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board) { return Board ? (Board->BoardSeatIndex + CREEP_TEAM_BASE) : CREEP_TEAM_BASE; }
+
+	// Stage/Round 기반 크립 태그/레벨 (필요 시 프로젝트 태그로 수정)
+	FGameplayTag GetCreepTagForStageRound(int32 StageOne, int32 RoundOne) const;
+	int32        GetCreepLevelForStageRound(int32 StageOne, int32 RoundOne) const;
+
+	// (Y,X) 입력을 받아 해당 자리에 두거나, 주변으로 탐색해서 배치
+	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
+
+	// GameMode와 동일하게 Tag/Team/Level 기반 스폰 + 보드 배치
+	APCBaseUnitCharacter* SpawnCreepAt(APCCombatBoard* Board, int32 StageOne, int32 RoundOne, const FIntPoint& YX) const;
 };

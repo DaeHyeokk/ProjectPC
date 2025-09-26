@@ -681,7 +681,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 {
 
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
 		
 	UPCTileManager* TM = GetTileManager();
 	if (!TM)
@@ -734,7 +734,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
 		
 	if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
 	{
@@ -903,7 +903,7 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		return;
 	
 	
-	if (bOk)
+	if (bOk && PreviewHero)
 	{
 		if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
 		{
@@ -944,17 +944,13 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 			
 		ShopWidget->SwitchShopWidget();	
 	}
-
+	
+	
 	if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
 	{
 		BattleBoard->OnHism(false);
 	}	
 
-	
-	// if (bSuccess)
-	// {
-	// 			
-	// }
 	
 	if (DragComponent)
 	{
