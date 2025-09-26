@@ -5,7 +5,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EngineUtils.h"
-#include "IContentBrowserSingleton.h"
 #include "Abilities/GameplayAbilityTypes.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
