@@ -46,41 +46,5 @@ void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* Ac
 				}
 			}
 		}
-		
-		if (Unit && Unit->GetUnitAnimSetDataAsset())
-			SetMontageConfig(ActorInfo);
-	}
-	
-	
-}
-
-void UPCBaseUnitGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
-{
-	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
-	{
-		const FGameplayTag MontageTag = GetMontageTag();
-		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
 	}
 }
-
-// void UPCBaseUnitGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
-// 	const FGameplayAbilitySpec& Spec)
-// {
-// 	Super::OnAvatarSet(ActorInfo, Spec);
-//
-// 	const APCBaseUnitCharacter* Avatar = Cast<APCBaseUnitCharacter>(ActorInfo->AvatarActor.Get());
-// 	const UPCDataAsset_UnitAbilityConfig* AbilityConfigData = Avatar ? Avatar->GetUnitAbilityConfigDataAsset() : nullptr;
-// 	if (!AbilityConfigData)
-// 		return;
-//
-// 	FAbilityConfig AbilityConfig;
-// 	if (AbilityConfigData->TryFindAbilityConfigByTag(AbilityTags.First(), AbilityConfig))
-// 	{
-// 		CostGameplayEffectClass = AbilityConfig.CostGEClass.LoadSynchronous();
-// 		CostEffectCallerTag = AbilityConfig.CostCallerTag;
-// 		CostGameplayAttribute = AbilityConfig.CostGameplayAttribute;
-//
-// 		CooldownGameplayEffectClass = AbilityConfig.CooldownGEClass.LoadSynchronous();
-// 		CooldownEffectCallerTag = AbilityConfig.CooldownCallerTag;
-// 	}
-// }

@@ -21,23 +21,23 @@ void UPCUnitDeathGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHand
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if (!Unit || HasAuthority(&ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
-		return;
-	}
-
-	if (UAnimMontage* Montage = MontageConfig.Montage)
-	{
-		UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-			this, NAME_None, Montage, 1.f, NAME_None, false);
-	
-		 //MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageFinished);
-		// MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageFinished);
-		// MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageFinished);
-		// MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageFinished);
-		MontageTask->ReadyForActivation();
-	}
+	// Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	//
+	// if (!Unit || HasAuthority(&ActivationInfo))
+	// {
+	// 	EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
+	// 	return;
+	// }
+	//
+	// if (UAnimMontage* Montage = MontageConfig.Montage)
+	// {
+	// 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	// 		this, NAME_None, Montage, 1.f, NAME_None, false);
+	//
+	// 	 //MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageFinished);
+	// 	// MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageFinished);
+	// 	// MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageFinished);
+	// 	// MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageFinished);
+	// 	MontageTask->ReadyForActivation();
+	// }
 }

@@ -36,17 +36,22 @@ protected:
 	void SetCurrentTarget(const AActor* Avatar);
 	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
 
+	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
+	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<const AActor> CurrentTarget;
 
 	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
 	const FGameplayTag HitSucceedTag = UnitGameplayTags::Unit_Event_HitSucceed;
+
+	FMontageConfig MontageConfig;
 	
+protected:
 	void StartHitSucceedWaitTask();
 	void StartProjectileSpawnSucceedWaitTask();
 	void StartPlayMontageAndWaitTask(UAnimMontage* Montage);
 	
-protected:
 	UFUNCTION()
 	void AttackCommit();
 	

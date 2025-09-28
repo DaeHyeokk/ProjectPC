@@ -24,5 +24,5 @@ protected:
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
-	virtual FGameplayTag GetMontageTag() override { return UnitGameplayTags::Unit_Montage_Death; }
+	//virtual FGameplayTag GetMontageTag() override { return UnitGameplayTags::Unit_Montage_Death; }
 };

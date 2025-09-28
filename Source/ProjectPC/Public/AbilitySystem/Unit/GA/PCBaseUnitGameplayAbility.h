@@ -25,12 +25,8 @@ protected:
 	virtual void OnAvatarSet(
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
-	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
-	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
-	
 	UPROPERTY(Transient)
 	TObjectPtr<APCBaseUnitCharacter> Unit;
 
 	FAbilityConfig AbilityConfig;
-	FMontageConfig MontageConfig;
 };

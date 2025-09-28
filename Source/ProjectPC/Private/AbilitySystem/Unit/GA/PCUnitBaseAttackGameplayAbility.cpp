@@ -30,6 +30,9 @@ void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorIn
 	const FGameplayAbilitySpec& Spec)
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
+	
+	if (Unit)
+		SetMontageConfig(ActorInfo);
 }
 
 void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -81,6 +84,15 @@ void UPCUnitBaseAttackGameplayAbility::SetCurrentTarget(const AActor* Avatar)
 		{
 			CurrentTarget = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetUnit")));
 		}
+	}
+}
+
+void UPCUnitBaseAttackGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
+{
+	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
+	{
+		const FGameplayTag MontageTag = GetMontageTag();
+		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
 	}
 }
 
@@ -162,7 +174,6 @@ void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventDa
 			}
 		}
 	}
-	
 	
 	AttackCommit();
 }

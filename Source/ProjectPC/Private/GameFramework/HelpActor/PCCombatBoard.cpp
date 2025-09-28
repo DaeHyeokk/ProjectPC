@@ -5,6 +5,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Net/UnrealNetwork.h"
@@ -86,9 +87,6 @@ void APCCombatBoard::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 	RebuildAnchors();
 	RebuildTilesFromMarkers();
-	
-	
-		
 }
 #endif
 
@@ -369,6 +367,3 @@ void APCCombatBoard::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
 		TileManager->ClearAllForUnit(InUnit);
 	}
 }
-
-
-

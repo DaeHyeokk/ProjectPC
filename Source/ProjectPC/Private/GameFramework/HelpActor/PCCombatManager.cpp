@@ -88,7 +88,7 @@ namespace
 APCCombatManager::APCCombatManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
+	bReplicates = false;
 }
 
 void APCCombatManager::BuildRandomPairs()

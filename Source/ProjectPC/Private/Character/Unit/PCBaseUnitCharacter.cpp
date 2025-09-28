@@ -46,7 +46,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	StatusBarComp->SetIsReplicated(true);
 	StatusBarComp->SetupAttachment(GetMesh());
 	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
-	StatusBarComp->SetDrawSize({300.f, 100.f});
+	//StatusBarComp->SetDrawSize({300.f, 100.f});
+	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
 	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
 }
@@ -150,6 +151,7 @@ void APCBaseUnitCharacter::BeginPlay()
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
 	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))

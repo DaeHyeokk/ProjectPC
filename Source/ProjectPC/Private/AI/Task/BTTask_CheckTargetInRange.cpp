@@ -105,8 +105,8 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 			continue;
 		}
 		
-		// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여)
-		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
+		// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여) / 현재 좌표 Y값이 홀수인지 짝수인지에 따라 다른 배열 가져옴
+		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(HerePoint.Y % 2 == 0))
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
 			
