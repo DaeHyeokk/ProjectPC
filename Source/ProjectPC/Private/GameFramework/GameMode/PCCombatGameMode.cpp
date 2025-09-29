@@ -236,7 +236,7 @@ void APCCombatGameMode::Step_Setup()
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
 			PCPlayerController->Client_ShowWidget();
-			PCPlayerController->ShopRequest_ShopRefresh(0);
+			PCPlayerController->Server_ShopRefresh(0);
 
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
@@ -729,21 +729,6 @@ void APCCombatGameMode::OnOnePlayerArrived()
 			TryPlacePlayersAfterTravel();
 		});
 	}
-}
-
-int32 APCCombatGameMode::GetCreepTeamIndexForBoard(const APCCombatBoard* Board)
-{
-	return Board ? (Board->BoardSeatIndex + 1000) : 1000;
-}
-
-FGameplayTag APCCombatGameMode::GetCreepTagForStageRound(int32 Stage, int32 Round)
-{
-	return UnitGameplayTags::Unit_Type_Creep_MinionLv1;
-}
-
-int32 APCCombatGameMode::GetCreepLevelForStageRound(int32 Stage, int32 Round)
-{
-	return 1;
 }
 
 bool APCCombatGameMode::PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const

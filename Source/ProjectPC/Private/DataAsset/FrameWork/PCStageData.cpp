@@ -88,7 +88,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
     // (0) 입장 5초
     AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, 1, 1, {
         S(EPCStageType::Start, 5.f),
-    	S(EPCStageType::Return, 5.f)
+    	S(EPCStageType::Return, 3.f)
     });
 
     // (1) Stage 1 — 1-2, 1-3, 1-4 (PvE)
@@ -107,7 +107,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 3, {
             S(EPCStageType::Setup,  15.f),
             S(EPCStageType::CreepSpawn, 3.f),
-            S(EPCStageType::PvE,    20.f),
+            S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
 
@@ -115,7 +115,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 4, {
             S(EPCStageType::Setup,  20.f),
             S(EPCStageType::CreepSpawn, 3.f),
-            S(EPCStageType::PvE,    20.f),
+            S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
     }

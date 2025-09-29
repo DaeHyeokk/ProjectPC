@@ -67,13 +67,17 @@ struct FCombatManager_FieldOnlySnapshot
 	GENERATED_BODY()
 
 	UPROPERTY()
-	int32 SeatIndex = INDEX_NONE;           // ★ 복구용 키
+	TWeakObjectPtr<APCCombatBoard> CombatBoard;
+	UPROPERTY()
+	TWeakObjectPtr<UPCTileManager> TileManager;
+	
 	UPROPERTY()
 	TArray<FCombatManager_FieldSlot> Field; // (Col, Row, Unit)만 저장
 
 	void Reset()
 	{
-		SeatIndex = INDEX_NONE;
+		CombatBoard = nullptr;
+		TileManager = nullptr;
 		Field.Reset();
 	}
 };
@@ -167,8 +171,8 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
-	TArray<FCombatManager_Pair> PvEPairs;
+	UPROPERTY()
+	TMap<int32, FCombatManager_FieldOnlySnapshot> PvEFieldSnapshots;
 
 	// 결과 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
@@ -219,13 +223,20 @@ private:
 	bool IsAuthority() const { return GetLocalRole() == ROLE_Authority; }
 
 	// 전투 스냅샷
-	static void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
-	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
+	UFUNCTION()
+	void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
+
+	UFUNCTION()
+	void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
+	
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
 
 	// PvE 전투 스냅샷
+	UFUNCTION()
 	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
-	void RestoreSnapShotPvE(FCombatManager_FieldOnlySnapshot& Snap);
+
+	UFUNCTION()
+	void RestoreSnapShotPvE(APCCombatBoard* Board, const FCombatManager_FieldOnlySnapshot& Snap);
 
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)

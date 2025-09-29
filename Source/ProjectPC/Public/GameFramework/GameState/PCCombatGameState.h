@@ -155,8 +155,6 @@ public:
 	FStageRuntimeState StageRuntimeState;
 	
 protected:
-
-	
 	
 	UFUNCTION()
 	void OnRep_StageRunTime();

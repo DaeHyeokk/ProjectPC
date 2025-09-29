@@ -261,8 +261,9 @@ void APCCombatPlayerController::ShopRequest_ShopRefresh(float GoldCost)
 {
 	if (IsLocalController())
 	{
-		Server_ShopRefresh(GoldCost);
+		Server_ShopRefresh(GoldCost);	
 	}
+	
 }
 
 void APCCombatPlayerController::ShopRequest_BuyXP()
@@ -590,6 +591,11 @@ void APCCombatPlayerController::ShowWidget()
 {
 	if (!IsLocalController() || !IsValid(ShopWidget))
 		return;
+
+	if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
+	{
+		return;
+	}
 	ShopWidget->SetVisibility(ESlateVisibility::Visible);
 	
 }
