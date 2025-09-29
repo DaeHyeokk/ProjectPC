@@ -39,21 +39,21 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Magic)
 
 	// ==== Unit Stat Tags ====
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_CurrentHealth)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_BaseDamage)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackRange)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackSpeed)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_PhysicalDefense)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MagicDefense)
-	
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MaxMana)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CurrentMana)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_PhysicalDamageMultiplier)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MagicDamageMultiplier)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CritChance)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_LifeSteal)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_CurrentHealth)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_BaseDamage)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackRange)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackSpeed)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_PhysicalDefense)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MagicDefense)
+	//
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MaxMana)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CurrentMana)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_PhysicalDamageMultiplier)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MagicDamageMultiplier)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CritChance)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_LifeSteal)
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
 
 	// ==== Unit Action Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Action)
@@ -131,7 +131,8 @@ namespace GameplayEffectTags
 
 namespace GameplayCueTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Unit_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UI_Unit_DamageText)
 }
 
 namespace PlayerGameplayTags

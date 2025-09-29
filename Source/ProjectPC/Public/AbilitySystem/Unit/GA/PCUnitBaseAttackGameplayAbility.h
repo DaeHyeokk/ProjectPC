@@ -4,8 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
-#include "AbilitySystem/Unit/GA/PCBaseUnitGameplayAbility.h"
-#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
+#include "PCUnitMontagePlayGameplayAbility.h"
 #include "PCUnitBaseAttackGameplayAbility.generated.h"
 
 class UPCUnitAbilitySystemComponent;
@@ -15,7 +14,7 @@ class UPCUnitAttributeSet;
  * 
  */
 UCLASS(Abstract)
-class PROJECTPC_API UPCUnitBaseAttackGameplayAbility : public UPCBaseUnitGameplayAbility
+class PROJECTPC_API UPCUnitBaseAttackGameplayAbility : public UPCUnitMontagePlayGameplayAbility
 {
 	GENERATED_BODY()
 
@@ -34,23 +33,16 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 
 	void SetCurrentTarget(const AActor* Avatar);
-	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
-
-	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
-	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
 	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<const AActor> CurrentTarget;
 
 	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
 	const FGameplayTag HitSucceedTag = UnitGameplayTags::Unit_Event_HitSucceed;
-
-	FMontageConfig MontageConfig;
 	
 protected:
 	void StartHitSucceedWaitTask();
 	void StartProjectileSpawnSucceedWaitTask();
-	void StartPlayMontageAndWaitTask(UAnimMontage* Montage);
 	
 	UFUNCTION()
 	void AttackCommit();
@@ -60,19 +52,5 @@ protected:
 
 	UFUNCTION()
 	void OnSpawnProjectileSucceed(FGameplayEventData Payload);
-	
-	UFUNCTION()
-	void OnMontageFinished();
-	
-protected:
-	// ==== 디버깅용 ====
-	// UFUNCTION()
-	// void OnMontageCompleted();
-	// UFUNCTION()
-	// void OnMontageCancelled();
-	// UFUNCTION()
-	// void OnMontageBlendOut();
-	// UFUNCTION()
-	// void OnMontageInterrupted();
 };
 

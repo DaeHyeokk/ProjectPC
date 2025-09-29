@@ -4,6 +4,7 @@
 #include "AbilitySystem/Unit/ExecutionCalculation/UPCUnitDamageExec.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
+#include "DynamicUIActor/PCDamageTextPayload.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 static FGameplayEffectAttributeCaptureDefinition MakeCapture(const FGameplayAttribute& Attr,
@@ -52,8 +53,13 @@ UPCUnitDamageExec::UPCUnitDamageExec()
 void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams,
 	FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
+	UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
+	// 데미지 계산, 적용은 서버에서만 실행
+	if (!TargetASC || !TargetASC->GetOwner()->HasAuthority())
+		return;
+	
 	// BaseDamage: SetByCaller에서 읽음 (없으면 0)
 	float BaseDamage = Spec.GetSetByCallerMagnitude(DamageCallerTag, 0.f);
 	if (BaseDamage <= 0.f)
@@ -65,6 +71,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	const FGameplayTagContainer& DynTags = Spec.GetDynamicAssetTags();
 	const bool bPhysical = DynTags.HasTag(PhysicalDamageTypeTag);
 	const bool bMagic = DynTags.HasTag(MagicDamageTypeTag);
+	//const bool bTrueDamage = DynTags.HasTag();
 	const bool bUsePhysical = bPhysical || !bMagic;	// 기본은 물리로
 
 	FAggregatorEvaluateParameters EvalParams;
@@ -88,6 +95,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 
 	// 치명타 (영웅 전용)
 	float CritChance = 0.f, CritMul = 1.f;
+	bool bIsCritical = false;
 	GetMagnitude(Captures.CritChance, CritChance);
 	CritChance *= 0.01f;
 	GetMagnitude(Captures.CritMultiplier, CritMul);
@@ -95,15 +103,10 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	
 	if (CritChance > 0.f && CritMul > 1.f)
 	{
-		const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
-		
-		// 서버에서만 판정
-		if (TargetASC && TargetASC->GetOwner()->HasAuthority())
+		if (FMath::FRand() < FMath::Clamp(CritChance, 0.f, 1.f))
 		{
-			if (FMath::FRand() < FMath::Clamp(CritChance, 0.f, 1.f))
-			{
-				BaseDamage *= CritMul;
-			}
+			bIsCritical = true;
+			BaseDamage *= CritMul;
 		}
 	}
 	
@@ -129,7 +132,6 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		-FinalDamage));
 
 	// 감소전 피해량 & 감소후 피해량에 따라 마나 회복 (영웅 전용)
-	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
 	const bool bIsHeroTarget = (TargetASC && TargetASC->GetAttributeSet(UPCHeroUnitAttributeSet::StaticClass()) != nullptr);
 	if (bIsHeroTarget)
 	{
@@ -165,6 +167,22 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 			}
 		}
 	}
+
+	UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
+	
+	EDamageType DamageType = Physical;
+	if (bPhysical)
+		DamageType = Physical;
+	else if (bMagic)
+		DamageType = Magic;
+	
+	FGameplayCueParameters CueParams;
+	CueParams.EffectContext = Spec.GetEffectContext();
+	CueParams.RawMagnitude = FinalDamage;
+	CueParams.NormalizedMagnitude = bIsCritical ? 1.f : 0.f;
+	CueParams.GameplayEffectLevel = static_cast<int32>(DamageType);
+	CueParams.Instigator = SourceASC->GetAvatarActor();
+	TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_DamageText, CueParams);
 }
 
 const UGameplayEffect* UPCUnitDamageExec::ResolveHealGE(const UWorld* World) const
@@ -173,7 +191,8 @@ const UGameplayEffect* UPCUnitDamageExec::ResolveHealGE(const UWorld* World) con
 		return nullptr;
 
 	if (UPCUnitGERegistrySubsystem* GERegistrySubsystem = World->GetSubsystem<UPCUnitGERegistrySubsystem>())
-		return GERegistrySubsystem->GetGE_CDO(HealthChangeGEKeyTag);
-	else
-		return nullptr;
+		return GERegistrySubsystem->GetGE_CDO(HealthChangeGEClassTag);
+
+	
+	return nullptr;
 }

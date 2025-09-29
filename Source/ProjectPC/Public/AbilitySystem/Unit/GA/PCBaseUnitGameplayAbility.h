@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
-#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCBaseUnitGameplayAbility.generated.h"
 
 class APCBaseUnitCharacter;

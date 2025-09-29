@@ -74,7 +74,7 @@ void APCHeroUnitCharacter::LevelUp()
 
 	FGameplayCueParameters Params;
 	Params.TargetAttachComponent = GetMesh();
-	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Unit_LevelUp, Params);
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
@@ -139,6 +139,8 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 			bIsDead = false;
 		}
 
+		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.2f);
+		
 		// 블랙보드 키값 초기화
 		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
 		{

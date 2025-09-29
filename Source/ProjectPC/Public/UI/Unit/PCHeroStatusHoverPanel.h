@@ -44,8 +44,7 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
-
-private:
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<APCHeroUnitCharacter> Hero;
 	UPROPERTY(Transient)

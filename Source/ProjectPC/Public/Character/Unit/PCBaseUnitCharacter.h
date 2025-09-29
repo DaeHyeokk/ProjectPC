@@ -9,6 +9,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "PCBaseUnitCharacter.generated.h"
 
 class UPCDataAsset_UnitAbilityConfig;

@@ -7,6 +7,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitDamageTextSpawnSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -26,6 +27,11 @@ void APCCombatGameState::BeginPlay()
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
 	}
 
+	if (auto* DamageTextSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitDamageTextSpawnSubsystem>())
+	{
+		DamageTextSpawnSubsystem->InitDamageTextSpawnSubsystem(DamageTextClass);
+	}
+	
 	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
 	{
 		if (ProjectilePoolData)

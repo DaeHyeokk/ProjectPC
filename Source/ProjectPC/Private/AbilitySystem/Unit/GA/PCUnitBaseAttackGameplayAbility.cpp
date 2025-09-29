@@ -55,7 +55,7 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 			return;
 		}
 			
-		StartPlayMontageAndWaitTask(Montage);
+		StartPlayMontageAndWaitTask(Montage, false);
 		
 		if (AbilityConfig.bSpawnProjectile)
 		{
@@ -87,15 +87,6 @@ void UPCUnitBaseAttackGameplayAbility::SetCurrentTarget(const AActor* Avatar)
 	}
 }
 
-void UPCUnitBaseAttackGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
-{
-	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
-	{
-		const FGameplayTag MontageTag = GetMontageTag();
-		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
-	}
-}
-
 void UPCUnitBaseAttackGameplayAbility::StartHitSucceedWaitTask()
 {
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
@@ -124,20 +115,6 @@ void UPCUnitBaseAttackGameplayAbility::StartProjectileSpawnSucceedWaitTask()
 		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnSpawnProjectileSucceed);
 		WaitEventTask->ReadyForActivation();
 	}
-}
-
-void UPCUnitBaseAttackGameplayAbility::StartPlayMontageAndWaitTask(UAnimMontage* Montage)
-{
-	const float MontagePlayRate = GetMontagePlayRate(Montage);
-			
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-		this, NAME_None, Montage, MontagePlayRate, NAME_None, false);
-	
-	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageFinished);
-	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::OnMontageFinished);
-	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageFinished);
-	MontageTask->ReadyForActivation();
 }
 
 void UPCUnitBaseAttackGameplayAbility::OnHitSucceed(FGameplayEventData Payload)
@@ -206,32 +183,3 @@ void UPCUnitBaseAttackGameplayAbility::AttackCommit()
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }
 
-void UPCUnitBaseAttackGameplayAbility::OnMontageFinished()
-{
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-}
-
-// ==== 디버깅용 ====
-// void UPCUnitBaseAttackGameplayAbility::OnMontageCompleted()
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("Montage Completed"));
-// 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-// }
-//
-// void UPCUnitBaseAttackGameplayAbility::OnMontageCancelled()
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("Montage Cancelled"));
-// 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, true);
-// }
-//
-// void UPCUnitBaseAttackGameplayAbility::OnMontageBlendOut()
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("Montage BlendOut"));
-// 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-// }
-//
-// void UPCUnitBaseAttackGameplayAbility::OnMontageInterrupted()
-// {
-// 	UE_LOG(LogTemp, Warning, TEXT("Montage Interrupted"));
-// 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-// }

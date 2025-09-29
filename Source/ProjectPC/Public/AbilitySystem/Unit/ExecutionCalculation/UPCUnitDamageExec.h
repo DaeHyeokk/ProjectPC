@@ -7,6 +7,14 @@
 #include "GameplayEffectExecutionCalculation.h"
 #include "UPCUnitDamageExec.generated.h"
 
+UENUM()
+enum EDamageType
+{
+	Physical,
+	Magic,
+	TrueDamage
+};
+
 /**
  * 
  */
@@ -23,7 +31,7 @@ public:
 
 	FGameplayTag DamageCallerTag = GameplayEffectTags::GE_Caller_Damage;
 	FGameplayTag HealCallerTag = GameplayEffectTags::GE_Caller_Stat_CurrentHealth;
-	FGameplayTag HealthChangeGEKeyTag = GameplayEffectTags::GE_Class_HealthChange_Instant;
+	FGameplayTag HealthChangeGEClassTag = GameplayEffectTags::GE_Class_HealthChange_Instant;
 	
 protected:
 	struct FCaptureDefs

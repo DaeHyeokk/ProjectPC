@@ -32,7 +32,6 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 			const FGameplayTag CooldownEffectCallerTag = AbilityConfig.CooldownCallerTag;
 			
 			CooldownSpec.Data->SetSetByCallerMagnitude(CooldownEffectCallerTag, CooldownDuration);
-		//	(void)ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, CooldownSpec);
 			ASC->ApplyGameplayEffectSpecToSelf(*CooldownSpec.Data.Get());
 		}
 	}

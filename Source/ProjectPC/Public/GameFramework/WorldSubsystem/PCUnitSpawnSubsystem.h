@@ -12,6 +12,7 @@
  * 
  */
 
+class APCPlayerState;
 class APCCombatBoard;
 class APCHeroUnitCharacter;
 class APCPreviewHeroActor;

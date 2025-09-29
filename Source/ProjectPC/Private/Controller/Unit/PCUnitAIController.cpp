@@ -10,6 +10,13 @@
 #include "Navigation/PathFollowingComponent.h"
 
 
+APCUnitAIController::APCUnitAIController()
+{
+	// bWantsPlayerState = true;
+	// OwnerUnit = nullptr;
+	// CachedMovePoint = FIntPoint::NoneValue;
+}
+
 void APCUnitAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);

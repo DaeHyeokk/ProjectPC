@@ -16,6 +16,7 @@ class PROJECTPC_API APCUnitAIController : public AAIController
 	GENERATED_BODY()
 
 protected:
+	APCUnitAIController();
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;

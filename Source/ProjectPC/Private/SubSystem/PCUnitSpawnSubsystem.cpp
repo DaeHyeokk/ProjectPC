@@ -18,13 +18,13 @@
 
 void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfig& SpawnConfig)
 {
-	Registry = SpawnConfig.Registry;
-	DefaultCreepClass = SpawnConfig.DefaultCreepClass;
-	DefaultAppearanceChangedHeroClass = SpawnConfig.DefaultAppearanceChangedHeroClass;
-	DefaultAppearanceFixedHeroClass = SpawnConfig.DefaultAppearanceFixedHeroClass;
-	DefaultCreepStatusBarWidgetClass =SpawnConfig.CreepStatusBarWidgetClass;
-	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass;
-	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass;
+	Registry = SpawnConfig.Registry.LoadSynchronous();
+	DefaultCreepClass = SpawnConfig.DefaultCreepClass.LoadSynchronous();
+	DefaultAppearanceChangedHeroClass = SpawnConfig.DefaultAppearanceChangedHeroClass.LoadSynchronous();
+	DefaultAppearanceFixedHeroClass = SpawnConfig.DefaultAppearanceFixedHeroClass.LoadSynchronous();
+	DefaultCreepStatusBarWidgetClass =SpawnConfig.CreepStatusBarWidgetClass.LoadSynchronous();
+	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass.LoadSynchronous();
+	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass.LoadSynchronous();
 	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass.LoadSynchronous();
 	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
@@ -41,7 +41,7 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 }
 
 APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const int32 TeamIndex,
-                                                            const int32 UnitLevel, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
+	const int32 UnitLevel, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
 {
 	// 유닛 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)
