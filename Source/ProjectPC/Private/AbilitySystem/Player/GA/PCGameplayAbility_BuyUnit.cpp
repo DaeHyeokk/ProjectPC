@@ -88,7 +88,7 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 	const auto* TargetData = TriggerEventData->TargetData.Get(0);
 	SlotIndex = TargetData->GetHitResult()->Location.X;
 	BuyCount = TargetData->GetHitResult()->Location.Y;
-	UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
+	UnitTag = PS->GetShopSlots()[SlotIndex].UnitTag;
 	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 
 	const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();

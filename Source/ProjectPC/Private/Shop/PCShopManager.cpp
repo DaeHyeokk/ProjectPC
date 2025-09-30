@@ -330,7 +330,7 @@ void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 
 	for (auto& Unit : GetShopUnitDataListByCost(UnitCost))
 	{
-		if (UnitTag == Unit.Tag)
+		if (UnitTag == Unit.UnitTag)
 		{
 			// 1성은 1개, 2성은 3개, 3성은 9개 기물 반환
 				// 4성이 추가되도 그대로 사용 가능
@@ -374,7 +374,7 @@ void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 		auto& UnitDataList = GetShopUnitDataListByCost(UnitCost);
 		for (auto& Unit : UnitDataList)
 		{
-			if (Unit.Tag == UnitTag)
+			if (Unit.UnitTag == UnitTag)
 			{
 				Unit.UnitCount += 1;
 			}
@@ -398,7 +398,7 @@ void UPCShopManager::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>
 		if (PurchasedSlots.Contains(i)) continue;
 
 		const auto& OldSlot = OldSlots[i];
-		ReturnUnitToShopByTag(OldSlot.Tag);
+		ReturnUnitToShopByTag(OldSlot.UnitTag);
 	}
 }
 
@@ -443,7 +443,7 @@ TArray<FGameplayTag> UPCShopManager::GetCarouselRandomUnitTagsByCost(int32 UnitC
 		// 해당 코스트에 아무 기물도 안남았으면 Add 안함
 		if (Unit.UnitName != "Dummy")
 		{
-			ReturnTags.Add(Unit.Tag);
+			ReturnTags.Add(Unit.UnitTag);
 		}
 	}
 
@@ -511,7 +511,7 @@ int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 {
 	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
 	{
-		if (UnitData.Tag == UnitTag)
+		if (UnitData.UnitTag == UnitTag)
 		{
 			return UnitData.UnitCost;
 		}

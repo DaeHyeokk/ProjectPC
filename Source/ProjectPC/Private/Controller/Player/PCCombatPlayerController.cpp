@@ -246,7 +246,7 @@ TArray<int32> APCCombatPlayerController::GetSameShopSlotIndices(int32 SlotIndex)
 				
 			if (!PurchasedSlots.Contains(i))
 			{
-				if (ShopSlots[i].Tag == ShopSlots[SlotIndex].Tag)
+				if (ShopSlots[i].UnitTag == ShopSlots[SlotIndex].UnitTag)
 				{
 					SlotIndices.Add(i);
 				}
@@ -399,7 +399,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	if (Board->GetFirstEmptyBenchIndex(PS->SeatIndex) == INDEX_NONE)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
-		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].UnitTag, SameSlotIndices.Num() + 1);
 		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
