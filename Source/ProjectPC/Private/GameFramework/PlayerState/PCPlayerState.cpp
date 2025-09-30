@@ -8,6 +8,7 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -26,6 +27,18 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+}
+
+void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
+{
+	if (HasAuthority())
+	{
+		PlayerBoard = InBoard;
+		if (PlayerBoard)
+		{
+			PlayerBoard->OwnerPlayerState = this;
+		}
+	}
 }
 
 void APCPlayerState::BeginPlay()
@@ -127,4 +140,5 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIdentified);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
+	DOREPLIFETIME(APCPlayerState, PlayerBoard);
 }

@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "PCCombatManager.generated.h"
 
+enum class ETileFacing : uint8;
+class APCPlayerBoard;
 class APCPlayerCharacter;
 class APCCombatPlayerController;
 class APCBaseUnitCharacter;
@@ -29,55 +31,21 @@ struct FCombatManager_FieldSlot
 	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 };
 
-USTRUCT()
-struct FCombatManager_BenchSlot
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	int32 Index = 0;
-	UPROPERTY()
-	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
-};
 
 USTRUCT()
-struct FCombatManager_BoardSnapShot
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	TWeakObjectPtr<APCCombatBoard> CombatBoard;
-	UPROPERTY()
-	TWeakObjectPtr<UPCTileManager> Tile;
-	UPROPERTY()
-	TArray<FCombatManager_FieldSlot> Field;
-	UPROPERTY()
-	TArray<FCombatManager_BenchSlot> Bench;
-
-	void Reset()
-	{
-		CombatBoard = nullptr;
-		Tile = nullptr;
-		Field.Reset();
-		Bench.Reset();
-	}
-};
-
-USTRUCT()
-struct FCombatManager_FieldOnlySnapshot
+struct FBoardFieldSnapShot
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TWeakObjectPtr<APCCombatBoard> CombatBoard;
-	UPROPERTY()
-	TWeakObjectPtr<UPCTileManager> TileManager;
+	TWeakObjectPtr<APCPlayerBoard> PlayerBoard;
 	
 	UPROPERTY()
 	TArray<FCombatManager_FieldSlot> Field; // (Col, Row, Unit)만 저장
 
 	void Reset()
 	{
-		CombatBoard = nullptr;
-		TileManager = nullptr;
+		PlayerBoard = nullptr;
 		Field.Reset();
 	}
 };
@@ -92,24 +60,16 @@ struct FCombatManager_Pair
 	TWeakObjectPtr<APCCombatBoard> Guest;
 
 	UPROPERTY()
-	FCombatManager_BoardSnapShot HostSnapShot;
+	FBoardFieldSnapShot HostSnapShot;
 	UPROPERTY()
-	FCombatManager_BoardSnapShot GuestSnapShot;
-	UPROPERTY()
-	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> MovedUnits;
-
-	// 전투 중 새로 생성된 유닛(구매/합성 등) 기록 : Seat -> Units
-	TMap<int32, TArray<TWeakObjectPtr<APCBaseUnitCharacter>>> NewUnitDuringBattle;
-
+	FBoardFieldSnapShot GuestSnapShot;
+	
 	// PVE 지원
 	UPROPERTY()
 	bool bIsPvE = false;
 	UPROPERTY()
 	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> PvECreeps;
-
-	UPROPERTY()
-	FCombatManager_FieldOnlySnapshot HostFieldSnapshot; // PvE 전용: 필드만
-
+	
 	// 전투상태
 	UPROPERTY()
 	int32 HostAlive = 0;
@@ -126,8 +86,6 @@ struct FCombatManager_Pair
 
 	void ResetRuntime()
 	{
-		MovedUnits.Reset();
-		NewUnitDuringBattle.Reset();
 		PvECreeps.Reset();
 		DeadUnits.Reset();
 		HostAlive = 0;
@@ -171,9 +129,6 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
 
-	UPROPERTY()
-	TMap<int32, FCombatManager_FieldOnlySnapshot> PvEFieldSnapshots;
-
 	// 결과 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
 	FOnCombatPairResult OnCombatPairResult;
@@ -187,6 +142,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FinishAllBattle();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTileManager* TM, bool MirrorRows, bool MirrorCols, ETileFacing Facing);
 
 	// 플레이어 전체 이동
 
@@ -221,26 +179,21 @@ public:
 	
 private:
 	bool IsAuthority() const { return GetLocalRole() == ROLE_Authority; }
-
-	// 전투 스냅샷
+	
 	UFUNCTION()
-	void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
-
+	void TakeFieldSnapShot(APCPlayerBoard* PlayerBoard, FBoardFieldSnapShot& Out);
+	
 	UFUNCTION()
-	void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
+	void RestoreFieldSnapShot(const FBoardFieldSnapShot& Snap);
 	
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
-
-	// PvE 전투 스냅샷
-	UFUNCTION()
-	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
-
-	UFUNCTION()
-	void RestoreSnapShotPvE(APCCombatBoard* Board, const FCombatManager_FieldOnlySnapshot& Snap);
-
+	
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)
 	APCCombatBoard* FindBoardBySeatIndex(UWorld* World, int32 SeatIndex);
+
+	UFUNCTION(BlueprintCallable)
+	APCPlayerBoard* FindPlayerBoardBySeat(int32 SeatIndex) const;
 	
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIndex) const;
 	APCCombatPlayerController* FindPlayerController(int32 SeatIndex) const;
@@ -263,11 +216,6 @@ private:
 	void CheckPairVictory(int32 PairIndex);
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
-
-	// 전투중 구매
-	UFUNCTION()
-	void OnUnitSpawnedDuringBattle(APCBaseUnitCharacter* Unit, int32 SeatIndex);
-	
 public:
 	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;

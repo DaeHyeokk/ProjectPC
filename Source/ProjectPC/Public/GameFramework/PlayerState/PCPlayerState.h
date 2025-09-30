@@ -15,6 +15,7 @@
  */
 
 
+class APCPlayerBoard;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 
 UCLASS()
@@ -24,6 +25,16 @@ class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemI
 
 public:
 	APCPlayerState();
+
+	// 나의 PCPlayerBoard 캐시 (서버에서 세팅, 클라 복제 : 보드에 시각적 효과 적용 위함)
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	APCPlayerBoard* PlayerBoard = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerBoard")
+	FORCEINLINE APCPlayerBoard* GetPlayerBoard() { return PlayerBoard; }
+
+	// 서버 전용 세터
+	void SetPlayerBoard(APCPlayerBoard* InBoard);
 	
 protected:
 	virtual void BeginPlay() override;

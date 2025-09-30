@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "PCCombatPlayerController.generated.h"
 
 
@@ -264,9 +265,8 @@ public:
 
 	UPCTileManager* GetTileManager() const ;
 
-	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
-	bool IsAllowBenchIdx(int32 Idx);
-
+	APCPlayerBoard* GetPlayerBoard() const;
+	
 	// 외곽선 관련
 	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;
 

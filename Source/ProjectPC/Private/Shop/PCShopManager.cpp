@@ -13,6 +13,7 @@
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 class UPCUnitSpawnSubsystem;
@@ -99,21 +100,16 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
-	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
-	if (!Board)
-	{
-		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-		if (!Board) return;
-	}
+	auto PlayerBoard = TargetPlayer->GetPlayerBoard();
 	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 
 	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
 	{
-		auto BenchIndex = Board->GetFirstEmptyBenchIndex(TargetPlayer->SeatIndex);
+		auto BenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
 		if (BenchIndex != INDEX_NONE)
 		{
-			Board->TileManager->PlaceUnitOnBench(BenchIndex, Unit);
+			PlayerBoard->PlaceUnitOnBench(BenchIndex, Unit);
 		}
 	}
 	
@@ -133,25 +129,19 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return UnitCountByLevelMap;
 
-	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
-	if (!Board)
-	{
-		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-		if (!Board) return UnitCountByLevelMap;
-	}
-	
-	auto TileManager = Board->TileManager;
+	auto PlayerBoard = TargetPlayer->PlayerBoard;
+	if (!PlayerBoard) return UnitCountByLevelMap;
 
 	TArray<APCBaseUnitCharacter*> UnitList;
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
-		UnitList = TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+		UnitList = PlayerBoard->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 	else
 	{
-		UnitList = TileManager->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+		UnitList = PlayerBoard->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 
 	// 테스트용, 실제 게임 적용할 때는 삭제
@@ -214,25 +204,19 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
-	auto Board = GS->GetBattleBoardForSeat(TargetPlayer->SeatIndex);
-	if (!Board)
-	{
-		Board = GS->GetBoardBySeat(TargetPlayer->SeatIndex);
-		if (!Board) return;
-	}
-	
-	auto TileManager = Board->TileManager;
+	auto PlayerBoard = TargetPlayer->PlayerBoard;
+	if (!PlayerBoard) return;
 
 	TArray<APCBaseUnitCharacter*> UnitList;
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
-		UnitList = TileManager->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+		UnitList = PlayerBoard->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 	else
 	{
-		UnitList = TileManager->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+		UnitList = PlayerBoard->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 
 	auto AddShopUnitCountMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, ShopAddUnitCount);
@@ -275,7 +259,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 		int32 RemoveCount = FMath::Min(2, HeroUnitList.Num() - 1);
 		for (int32 i = 1; i <= RemoveCount; ++i)
 		{
-			TileManager->RemoveFromBoard(HeroUnitList[i]);
+			PlayerBoard->RemoveFromBoard(HeroUnitList[i]);
 			HeroUnitList[i]->Destroy();
 		}
 	}

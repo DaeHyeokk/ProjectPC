@@ -172,9 +172,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RebuildTilesFromMarkers();
 
-	// 비어있는 벤치 중 가장 왼쪽의 인덱스를 받아오는 함수
-	int32 GetFirstEmptyBenchIndex(int32 SeatIndex) const;
-
 protected:
 	// 마커 수집
 	void CollectTileMarkers();
@@ -218,13 +215,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetTileWorldLocation(int32 Y, int32 X) const;
-
-	UFUNCTION(BlueprintPure, Category = "Tile")
-	APCBaseUnitCharacter* GetBenchUnitAt(int32 BenchIndex) const;
-
-	UFUNCTION(BlueprintPure, Category = "Tile")
-	FVector GetBenchWorldLocation(int32 BenchIndex) const;
-
+	
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	bool IsInRange(int32 Y, int X) const;
 

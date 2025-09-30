@@ -331,12 +331,16 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
 		return;
 
-	if (UPCTileManager* TM = GetTileManager())
-	{
-		if (TM->GetBenchUnitIndex(Unit) == INDEX_NONE && TM->GetFieldUnitGridPoint(Unit) == FIntPoint::NoneValue)
-			return;
-	}
-	
+	// ✅ PlayerBoard 기준으로 소유/존재 확인
+	APCPlayerBoard* PB = GetPlayerBoard();
+	if (!IsValid(PB)) return;
+
+	const bool bOnMyBoard =
+		(PB->GetBenchUnitIndex(Unit) != INDEX_NONE) ||
+		(PB->GetFieldUnitGridPoint(Unit) != FIntPoint::NoneValue);
+
+	if (!bOnMyBoard)
+		return;
 	
 	if (auto ASC = PS->GetAbilitySystemComponent())
 	{
@@ -367,17 +371,13 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	auto ASC = PS->GetAbilitySystemComponent();
 	if (!ASC) return;
 	
-	auto Board = GS->GetBattleBoardForSeat(PS->SeatIndex);
-	if (!Board)
-	{
-		Board = GS->GetBoardBySeat(PS->SeatIndex);
-		if (!Board) return;
-	}
+	APCPlayerBoard* PB = GetPlayerBoard();
+	if (!IsValid(PB)) return;
 
 	int32 RequiredCount = 0;
 
 	// 벤치가 꽉 찼을 때
-	if (Board->GetFirstEmptyBenchIndex(PS->SeatIndex) == INDEX_NONE)
+	if (PB->GetFirstEmptyBenchIndex() == INDEX_NONE)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
 		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
@@ -691,44 +691,49 @@ void APCCombatPlayerController::OnMouse_Released()
 
 void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector World, int32 DragId)
 {
-
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
-		
-	UPCTileManager* TM = GetTileManager();
-	if (!TM)
+
+	APCPlayerBoard* PB = GetPlayerBoard();
+	if (!IsValid(PB))
 	{
 		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
-	bool bIsField = false;
-	int32 Y = -1;
-	int32 X = -1;
-	int32 BenchIdx = -1;
+	bool  bIsField = false;
+	int32 Y = INDEX_NONE, X = INDEX_NONE, BenchIdx = INDEX_NONE; // BenchIdx = 로컬
 	FVector Snap = World;
 
-	if (!TM->WorldAnyTile(World, true, bIsField, Y, X, BenchIdx, Snap))
+	// 유닛이 있는 타일만 허용(bRequireUnit=true)
+	if (!PB->WorldAnyTile(World, /*bPreferField*/ true, bIsField, Y, X, BenchIdx, Snap, 0.f, 0.f, /*bRequireUnit*/ false))
 	{
-		Client_DragConfirm(false,DragId, World,nullptr);
+		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
+	// 전투 중엔 필드에서 픽업 불가 (벤치만)
 	if (bInBattle && bIsField)
 	{
 		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
-	APCBaseUnitCharacter* Unit = bIsField ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx);
-	
-	if (!Unit || !CanControlUnit(Unit))
+	APCBaseUnitCharacter* Unit = bIsField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
+	if (!IsValid(Unit) || !CanControlUnit(Unit))
 	{
 		Client_DragConfirm(false, DragId, World, nullptr);
 		return;
 	}
 
-	CurrentDragId = DragId;
+	// 벤치면 로컬 범위 한번 더 안전 확인
+	if (!bIsField && (BenchIdx < 0 || BenchIdx >= PB->BenchSize))
+	{
+		Client_DragConfirm(false, DragId, World, nullptr);
+		return;
+	}
+
+	CurrentDragId   = DragId;
 	CurrentDragUnit = Unit;
 
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
@@ -738,175 +743,152 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	}
 	else
 	{
-		Client_DragConfirm(true, DragId, World, nullptr);
+		Client_DragConfirm(true, DragId, Snap, nullptr);
 	}
-	
 }
 
 void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
-	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
-		
-	if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
-	{
-		Client_DragEndResult(false, World, DragId, nullptr);
-		return;
-	}
+	 APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
+    const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
 
-	UPCTileManager* TM = GetTileManager();
-	if (!TM)
-	{
-		Client_DragEndResult(false, World, DragId, nullptr);
-		return;
-	}
+    // 드래그 유효성
+    if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        return;
+    }
 
-	bool bField = false;
-	int32 Y = -1;
-	int32 X = -1;
-	int32 BenchIdx = -1;
-	FVector Snap = World;
-	
-	if (!TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
-	{
-		Client_DragEndResult(false, World, DragId, nullptr);
-		return;
-	}
+    APCPlayerBoard* PB = GetPlayerBoard();
+    if (!IsValid(PB))
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        return;
+    }
 
-	if (bField && bInBattle)
-	{
-		Client_DragEndResult(false, World, DragId, nullptr);
-		CurrentDragUnit = nullptr;
-		CurrentDragId = 0;
-		return;
-	}
+    // 목표 타일 스냅 (전투중이면 벤치 우선)
+    bool    bDstField  = false;
+    int32   Y          = INDEX_NONE;
+    int32   X          = INDEX_NONE;
+    int32   BenchIdx   = INDEX_NONE;     // 로컬 벤치 인덱스
+    FVector Snap       = World;
+    const bool bPreferField = !bInBattle;
 
-	APCBaseUnitCharacter* Unit = CurrentDragUnit.Get();
+    if (!PB->WorldAnyTile(World, bPreferField, bDstField, Y, X, BenchIdx, Snap, 0.f, 0.f, /*bRequireUnit*/ false))
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        return;
+    }
 
-	// 1) 유효성 판단
-	bool bValid = false;
-	APCBaseUnitCharacter* DstUnit = nullptr;
-	
-	if (bField)
-	{
-		if (IsAllowFieldY(Y) && TM->IsInRange(Y,X))
-		{
-			DstUnit = TM->GetFieldUnit(Y,X);
-			bValid = (DstUnit == nullptr) || (DstUnit == Unit) || CanControlUnit(DstUnit);
-		}
-	}
-	else
-	{
-		if (IsAllowBenchIdx(BenchIdx))
-		{
-			DstUnit = TM->GetBenchUnit(BenchIdx);
-			bValid = (DstUnit == nullptr || DstUnit == Unit || CanControlUnit(DstUnit));
-		}
-		
-	}
+    // 전투 중엔 필드 배치 금지
+    if (bInBattle && bDstField)
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        CurrentDragUnit = nullptr;
+        CurrentDragId   = 0;
+        return;
+    }
 
-	if (!bValid)
-	{
-		Client_DragEndResult(false, Snap, DragId, nullptr);
-		return;
-	}
+    // 벤치면 로컬 범위 확인 (PlayerBoard는 적/아군 구분 없이 자기 벤치만 있음)
+    if (!bDstField && (BenchIdx < 0 || BenchIdx >= PB->BenchSize))
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        CurrentDragUnit = nullptr;
+        CurrentDragId   = 0;
+        return;
+    }
 
-	const FIntPoint SrcGrid = TM->GetFieldUnitGridPoint(Unit);
-	const bool bSrcField = (SrcGrid != FIntPoint::NoneValue);
-	const int32 SrcBench = bSrcField ? INDEX_NONE : TM->GetBenchUnitIndex(Unit);
+    APCBaseUnitCharacter* Unit = CurrentDragUnit.Get();
+    if (!IsValid(Unit))
+    {
+        Client_DragEndResult(false, World, DragId, nullptr);
+        return;
+    }
 
-	if (DstUnit == nullptr || DstUnit == Unit)
-	{
-		if (bSrcField)
-		{
-			TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
-		}
-		else if (SrcBench != INDEX_NONE)
-		{
-			TM->RemoveFromBench(SrcBench, false);
-		}
+    // 출발지 정보
+    const FIntPoint SrcGrid  = PB->GetFieldUnitGridPoint(Unit);
+    const bool      bSrcField= (SrcGrid != FIntPoint::NoneValue);
+    const int32     SrcBench = bSrcField ? INDEX_NONE : PB->GetBenchUnitIndex(Unit);
 
-		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) : TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto);
+    // 목적지 점유자
+    APCBaseUnitCharacter* DstUnit = bDstField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
+    if (DstUnit && !CanControlUnit(DstUnit))
+    {
+        Client_DragEndResult(false, Snap, DragId, nullptr);
+        return;
+    }
 
-		if (bPlaced)
-		{
-			Multicast_LerpMove(Unit, Snap, LerpDuration);
-			Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
-		}
-		else
-		{
-			Client_DragEndResult(false, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
-		}
+    // ───────────────────────────────────────────────────────────
+    // 1) 빈 칸(또는 자기 자신)으로 이동
+    // ───────────────────────────────────────────────────────────
+    if (DstUnit == nullptr || DstUnit == Unit)
+    {
+        if (bSrcField)
+        {
+            PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
+        }
+        else if (SrcBench != INDEX_NONE)
+        {
+            PB->RemoveFromBench(SrcBench);
+        }
 
-		CurrentDragUnit = nullptr;
-		CurrentDragId = 0;
-		return;
-	}
+        const bool bPlaced =
+            bDstField ? PB->PlaceUnitOnField(Y, X, Unit)
+                      : PB->PlaceUnitOnBench(BenchIdx, Unit);
 
-	if (!CanControlUnit(DstUnit))
-	{
-		Client_DragEndResult(false, Snap, DragId, nullptr);
-	}
+        if (bPlaced)
+        {
+            Multicast_LerpMove(Unit, Snap, LerpDuration);
+            Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
+        }
+        else
+        {
+            Client_DragEndResult(false, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
+        }
 
-	bool bSwapOK = false;
-	FVector OtherDestWorld = FVector::ZeroVector;
+        CurrentDragUnit = nullptr;
+        CurrentDragId   = 0;
+        return;
+    }
 
-	if (bSrcField && bField)
-	{
-		// 필드 -> 필드
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
-		TM->RemoveFromField(Y,X, false);
+    // ───────────────────────────────────────────────────────────
+    // 2) 스왑 (목적지에 내 유닛이 있을 때)
+    // ───────────────────────────────────────────────────────────
+    {
+        // 유닛의 도착지 월드 위치 (스냅으로 충분하지만 bench/field 정확 좌표 쓰면 더 깔끔)
+        const FVector UnitDest =
+            bDstField ? PB->GetFieldWorldPos(Y, X)
+                      : PB->GetBenchWorldPos(BenchIdx);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
+        // 스왑 수행
+        const FIntPoint SrcGridForOther = PB->GetFieldUnitGridPoint(Unit);
+        const int32     SrcBenchForOther= PB->GetBenchUnitIndex(Unit);
 
-		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
-	}
-	else if (!bSrcField && bField)
-	{
-		// 벤치 -> 필드
-		TM->RemoveFromBench(SrcBench, false);
-		TM->RemoveFromField(Y,X,false);
+        if (PB->Swap(Unit, DstUnit))
+        {
+            // 상대 유닛의 목적지 = Unit의 원래 자리
+            FVector OtherDest = FVector::ZeroVector;
+            if (SrcGridForOther != FIntPoint::NoneValue)
+                OtherDest = PB->GetFieldWorldPos(SrcGridForOther.X, SrcGridForOther.Y);
+            else if (SrcBenchForOther != INDEX_NONE)
+                OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
 
-		bSwapOK = TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
-		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
-	}
-	else if (bSrcField && !bField)
-	{
-		// 필드 -> 벤치
-		TM->RemoveFromField(SrcGrid.Y, SrcGrid.X, false);
-		TM->RemoveFromBench(BenchIdx, false);
+            // 비주얼 이동
+            Multicast_LerpMove(Unit,    UnitDest,  LerpDuration);
+            if (!OtherDest.IsNearlyZero())
+                Multicast_LerpMove(DstUnit, OtherDest, LerpDuration);
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnField(SrcGrid.Y, SrcGrid.X, DstUnit,ETileFacing::Auto);
-		OtherDestWorld = TM->GetTileWorldPosition(SrcGrid.Y, SrcGrid.X);
-	}
-	else
-	{
-		// 벤치 -> 벤치
-		TM->RemoveFromBench(SrcBench, false);
-		TM->RemoveFromBench(BenchIdx, false);
+            Client_DragEndResult(true, UnitDest, DragId, Cast<APCHeroUnitCharacter>(Unit));
+        }
+        else
+        {
+            Client_DragEndResult(false, World, DragId, nullptr);
+        }
 
-		bSwapOK = TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto) && TM->PlaceUnitOnBench(SrcBench, DstUnit,ETileFacing::Auto);
-
-		OtherDestWorld = TM->GetBenchWorldPosition(SrcBench);
-	}
-
-	if (bSwapOK)
-	{
-		Multicast_LerpMove(Unit, Snap, LerpDuration);
-		Multicast_LerpMove(DstUnit, OtherDestWorld, LerpDuration);
-		Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
-	}
-	else
-	{
-		Client_DragEndResult(false, World, DragId, nullptr);
-	}
-
-	// 임시 코드
-	// if (APCHeroUnitCharacter* CurrentHero = Cast<APCHeroUnitCharacter>(CurrentDragUnit))
-	// 	CurrentHero->ActionDrag(false);
-	
-	CurrentDragUnit = nullptr;
-	CurrentDragId = 0;
+        CurrentDragUnit = nullptr;
+        CurrentDragId   = 0;
+        return;
+    }
 }
 
 void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewHero)
@@ -1002,16 +984,6 @@ bool APCCombatPlayerController::RemoveFromCurrentSlot(UPCTileManager* TM, APCBas
 		}
 	}
 
-	// 벤치에서 찾기
-	const int32 N2 = 2 * TM->BenchSlotsPerSide;
-	for (int32 i=0; i<N2; ++i)
-	{
-		if (TM->GetBenchUnit(i) == Unit)
-		{
-			TM->RemoveFromBench(i, /*bPreserveUnitBoard=*/true);
-			return true;
-		}
-	}
 	return false;
 }
 
@@ -1049,31 +1021,11 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 	return nullptr;
 }
 
-bool APCCombatPlayerController::IsAllowBenchIdx(int32 Idx)
+APCPlayerBoard* APCCombatPlayerController::GetPlayerBoard() const
 {
-	UPCTileManager* TM = GetTileManager();
-	if (!TM) return false;
-
-	bool bEnemySide = false; 
-	int32 Local = INDEX_NONE;
-	if (!TM->SplitGlobalBenchIndex(Idx, bEnemySide, Local)) 
-		return false;
-
-	// 로컬 범위도 확인(안전장치)
-	if (Local < 0 || Local >= TM->BenchSlotsPerSide) 
-		return false;
-
-	const APCPlayerState* PS = GetPlayerState<APCPlayerState>();
-	const APCCombatBoard* Board = TM->GetCombatBoard();
-	if (!PS || !Board) return false;
-
-	const bool bIAmHostOnThisTM = (PS->SeatIndex == Board->BoardSeatIndex);
-
-	// 내가 이 TM의 호스트면 내 벤치는 friendly(= !bEnemySide)
-	// 내가 게스트면 내 벤치는 enemy(=  bEnemySide)
-	// => XOR 한 줄로 정리
-	const bool bMySide = (bEnemySide ^ bIAmHostOnThisTM);
-	return bMySide;
+	if (const APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+		return PCPlayerState->PlayerBoard;
+	return nullptr;
 }
 
 void APCCombatPlayerController::SetHoverHighLight(APCBaseUnitCharacter* NewUnit)
@@ -1139,58 +1091,40 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 		Client_TileHoverUnit(nullptr);
 		return;
 	}
-	
-	UPCTileManager* TileManager = GetTileManager();
-	if (!TileManager)
+
+	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
+	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
+
+	APCPlayerBoard* PB = GetPlayerBoard();
+	if (!IsValid(PB))
 	{
 		Client_TileHoverUnit(nullptr);
 		return;
 	}
 
-	bool bField = false;
-	int32 Y = -1;
-	int32 X = -1;
-	int32 BenchIdx = -1;
-	FVector Snap = World;
-	
-	if (!TileManager->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
+	bool bField=false; int32 Y=-1, X=-1, BenchIdx=-1; FVector Snap=World;
+	const bool bPreferField = !bInBattle; // ✅ 전투 중엔 벤치 우선
+	if (!PB->WorldAnyTile(World, bPreferField, bField, Y, X, BenchIdx, Snap))
 	{
 		Client_TileHoverUnit(nullptr);
 		return;
 	}
-	
 
-	if (APCBaseUnitCharacter* Unit = bField ? TileManager->GetFieldUnit(Y,X) : TileManager->GetBenchUnit(BenchIdx))
-	{
-		Client_TileHoverUnit(Unit);
-	}
-	else
-	{
-		Client_TileHoverUnit(nullptr);
-	}
-
-	
-	
+	APCBaseUnitCharacter* Unit = bField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
+	Client_TileHoverUnit(Unit);
 }
 
 
 void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsField, int32 Y, int32 X, int32 BenchIdx)
 {
-	UPCTileManager* TM = GetTileManager();
-	if (!TM)
+	APCPlayerBoard* PB = GetPlayerBoard();
+	if (!IsValid(PB))
 	{
-		Client_TileHoverUnit(nullptr);
-		return;
+		Client_TileHoverUnit(nullptr); return;
 	}
 
-	if (APCBaseUnitCharacter* Unit = bIsField ? TM->GetFieldUnit(Y,X) : TM->GetBenchUnit(BenchIdx))
-	{
-		Client_TileHoverUnit(Unit);
-	}
-	else
-	{
-		Client_TileHoverUnit(nullptr);
-	}
+	APCBaseUnitCharacter* Unit = bIsField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
+	Client_TileHoverUnit(Unit);
 	
 }
 
