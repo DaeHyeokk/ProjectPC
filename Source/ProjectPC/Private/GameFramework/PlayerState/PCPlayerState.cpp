@@ -3,6 +3,7 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
+#include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
@@ -37,6 +38,20 @@ void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
 		if (PlayerBoard)
 		{
 			PlayerBoard->OwnerPlayerState = this;
+		}
+	}
+}
+
+void APCPlayerState::ResolvePlayerBoardOnClient()
+{
+	if (PlayerBoard) return;
+	UWorld* World = GetWorld();
+	for (TActorIterator<APCPlayerBoard> It(World); It; ++It)
+	{
+		if (It->PlayerIndex == SeatIndex)
+		{
+			PlayerBoard = *It;
+			break;
 		}
 	}
 }
@@ -141,4 +156,9 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
 	DOREPLIFETIME(APCPlayerState, PlayerBoard);
+}
+
+void APCPlayerState::OnRep_SeatIndex()
+{
+	ResolvePlayerBoardOnClient();
 }

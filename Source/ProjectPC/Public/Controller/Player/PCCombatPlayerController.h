@@ -266,6 +266,9 @@ public:
 	UPCTileManager* GetTileManager() const ;
 
 	APCPlayerBoard* GetPlayerBoard() const;
+
+	APCPlayerBoard* GetLocalPlayerBoard() const;
+	
 	
 	// 외곽선 관련
 	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;

@@ -71,13 +71,7 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Seat")
 	USceneComponent* EnemySeatAnchor = nullptr;
-
-	// HISM On / Off
-	UFUNCTION(BlueprintCallable, Category = "HISM")
-	void OnHism(bool bOn) const;
-
-	UFUNCTION(BLueprintCallable, Category = "HISM")
-	void OnEnemyHism(bool bEnemySide) const;
+	
 
 	// 보드 좌석 스폰용 헬퍼
 	UFUNCTION(BlueprintCallable)
@@ -119,84 +113,7 @@ protected:
 	void RebuildAnchors();
 	USceneComponent* Resolve(const FComponentReference& Ref) const;
 
-
-	// 타일 관련
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* FieldRoot;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* BenchRoot;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* EnemyBenchRoot;
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName FieldPrefix = TEXT("Field_");
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName BenchPrefix = TEXT("Bench_");
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName EnemyBenchPrefix = TEXT("Enemy_");
-
-	// HISM(필드/벤치)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* FieldHISM;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* BenchHISM;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* EnemyHISM;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UStaticMesh* HexTileMesh = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* HexTileMaterial = nullptr;
-
-	UPROPERTY(EditAnyWHere, Category = "HISM")
-	UMaterialInterface* HexTileOverlayMaterial = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UStaticMesh* BenchTileMesh = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* BenchTileMaterial = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* BenchTileOverlayMaterial = nullptr;
-
-	// 공개 API
-	UFUNCTION(BlueprintCallable)
-	void RebuildTilesFromMarkers();
-
-protected:
-	// 마커 수집
-	void CollectTileMarkers();
-
-	// 인스터스 / 매핑 구축
-	void BuildHISM();
-
-private:
-
-	// 타일 월드 변환
-	UPROPERTY()
-	TArray<FTileInfo> FieldTiles;
-	UPROPERTY()
-	TArray<FTileInfo> BenchTiles;
-	UPROPERTY()
-	TArray<FTileInfo> EnemyTiles;
-
-	// HISM 인덱스 / 논리 좌표
-	UPROPERTY()
-	TArray<FIntPoint> Field_InstanceToXY;
-	UPROPERTY()
-	TArray<FIntPoint> Bench_InstanceToXY;
-	UPROPERTY()
-	TArray<FIntPoint> Enemy_InstanceToXY;
-
+	
 	// Tile Manager
 public:
 

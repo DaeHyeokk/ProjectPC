@@ -35,6 +35,8 @@ public:
 
 	// 서버 전용 세터
 	void SetPlayerBoard(APCPlayerBoard* InBoard);
+
+	void ResolvePlayerBoardOnClient();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -64,10 +66,14 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
-	UFUNCTION() void OnRep_LocalUserId() {}
-	UFUNCTION() void OnRep_bIsLeader()   {}
-	UFUNCTION() void OnRep_bIsReady()    {}
-	UFUNCTION() void OnRep_SeatIndex()   {}
+	UFUNCTION()
+	void OnRep_LocalUserId() {}
+	UFUNCTION()
+	void OnRep_bIsLeader()   {}
+	UFUNCTION()
+	void OnRep_bIsReady()    {}
+	UFUNCTION()
+	void OnRep_SeatIndex();
 #pragma endregion Login
 
 #pragma region AbilitySystem

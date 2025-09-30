@@ -179,6 +179,9 @@ void UPCDragComponent::EnsureGhostAt(const FVector& World, APCHeroUnitCharacter*
                 if (UPCUnitSpawnSubsystem* SubSystem = WorldPtr->GetSubsystem<UPCUnitSpawnSubsystem>())
                 {
                     Preview = SubSystem->SpawnPreviewHeroBySourceHero(PreviewHero, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+                    FRotator HeroRot = PreviewHero->GetActorRotation();
+                    const FRotator  NewRot(HeroRot.Pitch,FMath::UnwindDegrees(HeroRot.Yaw - 90.f),HeroRot.Roll);
+                    Preview->SetActorRotation(NewRot);
                 }
             }
         }

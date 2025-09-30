@@ -361,22 +361,15 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	return true;
 }
 
-bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit, bool bIsBattle)
+bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit)
 {
 	if (!Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
-
-	if (bIsBattle)
-	{
-		const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
-		const FRotator Rot(0,180,0);
-		Unit->SetActorLocationAndRotation(World,Rot,false,nullptr);
-		return true;
-	}
-
+	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
-	Unit->SetActorLocation(World);
+	const FRotator ActorRot = GetActorRotation();
+	Unit->SetActorLocationAndRotation(World,ActorRot,false,nullptr);
 	return true;
 }
 
@@ -426,9 +419,9 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 	if (BA != INDEX_NONE && BB != INDEX_NONE)
 	{
 		PlayerBench[BA].Unit = B;
-		PlaceUnitOnBench(BA,B,false);
+		PlaceUnitOnBench(BA,B);
 		PlayerBench[BB].Unit = A;
-		PlaceUnitOnBench(BB,A,false);
+		PlaceUnitOnBench(BB,A);
 		return true;
 	}
 
@@ -437,7 +430,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 		PlayerField[IndexOf(PA.X, PA.Y)].Unit = B; // FIX
 		PlaceUnitOnField(PA.X, PA.Y, B);
 		PlayerBench[BB].Unit = A;
-		PlaceUnitOnBench(BB,A,false);
+		PlaceUnitOnBench(BB,A);
 		return true;
 	}
 
@@ -446,7 +439,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 		PlayerField[IndexOf(PB.X, PB.Y)].Unit = A;
 		PlaceUnitOnField(PB.X, PB.Y, A);
 		PlayerBench[BA].Unit = B;
-		PlaceUnitOnBench(BA,B,false);
+		PlaceUnitOnBench(BA,B);
 		return true;
 	}
 

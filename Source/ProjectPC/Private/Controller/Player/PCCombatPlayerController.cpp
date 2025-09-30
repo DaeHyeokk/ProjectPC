@@ -835,7 +835,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         const bool bPlaced =
             bDstField ? PB->PlaceUnitOnField(Y, X, Unit)
-                      : PB->PlaceUnitOnBench(BenchIdx, Unit,false);
+                      : PB->PlaceUnitOnBench(BenchIdx, Unit);
 
         if (bPlaced)
         {
@@ -897,15 +897,14 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		return;
 
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	APCPlayerState* PC = GetPlayerState<APCPlayerState>();
-	if (!GS || !PC )
+	if (!GS)
 		return;
 	
 	bool bIsBattle = GS->bIsbattle();
 	
 	if (bOk && PreviewHero)
 	{
-		if (APCPlayerBoard* PlayerBoard = PC->GetPlayerBoard())
+		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
 			PlayerBoard->OnHISM(true,bIsBattle);
 		}
@@ -1005,6 +1004,18 @@ APCPlayerBoard* APCCombatPlayerController::GetPlayerBoard() const
 	if (const APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
 		return PCPlayerState->PlayerBoard;
 	return nullptr;
+}
+
+APCPlayerBoard* APCCombatPlayerController::GetLocalPlayerBoard() const
+{
+	if (auto* PS = GetPlayerState<APCPlayerState>())
+	{
+		if (PS->PlayerBoard) return PS->PlayerBoard;
+			// 아직 null이면 좌석으로 즉시 재검색
+		PS->ResolvePlayerBoardOnClient();
+		return PS->PlayerBoard;
+	}
+		return nullptr;
 }
 
 void APCCombatPlayerController::SetHoverHighLight(APCBaseUnitCharacter* NewUnit)

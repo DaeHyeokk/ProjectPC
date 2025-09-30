@@ -833,10 +833,7 @@ void APCCombatManager::BindUnitOnBoardForPair(int32 PairIndex)
 	APCCombatBoard* Guest = Pair.Guest.Get();
 	if (!Host || !Host->TileManager)
 		return;
-
-	const int32 HostSeat = Host->BoardSeatIndex;
-	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
-
+	
 	UPCTileManager* TM = Host->TileManager;
 
 	auto TryBind = [&](APCBaseUnitCharacter* Unit)
@@ -862,41 +859,25 @@ void APCCombatManager::BindUnitOnBoardForPair(int32 PairIndex)
 
 void APCCombatManager::UnbindAllForPair(int32 PairIndex)
 {
-	auto& Pair = Pairs[PairIndex];
-
-	auto TryUnbind = [&](APCBaseUnitCharacter* Unit)
+	TArray<APCBaseUnitCharacter*> ToUnbind;
+	for (auto It = UnitToPairIndex.CreateIterator(); It; ++It)
 	{
-		if (!Unit) return;
-		if (UnitToPairIndex.Remove(Unit) > 0)
+		if (It.Value() == PairIndex)
 		{
-			Unit->OnUnitDied.RemoveDynamic(this, &APCCombatManager::OnAnyUnitDied);
-		}
-	};
-
-	if (APCCombatBoard* Host = Pair.Host.Get())
-	{
-		if (UPCTileManager* TM = Host->TileManager)
-		{
-			for (int32 y = 0; y < TM->Cols; ++y)
+			const TWeakObjectPtr<APCBaseUnitCharacter> wUnit = It.Key();
+			if (APCBaseUnitCharacter* Unit = wUnit.Get())
 			{
-				for (int32 x = 0; x < TM->Rows; ++x)
-				{
-					TryUnbind(TM->GetFieldUnit(y, x));
-				}
+				Unit->OnUnitDied.RemoveDynamic(this, &APCCombatManager::OnAnyUnitDied);
 			}
+			It.RemoveCurrent(); // 맵에서 제거
 		}
 	}
 	
-	// PvE 크립도 언바인드
-	for (const auto& WU : Pair.PvECreeps)
+	if (Pairs.IsValidIndex(PairIndex))
 	{
-		if (APCBaseUnitCharacter* Unit = WU.Get())
-		{
-			TryUnbind(Unit);
-		}
+		Pairs[PairIndex].DeadUnits.Reset();
 	}
-
-	Pair.DeadUnits.Reset();
+	
 }
 
 
@@ -1002,9 +983,9 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	const int32 GuestSeat = Pair.Guest.IsValid() ? Pair.Guest->BoardSeatIndex : INDEX_NONE;
 	if (HostSeat == INDEX_NONE || GuestSeat == INDEX_NONE) return;
 
-	APawn* AttackerPawn = FindPawnBySeat(bHostWon ? HostSeat : GuestSeat);
-	APawn* DefenderPawn = FindPawnBySeat(bHostWon ? GuestSeat : HostSeat);
-	if (!AttackerPawn || !DefenderPawn) return;
+	APCPlayerState* WinnerPlayerState = FindPlayerStateBySeat(bHostWon ? HostSeat : GuestSeat);
+	APCPlayerState* LoserPlayerState = FindPlayerStateBySeat(bHostWon ? GuestSeat : HostSeat);
+	if (!WinnerPlayerState || !LoserPlayerState) return;
 
 	const int32 StageIndex      = GetCurrentStageIndex();
 	const int32 StageBaseDamage = GetStageBaseDamageFromDT(StageIndex);
@@ -1014,10 +995,10 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	FGameplayEventData DamageData;
 	DamageData.EventTag       = DamageEventTag;
 	DamageData.EventMagnitude = Damage;
-	DamageData.Instigator     = AttackerPawn;
-	DamageData.Target         = DefenderPawn;
+	DamageData.Instigator     = WinnerPlayerState;
+	DamageData.Target         = LoserPlayerState;
 
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AttackerPawn, DamageEventTag, DamageData);
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(WinnerPlayerState, DamageEventTag, DamageData);
 
 	UnbindAllForPair(PairIndex);
 	Pair.bRunning = false;

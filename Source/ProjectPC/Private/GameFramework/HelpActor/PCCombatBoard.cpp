@@ -17,32 +17,7 @@ APCCombatBoard::APCCombatBoard()
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(SceneRoot);
-
-	FieldRoot = CreateDefaultSubobject<USceneComponent>(TEXT("FieldRoot"));
-	FieldRoot->SetupAttachment(SceneRoot);
-
-	BenchRoot = CreateDefaultSubobject<USceneComponent>(TEXT("BenchRoot"));
-	BenchRoot->SetupAttachment(SceneRoot);
-
-	EnemyBenchRoot = CreateDefaultSubobject<USceneComponent>(TEXT("EnemyRoot"));
-	EnemyBenchRoot->SetupAttachment(SceneRoot);
-
-	// HISM
-	FieldHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("FieldHISM"));
-	FieldHISM->SetupAttachment(SceneRoot);
-	FieldHISM->SetMobility(EComponentMobility::Static);
-	FieldHISM->NumCustomDataFloats = 4;
-
-	BenchHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("BenchHISM"));
-	BenchHISM->SetupAttachment(SceneRoot);
-	BenchHISM->SetMobility(EComponentMobility::Static);
-	BenchHISM->NumCustomDataFloats = 4;
-
-	EnemyHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("EnemyHISM"));
-	EnemyHISM->SetupAttachment(SceneRoot);
-	EnemyHISM->SetMobility(EComponentMobility::Static);
-	EnemyHISM->NumCustomDataFloats = 4;
-	
+		
 	// 카메라
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(SceneRoot);
@@ -71,7 +46,6 @@ void APCCombatBoard::BeginPlay()
 {
 	Super::BeginPlay();
 	RebuildAnchors();
-	RebuildTilesFromMarkers();
 
 	if (TileManager)
 	{
@@ -84,9 +58,6 @@ void APCCombatBoard::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	RebuildAnchors();
-	RebuildTilesFromMarkers();
-	
-	
 		
 }
 #endif
@@ -94,12 +65,6 @@ void APCCombatBoard::OnConstruction(const FTransform& Transform)
 USceneComponent* APCCombatBoard::Resolve(const FComponentReference& Ref) const
 {
 	return Cast<USceneComponent>(Ref.GetComponent(const_cast<APCCombatBoard*>(this)));
-}
-
-void APCCombatBoard::RebuildTilesFromMarkers()
-{
-	CollectTileMarkers();
-	BuildHISM();
 }
 
 
@@ -110,101 +75,6 @@ static int32 NameSuffixToIndex(const FString& Name, const FString& Prefix)
 	int32 Index = -1;
 	LexTryParseString(Index, *Name.RightChop(Prefix.Len()));
 	return Index;
-}
-
-void APCCombatBoard::CollectTileMarkers()
-{
-	FieldTiles.Reset();
-	BenchTiles.Reset();
-	EnemyTiles.Reset();
-
-	auto Gather = [&](USceneComponent* Root, const FString& Prefix, TArray<FTileInfo>& Out)
-	{
-		if (!Root) return;
-		TArray<USceneComponent*> Children;
-		Root->GetChildrenComponents(false, Children);
-		Children.Sort([&](const USceneComponent& ARoot, const USceneComponent& BRoot)
-		{
-			const int ARootIndex = NameSuffixToIndex(ARoot.GetName(), Prefix);
-			const int BRootIndex = NameSuffixToIndex(BRoot.GetName(), Prefix);
-			return ARootIndex < BRootIndex;
-		});
-		for (USceneComponent* SceneComponent : Children)
-		{
-			FTileInfo TileInfo;
-			TileInfo.WorldTransform = SceneComponent->GetComponentTransform();
-			Out.Add(TileInfo);
-		}
-	};
-
-	Gather(FieldRoot, FieldPrefix.ToString(), FieldTiles);
-	Gather(BenchRoot, BenchPrefix.ToString(), BenchTiles);
-	Gather(EnemyBenchRoot, BenchPrefix.ToString(), EnemyTiles);
-}
-
-
-void APCCombatBoard::BuildHISM()
-{
-	FieldHISM->ClearInstances();
-	BenchHISM->ClearInstances();
-	EnemyHISM->ClearInstances();
-
-	if (HexTileMesh)
-		FieldHISM->SetStaticMesh(HexTileMesh);
-	if (HexTileMaterial)
-		FieldHISM->SetMaterial(0, HexTileMaterial);
-	FieldHISM->SetOverlayMaterial(nullptr);
-	if (BenchTileMesh)
-	{
-		BenchHISM->SetStaticMesh(BenchTileMesh);
-		EnemyHISM->SetStaticMesh(BenchTileMesh);
-	}
-		
-	if (BenchTileMaterial)
-	{
-		BenchHISM->SetMaterial(0, BenchTileMaterial);
-		EnemyHISM->SetMaterial(0, BenchTileMaterial);
-	}
-	BenchHISM->SetOverlayMaterial(nullptr);
-	EnemyHISM->SetOverlayMaterial(nullptr);
-	
-	Field_InstanceToXY.Reset();
-	Bench_InstanceToXY.Reset();
-	Enemy_InstanceToXY.Reset();
-
-	// 필드 인스턴스
-	for (int32 i = 0; i < FieldTiles.Num(); ++i)
-	{
-		const int32 InstanceIndex = FieldHISM->AddInstance(FieldTiles[i].WorldTransform, true);
-		if (InstanceIndex != INDEX_NONE)
-		{
-			Field_InstanceToXY.Add(FIntPoint(i,0));
-		}
-	}
-
-	// 벤치 인스턴스
-	for (int32 i = 0; i < BenchTiles.Num(); ++i)
-	{
-		const int32 InstanceIndex = BenchHISM->AddInstance(BenchTiles[i].WorldTransform, true);
-		if (InstanceIndex != INDEX_NONE)
-		{
-			Bench_InstanceToXY.Add(FIntPoint(i,0));
-		}
-	}
-
-	// 적 벤치 인스턴스
-	for (int32 i = 0; i < EnemyTiles.Num(); ++i)
-	{
-		const int32 InstanceIndex = EnemyHISM->AddInstance(EnemyTiles[i].WorldTransform, true);
-		if (InstanceIndex != INDEX_NONE)
-		{
-			Enemy_InstanceToXY.Add(FIntPoint(i,0));
-		}
-	}
-
-	FieldHISM->BuildTreeIfOutdated(true,true);
-	BenchHISM->BuildTreeIfOutdated(true,true);
-	EnemyHISM->BuildTreeIfOutdated(true,true);
 }
 
 void APCCombatBoard::RebuildAnchors()
@@ -229,38 +99,6 @@ void APCCombatBoard::RebuildAnchors()
 	};
 	Make(PlayerSeatAnchor, PlayerSeatParent, PlayerSeatSocket);
 	Make(EnemySeatAnchor, EnemySeatParent, EnemySeatSocket);
-}
-
-
-void APCCombatBoard::OnHism(bool bOn) const
-{
-	if (!FieldHISM && !BenchHISM)
-		return;
-	if (bOn)
-	{
-		FieldHISM->SetOverlayMaterial(HexTileOverlayMaterial);
-		BenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
-	}
-	else
-	{
-		FieldHISM->SetOverlayMaterial(nullptr);
-		BenchHISM->SetOverlayMaterial(nullptr);
-	}
-}
-
-void APCCombatBoard::OnEnemyHism(bool bEnemySide) const
-{
-	if (!EnemyHISM)
-		return;
-
-	if (bEnemySide)
-	{
-		EnemyHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
-	}
-	else
-	{
-		EnemyHISM->SetOverlayMaterial(nullptr);
-	}
 }
 
 FTransform APCCombatBoard::GetPlayerSeatTransform() const
