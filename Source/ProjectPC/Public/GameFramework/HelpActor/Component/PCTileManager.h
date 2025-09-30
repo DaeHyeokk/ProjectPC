@@ -293,6 +293,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
 	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
+
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<FGameplayTag> GetAllBenchUnitTag();
 	
 #pragma endregion LevelUp & Synergy
 

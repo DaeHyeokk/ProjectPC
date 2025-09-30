@@ -906,6 +906,22 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetBenchUnitByTag(FGameplayTag Uni
 	return Out;
 }
 
+TArray<FGameplayTag> UPCTileManager::GetAllBenchUnitTag()
+{
+	TArray<FGameplayTag> Out;
+
+	for (int32 i = 0; i < Bench.Num(); ++i)
+	{
+		if (!Bench[i].IsEmpty())
+		{
+			FGameplayTag UnitTag = Bench[i].Unit->GetUnitTag();
+			Out.AddUnique(UnitTag);
+		}
+	}
+	
+	return Out;
+}
+
 void UPCTileManager::BindToUnit(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return;
