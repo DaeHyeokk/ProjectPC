@@ -108,7 +108,7 @@ void UPCShopWidget::SetupPlayerInfo()
 
 	// 플레이어 정보 (레벨) 세팅
 	PlayerLevel = static_cast<int32>(AttributeSet->GetPlayerLevel());
-	auto LevelText = FString::Printf(TEXT("Lv. %d"), PlayerLevel);
+	auto LevelText = FString::Printf(TEXT("Lv.%d"), PlayerLevel);
 	Level->SetText(FText::FromString(LevelText));
 
 	// 플레이어 정보 (경험치) 세팅
@@ -162,7 +162,7 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 	if (!PS || !XP || !XPBar) return;
 
 	PlayerLevel = static_cast<int32>(Data.NewValue);
-	auto LevelText = FString::Printf(TEXT("Lv. %d"), PlayerLevel);
+	auto LevelText = FString::Printf(TEXT("Lv.%d"), PlayerLevel);
 	Level->SetText(FText::FromString(LevelText));
 
 	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(PlayerLevel);
