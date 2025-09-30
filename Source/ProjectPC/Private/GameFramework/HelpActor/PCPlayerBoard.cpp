@@ -6,24 +6,28 @@
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "Net/UnrealNetwork.h"
 
 
 APCPlayerBoard::APCPlayerBoard()
 {
  	
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	bAlwaysRelevant = true;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	SceneRoot->SetMobility(EComponentMobility::Movable);
 	SetRootComponent(SceneRoot);
 
 	PlayerFieldHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("FieldHISM"));
 	PlayerFieldHISM->SetupAttachment(SceneRoot);
-	PlayerFieldHISM->SetMobility(EComponentMobility::Static);
+	PlayerFieldHISM->SetMobility(EComponentMobility::Movable);
 	PlayerFieldHISM->NumCustomDataFloats = 4;
 
 	PlayerBenchHISM = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("BenchHIS"));
 	PlayerBenchHISM->SetupAttachment(SceneRoot);
-	PlayerBenchHISM->SetMobility(EComponentMobility::Static);
+	PlayerBenchHISM->SetMobility(EComponentMobility::Movable);
 	PlayerBenchHISM->NumCustomDataFloats = 4;
 
 }
@@ -36,48 +40,111 @@ void APCPlayerBoard::QuickSetUp()
 	BuildHISM();
 }
 
+void APCPlayerBoard::OnHISM(bool bIsOn, bool bIsBattle)
+{
+	if (PlayerFieldHISM && PlayerBenchHISM && bIsOn && !bIsBattle)
+	{
+		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
+		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
+	}
+	else
+	{
+		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
+	}
+
+	if (PlayerFieldHISM && PlayerBenchHISM && !bIsOn)
+	{
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
+		PlayerBenchHISM->SetOverlayMaterial(nullptr);
+	}
+	
+}
+
 void APCPlayerBoard::BuildHISM()
 {
 	PlayerFieldHISM->ClearInstances();
 	PlayerBenchHISM->ClearInstances();
 
-	if (FieldTileMesh && FieldTileMaterial && FieldTileOverlayMaterial)
+	if (FieldTileMesh && FieldTileMaterial)
 	{
 		PlayerFieldHISM->SetStaticMesh(FieldTileMesh);
 		PlayerFieldHISM->SetMaterial(0, FieldTileMaterial);
-		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
 	}
-	if (BenchTileMesh && BenchTileMaterial && BenchTileOverlayMaterial)
+	if (BenchTileMesh && BenchTileMaterial)
 	{
 		PlayerBenchHISM->SetStaticMesh(BenchTileMesh);
 		PlayerBenchHISM->SetMaterial(0, BenchTileMaterial);
-		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
+		PlayerBenchHISM->SetOverlayMaterial(nullptr);
 	}
 
-	for (int32 i = 0; i < PlayerField.Num(); ++i)
+	// ── 서버에서만 원본 배열을 갱신
+	if (HasAuthority())
 	{
-		const FTransform WorldXForm(FRotator::ZeroRotator, PlayerField[i].Position, FVector::OneVector);
-		PlayerFieldHISM->AddInstance(WorldXForm, true);
-	}
+		FieldLocs.SetNum(PlayerField.Num());
+		for (int32 i=0;i<PlayerField.Num();++i)
+			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);       // 로컬 좌표 저장
 
-	for (int32 i = 0; i < PlayerBench.Num(); ++i)
+		BenchLocs.SetNum(PlayerBench.Num());
+		for (int32 i=0;i<PlayerBench.Num();++i)
+			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);          // 로컬 좌표 저장
+
+		// 서버도 즉시 재구성(클라는 OnRep에서)
+		RebuildHISM_FromArrays();
+
+		// 변경을 즉시 밀고 싶으면:
+		ForceNetUpdate();
+	}
+	else
 	{
-		const FTransform worldXForm(FRotator::ZeroRotator, PlayerBench[i].Position, FVector::OneVector);
-		PlayerBenchHISM->AddInstance(worldXForm, true);
+		// 클라에서 직접 BuildHISM()을 호출하는 경우는 드묾.
+		// 그래도 혹시를 대비해 배열이 차있으면 재구성
+		RebuildHISM_FromArrays();
 	}
-
-	PlayerFieldHISM->BuildTreeIfOutdated(true, true);
-	PlayerBenchHISM->BuildTreeIfOutdated(true, true);
-	
 }
 
 void APCPlayerBoard::BeginPlay()
 {
 	Super::BeginPlay();
 
-	QuickSetUp();
-	BuildHISM();
-	
+	QuickSetUp();	
+}
+
+void APCPlayerBoard::OnRep_FieldLocs()
+{
+	RebuildHISM_FromArrays();
+}
+
+void APCPlayerBoard::OnRep_BenchLocs()
+{
+	RebuildHISM_FromArrays();
+}
+
+void APCPlayerBoard::RebuildHISM_FromArrays()
+{
+	PlayerFieldHISM->ClearInstances();
+	for (const FVector& P : FieldLocs)
+	{
+		const FTransform LocalT(FRotator::ZeroRotator, FVector(P), FVector::OneVector);
+		PlayerFieldHISM->AddInstance(LocalT, /*bWorldSpace=*/false); // 로컬로 추가!
+	}
+
+	PlayerBenchHISM->ClearInstances();
+	for (const FVector& P : BenchLocs)
+	{
+		const FTransform LocalT(FRotator::ZeroRotator, FVector(P), FVector::OneVector);
+		PlayerBenchHISM->AddInstance(LocalT, /*bWorldSpace=*/false);
+	}
+
+	PlayerFieldHISM->BuildTreeIfOutdated(true,true);
+	PlayerBenchHISM->BuildTreeIfOutdated(true,true);
+}
+
+void APCPlayerBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APCPlayerBoard, FieldLocs)
+	DOREPLIFETIME(APCPlayerBoard, BenchLocs)
 }
 
 #if WITH_EDITOR
@@ -88,33 +155,29 @@ void APCPlayerBoard::OnConstruction(const FTransform& Transform)
 	BuildHISM();
 }
 #endif
+
 void APCPlayerBoard::CreatePlayerField()
 {
 	PlayerField.SetNum(Rows * Cols);
 
-	const FVector SelfLocation = GetActorLocation();
+	const float R = FieldTileWidthX * 0.5f;
+	const float Xs = 1.5f * R;
+	const float Ys = FMath::Sqrt(3.f) * R;
+	const FVector BaseLocal(FirstFieldLoc.X, FirstFieldLoc.Y, 0);
 
-	const float Radios = FieldTileWidthX * 0.5;
-	const float Xs = 1.5f * Radios;
-	const float Ys = FMath::Sqrt(3.f) * Radios;
-
-	const FVector Base = SelfLocation + FVector(FirstFieldLoc.X, FirstFieldLoc.Y,0);
-
-	for ( int32 r = 0; r < Rows; ++r )
+	for (int32 r=0; r<Rows; ++r)
 	{
-		const int32 rLocal  = bRowZeroAtBottom ? r : (Rows - 1 - r);
-
-		for (int32 c = 0; c < Cols; ++c)
+		const int32 rLocal = bRowZeroAtBottom ? r : (Rows-1-r);
+		for (int32 c=0; c<Cols; ++c)
 		{
-			const int32 i = c * Rows + r;
+			const int32 i = c*Rows + r;
 			const float x = c * Xs;
+			const float y = (rLocal + ((c&1)? OddColumRowShift : 0.f)) * Ys;
 
-			const float RowShift = ((c&1) ? OddColumRowShift : 0.0f);
-			const float y = (rLocal + RowShift) * Ys;
 			PlayerField[i].UnitIntPoint = FIntPoint(c,r);
-			PlayerField[i].Position = Base + FVector(x, y, 0);
-			PlayerField[i].bIsField = true;
-			PlayerField[i].Unit = nullptr;
+			PlayerField[i].Position     = BaseLocal + FVector(x,y,0); // ← 로컬 저장
+			PlayerField[i].bIsField     = true;
+			PlayerField[i].Unit         = nullptr;
 		}
 	}
 }
@@ -124,12 +187,10 @@ void APCPlayerBoard::CreatePlayerBench()
 	const int32 N = FMath::Max(0, BenchSize);
 	PlayerBench.SetNum(N);
 
-	const FVector SelfLocation = GetActorLocation();
-	const FVector Base = SelfLocation + FVector(FirstBenchLoc.X, FirstBenchLoc.Y,0);
-
-	for (int32 i = 0; i < N; ++i)
+	const FVector BaseLocal(FirstBenchLoc.X, FirstBenchLoc.Y, 0);
+	for (int32 i=0; i<N; ++i)
 	{
-		PlayerBench[i].Position = Base + FVector(0.f, i * BenchStepLocalY, 0);
+		PlayerBench[i].Position = BaseLocal + FVector(0.f, i*BenchStepLocalY, 0); // 로컬
 		PlayerBench[i].bIsField = false;
 		PlayerBench[i].Unit = nullptr;
 	}
@@ -294,19 +355,28 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	EnsureExclusive(Unit);
 	const int32 i = IndexOf(Y,X);
 	PlayerField[i].Unit = Unit;
-	Unit->SetActorLocation(PlayerField[i].Position);
 
-	UE_LOG(LogTemp, Warning, TEXT("Place Field Y=%d X=%d i=%d Pos=%s"),
-		   Y, X, IndexOf(Y,X), *PlayerField[IndexOf(Y,X)].Position.ToString());
+	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
+	Unit->SetActorLocation(World);
 	return true;
 }
 
-bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit)
+bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit, bool bIsBattle)
 {
 	if (!Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
-	Unit->SetActorLocation(PlayerBench[LocalBenchIndex].Position);
+
+	if (bIsBattle)
+	{
+		const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
+		const FRotator Rot(0,180,0);
+		Unit->SetActorLocationAndRotation(World,Rot,false,nullptr);
+		return true;
+	}
+
+	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
+	Unit->SetActorLocation(World);
 	return true;
 }
 
@@ -329,7 +399,7 @@ bool APCPlayerBoard::RemoveFromBoard(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return false;
 	if (auto p = GetFieldUnitGridPoint(Unit); p != FIntPoint::NoneValue)
-		return RemoveFromField(p.Y, p.X); // FIX: (Y,X)
+		return RemoveFromField(p.X, p.Y); // FIX: (Y,X)
 	if (auto bi = GetBenchUnitIndex(Unit); bi != INDEX_NONE)
 		return RemoveFromBench(bi);
 	return false;
@@ -356,9 +426,9 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 	if (BA != INDEX_NONE && BB != INDEX_NONE)
 	{
 		PlayerBench[BA].Unit = B;
-		PlaceUnitOnBench(BA,B);
+		PlaceUnitOnBench(BA,B,false);
 		PlayerBench[BB].Unit = A;
-		PlaceUnitOnBench(BB,A);
+		PlaceUnitOnBench(BB,A,false);
 		return true;
 	}
 
@@ -367,7 +437,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 		PlayerField[IndexOf(PA.X, PA.Y)].Unit = B; // FIX
 		PlaceUnitOnField(PA.X, PA.Y, B);
 		PlayerBench[BB].Unit = A;
-		PlaceUnitOnBench(BB,A);
+		PlaceUnitOnBench(BB,A,false);
 		return true;
 	}
 
@@ -376,7 +446,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 		PlayerField[IndexOf(PB.X, PB.Y)].Unit = A;
 		PlaceUnitOnField(PB.X, PB.Y, A);
 		PlayerBench[BA].Unit = B;
-		PlaceUnitOnBench(BA,B);
+		PlaceUnitOnBench(BA,B,false);
 		return true;
 	}
 
@@ -398,15 +468,12 @@ bool APCPlayerBoard::WorldToField(const FVector& World, int32& OutY, int32& OutX
 {
 	OutY = INDEX_NONE;
 	OutX = INDEX_NONE;
-
-	if (PlayerField.Num() <= 0 || Rows <= 0 || Cols <= 0)
-		return false;
+	if (PlayerField.Num() <= 0 || Rows <= 0 || Cols <= 0) return false;
 
 	float BestD2 = TNumericLimits<float>::Max();
 	int32 BestY = INDEX_NONE;
 	int32 BestX = INDEX_NONE;
 
-	// 전체 스캔 (Rows*Cols), 보드 크기가 작으니 충분히 빠름
 	for (int32 y = 0; y < Cols; ++y)
 	{
 		for (int32 x = 0; x < Rows; ++x)
@@ -414,31 +481,20 @@ bool APCPlayerBoard::WorldToField(const FVector& World, int32& OutY, int32& OutX
 			const int32 i = IndexOf(y, x);
 			if (!PlayerField.IsValidIndex(i)) continue;
 
-			const float d2 = Dist2_2D(PlayerField[i].Position, World);
-			if (d2 < BestD2)
-			{
-				BestD2 = d2;
-				BestY = y;
-				BestX = x;
-			}
+			const FVector TileW = ToWorld(SceneRoot, PlayerField[i].Position); // 로컬→월드
+			const float d2 = FVector::DistSquared2D(TileW, World);
+			if (d2 < BestD2) { BestD2 = d2; BestY = y; BestX = x; }
 		}
 	}
 
-	if (BestY == INDEX_NONE)
-		return false;
+	if (BestY == INDEX_NONE) return false;
 
-	// 스냅 임계값: 제곱거리끼리 비교!
 	const float DefSnap = (FieldTileWidthX > 0.f) ? (FieldTileWidthX * 0.6f) : 120.f;
-	const float Snap = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+	const float Snap    = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
+	if (BestD2 > Snap * Snap) return false;
 
-	if (BestD2 > (Snap * Snap))
-		return false;
-
-	OutY = BestY;
-	OutX = BestX;
-	
+	OutY = BestY; OutX = BestX;
 	return true;
-	
 }
 
 bool APCPlayerBoard::WorldToBench(const FVector& World, int32& OutLocalBenchIndex, float MaxSnapDist) const
@@ -446,48 +502,45 @@ bool APCPlayerBoard::WorldToBench(const FVector& World, int32& OutLocalBenchInde
 	OutLocalBenchIndex = INDEX_NONE;
 	const int32 N = BenchSize;
 
-	float bestD2 = TNumericLimits<float>::Max();
-	int32 bestG  = INDEX_NONE;
+	float BestD2 = TNumericLimits<float>::Max();
+	int32 BestIdx = INDEX_NONE;
 
-	auto try_slot = [&](int32 local, const FPlayerTile& T)
+	auto try_slot = [&](int32 Local, const FPlayerTile& T)
 	{
-		const float d2 = (T.Position - World).SizeSquared2D();
-		if (d2 < bestD2) { bestD2 = d2; bestG =  local; }
+		const FVector TileW = ToWorld(SceneRoot, T.Position); // 로컬→월드
+		const float d2 = FVector::DistSquared2D(TileW, World);
+		if (d2 < BestD2) { BestD2 = d2; BestIdx = Local; }
 	};
 
-	for (int32 i=0;i<N;++i)
+	for (int32 i = 0; i < N; ++i)
 		if (PlayerBench.IsValidIndex(i)) try_slot(i, PlayerBench[i]);
 
-
-	if (bestG == INDEX_NONE) return false;
+	if (BestIdx == INDEX_NONE) return false;
 
 	const float DefSnap = (FieldTileWidthX > 0.f) ? (FieldTileWidthX * 0.6f) : 120.f;
 	const float Snap    = (MaxSnapDist > 0.f) ? MaxSnapDist : DefSnap;
-	if (bestD2 > Snap*Snap) return false;
+	if (BestD2 > Snap * Snap) return false;
 
-	OutLocalBenchIndex = bestG;
+	OutLocalBenchIndex = BestIdx;
 	return true;
 }
 
 bool APCPlayerBoard::WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
 	int32& OutLocalBenchIndex, FVector& OutSnapPos, float MaxSnapField, float MaxSnapBench, bool bRequireUnit) const
 {
-	 bOutIsField        = false;
-    OutY = OutX        = INDEX_NONE;
+	 bOutIsField = false;
+    OutY = OutX = INDEX_NONE;
     OutLocalBenchIndex = INDEX_NONE;
-    OutSnapPos         = World;
+    OutSnapPos = World;
 
     int32 Y = INDEX_NONE, X = INDEX_NONE, LocalBench = INDEX_NONE;
-
     const bool bFieldHit = WorldToField(World, Y, X, MaxSnapField);
     const bool bBenchHit = WorldToBench(World, LocalBench, MaxSnapBench);
+    if (!bFieldHit && !bBenchHit) return false;
 
-    if (!bFieldHit && !bBenchHit)
-        return false;
-
-    // ── 필드 후보 평가
+    // 필드 후보
     bool bFieldCandidate = false;
-    FVector PField = FVector::ZeroVector;
+    FVector PFieldW = FVector::ZeroVector; // 월드 좌표
     if (bFieldHit)
     {
         const int32 Idx = IndexOf(Y, X);
@@ -497,116 +550,88 @@ bool APCPlayerBoard::WorldAnyTile(const FVector& World, bool bPreferField, bool&
             if (!bRequireUnit || bHasUnit)
             {
                 bFieldCandidate = true;
-                PField = PlayerField[Idx].Position;
+                PFieldW = ToWorld(SceneRoot, PlayerField[Idx].Position); // 로컬→월드
             }
         }
     }
 
-    // ── 벤치 후보 평가 (로컬 인덱스만 사용)
+    // 벤치 후보
     bool bBenchCandidate = false;
-    FVector PBench = FVector::ZeroVector;
+    FVector PBenchW = FVector::ZeroVector; // 월드 좌표
     if (bBenchHit && PlayerBench.IsValidIndex(LocalBench))
     {
         const bool bHasUnit = (PlayerBench[LocalBench].Unit != nullptr);
         if (!bRequireUnit || bHasUnit)
         {
             bBenchCandidate = true;
-            PBench = PlayerBench[LocalBench].Position;
+            PBenchW = ToWorld(SceneRoot, PlayerBench[LocalBench].Position); // 로컬→월드
         }
     }
 
-    if (!bFieldCandidate && !bBenchCandidate)
-        return false;
+    if (!bFieldCandidate && !bBenchCandidate) return false;
 
-    // ── 둘 다 후보면 더 가까운 쪽(동률 시 bPreferField에 살짝 가중치)
     if (bFieldCandidate && bBenchCandidate)
     {
-        const float df2 = FVector::DistSquared2D(PField, World);
-        const float db2 = FVector::DistSquared2D(PBench, World);
-        constexpr float TieBias = 1.02f; // 근소 차이 시 필드 우대 옵션
+        const float df2 = FVector::DistSquared2D(PFieldW, World);
+        const float db2 = FVector::DistSquared2D(PBenchW, World);
+        constexpr float TieBias = 1.02f;
         const bool ChooseField = bPreferField ? (df2 <= db2 * TieBias) : (df2 < db2);
 
-        if (ChooseField)
-        {
-            bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PField;
-        }
-        else
-        {
-            bOutIsField = false; OutLocalBenchIndex = LocalBench; OutSnapPos = PBench;
-        }
+        if (ChooseField) { bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PFieldW; }
+        else             { bOutIsField = false; OutLocalBenchIndex = LocalBench; OutSnapPos = PBenchW; }
         return true;
     }
 
-    // ── 하나만 후보
-    if (bFieldCandidate)
-    {
-        bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PField;
-        return true;
-    }
-    else
-    {
-        bOutIsField = false; OutLocalBenchIndex = LocalBench; OutSnapPos = PBench;
-        return true;
-    }
+    if (bFieldCandidate) { bOutIsField = true;  OutY = Y; OutX = X; OutSnapPos = PFieldW;  return true; }
+    else                 { bOutIsField = false; OutLocalBenchIndex = LocalBench; OutSnapPos = PBenchW; return true; }
 }
 
 void APCPlayerBoard::AttachToCombatBoard(APCCombatBoard* CombatBoardToFollow, bool bIsGuest)
 {
-	if (!IsValid(CombatBoardToFollow))
-		return;
+	if (!IsValid(CombatBoardToFollow)) return;
 
-	// 홈 위치 저장(한 번만 저장하고, 이미 붙어있다면 업데이트만)
-	if (!BattleBoard.IsValid())
-	{
-		SaveHomeTransform = GetActorTransform();
-	}
+	SaveHomeTransform = GetActorTransform();
 
-	BattleBoard = CombatBoardToFollow;
-
-	// 전장 보드 기준으로 위치/회전 맞추기 (+180 Yaw)
 	const FTransform BoardXf = CombatBoardToFollow->GetActorTransform();
-	const FVector   NewLoc   = BoardXf.GetLocation() + AttachWorldOffset;
-	const FRotator  BoardRot = BoardXf.Rotator();
-	const FRotator  NewRot   = FRotator(
-		BoardRot.Pitch,
-		FMath::UnwindDegrees(BoardRot.Yaw + AttachYawOffsetDeg),  // 요구: 180도 반전
-		BoardRot.Roll
-	);
-	
-	// 월드 변환 먼저 적용한 뒤…
-	SetActorLocationAndRotation(NewLoc, NewRot, /*bSweep=*/false, /*OutHit=*/nullptr, ETeleportType::TeleportPhysics);
+	const FRotator  NewRot(BoardXf.Rotator().Pitch,
+						   FMath::UnwindDegrees(BoardXf.Rotator().Yaw + AttachYawOffsetDeg),
+						   BoardXf.Rotator().Roll);
 
-	// 전장 보드에 부착(보드가 이동하면 같이 따라가도록) — 월드 변환 유지
-	AttachToActor(CombatBoardToFollow, FAttachmentTransformRules::KeepWorldTransform);
+	SetActorLocationAndRotation(BoardXf.GetLocation(), NewRot, false, nullptr, ETeleportType::TeleportPhysics);
+
+	// 인스턴스는 로컬이므로, 보드가 이동하면 같이 따라감. 그래도 재빌드하면 안전.
+	ResnapBenchUnitsToBoard(true);
+	BuildHISM();
 }
 
 void APCPlayerBoard::DetachFromCombatBoard()
 {
-	// 부착 해제
-	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
 	// 원래 홈 위치/회전으로 복귀
 	if (!SaveHomeTransform.Equals(FTransform::Identity))
 	{
 		SetActorTransform(SaveHomeTransform, /*bSweep=*/false, /*OutHit=*/nullptr, ETeleportType::TeleportPhysics);
 	}
-
+	
 	// 벤치 유닛들을 현재 PlayerBoard 기준 벤치 타일 위치로 재스냅
-	ResnapBenchUnitsToBoard();
-
-	BattleBoard = nullptr;
+	ResnapBenchUnitsToBoard(false);
+	BuildHISM();
 }
 
-void APCPlayerBoard::ResnapBenchUnitsToBoard()
+void APCPlayerBoard::ResnapBenchUnitsToBoard(bool bIsBattle)
 {
 	for (int32 i = 0; i < PlayerBench.Num(); ++i)
 	{
 		if (APCBaseUnitCharacter* Unit = PlayerBench[i].Unit)
 		{
-			const FVector Loc = PlayerBench[i].Position;
-			const FRotator Rot = FRotator(0,0,0);
+			const FVector Loc = ToWorld(SceneRoot,PlayerBench[i].Position);
+			FRotator Rot = FRotator(0,0,0);
+
+			if (bIsBattle)
+			{
+				Rot = FRotator(0,180,0);
+			}
+			
 			Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
-			Unit->ChangedOnTile(false);
 		}
 	}
 }
@@ -677,15 +702,15 @@ void APCPlayerBoard::ApplySnapshot(const FPlayerBoardSnapshot& In)
 		PlayerBench[i].Unit = In.BenchUnits[i];
 }
 
-FVector APCPlayerBoard::GetFieldWorldPos(int32 Y, int32 X) const
+FVector APCPlayerBoard::GetFieldWorldPos(int32 Y, int32 X) 
 {
 	const int32 i = IndexOf(Y,X);
-	return PlayerField.IsValidIndex(i) ? PlayerField[i].Position : FVector::ZeroVector;
+	return PlayerField.IsValidIndex(i) ? ToWorld(SceneRoot, PlayerField[i].Position) : FVector::ZeroVector;
 }
 
-FVector APCPlayerBoard::GetBenchWorldPos(int32 LocalBenchIndex) const
+FVector APCPlayerBoard::GetBenchWorldPos(int32 LocalBenchIndex) 
 {
-	return PlayerBench.IsValidIndex(LocalBenchIndex) ? PlayerBench[LocalBenchIndex].Position : FVector::ZeroVector;
+	return PlayerBench.IsValidIndex(LocalBenchIndex) ? ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position) : FVector::ZeroVector;
 }
 
 

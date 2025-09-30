@@ -113,7 +113,7 @@ private:
 	
 	// CombatManager / GameState 핸들러
 	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
-	TWeakObjectPtr<APCCombatManager> CombatManager;
+	APCCombatManager* CombatManager;
 	APCCombatManager* GetCombatManager();
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;

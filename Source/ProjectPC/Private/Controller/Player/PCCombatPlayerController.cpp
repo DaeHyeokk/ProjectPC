@@ -737,7 +737,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	CurrentDragUnit = Unit;
 
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
-	{
+	{		
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
 		Client_CurrentDragUnit(Unit);
 	}
@@ -760,6 +760,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
     }
 
     APCPlayerBoard* PB = GetPlayerBoard();
+	
     if (!IsValid(PB))
     {
         Client_DragEndResult(false, World, DragId, nullptr);
@@ -834,7 +835,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         const bool bPlaced =
             bDstField ? PB->PlaceUnitOnField(Y, X, Unit)
-                      : PB->PlaceUnitOnBench(BenchIdx, Unit);
+                      : PB->PlaceUnitOnBench(BenchIdx, Unit,false);
 
         if (bPlaced)
         {
@@ -887,7 +888,6 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         CurrentDragUnit = nullptr;
         CurrentDragId   = 0;
-        return;
     }
 }
 
@@ -896,21 +896,22 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	if (!IsLocalController())
 		return;
 
+	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	APCPlayerState* PC = GetPlayerState<APCPlayerState>();
-	if (!PC)
+	if (!GS || !PC )
 		return;
 	
+	bool bIsBattle = GS->bIsbattle();
 	
 	if (bOk && PreviewHero)
 	{
-		if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
+		if (APCPlayerBoard* PlayerBoard = PC->GetPlayerBoard())
 		{
-			BattleBoard->OnHism(true);
-
-			if (ShopWidget)
-			{
-				ShopWidget->ShowSellBox();
-			}
+			PlayerBoard->OnHISM(true,bIsBattle);
+		}
+		if (ShopWidget)
+		{
+			ShopWidget->ShowSellBox();
 		}
 	}
 	
@@ -929,6 +930,11 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	if (!PC)
 		return;
 
+	if (APCPlayerBoard* PlayerBoard = PC->GetPlayerBoard())
+	{
+		PlayerBoard->OnHISM(false,false);
+	}
+
 	if (ShopWidget)
 	{
 		float X, Y;
@@ -942,14 +948,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 			
 		ShopWidget->ShowPlayerShopBox();	
 	}
-
-	
-	if (APCCombatBoard* BattleBoard = FindBoardBySeatIndex(HomeBoardSeatIndex))
-	{
-		BattleBoard->OnHism(false);
-	}	
-
-	
+		
 	if (DragComponent)
 	{
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
@@ -964,26 +963,6 @@ bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit)
 	{
 		return (Unit->GetTeamIndex() == PCPlayerState->SeatIndex);
 	}
-	return false;
-}
-
-bool APCCombatPlayerController::RemoveFromCurrentSlot(UPCTileManager* TM, APCBaseUnitCharacter* Unit) const
-{
-	if (!TM || !Unit) return false;
-
-	// 필드에서 찾기
-	for (int32 x=0; x<TM->Rows; ++x)
-	{
-		for (int32 y=0; y<TM->Cols; ++y)
-		{
-			if (TM->GetFieldUnit(y, x) == Unit)
-			{
-				TM->RemoveFromField(y, x, /*bPreserveUnitBoard=*/true);
-				return true;
-			}
-		}
-	}
-
 	return false;
 }
 
@@ -1170,7 +1149,7 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 	const ENetMode NetMode   = GetWorld() ? GetWorld()->GetNetMode() : NM_Standalone;
 	const float    Now       = GetWorld() ? GetWorld()->TimeSeconds : 0.f;
 
-	UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
-		Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
+	// UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
+	// 	Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
 	
 }

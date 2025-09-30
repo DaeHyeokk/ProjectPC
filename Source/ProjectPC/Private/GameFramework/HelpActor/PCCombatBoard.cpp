@@ -76,7 +76,6 @@ void APCCombatBoard::BeginPlay()
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
-		TileManager->DebugLogField(true,true,TEXT("TileManger"));
 	}
 }
 

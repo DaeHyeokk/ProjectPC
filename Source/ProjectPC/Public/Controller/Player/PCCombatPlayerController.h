@@ -251,7 +251,7 @@ public:
 
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
-	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() { return CachedHoverUnit; }
+	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() const { return CachedHoverUnit; }
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
@@ -286,7 +286,6 @@ public:
 		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
 	}
 
-	
 
 protected:
 	// 서버 상태
@@ -295,7 +294,6 @@ protected:
 
 	// === 서버 헬퍼 ===
 	bool CanControlUnit(const APCBaseUnitCharacter* Unit) const;
-	bool RemoveFromCurrentSlot(UPCTileManager* TM, APCBaseUnitCharacter* Unit) const;
 	
 	// 이동 연출(클라) - 서버에서 호출
 	UFUNCTION(NetMulticast, Unreliable)

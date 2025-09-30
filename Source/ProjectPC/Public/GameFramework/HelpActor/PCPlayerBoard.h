@@ -20,7 +20,7 @@ struct FPlayerTile
 	UPROPERTY(BlueprintReadWrite)
 	FIntPoint UnitIntPoint = FIntPoint::NoneValue;
 		
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(Transient, BlueprintReadWrite)
 	FVector Position = FVector::ZeroVector;
 	
 	UPROPERTY(BlueprintReadWrite)
@@ -134,11 +134,30 @@ public:
 	UPROPERTY(EditAnywhere, Category = "HISM")
 	UMaterialInterface* BenchTileOverlayMaterial = nullptr;
 
+	UFUNCTION(BlueprintCallable, Category = "HISM")
+	void OnHISM(bool bIsOn, bool bIsBattle);
+	
 	void BuildHISM();
 
 protected:
 	
 	virtual void BeginPlay() override;
+
+	UPROPERTY(ReplicatedUsing=OnRep_FieldLocs)
+	TArray<FVector_NetQuantize10> FieldLocs;
+
+	UPROPERTY(ReplicatedUsing=OnRep_BenchLocs)
+	TArray<FVector_NetQuantize10> BenchLocs;
+
+	UFUNCTION()
+	void OnRep_FieldLocs();
+
+	UFUNCTION()
+	void OnRep_BenchLocs();
+
+	void RebuildHISM_FromArrays();
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -186,7 +205,7 @@ public:
     bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
-    bool PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit);
+    bool PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit, bool bIsBattle);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
     bool RemoveFromField(int32 Y, int32 X);
@@ -223,7 +242,7 @@ public:
     void DetachFromCombatBoard();
 
 	UFUNCTION(BlueprintCallable, Category="PlayerBoard|Battle")
-	void ResnapBenchUnitsToBoard(); // 전투 종료시 호출 (벤치 복귀)
+	void ResnapBenchUnitsToBoard(bool bIsBattle); // 전투 종료시 호출 (벤치 복귀)
 	
 	// 평시 위치 / 회전 복구용
 	UPROPERTY(Transient)
@@ -263,8 +282,17 @@ public:
 	
     // 내부 헬퍼
     bool EnsureExclusive(APCBaseUnitCharacter* Unit);
-    FVector GetFieldWorldPos(int32 Y, int32 X) const;
-    FVector GetBenchWorldPos(int32 LocalBenchIndex) const;
+    FVector GetFieldWorldPos(int32 Y, int32 X);
+    FVector GetBenchWorldPos(int32 LocalBenchIndex);
+
+	static FORCEINLINE FVector ToWorld(const USceneComponent* Root, const FVector& Local)
+	{
+		return Root ? Root->GetComponentTransform().TransformPosition(Local) : Local;
+	}
+	static FORCEINLINE FVector ToLocal(const USceneComponent* Root, const FVector& World)
+	{
+		return Root ? Root->GetComponentTransform().InverseTransformPosition(World) : World;
+	}
 };
 	
 

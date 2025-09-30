@@ -81,9 +81,9 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	{
 		if (auto PC = Cast<APCCombatPlayerController>(PS->GetPlayerController()))
 		{
-			if (auto TileManager = PC->GetTileManager())
+			if (auto PlayerBoard = PC->GetPlayerBoard())
 			{
-				if (!TileManager->RemoveFromBoard(Unit))
+				if (!PlayerBoard->RemoveFromBoard(Unit))
 				{
 					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 					return;

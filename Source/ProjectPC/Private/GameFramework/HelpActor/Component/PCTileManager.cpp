@@ -304,7 +304,7 @@ bool UPCTileManager::EnsureExclusive(APCBaseUnitCharacter* InUnit)
 	const FIntPoint GridPoint = GetFieldUnitGridPoint(InUnit);
 	if (GridPoint != FIntPoint::NoneValue)
 	{
-		RemoveFromField(GridPoint.Y, GridPoint.X, false);
+		RemoveFromField(GridPoint.X, GridPoint.Y, false);
 		return true;
 	}
 	
@@ -364,11 +364,11 @@ void UPCTileManager::DebugLogField(bool bAsGrid /*=true*/, bool bShowOccupiedLis
     // 그리드 출력 (행=Y, 열=X)
     if (bAsGrid)
     {
-        for (int32 y = 0; y < Rows; ++y)
+    	for (int32 y = 0; y < Cols; ++y)
         {
             FString Line;
             Line.Reserve(Cols * 4);
-            for (int32 x = 0; x < Cols; ++x)
+    		for (int32 x = 0; x < Rows; ++x)
             {
                 const int32 i = y * Rows + x; // ⚠️ 네가 쓰는 규칙: IndexOf(Y,X) = Y*Rows + X
 
@@ -386,7 +386,7 @@ void UPCTileManager::DebugLogField(bool bAsGrid /*=true*/, bool bShowOccupiedLis
                 Line.AppendChar(Mark);
                 Line.Append(TEXT("  "));
             }
-            UE_LOG(LogTemp, Log, TEXT("[Y=%d] %s"), y, *Line);
+    		UE_LOG(LogTemp, Log, TEXT("[Y=%d] %s"), y, *Line);
         }
     }
 

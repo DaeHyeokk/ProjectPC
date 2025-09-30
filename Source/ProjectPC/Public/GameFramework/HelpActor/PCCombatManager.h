@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PCPlayerBoard.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "GameFramework/Actor.h"
 #include "PCCombatManager.generated.h"
 
+struct FPlayerBoardSnapshot;
 enum class ETileFacing : uint8;
 class APCPlayerBoard;
 class APCPlayerCharacter;
@@ -32,15 +34,15 @@ struct FCombatManager_FieldSlot
 };
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FBoardFieldSnapShot
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	TWeakObjectPtr<APCPlayerBoard> PlayerBoard;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	TArray<FCombatManager_FieldSlot> Field; // (Col, Row, Unit)만 저장
 
 	void Reset()
@@ -63,6 +65,9 @@ struct FCombatManager_Pair
 	FBoardFieldSnapShot HostSnapShot;
 	UPROPERTY()
 	FBoardFieldSnapShot GuestSnapShot;
+
+	UPROPERTY()
+	FPlayerBoardSnapshot PvESnapShot;
 	
 	// PVE 지원
 	UPROPERTY()
@@ -219,7 +224,6 @@ private:
 public:
 	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;
-	int32 FindFirstFreeBenchIndex(UPCTileManager* TM, bool bEnemySide) const;
 
 	// 데미지 관련
 public:

@@ -189,6 +189,8 @@ void APCCombatManager::StartAllBattle()
 		PlacePlayerBoardToTM(HostPB,  HostTM, false,false, ETileFacing::Friendly);
 		PlacePlayerBoardToTM(GuestPB, HostTM, bMirrorRows, bMirrorCols, ETileFacing::Enemy);
 
+		HostTM->DebugLogField(true,true,FString("CombatManager"));
+
 		// 생존 수 카운트 + 바인딩
 		CountAliveOnHostBoardForPair(PairIndex);
 		BindUnitOnBoardForPair(PairIndex);
@@ -211,19 +213,16 @@ void APCCombatManager::FinishAllBattle()
 		APCCombatBoard* Guest = Pair.Guest.Get();
 		if (!Host) continue;
 
+		// 언바인드
+		UnbindAllForPair(PairIndex);
+
 		UPCTileManager* HostTM = Host->TileManager;
 		if (HostTM)
 		{
 			// 전장 필드 비우기
 			HostTM->ClearAll();
 		}
-
-		// === PlayerBoard 필드 복구
-		RestoreFieldSnapShot(Pair.HostSnapShot);
-		RestoreFieldSnapShot(Pair.GuestSnapShot);
-		Pair.HostSnapShot.Reset();
-		Pair.GuestSnapShot.Reset();
-
+		
 		// === PlayerBoard 분리(원래 자리로 복귀 + 벤치 스냅)
 		if (APCPlayerBoard* HostPB = FindPlayerBoardBySeat(Host->BoardSeatIndex))
 			HostPB->DetachFromCombatBoard();
@@ -233,8 +232,12 @@ void APCCombatManager::FinishAllBattle()
 				GuestPB->DetachFromCombatBoard();
 		}
 
-		// 언바인드 및 마무리
-		UnbindAllForPair(PairIndex);
+		// === PlayerBoard 필드 복구
+		RestoreFieldSnapShot(Pair.HostSnapShot);
+		RestoreFieldSnapShot(Pair.GuestSnapShot);
+		Pair.HostSnapShot.Reset();
+		Pair.GuestSnapShot.Reset();
+		
 		Pair.bRunning = false;
 	}
 }
@@ -244,47 +247,59 @@ void APCCombatManager::PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTile
 {
 	if (!IsValid(PlayerBoard) || !IsValid(TM)) return;
 	
-	// 1) TM 필드 깨끗하게 비우기 (도착지 충돌 방지)
-	for (int32 y = 0; y < TM->Cols; ++y)
-	{
-		for (int32 x = 0; x < TM->Rows; ++x)
-		{
-			TM->RemoveFromField(y, x, /*bPreserveUnitBoard=*/true);
-		}
-	}
-		
+	// 1) PB 필드 스냅샷 (Y=Col, X=Row)
+	struct FCaptured { int32 Y; int32 X; TWeakObjectPtr<APCBaseUnitCharacter> Unit; };
+	TArray<FCaptured> Capture;
+	Capture.Reserve(PlayerBoard->Rows * PlayerBoard->Cols);
 
-	// 2) PB에서 필드 스캔 → TM에 배치
-	
-	for (int32 y = 0; y < PlayerBoard->Cols; ++y)       // Y(=Cols)
+	for (int32 y = 0; y < PlayerBoard->Cols; ++y)
 	{
-		for (int32 x = 0; x < PlayerBoard->Rows; ++x)   // X(=Rows)
+		for (int32 x = 0; x < PlayerBoard->Rows; ++x)
 		{
-			const int32 i = PlayerBoard->IndexOf(y, x); // PB는 IndexOf(Y,X)
+			const int32 i = PlayerBoard->IndexOf(y, x); // PB: IndexOf(Y,X) = Y*Rows + X
 			if (!PlayerBoard->PlayerField.IsValidIndex(i)) continue;
 
-			APCBaseUnitCharacter* Unit = PlayerBoard->PlayerField[i].Unit;
-			if (!IsValid(Unit)) continue;
+			if (APCBaseUnitCharacter* U = PlayerBoard->PlayerField[i].Unit)
+			{
+				Capture.Add({ y, x, U });
+			}
+		}
+	}
 
-			int32 dstY = y;
-			int32 dstX = x;
+	// 2) TM 기준으로 좌표 미러 계산 후 배치
+	for (const auto& E : Capture)
+	{
+		// TM의 크기를 기준으로 미러링
+		const int32 dstX = MirrorRows ? (TM->Rows - 1 - E.X) : E.X; // Row
+		const int32 dstY = MirrorCols ? (TM->Cols - 1 - E.Y) : E.Y; // Col
 
-			if (MirrorCols) dstY = PlayerBoard->Cols - 1 - dstY; // Y축 반전
-			if (MirrorRows) dstX = PlayerBoard->Rows - 1 - dstX; // X축 반전
+		// 범위 체크 (PB/TM 크기 다를 수 있음)
+		if (dstY < 0 || dstY >= TM->Cols || dstX < 0 || dstX >= TM->Rows)
+			continue;
 
-			// 혹시 다른 곳에 있던 유닛이면 빼주고
-			TM->EnsureExclusive(Unit);
-
-			// 빈칸 전제(위에서 싹 비웠으니 true가 나와야 정상)
+		if (APCBaseUnitCharacter* Unit = E.Unit.Get())
+		{
+			TM->EnsureExclusive(Unit); // 다른 TM/슬롯에 있던 경우 분리
 			const bool ok = TM->PlaceUnitOnField(dstY, dstX, Unit, Facing);
+
+			// 팀 보장
+			if (ok && Unit->GetTeamIndex() != PlayerBoard->PlayerIndex)
+			{
+				Unit->SetTeamIndex(PlayerBoard->PlayerIndex);
+			}
+
+			UE_LOG(LogTemp, Warning,
+				TEXT("[PlacePB->TM] Place success dst=(Y=%d,X=%d) Unit=%s, UnitTeamIndex = %d"),
+				dstY, dstX, *GetNameSafe(E.Unit.Get()), E.Unit.Get()->GetTeamIndex());
+				
 			if (!ok)
 			{
 				UE_LOG(LogTemp, Warning,
 					TEXT("[PlacePB->TM] Place failed dst=(Y=%d,X=%d) Unit=%s"),
-					dstY, dstX, *GetNameSafe(Unit));
+					dstY, dstX, *GetNameSafe(E.Unit.Get()));
 			}
-		}
-	}
+		}		
+	}	
 }
 
 APCCombatBoard* APCCombatManager::FindBoardBySeatIndex(UWorld* World, int32 SeatIndex)
@@ -490,39 +505,46 @@ int32 APCCombatManager::StartPvEBattleForSeat(int32 HostSeatIndex)
 
 	APCPlayerBoard* HostPB = FindPlayerBoardBySeat(HostSeatIndex);
 	if (!HostPB) return INDEX_NONE;
-	
-	// 페어 생성
+
 	const int32 PairIndex = Pairs.AddDefaulted();
 	FCombatManager_Pair& Pair = Pairs[PairIndex];
 	Pair.ResetRuntime();
-	Pair.Host   = HostBoard;
-	Pair.Guest  = nullptr;
-	Pair.bIsPvE = true;
+	Pair.Host     = HostBoard;
+	Pair.Guest    = nullptr;
+	Pair.bIsPvE   = true;
 	Pair.bRunning = true;
 
-	// PB 스냅 + TM 초기화 + PB 배치(Friendly)
-	TakeFieldSnapShot(HostPB, Pair.HostSnapShot);
+	// 1) 보드 스냅샷 저장
+	HostPB->MakeSnapshot(Pair.PvESnapShot);
+
+	// 2) 전장 초기화
 	UPCTileManager* TM = HostBoard->TileManager;
 	TM->ClearAll();
-	PlacePlayerBoardToTM(HostPB, TM, false, false, ETileFacing::Friendly);
 
-	// 크립 스폰/배치
+	// 3) 보드 → TM 배치(미러 없음, Friendly)
+	for (int32 y=0; y<HostPB->Cols; ++y)
+	{
+		for (int32 x=0; x<HostPB->Rows; ++x)
+		{
+			const int32 i = HostPB->IndexOf(y,x);
+			if (!HostPB->PlayerField.IsValidIndex(i)) continue;
+
+			if (APCBaseUnitCharacter* U = HostPB->PlayerField[i].Unit)
+			{
+				TM->EnsureExclusive(U);
+				TM->PlaceUnitOnField(y, x, U, ETileFacing::Friendly);
+			}
+		}
+	}
+
+	// 4) 크립 스폰/배치
 	int32 StageOne=0, RoundOne=0;
 	if (GetCurrentStageRoundOne(StageOne, RoundOne))
 	{
 		TArray<FIntPoint> Points; BuildCreepPoints(StageOne, RoundOne, Points);
 		for (const FIntPoint& YX : Points)
-		{
 			if (APCBaseUnitCharacter* Creep = SpawnCreepAt(HostBoard, StageOne, RoundOne, YX))
-			{
-				if (!UnitToPairIndex.Contains(Creep))
-				{
-					Creep->OnUnitDied.AddDynamic(this, &APCCombatManager::OnAnyUnitDied);
-					UnitToPairIndex.Add(Creep, PairIndex);
-				}
-				Pair.PvECreeps.Add(Creep);
-			}
-		}
+			{ Pair.PvECreeps.Add(Creep); UnitToPairIndex.Add(Creep, PairIndex); Creep->OnUnitDied.AddDynamic(this, &ThisClass::OnAnyUnitDied); }
 	}
 
 	CountAliveOnHostBoardForPair(PairIndex);
@@ -544,22 +566,44 @@ void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 	APCCombatBoard* Host = Pair.Host.Get();
 	if (!Host || !Host->TileManager) return;
 
-	// 1) 크립 제거
+	UPCTileManager* TM = Host->TileManager;
+
+	// 1) 크립 제거(필드에서만 빼면 충분)
 	for (auto& WU : Pair.PvECreeps)
 		if (APCBaseUnitCharacter* Creep = WU.Get())
-			RemoveUnitFromAny(Host->TileManager, Creep);
+			RemoveUnitFromAny(TM, Creep);
+	Pair.PvECreeps.Reset();
 
-	// 2) TM 비우고 PB 복구
-	Host->TileManager->ClearAll();
-	RestoreFieldSnapShot(Pair.HostSnapShot);
-	Pair.HostSnapShot.Reset();
+	// 2) TM 비우기
+	TM->ClearAll();
 
-	// 3) PB Detach
+	// 3) 보드 스냅샷 복구 + 유닛 위치 재스냅
 	if (APCPlayerBoard* HostPB = FindPlayerBoardBySeat(HostSeatIndex))
-		HostPB->DetachFromCombatBoard();
+	{
+		HostPB->ApplySnapshot(Pair.PvESnapShot);
 
-	// 4) 언바인드/정리
+		// 스냅샷대로 배열 복구 후, 액터를 보드 타일까지 이동
+		for (int32 y=0; y<HostPB->Cols; ++y)
+		{
+			for (int32 x=0; x<HostPB->Rows; ++x)
+			{
+				const int32 i = HostPB->IndexOf(y,x);
+				if (!HostPB->PlayerField.IsValidIndex(i)) continue;
+
+				if (APCBaseUnitCharacter* U = HostPB->PlayerField[i].Unit)
+				{
+					const FVector Loc = HostPB->GetFieldWorldPos(y,x);
+					const FRotator Rot(0.f, HostPB->GetActorRotation().Yaw, 0.f);
+					U->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
+					U->ChangedOnTile(false);
+				}
+			}
+		}
+	}
+
+	// 4) 언바인드 및 정리
 	UnbindAllForPair(PairIndex);
+	Pair.PvESnapShot = {};        // 스냅샷 해제
 	Pair.ResetRuntime();
 	Pair.bRunning = false;
 	
@@ -638,10 +682,9 @@ void APCCombatManager::RestoreFieldSnapShot(const FBoardFieldSnapShot& Snap)
 		if (APCBaseUnitCharacter* Unit = FieldSnap.Unit.Get())
 		{
 			PlayerBoard->PlayerField[i].Unit = Unit;
-			const FVector Loc = PlayerBoard->PlayerField[i].Position;
+			const FVector Loc = PlayerBoard->GetFieldWorldPos(FieldSnap.Col, FieldSnap.Row);
 			const FRotator Rot(0.f, PlayerBoard->GetActorRotation().Yaw,0.f);
 			Unit->SetActorLocationAndRotation(Loc,Rot,false,nullptr, ETeleportType::TeleportPhysics);
-			Unit->ChangedOnTile(true);
 		}
 	}
 }

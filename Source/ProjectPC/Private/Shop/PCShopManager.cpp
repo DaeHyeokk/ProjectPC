@@ -100,18 +100,19 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
+	const bool bIsBattle = GS->bIsbattle();
+
 	auto PlayerBoard = TargetPlayer->GetPlayerBoard();
 	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 
-	if (GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Preparation && GS->GetGameStateTag() != GameStateTags::Game_State_Combat_Active)
+	auto BenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
+
+	if (BenchIndex != INDEX_NONE)
 	{
-		auto BenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
-		if (BenchIndex != INDEX_NONE)
-		{
-			PlayerBoard->PlaceUnitOnBench(BenchIndex, Unit);
-		}
+		PlayerBoard->PlaceUnitOnBench(BenchIndex, Unit, bIsBattle);
 	}
+	
 	
 	UnitLevelUp(TargetPlayer, UnitTag, 0);
 	TargetPlayer->PurchasedSlots.Add(SlotIndex);

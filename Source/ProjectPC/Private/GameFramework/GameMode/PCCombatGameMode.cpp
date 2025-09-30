@@ -344,7 +344,11 @@ void APCCombatGameMode::Step_Return()
 		if (APCCombatGameState* PCGameState = GetCombatGameState())
 		{
 			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_End);
-			CombatManager->FinishAllPve();
+
+			if (APCCombatManager* PCCombatManager = GetCombatManager())
+			{
+				PCCombatManager->FinishAllPve();
+			}
 		}
 	}
 }
@@ -379,9 +383,9 @@ void APCCombatGameMode::Step_CreepSpawn()
 		{
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				if (APCCombatBoard* Board = PCGameState->GetBoardBySeat(PCPlayerState->SeatIndex))
+				if (APCCombatManager* PCCombatManager = GetCombatManager())
 				{
-					CombatManager->StartPvEBattleForSeat(PCPlayerState->SeatIndex);
+					PCCombatManager->StartPvEBattleForSeat(PCPlayerState->SeatIndex);
 				}
 			}
 		}
@@ -415,7 +419,7 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
 							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1);
-							PCPlayerBoard->PlaceUnitOnBench(0,Unit);
+							PCPlayerBoard->PlaceUnitOnBench(0,Unit,false);
 							++SpawnIndex;
 						}
 					}
@@ -584,6 +588,7 @@ void APCCombatGameMode::CollectPlayerBoards()
 			}
 		}
 	}
+	
 	UE_LOG(LogTemp, Log, TEXT("[GM] PlayerBoards collected: %d"), AllPlayerBoards.Num());
 }
 
@@ -606,7 +611,7 @@ void APCCombatGameMode::BindPlayerBoardsToPlayerStates()
 		PlayerBoard->OwnerPlayerState = PCPS;
 		// 보드에 내 Seat 기록(검색용)
 		PCPS->SetPlayerBoard(PlayerBoard);
-
+		ForceNetUpdate();
 		UE_LOG(LogTemp, Warning, TEXT("PlayerBoardIndex : %d, PCPSSeatIndex : %d, OwnerPlayerState : %p "), PlayerBoard->PlayerIndex, PCPS->SeatIndex, PlayerBoard->OwnerPlayerState)
 	}
 }
@@ -625,12 +630,12 @@ APCPlayerBoard* APCCombatGameMode::FindPlayerBoardBySeat(int32 SeatIndex) const
 
 APCCombatManager* APCCombatGameMode::GetCombatManager()
 {
-	if (CombatManager.IsValid())
-		return CombatManager.Get();
+	if (CombatManager)
+		return CombatManager;
 	for (TActorIterator<APCCombatManager> It(GetWorld()); It; ++It)
 	{
 		CombatManager = *It;
-		return CombatManager.Get();
+		return CombatManager;
 	}
 	return nullptr;
 }
