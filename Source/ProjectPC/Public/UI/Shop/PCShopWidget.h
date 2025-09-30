@@ -8,6 +8,7 @@
 
 struct FOnAttributeChangeData;
 
+class UImage;
 class UHorizontalBox;
 class UOverlay;
 class UButton;
@@ -41,23 +42,26 @@ protected:
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* PlayerShopBox;
-	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* ShopBox;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UOverlay* SellBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UWidgetSwitcher* WidgetSwitcher;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_BuyXP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_Reroll;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UButton* Btn_ShopLock;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* GoldBalance;
-	
+
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UWidgetSwitcher* WidgetSwitcher;
+	UImage* Img_ShopLock;
 
 	// Cost Probability
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -79,6 +83,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UProgressBar* XPBar;
 
+	// ShopLock
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* ShopLock;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* ShopUnlock;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
@@ -94,6 +104,8 @@ private:
 	void OnClickedBuyXP();
 	UFUNCTION()
 	void OnClickedReroll();
+	UFUNCTION()
+	void OnClickedShopLock();
 	
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);

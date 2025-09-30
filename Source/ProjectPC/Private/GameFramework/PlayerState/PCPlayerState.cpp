@@ -8,6 +8,7 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -92,9 +93,16 @@ void APCPlayerState::AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Valu
 
 void APCPlayerState::ApplyRoundReward()
 {
-	if (PlayerAbilitySystemComponent && HasAuthority())
+	if (!HasAuthority()) return;
+	
+	if (PlayerAbilitySystemComponent)
 	{
 		PlayerAbilitySystemComponent->ApplyPlayerRoundRewardEffect();
+	}
+	
+	if (auto PC = Cast<APCCombatPlayerController>(GetPlayerController()))
+	{
+		PC->Server_ShopRefresh(0);
 	}
 }
 

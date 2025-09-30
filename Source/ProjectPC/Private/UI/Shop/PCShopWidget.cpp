@@ -3,11 +3,14 @@
 
 #include "UI/Shop/PCShopWidget.h"
 
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
 #include "Components/Overlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Components/WidgetSwitcher.h"
 #include "GameplayEffectTypes.h"
 
 #include "UI/Shop/PCUnitSlotWidget.h"
@@ -15,8 +18,6 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Components/WidgetSwitcher.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -28,6 +29,8 @@ bool UPCShopWidget::Initialize()
 	Btn_BuyXP->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedBuyXP);
 	if (!Btn_Reroll) return false;
 	Btn_Reroll->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedReroll);
+	if (!Btn_ShopLock) return false;
+	Btn_ShopLock->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedShopLock);
 
 	return true;
 }
@@ -150,6 +153,28 @@ void UPCShopWidget::OnClickedReroll()
 	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
 	{
 		PC->ShopRequest_ShopRefresh(2);
+	}
+}
+
+void UPCShopWidget::OnClickedShopLock()
+{
+	if (!Img_ShopLock || !ShopLock || !ShopUnlock) return;
+
+	auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer());
+	if (!PC) return;
+
+	const auto& CurrentBrush = Img_ShopLock->GetBrush();
+	auto CurrentResource = CurrentBrush.GetResourceObject();
+
+	if (CurrentResource && CurrentResource == ShopLock)
+	{
+		Img_ShopLock->SetBrushFromTexture(ShopUnlock);
+		PC->ShopRequest_ShopLock(false);
+	}
+	else
+	{
+		Img_ShopLock->SetBrushFromTexture(ShopLock);
+		PC->ShopRequest_ShopLock(true);
 	}
 }
 

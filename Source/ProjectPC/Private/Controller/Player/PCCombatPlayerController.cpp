@@ -289,8 +289,19 @@ void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
 	}
 }
 
+void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
+{
+	if (IsLocalController())
+	{
+		Server_ShopLock(ShopLockState);
+	}
+}
+
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
+	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
+	if (GoldCost == 0 && bIsShopLocked) return;
+	
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
@@ -422,6 +433,11 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	ASC->HandleGameplayEvent(GA_Tag, &EventData);
 	
 	SetSlotHidden(SlotIndex);
+}
+
+void APCCombatPlayerController::Server_ShopLock_Implementation(bool ShopLockState)
+{
+	bIsShopLocked = ShopLockState;
 }
 
 void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)

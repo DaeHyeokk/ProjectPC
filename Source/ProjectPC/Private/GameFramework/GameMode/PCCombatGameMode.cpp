@@ -237,12 +237,12 @@ void APCCombatGameMode::Step_Setup()
 		{
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				// PCPlayerState->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerXP,2);
 				PCPlayerState->ApplyRoundReward();
 			}
 			
 			PCPlayerController->Client_ShowWidget();
-			PCPlayerController->Server_ShopRefresh(0);
+			// PCPlayerController->Server_ShopRefresh(0);
+			
 		}
 	}
 }
