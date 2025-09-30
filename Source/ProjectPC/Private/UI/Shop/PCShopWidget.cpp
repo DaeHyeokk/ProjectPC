@@ -66,13 +66,13 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 
 void UPCShopWidget::OpenMenu()
 {
-	this->AddToViewport(100);
-	this->SetVisibility(ESlateVisibility::Hidden);
+	AddToViewport(100);
+	SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UPCShopWidget::CloseMenu()
 {
-	this->RemoveFromParent();
+	RemoveFromParent();
 }
 
 void UPCShopWidget::SetupShopSlots()

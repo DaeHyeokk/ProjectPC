@@ -6,8 +6,10 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 
 #include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -50,8 +52,30 @@ APCPlayerCharacter::APCPlayerCharacter()
 
 void APCPlayerCharacter::PlayerDie()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Player Die"));
-	bIsDead = true;
+	GetCharacterMovement()->StopMovementImmediately();
+	
+	auto PC = Cast<APCCombatPlayerController>(GetController());
+	if (!PC) return;
+	
+	if (HasAuthority())
+	{
+		bIsDead = true;
+
+		PC->Client_HideWidget();
+
+		// 죽은 플레이어가 가지고 있던 유닛 상점 반환
+	}
+
+	if (IsLocallyControlled())
+	{
+		DisableInput(PC);
+		PC->SetInputMode(FInputModeUIOnly());
+	}
+}
+
+void APCPlayerCharacter::OnPlayerDeathAnimFinished()
+{
+	Destroy();
 }
 
 void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

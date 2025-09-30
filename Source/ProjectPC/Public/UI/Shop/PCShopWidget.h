@@ -104,9 +104,10 @@ public:
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)
 	void CloseMenu();
-	UFUNCTION(BlueprintCallable)
+	
+	UFUNCTION()
 	void SetupShopSlots();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void SetupPlayerInfo();
 	
 private:
