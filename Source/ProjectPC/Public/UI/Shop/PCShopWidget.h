@@ -59,9 +59,13 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* GoldBalance;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* WinningStreak;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_ShopLock;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_WinningStreak;
 
 	// Cost Probability
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -89,6 +93,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* ShopUnlock;
 
+	// WinningStreak
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* Winning;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* Losing;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
@@ -110,6 +120,7 @@ private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
+	void OnPlayerWinningStreakChanged();
 
 public:
 	void SetSlotHidden(int32 SlotIndex);

@@ -132,8 +132,15 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 	return ShopSlots;
 }
 
+void APCPlayerState::OnRep_PlayerWinningStreak()
+{
+	OnWinningStreakUpdated.Broadcast();
+}
+
 void APCPlayerState::PlayerWin()
 {
+	if (!HasAuthority()) return;
+	
 	if (PlayerWinningStreak <= 0)
 	{
 		PlayerWinningStreak = 1;
@@ -146,6 +153,8 @@ void APCPlayerState::PlayerWin()
 
 void APCPlayerState::PlayerLose()
 {
+	if (!HasAuthority()) return;
+	
 	if (PlayerWinningStreak >= 0)
 	{
 		PlayerWinningStreak = -1;
@@ -172,4 +181,5 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIdentified);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
+	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
 }

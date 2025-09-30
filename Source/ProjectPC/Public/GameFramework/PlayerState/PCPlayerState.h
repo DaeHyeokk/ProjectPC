@@ -16,6 +16,8 @@
 
 
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
+DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
+DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
 
 UCLASS()
 class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
@@ -103,7 +105,6 @@ public:
 	UPROPERTY()
 	TSet<int32> PurchasedSlots;
 	
-	DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 	FOnShopSlotsUpdated OnShopSlotsUpdated;
 	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
@@ -114,16 +115,21 @@ public:
 #pragma region Combat
 
 private:
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)
 	int32 PlayerWinningStreak = 0;
 
+	UFUNCTION()
+	void OnRep_PlayerWinningStreak();
+
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void PlayerWin();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void PlayerLose();
-	UFUNCTION(BlueprintCallable)
-	int32 GetPlayerWinningStreak() const;
+
+	FOnWinningStreakUpdated OnWinningStreakUpdated;
 	
+	int32 GetPlayerWinningStreak() const;
+
 #pragma endregion Combat
 };

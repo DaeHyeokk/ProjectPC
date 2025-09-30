@@ -39,10 +39,13 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
 
-	NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
-	{
-		SetupShopSlots();
-	});
+	// NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
+	// {
+	// 	SetupShopSlots();
+	// });
+
+	NewPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
+	NewPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
 	
 	SetupShopSlots();
 	SetupPlayerInfo();
@@ -244,6 +247,26 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 		{
 			UnitSlotWidget->SetupButton();
 		}
+	}
+}
+
+void UPCShopWidget::OnPlayerWinningStreakChanged()
+{
+	if (!WinningStreak || !Img_WinningStreak || !Winning || !Losing) return;
+
+	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+
+	auto WinningCount = PS->GetPlayerWinningStreak();
+	if (WinningCount > 0)
+	{
+		Img_WinningStreak->SetBrushFromTexture(Winning);
+		WinningStreak->SetText(FText::AsNumber(WinningCount));
+	}
+	else
+	{
+		Img_WinningStreak->SetBrushFromTexture(Losing);
+		WinningStreak->SetText(FText::AsNumber(-WinningCount));
 	}
 }
 
