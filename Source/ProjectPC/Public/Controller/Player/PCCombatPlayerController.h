@@ -94,6 +94,7 @@ private:
 
 private:
 	bool bIsShopLocked = false;
+	bool bIsShopRequestInProgress = false;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
@@ -125,8 +126,11 @@ public:
 	void Server_BuyUnit(int32 SlotIndex);
 	UFUNCTION(Server, Reliable)
 	void Server_ShopLock(bool ShopLockState);
+	
 	UFUNCTION(Client, Reliable)
-	void SetSlotHidden(int32 SlotIndex);
+	void Client_SetSlotHidden(int32 SlotIndex);
+	UFUNCTION(Client, Reliable)
+	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
 

@@ -241,8 +241,6 @@ void APCCombatGameMode::Step_Setup()
 			}
 			
 			PCPlayerController->Client_ShowWidget();
-			// PCPlayerController->Server_ShopRefresh(0);
-			
 		}
 	}
 }
