@@ -257,6 +257,10 @@ void APCCombatGameMode::Step_Travel()
 	{
 	case EPCStageType::PvP:
 		{
+			if (APCCombatGameState* PCGameState = GetCombatGameState())
+			{
+				PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
+			}
 			
 			if (APCCombatManager* PCCombatManager = GetCombatManager())
 			{
@@ -264,11 +268,7 @@ void APCCombatGameMode::Step_Travel()
 				PCCombatManager->TravelPlayersForAllPairs(TravelCameraBlend);
 				PCCombatManager->StartAllBattle();
 			}
-
-			if (APCCombatGameState* PCGameState = GetCombatGameState())
-			{
-				PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
-			}
+			
 			break;
 		}
 	case EPCStageType::Carousel:

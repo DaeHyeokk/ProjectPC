@@ -81,10 +81,10 @@ void UPCShopManager::OnGameStateChanged(FGameplayTag NewTag)
 			
 			if (auto PS = (*It)->GetPlayerState<APCPlayerState>())
 			{
-				auto Board = GS->GetBoardBySeat(PS->SeatIndex);
+				auto Board = PS->GetPlayerBoard();
 				if (!Board) continue;
 
-				auto BenchUnitTags = Board->TileManager->GetAllBenchUnitTag();
+				auto BenchUnitTags = Board->GetAllBenchUnitTag();
 				for (int i = 0; i < BenchUnitTags.Num(); ++i)
 				{
 					UnitLevelUp(PS, BenchUnitTags[i], 0);

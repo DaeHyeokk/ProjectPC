@@ -779,7 +779,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 
 void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
-	 APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
+	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
     const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
 
     // 드래그 유효성
@@ -1125,6 +1125,12 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	bool bField=false; int32 Y=-1, X=-1, BenchIdx=-1; FVector Snap=World;
 	const bool bPreferField = !bInBattle; // ✅ 전투 중엔 벤치 우선
 	if (!PB->WorldAnyTile(World, bPreferField, bField, Y, X, BenchIdx, Snap))
+	{
+		Client_TileHoverUnit(nullptr);
+		return;
+	}
+
+	if (bInBattle && bField)
 	{
 		Client_TileHoverUnit(nullptr);
 		return;

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PCPlayerBoard.generated.h"
 
+struct FGameplayTag;
 class UPCTileManager;
 class APCCombatBoard;
 class APCPlayerState;
@@ -199,6 +200,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "LevelUp")
 	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
 
+	UFUNCTION(BlueprintCallable, Category = "LevelUp")
+	TArray<FGameplayTag> GetAllBenchUnitTag();
     // ─────────────────────────────────────────────────────────────
     // 2) 배치/이동 (플레이 중)
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
