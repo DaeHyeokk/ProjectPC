@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
@@ -20,12 +21,21 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer CharacterTags;
+	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+	
+#pragma region PlayerDead
 	
 	UPROPERTY(Replicated)
 	bool bIsDead;
@@ -38,6 +48,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void OnPlayerDeathAnimFinished();
-	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+#pragma endregion PlayerDead
+
+public:
+	UFUNCTION(Client, Reliable)
+	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
 };

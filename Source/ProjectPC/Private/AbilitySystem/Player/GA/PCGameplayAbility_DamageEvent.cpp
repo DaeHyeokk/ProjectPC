@@ -8,6 +8,8 @@
 
 #include "BaseGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Character/Player/PCPlayerCharacter.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
 
@@ -65,35 +67,69 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
+	APawn* InstigatorPawn = nullptr;
+	APawn* TargetPawn = nullptr;
+
+	FGameplayTag CharacterTag;
+	FGameplayTag AttackTypeTag;
+	
+	if (auto InstigatorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorPS))
+	{
+		InstigatorPawn = Cast<APawn>(InstigatorASC->GetAvatarActor());
+
+		FGameplayTagContainer InstigatorTags;
+		InstigatorASC->GetOwnedGameplayTags(InstigatorTags);
+
+		for (const FGameplayTag& Tag : InstigatorTags)
+		{
+			if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Player.Type"))))
+			{
+				CharacterTag = Tag;
+			}
+			else if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Player.Action.Attack"))))
+			{
+				AttackTypeTag = Tag;
+			}
+		}
+	}
+	
+	if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPS.Get()))
+	{
+		TargetPawn = Cast<APawn>(TargetASC->GetAvatarActor());
+	}
+	
+	if (!InstigatorPawn || !TargetPawn)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if (PlayerAttackAnimData)
+	{
+		if (auto AttackMontage = PlayerAttackAnimData->GetAttackMontage(CharacterTag, AttackTypeTag))
+		{
+			if (auto InstigatorChar = Cast<ACharacter>(InstigatorPawn))
+			{
+				InstigatorChar->PlayAnimMontage(AttackMontage);
+
+				if (auto* PCChar = Cast<APCPlayerCharacter>(InstigatorChar))
+				{
+					PCChar->Client_PlayMontage(AttackMontage, 1.f);
+				}
+			}
+		}
+	}
+
 	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
 	{
-		APawn* InstigatorPawn = nullptr;
-		APawn* TargetPawn = nullptr;
-		
-		if (auto InstigatorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorPS))
-		{
-			InstigatorPawn = Cast<APawn>(InstigatorASC->GetAvatarActor());
-		}
-		
-		if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPS.Get()))
-		{
-			TargetPawn = Cast<APawn>(TargetASC->GetAvatarActor());
-		}
-		
-		if (!InstigatorPawn || !TargetPawn)
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-			return;
-		}
-		
 		FVector InstLoc = InstigatorPawn->GetActorLocation();
 		FVector TargetLoc = TargetPawn->GetActorLocation();
 		FVector Direction = (TargetLoc - InstLoc).GetSafeNormal();
 
 		FTransform SpawnTransform(Direction.Rotation(), InstLoc);
-		ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, PlayerGameplayTags::Player_Type_LittleDragon, PlayerGameplayTags::Player_Action_Attack_Basic, InstigatorPawn, TargetPawn, true);
+		ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, CharacterTag, AttackTypeTag, InstigatorPawn, TargetPawn, true);
 	}
-
+	
 	auto WaitHit = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, PlayerGameplayTags::Player_Event_ProjectileHit);
 	WaitHit->EventReceived.AddDynamic(this, &UPCGameplayAbility_DamageEvent::OnProjectileHitEvent);
 	WaitHit->ReadyForActivation();

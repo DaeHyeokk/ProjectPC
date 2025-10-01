@@ -165,7 +165,13 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 	{
 		if (APawn* ControlledPawn = GetPawn())
 		{
-			//UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+			FVector CurrentLocation = ControlledPawn->GetActorLocation();
+			FVector Direction = CachedDestination - CurrentLocation;
+			     
+			FRotator TargetRotation = Direction.Rotation();
+			FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
+			     
+			ControlledPawn->SetActorRotation(NewRotation);
 			Server_MovetoLocation(CachedDestination);
 		}
 	}

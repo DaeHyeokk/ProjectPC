@@ -29,8 +29,9 @@ APCPlayerCharacter::APCPlayerCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
@@ -46,9 +47,6 @@ APCPlayerCharacter::APCPlayerCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
 
-	NetUpdateFrequency = 100.f;
-	MinNetUpdateFrequency = 60.f;
-
 	bIsDead = false;
 }
 
@@ -61,6 +59,10 @@ void APCPlayerCharacter::PossessedBy(AController* NewController)
 		if (auto ASC = PS->GetAbilitySystemComponent())
 		{
 			ASC->InitAbilityActorInfo(PS, this);
+			if (!CharacterTags.IsEmpty())
+			{
+				ASC->AddLooseGameplayTags(CharacterTags);	
+			}
 		}
 	}
 }
@@ -101,6 +103,19 @@ void APCPlayerCharacter::PlayerDie()
 void APCPlayerCharacter::OnPlayerDeathAnimFinished()
 {
 	Destroy();
+}
+
+void APCPlayerCharacter::Client_PlayMontage_Implementation(UAnimMontage* Montage, float InPlayRate)
+{
+	if (!Montage) return;
+
+	if (auto CharMesh = GetMesh())
+	{
+		if (auto Anim = CharMesh->GetAnimInstance())
+		{
+			Anim->Montage_Play(Montage, InPlayRate); 
+		}
+	}
 }
 
 void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
