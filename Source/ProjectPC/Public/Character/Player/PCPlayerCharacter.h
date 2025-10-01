@@ -30,7 +30,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool IsDead() const { return bIsDead; }
 
-	void PlayerDie();
+	void PlayerDie(int32 Ranking);
 
 	UFUNCTION(BlueprintCallable)
 	void OnPlayerDeathAnimFinished();

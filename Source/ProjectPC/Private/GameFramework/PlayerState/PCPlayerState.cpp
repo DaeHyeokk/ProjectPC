@@ -74,9 +74,9 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 
 			if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
 			{
-				if (const auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
+				if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 				{
-					PlayerCharacter->PlayerDie();
+					PlayerCharacter->PlayerDie(9);
 				}
 			}
 		}

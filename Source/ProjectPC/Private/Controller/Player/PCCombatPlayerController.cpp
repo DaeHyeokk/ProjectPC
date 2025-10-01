@@ -24,6 +24,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
+#include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
@@ -1263,5 +1264,18 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 
 	UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
 		Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
-	
+}
+
+void APCCombatPlayerController::LoadGameResultWidget(int32 Ranking)
+{
+	if (IsLocalController())
+	{
+		if (!GameResultWidgetClass) return;
+		
+		GameResultWidget = CreateWidget<UPCGameResultWidget>(this, GameResultWidgetClass);
+		if (!GameResultWidget) return;
+
+		GameResultWidget->SetRanking(Ranking);
+		GameResultWidget->OpenMenu();
+	}
 }

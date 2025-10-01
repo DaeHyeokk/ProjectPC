@@ -56,7 +56,7 @@ void APCBaseProjectile::BeginPlay()
 }
 
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack)
 {
 	if (SpawnActor && TargetActor)
 	{
@@ -73,6 +73,8 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 		SetTarget(TargetActor);
 		
 		Target = TargetActor;
+
+		bIsPlayerAttack = IsPlayerAttack;
 	}
 }
 
@@ -192,6 +194,11 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 			Multicast_Overlap(OtherActor);
 		}
 
+		if (!bIsPlayerAttack)
+		{
+			// 플레이어 공격일 때
+		}
+		
 		for (auto EffectSpec : EffectSpecs)
 		{
 			if (EffectSpec)

@@ -8,6 +8,7 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
 class APCBaseUnitCharacter;
@@ -319,4 +320,18 @@ protected:
 	float LerpDuration = 0.15f;
 
 #pragma endregion Drag&Drop
+
+#pragma region GameResult
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameResultWidget")
+	TSubclassOf<UUserWidget> GameResultWidgetClass;
+
+	UPROPERTY()
+	UPCGameResultWidget* GameResultWidget;
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGameResultWidget(int32 Ranking);
+
+#pragma endregion GameResult
 };

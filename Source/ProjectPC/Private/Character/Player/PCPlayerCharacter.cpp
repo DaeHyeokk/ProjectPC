@@ -50,7 +50,7 @@ APCPlayerCharacter::APCPlayerCharacter()
 	bIsDead = false;
 }
 
-void APCPlayerCharacter::PlayerDie()
+void APCPlayerCharacter::PlayerDie(int32 Ranking)
 {
 	GetCharacterMovement()->StopMovementImmediately();
 	
@@ -68,8 +68,8 @@ void APCPlayerCharacter::PlayerDie()
 
 	if (IsLocallyControlled())
 	{
+		PC->LoadGameResultWidget(Ranking);
 		DisableInput(PC);
-		PC->SetInputMode(FInputModeUIOnly());
 	}
 }
 
