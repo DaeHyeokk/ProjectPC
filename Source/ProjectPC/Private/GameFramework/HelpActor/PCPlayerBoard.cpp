@@ -332,6 +332,22 @@ TArray<APCBaseUnitCharacter*> APCPlayerBoard::GetBenchUnitByTag(FGameplayTag Uni
 	return BenchUnit;
 }
 
+TArray<FGameplayTag> APCPlayerBoard::GetAllBenchUnitTag()
+{
+	TArray<FGameplayTag> Out;
+
+	for (int32 i = 0; i < PlayerBench.Num(); ++i)
+	{
+		if (!PlayerBench[i].IsEmpty())
+		{
+			FGameplayTag UnitTag = PlayerBench[i].Unit->GetUnitTag();
+			Out.AddUnique(UnitTag);
+		}
+	}
+
+	return Out;
+}
+
 bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return false;
@@ -682,8 +698,6 @@ void APCPlayerBoard::MakeSnapshot(FPlayerBoardSnapshot& Out) const
 {
 	Out.FieldUnits.SetNum(Rows*Cols);
 	for (int32 i=0;i<Out.FieldUnits.Num();++i) Out.FieldUnits[i] = PlayerField.IsValidIndex(i) ? PlayerField[i].Unit : nullptr;
-	Out.BenchUnits.SetNum(PlayerBench.Num());
-	for (int32 i=0;i<Out.BenchUnits.Num();++i) Out.BenchUnits[i] = PlayerBench[i].Unit;
 }
 
 void APCPlayerBoard::ApplySnapshot(const FPlayerBoardSnapshot& In)
@@ -691,8 +705,6 @@ void APCPlayerBoard::ApplySnapshot(const FPlayerBoardSnapshot& In)
 	const int32 NField = Rows*Cols;
 	for (int32 i=0;i<NField && i<In.FieldUnits.Num(); ++i)
 		if (PlayerField.IsValidIndex(i)) PlayerField[i].Unit = In.FieldUnits[i];
-	for (int32 i=0;i<PlayerBench.Num() && i<In.BenchUnits.Num(); ++i)
-		PlayerBench[i].Unit = In.BenchUnits[i];
 }
 
 FVector APCPlayerBoard::GetFieldWorldPos(int32 Y, int32 X) 
