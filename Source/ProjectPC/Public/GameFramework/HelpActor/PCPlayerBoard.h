@@ -205,7 +205,7 @@ public:
     bool PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
-    bool PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit, bool bIsBattle);
+    bool PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
     bool RemoveFromField(int32 Y, int32 X);
