@@ -7,19 +7,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
+enum class EPCStageType : uint8;
 
-
-/**
- * 
- */
+struct FGameplayTag;
+struct FRoundStep;
 
 class APCPlayerBoard;
 class APCBaseUnitCharacter;
 class UPCTileManager;
-struct FGameplayTag;
 class APCCombatManager;
-enum class EPCStageType : uint8;
-struct FRoundStep;
 class UPCDataAsset_UnitGEDictionary;
 class APCCombatGameState;
 class APCCombatBoard;
@@ -27,6 +23,9 @@ class APCCarouselRing;
 class UPCStageData;
 class APCPlayerState;
 
+/**
+ * 
+ */
 UCLASS()
 class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 {

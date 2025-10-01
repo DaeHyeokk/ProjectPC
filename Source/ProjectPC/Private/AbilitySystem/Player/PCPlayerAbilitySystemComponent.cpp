@@ -52,3 +52,14 @@ void UPCPlayerAbilitySystemComponent::ApplyPlayerEffects(FGameplayTag GE_Tag, fl
 		ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 	}
 }
+
+void UPCPlayerAbilitySystemComponent::ApplyPlayerRoundRewardEffect()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!PlayerAbilityData || !PlayerAbilityData->PlayerRoundRewardEffect) return;
+
+	FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingSpec(*PlayerAbilityData->PlayerRoundRewardEffect, 1, MakeEffectContext());
+	if (!EffectSpecHandle.IsValid()) return;
+
+	ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+}

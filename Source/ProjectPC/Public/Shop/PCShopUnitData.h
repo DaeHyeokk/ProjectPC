@@ -23,22 +23,22 @@ public:
 	int32 UnitCost = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UnitClass;
+	int32 UnitCount = 22;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UnitOrigin;
+	FGameplayTag UnitTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag UnitSpeciesTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag UnitJobTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> UnitTexture;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 UnitCount = 22;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag Tag;
-
 	bool operator==(const FPCShopUnitData& Other) const
 	{
-		return UnitName == Other.UnitName && Tag == Other.Tag;
+		return UnitName == Other.UnitName && UnitTag == Other.UnitTag;
 	}
 };

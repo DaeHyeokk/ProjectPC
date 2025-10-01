@@ -30,8 +30,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool IsDead() const { return bIsDead; }
 
-	UFUNCTION(BlueprintCallable)
 	void PlayerDie();
 
+	UFUNCTION(BlueprintCallable)
+	void OnPlayerDeathAnimFinished();
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

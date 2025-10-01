@@ -92,6 +92,11 @@ void UPCUnitSlotWidget::SetupButton()
 				Btn_UnitSlot->SetIsEnabled(false);
 				SetRenderOpacity(0.3f);
 			}
+			else
+			{
+				Btn_UnitSlot->SetIsEnabled(true);
+				SetRenderOpacity(1.f);
+			}
 		}
 	}
 }

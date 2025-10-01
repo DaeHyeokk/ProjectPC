@@ -10,6 +10,7 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -118,6 +119,21 @@ void APCPlayerState::AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Valu
 	}
 }
 
+void APCPlayerState::ApplyRoundReward()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerAbilitySystemComponent)
+	{
+		PlayerAbilitySystemComponent->ApplyPlayerRoundRewardEffect();
+	}
+	
+	if (auto PC = Cast<APCCombatPlayerController>(GetPlayerController()))
+	{
+		PC->Server_ShopRefresh(0);
+	}
+}
+
 void APCPlayerState::OnRep_ShopSlots()
 {
 	OnShopSlotsUpdated.Broadcast();
@@ -144,6 +160,44 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 	return ShopSlots;
 }
 
+void APCPlayerState::OnRep_PlayerWinningStreak()
+{
+	OnWinningStreakUpdated.Broadcast();
+}
+
+void APCPlayerState::PlayerWin()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerWinningStreak <= 0)
+	{
+		PlayerWinningStreak = 1;
+	}
+	else
+	{
+		PlayerWinningStreak++;
+	}
+}
+
+void APCPlayerState::PlayerLose()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerWinningStreak >= 0)
+	{
+		PlayerWinningStreak = -1;
+	}
+	else
+	{
+		PlayerWinningStreak--;
+	}
+}
+
+int32 APCPlayerState::GetPlayerWinningStreak() const
+{
+	return PlayerWinningStreak;
+}
+
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -156,9 +210,11 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
 	DOREPLIFETIME(APCPlayerState, PlayerBoard);
+	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
 }
 
 void APCPlayerState::OnRep_SeatIndex()
 {
 	ResolvePlayerBoardOnClient();
+	
 }

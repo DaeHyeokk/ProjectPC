@@ -25,4 +25,6 @@ public:
 	void ApplyInitializedAbilities();
 	// Tag에 따른 GE 적용
 	void ApplyPlayerEffects(FGameplayTag GE_Tag, float GE_Value);
+	// 라운드 보상 GE 적용
+	void ApplyPlayerRoundRewardEffect();
 };

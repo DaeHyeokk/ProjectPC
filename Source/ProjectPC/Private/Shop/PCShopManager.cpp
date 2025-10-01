@@ -16,7 +16,6 @@
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 
-class UPCUnitSpawnSubsystem;
 
 UPCShopManager::UPCShopManager()
 {
@@ -57,6 +56,42 @@ void UPCShopManager::BeginPlay()
 			break;
 		}
 	}
+	
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		if (auto GS = Cast<APCCombatGameState>(GetOwner()))
+		{
+			GS->OnGameStateTagChanged.AddUObject(this, &UPCShopManager::OnGameStateChanged);
+		}
+	}
+}
+
+void UPCShopManager::OnGameStateChanged(FGameplayTag NewTag)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	
+	auto GS = Cast<APCCombatGameState>(GetOwner());
+	if (!GS) return;
+		
+	if (NewTag == GameStateTags::Game_State_NonCombat)
+	{
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (*It == nullptr) continue;
+			
+			if (auto PS = (*It)->GetPlayerState<APCPlayerState>())
+			{
+				auto Board = GS->GetBoardBySeat(PS->SeatIndex);
+				if (!Board) continue;
+
+				auto BenchUnitTags = Board->TileManager->GetAllBenchUnitTag();
+				for (int i = 0; i < BenchUnitTags.Num(); ++i)
+				{
+					UnitLevelUp(PS, BenchUnitTags[i], 0);
+				}
+			}
+		}
+	}
 }
 
 void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
@@ -95,6 +130,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 
 void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 	if (!TargetPlayer) return;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -121,7 +157,8 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	UnitCountByLevelMap.Add({1,0});
 	UnitCountByLevelMap.Add({2,0});
 	UnitCountByLevelMap.Add({3,0});
-	
+
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return UnitCountByLevelMap;
 	if (!TargetPlayer) return UnitCountByLevelMap;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -167,7 +204,7 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 
 int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
 {
-	if (!TargetPlayer) return false;
+	if (!TargetPlayer) return 0;
 
 	auto UnitMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, 0);
 
@@ -197,6 +234,7 @@ int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* Target
 
 void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount)
 {
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 	if (!TargetPlayer) return;
 	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -265,6 +303,8 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 
 void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 {
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 
@@ -272,7 +312,7 @@ void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 
 	for (auto& Unit : GetShopUnitDataListByCost(UnitCost))
 	{
-		if (UnitTag == Unit.Tag)
+		if (UnitTag == Unit.UnitTag)
 		{
 			// 1성은 1개, 2성은 3개, 3성은 9개 기물 반환
 				// 4성이 추가되도 그대로 사용 가능
@@ -316,7 +356,7 @@ void UPCShopManager::ReturnUnitToShopByTag(FGameplayTag UnitTag)
 		auto& UnitDataList = GetShopUnitDataListByCost(UnitCost);
 		for (auto& Unit : UnitDataList)
 		{
-			if (Unit.Tag == UnitTag)
+			if (Unit.UnitTag == UnitTag)
 			{
 				Unit.UnitCount += 1;
 			}
@@ -340,7 +380,7 @@ void UPCShopManager::ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>
 		if (PurchasedSlots.Contains(i)) continue;
 
 		const auto& OldSlot = OldSlots[i];
-		ReturnUnitToShopByTag(OldSlot.Tag);
+		ReturnUnitToShopByTag(OldSlot.UnitTag);
 	}
 }
 
@@ -385,7 +425,7 @@ TArray<FGameplayTag> UPCShopManager::GetCarouselRandomUnitTagsByCost(int32 UnitC
 		// 해당 코스트에 아무 기물도 안남았으면 Add 안함
 		if (Unit.UnitName != "Dummy")
 		{
-			ReturnTags.Add(Unit.Tag);
+			ReturnTags.Add(Unit.UnitTag);
 		}
 	}
 
@@ -453,7 +493,7 @@ int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 {
 	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
 	{
-		if (UnitData.Tag == UnitTag)
+		if (UnitData.UnitTag == UnitTag)
 		{
 			return UnitData.UnitCost;
 		}

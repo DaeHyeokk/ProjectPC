@@ -92,6 +92,10 @@ private:
 #pragma endregion Input
 
 #pragma region Shop
+
+private:
+	bool bIsShopLocked = false;
+	bool bIsShopRequestInProgress = false;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
@@ -111,6 +115,7 @@ public:
 	void ShopRequest_BuyXP();
 	void ShopRequest_SellUnit();
 	void ShopRequest_BuyUnit(int32 SlotIndex);
+	void ShopRequest_ShopLock(bool ShopLockState);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh(float GoldCost);
@@ -120,8 +125,13 @@ public:
 	void Server_SellUnit(APCBaseUnitCharacter* Unit);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Server, Reliable)
+	void Server_ShopLock(bool ShopLockState);
+	
 	UFUNCTION(Client, Reliable)
-	void SetSlotHidden(int32 SlotIndex);
+	void Client_SetSlotHidden(int32 SlotIndex);
+	UFUNCTION(Client, Reliable)
+	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
 

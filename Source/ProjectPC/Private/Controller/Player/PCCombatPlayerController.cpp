@@ -246,7 +246,7 @@ TArray<int32> APCCombatPlayerController::GetSameShopSlotIndices(int32 SlotIndex)
 				
 			if (!PurchasedSlots.Contains(i))
 			{
-				if (ShopSlots[i].Tag == ShopSlots[SlotIndex].Tag)
+				if (ShopSlots[i].UnitTag == ShopSlots[SlotIndex].UnitTag)
 				{
 					SlotIndices.Add(i);
 				}
@@ -259,39 +259,53 @@ TArray<int32> APCCombatPlayerController::GetSameShopSlotIndices(int32 SlotIndex)
 
 void APCCombatPlayerController::ShopRequest_ShopRefresh(float GoldCost)
 {
-	if (IsLocalController())
+	if (IsLocalController() && !bIsShopRequestInProgress)
 	{
-		Server_ShopRefresh(GoldCost);	
+		bIsShopRequestInProgress = true;
+		Server_ShopRefresh(GoldCost);
 	}
-	
 }
 
 void APCCombatPlayerController::ShopRequest_BuyXP()
 {
-	if (IsLocalController())
+	if (IsLocalController() && !bIsShopRequestInProgress)
 	{
+		bIsShopRequestInProgress = true;
 		Server_BuyXP();
 	}
 }
 
 void APCCombatPlayerController::ShopRequest_SellUnit()
 {
-	if (IsLocalController())
+	if (IsLocalController() && !bIsShopRequestInProgress)
 	{
+		bIsShopRequestInProgress = true;
 		Server_SellUnit(CachedHoverUnit.Get());
 	}
 }
 
 void APCCombatPlayerController::ShopRequest_BuyUnit(int32 SlotIndex)
 {
+	if (IsLocalController() && !bIsShopRequestInProgress)
+	{
+		bIsShopRequestInProgress = true;
+		Server_BuyUnit(SlotIndex);
+	}
+}
+
+void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
+{
 	if (IsLocalController())
 	{
-		Server_BuyUnit(SlotIndex);
+		Server_ShopLock(ShopLockState);
 	}
 }
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
+	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
+	if (GoldCost == 0 && bIsShopLocked) return;
+	
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
 		if (auto ASC = PS->GetAbilitySystemComponent())
@@ -306,6 +320,8 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost
 			ASC->HandleGameplayEvent(GA_Tag, &EventData);
 		}
 	}
+
+	Client_ShopRequestFinished();
 }
 
 void APCCombatPlayerController::Server_BuyXP_Implementation()
@@ -317,6 +333,8 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(PlayerGameplayTags::Player_GA_Shop_BuyXP));
 		}
 	}
+
+	Client_ShopRequestFinished();
 }
 
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
@@ -357,7 +375,8 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 			Unit = nullptr;
 		}
 	}
-	
+
+	Client_ShopRequestFinished();
 }
 
 void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
@@ -380,7 +399,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	if (PB->GetFirstEmptyBenchIndex() == INDEX_NONE)
 	{
 		auto SameSlotIndices = GetSameShopSlotIndices(SlotIndex);
-		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].Tag, SameSlotIndices.Num() + 1);
+		RequiredCount = GS->GetShopManager()->GetRequiredCountWithFullBench(PS, PS->GetShopSlots()[SlotIndex].UnitTag, SameSlotIndices.Num() + 1);
 		
 		if (auto AttributeSet = PS->GetAttributeSet())
 		{
@@ -395,7 +414,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			{
 				for (int i = 0; i < RequiredCount - 1; ++i)
 				{
-					SetSlotHidden(SameSlotIndices[i]);
+					Client_SetSlotHidden(SameSlotIndices[i]);
 					PS->PurchasedSlots.Add(SameSlotIndices[i]);
 				}
 			}
@@ -422,10 +441,16 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 	
 	ASC->HandleGameplayEvent(GA_Tag, &EventData);
 	
-	SetSlotHidden(SlotIndex);
+	Client_SetSlotHidden(SlotIndex);
+	Client_ShopRequestFinished();
 }
 
-void APCCombatPlayerController::SetSlotHidden_Implementation(int32 SlotIndex)
+void APCCombatPlayerController::Server_ShopLock_Implementation(bool ShopLockState)
+{
+	bIsShopLocked = ShopLockState;
+}
+
+void APCCombatPlayerController::Client_SetSlotHidden_Implementation(int32 SlotIndex)
 {
 	ShopWidget->SetSlotHidden(SlotIndex);
 }
@@ -445,6 +470,11 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 	CarouselRing->ApplyCentralViewForSeat(this, SeatIndex, 0.f);
 	SwitchCameraWhileBlack(CarouselRing, BlendTime, 0.08f,0.15f,0.5f);
 	
+}
+
+void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
+{
+	bIsShopRequestInProgress = false;
 }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()

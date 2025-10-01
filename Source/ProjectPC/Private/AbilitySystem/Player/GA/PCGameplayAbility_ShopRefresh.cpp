@@ -69,7 +69,7 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 	
 	if (!TriggerEventData)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	

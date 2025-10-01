@@ -74,27 +74,27 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 	
 	if (!TriggerEventData || !TriggerEventData->TargetData.IsValid(0))
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get());
 	if (!PS)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	const auto* TargetData = TriggerEventData->TargetData.Get(0);
 	SlotIndex = TargetData->GetHitResult()->Location.X;
 	BuyCount = TargetData->GetHitResult()->Location.Y;
-	UnitTag = PS->GetShopSlots()[SlotIndex].Tag;
+	UnitTag = PS->GetShopSlots()[SlotIndex].UnitTag;
 	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 
 	const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
 	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost * BuyCount)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 

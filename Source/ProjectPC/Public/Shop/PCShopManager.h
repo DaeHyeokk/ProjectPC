@@ -35,9 +35,12 @@ private:
 	FPCShopUnitData DummyData;
 
 public:
+	// 매 라운드 레벨업 체크
+	void OnGameStateChanged(FGameplayTag NewTag);
+	
 	// 상점 업데이트
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
-
+	
 	// 유닛 구매
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag);
 	TMap<int32, int32> GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
