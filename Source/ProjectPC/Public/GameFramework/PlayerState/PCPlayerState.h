@@ -42,6 +42,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	
 
 #pragma region Login
 	
@@ -143,6 +144,8 @@ public:
 	void PlayerWin();
 	UFUNCTION()
 	void PlayerLose();
+	UFUNCTION()
+	void PlayerResult(int32 Ranking);
 
 	FOnWinningStreakUpdated OnWinningStreakUpdated;
 	

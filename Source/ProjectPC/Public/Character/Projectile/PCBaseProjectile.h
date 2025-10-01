@@ -62,7 +62,7 @@ private:
 	UPROPERTY()
 	const AActor* Target;
 
-	bool bIsPlayerAttack;
+	bool bIsPlayerAttack = false;
 
 public:
 	UFUNCTION(BlueprintCallable)

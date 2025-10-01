@@ -1200,16 +1200,13 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 	// 	Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
 }
 
-void APCCombatPlayerController::LoadGameResultWidget(int32 Ranking)
+void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32 Ranking)
 {
-	if (IsLocalController())
-	{
-		if (!GameResultWidgetClass) return;
+	if (!GameResultWidgetClass) return;
 		
-		GameResultWidget = CreateWidget<UPCGameResultWidget>(this, GameResultWidgetClass);
-		if (!GameResultWidget) return;
+	GameResultWidget = CreateWidget<UPCGameResultWidget>(this, GameResultWidgetClass);
+	if (!GameResultWidget) return;
 
-		GameResultWidget->SetRanking(Ranking);
-		GameResultWidget->OpenMenu();
-	}
+	GameResultWidget->SetRanking(Ranking);
+	GameResultWidget->OpenMenu();
 }

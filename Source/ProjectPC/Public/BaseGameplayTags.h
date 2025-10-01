@@ -136,6 +136,9 @@ namespace GameplayCueTags
 
 namespace PlayerGameplayTags
 {
+	// ==== Player Type Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Type_LittleDragon)
+	
 	// ==== Player Stat Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerLevel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Stat_PlayerXP)
@@ -154,6 +157,10 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopRefresh)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopLock)
 
+	// ==== Player Action Ability Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Action_Attack_Basic)
+	
 	// ==== Player Event Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_Damage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Event_ProjectileHit)
 }

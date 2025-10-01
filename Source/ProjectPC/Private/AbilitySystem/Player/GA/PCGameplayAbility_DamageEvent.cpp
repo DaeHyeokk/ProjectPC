@@ -7,6 +7,8 @@
 #include "AbilitySystemComponent.h"
 
 #include "BaseGameplayTags.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
 
 UPCGameplayAbility_DamageEvent::UPCGameplayAbility_DamageEvent()
@@ -53,17 +55,63 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
-	auto Damage = TriggerEventData->EventMagnitude;
-	auto Instigator = TriggerEventData->Instigator.Get();
-	auto Target = const_cast<AActor*>(TriggerEventData->Target.Get());
+	Damage = TriggerEventData->EventMagnitude;
+	TargetPS = const_cast<AActor*>(TriggerEventData->Target.Get());
+	auto InstigatorPS = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 
-	if (!Instigator || !Target)
+	if (!InstigatorPS || !TargetPS.Get())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target))
+	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+	{
+		APawn* InstigatorPawn = nullptr;
+		APawn* TargetPawn = nullptr;
+		
+		if (auto InstigatorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorPS))
+		{
+			InstigatorPawn = Cast<APawn>(InstigatorASC->GetAvatarActor());
+		}
+		
+		if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPS.Get()))
+		{
+			TargetPawn = Cast<APawn>(TargetASC->GetAvatarActor());
+		}
+		
+		if (!InstigatorPawn || !TargetPawn)
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
+		}
+		
+		FVector InstLoc = InstigatorPawn->GetActorLocation();
+		FVector TargetLoc = TargetPawn->GetActorLocation();
+		FVector Direction = (TargetLoc - InstLoc).GetSafeNormal();
+
+		FTransform SpawnTransform(Direction.Rotation(), InstLoc);
+		ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, PlayerGameplayTags::Player_Type_LittleDragon, PlayerGameplayTags::Player_Action_Attack_Basic, InstigatorPawn, TargetPawn, true);
+	}
+
+	auto WaitHit = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, PlayerGameplayTags::Player_Event_ProjectileHit);
+	WaitHit->EventReceived.AddDynamic(this, &UPCGameplayAbility_DamageEvent::OnProjectileHitEvent);
+	WaitHit->ReadyForActivation();
+}
+
+void UPCGameplayAbility_DamageEvent::EndAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+	bool bReplicateEndAbility, bool bWasCancelled)
+{
+	TargetPS = nullptr;
+	Damage = 0.f;
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UPCGameplayAbility_DamageEvent::OnProjectileHitEvent(FGameplayEventData EventData)
+{
+	if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPS.Get()))
 	{
 		FGameplayEffectSpecHandle HPSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerHPChange, GetAbilityLevel());
 		if (HPSpecHandle.IsValid())
@@ -73,12 +121,5 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		}
 	}
 
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-}
-
-void UPCGameplayAbility_DamageEvent::EndAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility, bool bWasCancelled)
-{
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

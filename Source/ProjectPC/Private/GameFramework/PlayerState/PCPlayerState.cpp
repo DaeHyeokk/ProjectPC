@@ -63,15 +63,10 @@ void APCPlayerState::BeginPlay()
 
 	if (HasAuthority())
 	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
 		PlayerAbilitySystemComponent->ApplyInitializedEffects();
 		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
 		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
-	}
-	else
-	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
 }
 
@@ -104,7 +99,7 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 			{
 				if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 				{
-					PlayerCharacter->PlayerDie(9);
+					PlayerCharacter->PlayerDie();
 				}
 			}
 		}
@@ -191,6 +186,16 @@ void APCPlayerState::PlayerLose()
 	{
 		PlayerWinningStreak--;
 	}
+}
+
+void APCPlayerState::PlayerResult(int32 Ranking)
+{
+	if (!HasAuthority()) return;
+	
+	auto PC = Cast<APCCombatPlayerController>(GetPlayerController());
+	if (!PC) return;
+	
+	PC->Client_LoadGameResultWidget(Ranking);
 }
 
 int32 APCPlayerState::GetPlayerWinningStreak() const

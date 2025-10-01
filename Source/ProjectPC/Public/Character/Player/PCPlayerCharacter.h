@@ -16,6 +16,10 @@ class PROJECTPC_API APCPlayerCharacter : public ACharacter
 public:
 	APCPlayerCharacter();
 
+protected:
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;
@@ -30,7 +34,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool IsDead() const { return bIsDead; }
 
-	void PlayerDie(int32 Ranking);
+	void PlayerDie();
 
 	UFUNCTION(BlueprintCallable)
 	void OnPlayerDeathAnimFinished();

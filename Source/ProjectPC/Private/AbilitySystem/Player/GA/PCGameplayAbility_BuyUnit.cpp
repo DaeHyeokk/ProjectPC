@@ -123,5 +123,10 @@ void UPCGameplayAbility_BuyUnit::EndAbility(const FGameplayAbilitySpecHandle Han
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	SlotIndex = 0;
+	BuyCount = 0;
+	UnitCost = 0.f;
+	UnitTag = FGameplayTag();
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

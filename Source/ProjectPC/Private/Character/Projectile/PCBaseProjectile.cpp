@@ -3,6 +3,10 @@
 
 #include "Character/Projectile/PCBaseProjectile.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemGlobals.h"
+#include "BaseGameplayTags.h"
+#include "AbilitySystem/Player/GA/PCGameplayAbility_DamageEvent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -10,6 +14,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
+#include "GameFramework/PlayerState.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -180,42 +185,50 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (!HasAuthority()) return;
 	Super::NotifyActorBeginOverlap(OtherActor);
-	
-	if (OtherActor != GetInstigator())
-	{
-		if (bIsHomingProjectile && OtherActor != Target)
-		{
-			return;
-		}
-		
-		if (HitEffect)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
-			Multicast_Overlap(OtherActor);
-		}
 
-		if (!bIsPlayerAttack)
+	if (AActor* InstigatorActor = GetInstigator())
+	{
+		if (OtherActor != InstigatorActor)
 		{
-			// 플레이어 공격일 때
-		}
+			if (bIsHomingProjectile && OtherActor != Target) return;
 		
-		for (auto EffectSpec : EffectSpecs)
-		{
-			if (EffectSpec)
+			if (HitEffect)
 			{
-				if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
+				Multicast_Overlap(OtherActor);
+			}
+
+			if (bIsPlayerAttack)
+			{
+				if (auto InstigatorPawn = Cast<APawn>(InstigatorActor))
 				{
-					if (auto ASC = Unit->GetAbilitySystemComponent())
+					if (auto InstigatorPS = InstigatorPawn->GetPlayerState())
 					{
-						EffectSpec->ApplyEffect(ASC, Target);
+						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorPS, PlayerGameplayTags::Player_Event_ProjectileHit, FGameplayEventData());
 					}
 				}
 			}
-		}
-
-		if (!bIsPenetrating)
-		{
-			ReturnToPool();
+			else
+			{
+				for (auto EffectSpec : EffectSpecs)
+				{
+					if (EffectSpec)
+					{
+						if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+						{
+							if (auto ASC = Unit->GetAbilitySystemComponent())
+							{
+								EffectSpec->ApplyEffect(ASC, Target);
+							}
+						}
+					}
+				}
+			}
+			
+			if (!bIsPenetrating)
+			{
+				ReturnToPool();
+			}
 		}
 	}
 }

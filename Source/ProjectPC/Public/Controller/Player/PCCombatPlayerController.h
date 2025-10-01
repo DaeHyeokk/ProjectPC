@@ -99,7 +99,7 @@ private:
 	bool bIsShopRequestInProgress = false;
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
+	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
@@ -325,14 +325,14 @@ protected:
 #pragma region GameResult
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameResultWidget")
+	UPROPERTY(EditDefaultsOnly, Category = "GameResultWidget")
 	TSubclassOf<UUserWidget> GameResultWidgetClass;
 
 	UPROPERTY()
 	UPCGameResultWidget* GameResultWidget;
 
-	UFUNCTION(BlueprintCallable)
-	void LoadGameResultWidget(int32 Ranking);
+	UFUNCTION(Client, Reliable)
+	void Client_LoadGameResultWidget(int32 Ranking);
 
 #pragma endregion GameResult
 };

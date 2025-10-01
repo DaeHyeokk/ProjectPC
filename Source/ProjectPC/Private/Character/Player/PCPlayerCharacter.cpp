@@ -3,6 +3,7 @@
 
 #include "Character/Player/PCPlayerCharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
@@ -10,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 #include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -50,7 +52,33 @@ APCPlayerCharacter::APCPlayerCharacter()
 	bIsDead = false;
 }
 
-void APCPlayerCharacter::PlayerDie(int32 Ranking)
+void APCPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (auto PS = GetPlayerState<APCPlayerState>())
+	{
+		if (auto ASC = PS->GetAbilitySystemComponent())
+		{
+			ASC->InitAbilityActorInfo(PS, this);
+		}
+	}
+}
+
+void APCPlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			ASC->InitAbilityActorInfo(PS, this);
+		}
+	}
+}
+
+void APCPlayerCharacter::PlayerDie()
 {
 	GetCharacterMovement()->StopMovementImmediately();
 	
@@ -62,15 +90,12 @@ void APCPlayerCharacter::PlayerDie(int32 Ranking)
 		bIsDead = true;
 
 		PC->Client_HideWidget();
-
+		// PC->Client_LoadGameResultWidget(Ranking);
+		
 		// 죽은 플레이어가 가지고 있던 유닛 상점 반환
 	}
-
-	if (IsLocallyControlled())
-	{
-		PC->LoadGameResultWidget(Ranking);
-		DisableInput(PC);
-	}
+	
+	DisableInput(PC);
 }
 
 void APCPlayerCharacter::OnPlayerDeathAnimFinished()

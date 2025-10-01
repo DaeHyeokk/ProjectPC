@@ -87,7 +87,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
 
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const

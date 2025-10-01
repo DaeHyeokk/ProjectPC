@@ -101,5 +101,7 @@ void UPCGameplayAbility_ShopRefresh::EndAbility(const FGameplayAbilitySpecHandle
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	CostValue = 0;
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
