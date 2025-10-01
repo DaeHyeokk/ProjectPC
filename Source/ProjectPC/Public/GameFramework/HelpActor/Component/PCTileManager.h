@@ -142,36 +142,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FVector GetTilePosition(int32 Y, int32 X) const { return GetTileWorldPosition(Y, X);}
-
-	// 벤치 배치 / 삭제 / 조회
-
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	bool PlaceUnitOnBench(int32 BenchIndex, APCBaseUnitCharacter* Unit, ETileFacing FacingOverride = ETileFacing::Auto);
 	
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	bool RemoveFromBench(int32 BenchIndex, bool bPreserveUnitBoard);
-
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	APCBaseUnitCharacter* GetBenchUnit(int32 BenchIndex) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	FVector GetBenchWorldPosition(int32 BenchIndex) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	FVector GetBenchLocalPosition(int32 BenchIndex) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Bench")
-	int32 GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const;
-
-	UFUNCTION(BlueprintPure, Category = "Bench")
-	int32 MirrorBenchIndex(int32 Index) const;
-
-	UFUNCTION(BlueprintPure, Category = "Bench")
-	int32 MakeGlobalBenchIndex(bool bEnemySide, int32 LocalIndex) const;
-
-	UFUNCTION(BlueprintPure, Category = "Bench")
-	bool SplitGlobalBenchIndex(int32 GlobalIndex, bool& bEnemySide, int32& Local) const;
-
 	UFUNCTION(BlueprintPure, Category = "Bench")
 	int32 GetBenchIndex(bool bEnemySide, int32 LocalIndex) const;
 
@@ -212,24 +183,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Util")
 	void ClearAll();
 	
-	UFUNCTION(BlueprintCallable, Category = "Util")
-	void MoveUnitsMirroredTo(UPCTileManager* TargetField, bool bMirrorRows = true, bool bMirrorCols = true, bool bIncludeBench = true );
-	
 	bool EnsureExclusive(APCBaseUnitCharacter* InUnit);
-
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Data")
-	TArray<FTile> Bench;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Data")
-	TArray<FTile> EnemyBench;
-
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
-	void CreateBench(); // 벤치 좌표 생성 (월드기준)
 
 	UPROPERTY()
 	TObjectPtr<APCCombatBoard> CachedCombatBoard;
@@ -260,44 +220,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Debug")
 	void DebugExplainTile(int32 Y, int32 X, const FString& Tag) const;
-
-#pragma region Drag&Drop
-
-public:
-	
-	// 드래그 앤 드랍 헬퍼 함수
-	// 월드 좌표 -> 가장 가까운 필드 타일(Y,X), 성공시 True
-	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
-	bool WorldToField( const FVector& WorldLoc, int32& OutY, int32& OutX, float MaxSnapDist = 0.f) const;
-
-	// 월드 좌표 -> 가장 가까운 벤치 인덱스, 성공시 True
-	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
-	bool WorldToBench(const FVector& World, int32& OutBenchIndex, float MaxSnapDist = 0.f) const;
-
-	// 월드 좌표 -> 필드/벤치 중 더 가까운 곳 스냅
-	UFUNCTION(BlueprintPure, Category = "Drag&Drop")
-	bool WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
-		int32& OutBenchIndex, FVector& OutSnapPos, float MaxSnapDistField = 0.f, float MaxSnapDistBench = 0.f, bool bRequireUnit = false) const;
-
-#pragma endregion Drag&Drop
-
-#pragma region LevelUp & Synergy
-
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<APCBaseUnitCharacter*> GetAllUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
-
-	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<APCBaseUnitCharacter*> GetFieldUnitByTag(FGameplayTag UnitTag);
-	
-	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<APCBaseUnitCharacter*> GetBenchUnitByTag(FGameplayTag UnitTag, int32 TeamSeat);
-
-	UFUNCTION(BlueprintCallable, Category = "LevelUp")
-	TArray<FGameplayTag> GetAllBenchUnitTag();
-	
-#pragma endregion LevelUp & Synergy
 
 #pragma region Win&Lose
 

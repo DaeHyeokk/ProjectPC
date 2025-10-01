@@ -3,11 +3,13 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
+#include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 
 
@@ -27,6 +29,32 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+}
+
+void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
+{
+	if (HasAuthority())
+	{
+		PlayerBoard = InBoard;
+		if (PlayerBoard)
+		{
+			PlayerBoard->OwnerPlayerState = this;
+		}
+	}
+}
+
+void APCPlayerState::ResolvePlayerBoardOnClient()
+{
+	if (PlayerBoard) return;
+	UWorld* World = GetWorld();
+	for (TActorIterator<APCPlayerBoard> It(World); It; ++It)
+	{
+		if (It->PlayerIndex == SeatIndex)
+		{
+			PlayerBoard = *It;
+			break;
+		}
+	}
 }
 
 void APCPlayerState::BeginPlay()
@@ -181,5 +209,12 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIdentified);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
+	DOREPLIFETIME(APCPlayerState, PlayerBoard);
 	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
+}
+
+void APCPlayerState::OnRep_SeatIndex()
+{
+	ResolvePlayerBoardOnClient();
+	
 }

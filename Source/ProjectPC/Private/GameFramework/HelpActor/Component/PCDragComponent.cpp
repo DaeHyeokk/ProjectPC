@@ -63,22 +63,17 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
     if (!CursorHitWorld(PC, World)) return;
 
     FVector Snap = World;
-    if (UPCTileManager* TM = PC->GetTileManager())
+    if (APCPlayerBoard* PlayerBoard = PC->GetPlayerBoard())
     {
         bool bField = false;
         int32 Y = -1;
         int32 X = -1;
         int32 BenchIdx = -1;
 
-        if (TM->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
+        if (PlayerBoard->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
         {
-            const bool bValid = bField ? PC->IsAllowFieldY(Y) : PC->IsAllowBenchIdx(BenchIdx);
-
-            if (bValid)
-            {
-                EnsureGhostAt(Snap,nullptr);
-                ShowGhost(Snap, nullptr);
-            }
+            EnsureGhostAt(Snap,nullptr);
+            ShowGhost(Snap, nullptr);
             
             const bool bTileChanged = (bField != LastQuestion_bIsField) || (Y != LastQuestion_Y) || (X != LastQuestion_X) ||  (BenchIdx != LastQuestion_Bench);
             if (bTileChanged)
@@ -184,6 +179,9 @@ void UPCDragComponent::EnsureGhostAt(const FVector& World, APCHeroUnitCharacter*
                 if (UPCUnitSpawnSubsystem* SubSystem = WorldPtr->GetSubsystem<UPCUnitSpawnSubsystem>())
                 {
                     Preview = SubSystem->SpawnPreviewHeroBySourceHero(PreviewHero, GetOwner(), nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+                    FRotator HeroRot = PreviewHero->GetActorRotation();
+                    const FRotator  NewRot(HeroRot.Pitch,FMath::UnwindDegrees(HeroRot.Yaw - 90.f),HeroRot.Roll);
+                    Preview->SetActorRotation(NewRot);
                 }
             }
         }

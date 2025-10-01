@@ -12,6 +12,7 @@ enum class EPCStageType : uint8;
 struct FGameplayTag;
 struct FRoundStep;
 
+class APCPlayerBoard;
 class APCBaseUnitCharacter;
 class UPCTileManager;
 class APCCombatManager;
@@ -75,7 +76,6 @@ private:
 	FTimerHandle CameraSetupTimer;
 	FTimerHandle WaitAllPlayerController;
 	
-private:
 	// 내부 빌드 / 흐름
 	void BuildHelperActor();
 	void BuildStageData();
@@ -112,27 +112,34 @@ private:
 	
 	// CombatManager / GameState 핸들러
 	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
-	TWeakObjectPtr<APCCombatManager> CombatManager;
+	APCCombatManager* CombatManager;
 	APCCombatManager* GetCombatManager();
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
-	// 크립 스폰 관련 로직
+// PCPlayerBoard 관련
+	// 수집한 보드 목록 / 맵
+	UPROPERTY()
+	TArray<APCPlayerBoard*> AllPlayerBoards;
 
-	// 크립 스폰 헬퍼
-	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
-	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);
-	static int32 GetCreepLevelForStageRound(int32 Stage, int32 Round);
-	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
+	UPROPERTY()
+	TMap<int32, APCPlayerBoard*> SeatToPlayerBoard;
 
+	// 보드 수집 & 맵 구성
+	void CollectPlayerBoards();
+
+	// 보드 PlayerState에 세팅
+	void BindPlayerBoardsToPlayerStates();
+
+	// 좌석인덱스로 -> PlayerBoard 찾기
+	APCPlayerBoard* FindPlayerBoardBySeat(int32 SeatIndex) const;
+	
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
-
-
-
+	
 	// 데이터 로딩
 
 private:

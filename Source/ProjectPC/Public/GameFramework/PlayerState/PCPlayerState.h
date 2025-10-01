@@ -15,6 +15,7 @@
  */
 
 
+class APCPlayerBoard;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
@@ -26,6 +27,18 @@ class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemI
 
 public:
 	APCPlayerState();
+
+	// 나의 PCPlayerBoard 캐시 (서버에서 세팅, 클라 복제 : 보드에 시각적 효과 적용 위함)
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	APCPlayerBoard* PlayerBoard = nullptr;
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerBoard")
+	FORCEINLINE APCPlayerBoard* GetPlayerBoard() { return PlayerBoard; }
+
+	// 서버 전용 세터
+	void SetPlayerBoard(APCPlayerBoard* InBoard);
+
+	void ResolvePlayerBoardOnClient();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -55,10 +68,14 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
-	UFUNCTION() void OnRep_LocalUserId() {}
-	UFUNCTION() void OnRep_bIsLeader()   {}
-	UFUNCTION() void OnRep_bIsReady()    {}
-	UFUNCTION() void OnRep_SeatIndex()   {}
+	UFUNCTION()
+	void OnRep_LocalUserId() {}
+	UFUNCTION()
+	void OnRep_bIsLeader()   {}
+	UFUNCTION()
+	void OnRep_bIsReady()    {}
+	UFUNCTION()
+	void OnRep_SeatIndex();
 #pragma endregion Login
 
 #pragma region AbilitySystem
