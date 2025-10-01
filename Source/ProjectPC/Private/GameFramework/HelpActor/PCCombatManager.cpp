@@ -1119,7 +1119,7 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	const int32 Alive           = bHostWon ? Pair.HostAlive : Pair.GuestAlive;
 	const int32 Damage          = FMath::Max(1, StageBaseDamage + Alive);
 
-	FGameplayEventData DamageData;
+ 	FGameplayEventData DamageData;
 	DamageData.EventTag       = DamageEventTag;
 	DamageData.EventMagnitude = Damage;
 	DamageData.Instigator     = AttackerPawn;

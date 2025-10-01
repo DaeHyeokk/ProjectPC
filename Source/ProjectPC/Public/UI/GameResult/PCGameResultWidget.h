@@ -29,7 +29,7 @@ protected:
 	UButton* Btn_Spectate;
 
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetRanking(int32 NewRanking);
 
 	UFUNCTION(BlueprintCallable)
