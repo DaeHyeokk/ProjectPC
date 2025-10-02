@@ -7,6 +7,7 @@
 #include "EngineUtils.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -49,7 +50,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	//GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -65,7 +66,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 	for (APlayerState* PlayerState : GameState->PlayerArray)
 	{
 		if (APCPlayerState* OtherPS = Cast<APCPlayerState>(PlayerState))
-		{
+		{			
 			if (OtherPS != PS && OtherPS->SeatIndex >= 0 && OtherPS->SeatIndex < 8)
 			{
 				UsedSeats[OtherPS->SeatIndex] = true;
@@ -87,6 +88,11 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
 	
+	if (auto* PC = Cast<APCCombatPlayerController>(NewPlayer))
+	{
+		PC->Client_RequestIdentity();
+	}
+	
 	OnOnePlayerArrived();
 }
 
@@ -96,6 +102,14 @@ int32 APCCombatGameMode::GetTotalSeatSlots() const
 	int32 ByBoards = CombatBoard.Num();
 	int32 Seats = (ByRing > 0 ? ByRing : (ByBoards > 0 ? ByBoards : 0));
 	return Seats;
+}
+
+void APCCombatGameMode::BindPlayerAttribute()
+{
+	if (APCCombatGameState* CombatGameState = GetCombatGameState())
+	{
+		CombatGameState->BindAllPlayerHP();
+	}
 }
 
 // 헬퍼 / 스케줄 빌드
@@ -710,7 +724,6 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		return false;
 	}
 	
-	GS->BindAllPlayerHP();
 	return true;
 }
 
@@ -722,6 +735,7 @@ void APCCombatGameMode::StartWhenReady()
 		GetWorldTimerManager().ClearTimer(ThWaitReady);
 		InitializeHomeBoardsForPlayers();
 		BindPlayerBoardsToPlayerStates();
+		BindPlayerAttribute();
 		StartFromBeginning();
 		return;
 	}

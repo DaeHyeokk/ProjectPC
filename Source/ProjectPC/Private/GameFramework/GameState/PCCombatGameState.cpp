@@ -164,6 +164,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
+	DOREPLIFETIME(APCCombatGameState, Leaderboard);
 	
 }
 
@@ -396,7 +397,6 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 			FPlayerStandingRow Row;
 			Row.LocalUserId = Id;
-			Row.PlayerName = PCS->GetPlayerName();
 			Row.Hp = HpCache.FindRef(Id);
 			Row.bEliminated = EliminatedSet.Contains(Id);
 			Row.FinalRank = FinalRanks.FindRef(Id);
@@ -510,6 +510,7 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 
 void APCCombatGameState::OnRep_Leaderboard()
 {
+	BroadCastLeaderboardMap();
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const
@@ -518,6 +519,20 @@ UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayer
 		return nullptr;
 
 	return PCPlayerState->GetAbilitySystemComponent();
+}
+
+void APCCombatGameState::BroadCastLeaderboardMap() const
+{
+	FLeaderBoardMap Map;
+	Map.Reserve(Leaderboard.Num());
+	for (const FPlayerStandingRow& Row : Leaderboard)
+	{
+		if (!Row.LocalUserId.IsEmpty())
+		{
+			Map.Add(Row.LocalUserId, Row);
+		}
+	}
+	OnLeaderboardMapUpdated.Broadcast(Map);
 }
 
 // 한 줄 포맷터 헬퍼
@@ -542,7 +557,6 @@ static FString FormatRowLine(int32 SlotIndex, const FPlayerStandingRow& Row)
 		Row.Hp,
 		*Final,
 		*Live,
-		*Row.PlayerName,
 		*IdShort
 	);
 }

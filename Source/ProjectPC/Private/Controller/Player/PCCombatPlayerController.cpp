@@ -48,6 +48,19 @@ APCCombatPlayerController::APCCombatPlayerController()
 	DragComponent = CreateDefaultSubobject<UPCDragComponent>(TEXT("DragComponent"));
 }
 
+void APCCombatPlayerController::Client_RequestIdentity_Implementation()
+{
+	// 플레이어 아이디 셋팅
+	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
+	{
+		const FString Name = Profile->GetDisplayName();
+		if (!Name.IsEmpty())
+		{
+			ServerSubmitIdentity(Name);
+		}
+	}
+}
+
 void APCCombatPlayerController::ServerSubmitIdentity_Implementation(const FString& InDisplayName)
 {
 	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
@@ -87,22 +100,7 @@ void APCCombatPlayerController::SetupInputComponent()
 void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 플레이어 아이디 셋팅
-
-	if (IsLocalController())
-	{
-		if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
-		{
-			const FString Name = Profile->GetDisplayName();
-			if (!Name.IsEmpty())
-			{
-				ServerSubmitIdentity(Name);
-			}
-		}
-	}
-
-	
+		
 	ApplyGameInputMode();
 
 	// 마우스 호버 풀링함수

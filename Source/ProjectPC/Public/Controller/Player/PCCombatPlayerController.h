@@ -56,6 +56,9 @@ class PROJECTPC_API APCCombatPlayerController : public APlayerController
 public:
 	APCCombatPlayerController();
 
+	UFUNCTION(Client, Reliable)
+	void Client_RequestIdentity();
+
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitIdentity(const FString& InDisplayName);
 	
@@ -336,6 +339,8 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);
+
+
 
 #pragma endregion GameResult
 };

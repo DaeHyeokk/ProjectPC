@@ -87,13 +87,10 @@ struct FPlayerStandingRow
 {
 	GENERATED_BODY()
 
-	/** 네가 쓰는 문자열 식별자 */
+	/** 플레이어ID 식별자 */
 	UPROPERTY(BlueprintReadOnly)
 	FString LocalUserId;
-
-	UPROPERTY(BlueprintReadOnly)
-	FString PlayerName;
-
+	
 	/** 최신 HP (실시간) */
 	UPROPERTY(BlueprintReadOnly)
 	float Hp = 0.f;
@@ -122,6 +119,10 @@ struct FPlayerStandingRow
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
+
+// Leaderboard 맵 델리게이트
+using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
 /**
  * 
  */
@@ -308,6 +309,9 @@ private:
 #pragma region Ranking
 
 public:
+
+	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
+	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
 	TArray<FPlayerStandingRow> Leaderboard;
@@ -351,6 +355,8 @@ protected:
 	void OnRep_Leaderboard();
 
 	UAbilitySystemComponent* ResolveASC(APCPlayerState* PCPlayerState) const;
+
+	void BroadCastLeaderboardMap() const;
 
 private:
 	/** 서버 캐시들 (키 = LocalUserId) */
