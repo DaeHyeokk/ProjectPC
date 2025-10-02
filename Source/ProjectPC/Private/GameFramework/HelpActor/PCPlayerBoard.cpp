@@ -51,20 +51,26 @@ void APCPlayerBoard::QuickSetUp()
 
 void APCPlayerBoard::OnHISM(bool bIsOn, bool bIsBattle)
 {
-	if (PlayerFieldHISM && PlayerBenchHISM && bIsOn && !bIsBattle)
+	if (!PlayerFieldHISM || !PlayerBenchHISM) return;
+
+	if (!bIsOn)
 	{
-		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
+		PlayerBenchHISM->SetOverlayMaterial(nullptr);
+		return;
+	}
+
+	// bIsOn == true
+	if (bIsBattle)
+	{
+		// 전투 중엔 오버레이 끄고 싶다면(원칙만 유지)
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
 	}
 	else
 	{
+		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
-	}
-
-	if (PlayerFieldHISM && PlayerBenchHISM && !bIsOn)
-	{
-		PlayerFieldHISM->SetOverlayMaterial(nullptr);
-		PlayerBenchHISM->SetOverlayMaterial(nullptr);
 	}
 	
 }
@@ -92,17 +98,15 @@ void APCPlayerBoard::BuildHISM()
 	{
 		FieldLocs.SetNum(PlayerField.Num());
 		for (int32 i=0;i<PlayerField.Num();++i)
-			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);       // 로컬 좌표 저장
+			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);    
 
 		BenchLocs.SetNum(PlayerBench.Num());
 		for (int32 i=0;i<PlayerBench.Num();++i)
-			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);          // 로컬 좌표 저장
+			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);     
 
 		// 서버도 즉시 재구성(클라는 OnRep에서)
 		RebuildHISM_FromArrays();
-
-		// 변경을 즉시 밀고 싶으면:
-		ForceNetUpdate();
+		
 	}
 	else
 	{
@@ -451,10 +455,6 @@ bool APCPlayerBoard::RemoveFromBoard(APCBaseUnitCharacter* Unit)
 	if (auto bi = GetBenchUnitIndex(Unit); bi != INDEX_NONE)
 		return RemoveFromBench(bi);
 	
-	if (HasAuthority())
-	{
-		RecountAndPushToWidget_Server();
-	}
 	return false;
 }
 
@@ -759,10 +759,9 @@ void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(FGameplayTag GameSt
 	if (CapacityWidgetComp)
 	{
 		CapacityWidgetComp->SetVisibility(bVisible);
-
-		UE_LOG(LogTemp, Warning, TEXT("WidgetComp Visible Is %d"), CapacityWidgetComp->GetVisibleFlag())
+		
 	}
-	UE_LOG(LogTemp, Warning, TEXT("WidgetComp Visible Is %d"), CapacityWidgetComp->GetVisibleFlag())
+	
 }
 
 void APCPlayerBoard::OnLevelChanged(const FOnAttributeChangeData& Data)
@@ -804,14 +803,7 @@ void APCPlayerBoard::SyncMaxFromLevel()
 
 APCPlayerState* APCPlayerBoard::ResolvePlayerState() const
 {
-	if (OwnerPlayerState == nullptr)
-	{
-		return GetWorld() ? GetWorld()->GetFirstPlayerController() ?
-	Cast<APCPlayerState>(GetWorld()->GetFirstPlayerController()->PlayerState) : nullptr : nullptr;
-	}
-
 	return OwnerPlayerState;
-	
 }
 
 UAbilitySystemComponent* APCPlayerBoard::ResolveASC() const
