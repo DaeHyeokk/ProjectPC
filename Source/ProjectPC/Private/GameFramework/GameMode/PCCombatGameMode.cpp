@@ -87,7 +87,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
 
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -225,6 +225,7 @@ void APCCombatGameMode::Step_Setup()
 {
 	const int32 Stage = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
 	const int32 Round = FlatRoundIdx.IsValidIndex(Cursor) ? FlatRoundIdx[Cursor] : 0;
+	const bool NotReword = (Stage == 1.f && Round == 2.f);
 
 	if (APCCombatGameState* PCCombatGameState = GetCombatGameState())
 	{
@@ -240,9 +241,11 @@ void APCCombatGameMode::Step_Setup()
 
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				PCPlayerState->ApplyRoundReward();
+				if (!NotReword)
+				{
+					PCPlayerState->ApplyRoundReward();
+				}
 			}
-			
 			PCPlayerController->Client_ShowWidget();
 		}
 	}
@@ -608,12 +611,16 @@ void APCCombatGameMode::BindPlayerBoardsToPlayerStates()
 		{
 			continue;
 		}
-		
-		PlayerBoard->PlayerIndex = PCPS->SeatIndex;
-		PlayerBoard->OwnerPlayerState = PCPS;
+				
 		// 보드에 내 Seat 기록(검색용)
 		PCPS->SetPlayerBoard(PlayerBoard);
 		ForceNetUpdate();
+
+		PlayerBoard->PlayerIndex = PCPS->SeatIndex;
+		PlayerBoard->OwnerPlayerState = PCPS;
+		PlayerBoard->SetOwner(PCPS);
+		PlayerBoard->PlayerBoardDelegate();
+		
 		UE_LOG(LogTemp, Warning, TEXT("PlayerBoardIndex : %d, PCPSSeatIndex : %d, OwnerPlayerState : %p "), PlayerBoard->PlayerIndex, PCPS->SeatIndex, PlayerBoard->OwnerPlayerState)
 	}
 }

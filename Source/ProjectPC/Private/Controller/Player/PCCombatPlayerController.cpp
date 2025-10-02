@@ -854,18 +854,35 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
     // ───────────────────────────────────────────────────────────
     if (DstUnit == nullptr || DstUnit == Unit)
     {
-        if (bSrcField)
-        {
-            PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
-        }
-        else if (SrcBench != INDEX_NONE)
-        {
-            PB->RemoveFromBench(SrcBench);
-        }
+    	
+    	if (bSrcField)
+    	{
+    		PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
+    	}
+    	else if (SrcBench != INDEX_NONE)
+    	{
+    		PB->RemoveFromBench(SrcBench);
+    	}
 
-        const bool bPlaced =
-            bDstField ? PB->PlaceUnitOnField(Y, X, Unit)
-                      : PB->PlaceUnitOnBench(BenchIdx, Unit);
+    	bool bPlaced;
+
+    	if (bDstField)
+    	{
+    		if (!PB->PlaceUnitOnField(Y, X, Unit))
+    		{
+    			PB->PlaceUnitOnBench(SrcBench, Unit);
+    			bPlaced = false;
+    		}
+		    else
+		    {
+		    	bPlaced = true;
+		    }
+    	}
+	    else
+	    {
+	    	PB->PlaceUnitOnBench(BenchIdx, Unit);
+	    	bPlaced = true;
+	    }
 
         if (bPlaced)
         {
