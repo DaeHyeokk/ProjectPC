@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
+class UAbilitySystemComponent;
 class UPCTileManager;
 class APCCombatBoard;
 class UPCShopManager;
@@ -80,8 +81,48 @@ struct FStageRuntimeState
 	float ServerEndTime = 0.f;
 };
 
+/** 메인 위젯에 그대로 나열할 행(1등=Index 0, N등=Index N-1) */
+USTRUCT(BlueprintType)
+struct FPlayerStandingRow
+{
+	GENERATED_BODY()
+
+	/** 플레이어ID 식별자 */
+	UPROPERTY(BlueprintReadOnly)
+	FString LocalUserId;
+	
+	/** 최신 HP (실시간) */
+	UPROPERTY(BlueprintReadOnly)
+	float Hp = 0.f;
+
+	/** 사망 여부 */
+	UPROPERTY(BlueprintReadOnly)
+	bool bEliminated = false;
+
+	/** 실시간 생존자 랭크(1부터). 사망자는 0 */
+	UPROPERTY(BlueprintReadOnly)
+	int32 LiveRank = 0;
+
+	/** 확정 최종 등수(사망 순간 할당. 마지막 생존자는 1) */
+	UPROPERTY(BlueprintReadOnly)
+	int32 FinalRank = 0;
+
+	/** 리스트 안정화용: 최초 관측 순서(사망 섹션 정렬에는 사용 X, 필요 시 참고) */
+	UPROPERTY(BlueprintReadOnly)
+	int32 StableOrder = 0;
+
+	/** HP 동률 안정화를 위한 마지막 변경 시각(서버시간) */
+	UPROPERTY(BlueprintReadOnly)
+	float LastChangeTime = 0.f;
+};
+
+
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
+
+// Leaderboard 맵 델리게이트
+using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
 /**
  * 
  */
@@ -264,4 +305,85 @@ private:
 	}
 
 #pragma endregion TemplateFunc
+
+#pragma region Ranking
+
+public:
+
+	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
+	
+	// UI에 뿌릴 최종 배열
+	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
+	TArray<FPlayerStandingRow> Leaderboard;
+
+	// LocalUserId -> 확정 최종 등수
+	UPROPERTY(BlueprintReadOnly, Category = "Ranking")
+	TMap<FString, int32> FinalRanks;
+
+	// 어트리뷰트 바인딩 함수
+	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")
+	void BindAllPlayerHP();
+
+	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")
+	void BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState);
+
+	// 자신의 최종 등수 반환 함수
+	UFUNCTION(BlueprintCallable, Category = "Ranking")
+	int32 AssignFinalRankOnDeathById(const FString& LocalUserId);
+
+	// 편의용 state 버전
+	UFUNCTION(BlueprintCallable, Category = "Ranking")
+	int32 AssignFinalRankOnDeathByPS(APCPlayerState* PCPlayerState);
+
+	UFUNCTION(BlueprintPure, Category = "Ranking")
+	int32 GetFinalRankFor(const FString& LocalUserId) const;
+
+protected:
+
+	virtual void RemovePlayerState(APlayerState* PlayerState) override;
+
+	// ASC AttributeChangeDelegate
+	void OnHpChanged_Server(APCPlayerState* PCPlayerState, float NewHp);
+	void OnEliminated_Server(APCPlayerState* PCPlayerState);
+
+	// 리더보드 재구성, 마지막 1인 1등 처리
+	void RebuildAndReplicatedLeaderboard();
+	void TryFinalizeLastSurvivor();
+
+	// 위젯 갱신
+	UFUNCTION()
+	void OnRep_Leaderboard();
+
+	UAbilitySystemComponent* ResolveASC(APCPlayerState* PCPlayerState) const;
+
+	void BroadCastLeaderboardMap() const;
+
+private:
+	/** 서버 캐시들 (키 = LocalUserId) */
+	TMap<FString, float> HpCache;             // 최신 HP
+	TMap<FString, float> LastChangeTimeCache; // 마지막 HP 변경시간(서버)
+	TMap<FString, int32> StableOrderCache;    // 최초 관측 순서
+	TSet<FString>        EliminatedSet;       // 사망자 집합
+
+	int32 AliveCount = 0;
+	int32 StableOrderCounter = 0;
+
+	/** ASC 바인딩 핸들 관리 */
+	TMap<TWeakObjectPtr<UAbilitySystemComponent>, FDelegateHandle> HpDelegateHandles;
+
+
+public:
+	// ==== Debug ====
+	UFUNCTION(BlueprintCallable, Exec, Category="Rank|Debug")
+	void DebugPrintLeaderboard(bool bToScreen = true, float ScreenSeconds = 5.f);
+
+	UFUNCTION(Server, Reliable)
+	void Server_DebugPrintLeaderboard(bool bToScreen, float ScreenSeconds);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_DebugPrintToScreen(const TArray<FString>& Lines, float ScreenSeconds);
+	
+	
+	
+#pragma endregion Ranking
 };

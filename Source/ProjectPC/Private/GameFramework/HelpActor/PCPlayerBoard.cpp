@@ -3,12 +3,15 @@
 
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
-#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "Components/WidgetComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/Board/PCBoardWidget.h"
 
 
 APCPlayerBoard::APCPlayerBoard()
@@ -32,6 +35,10 @@ APCPlayerBoard::APCPlayerBoard()
 	PlayerBenchHISM->SetMobility(EComponentMobility::Movable);
 	PlayerBenchHISM->NumCustomDataFloats = 4;
 
+	CapacityWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("CapacityWidgetComp"));
+	CapacityWidgetComp->SetupAttachment(SceneRoot);
+	CapacityWidgetComp->SetWidgetSpace(EWidgetSpace::World);
+	CapacityWidgetComp->SetVisibility(false);
 }
 
 
@@ -44,20 +51,26 @@ void APCPlayerBoard::QuickSetUp()
 
 void APCPlayerBoard::OnHISM(bool bIsOn, bool bIsBattle)
 {
-	if (PlayerFieldHISM && PlayerBenchHISM && bIsOn && !bIsBattle)
+	if (!PlayerFieldHISM || !PlayerBenchHISM) return;
+
+	if (!bIsOn)
 	{
-		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
+		PlayerBenchHISM->SetOverlayMaterial(nullptr);
+		return;
+	}
+
+	// bIsOn == true
+	if (bIsBattle)
+	{
+		// 전투 중엔 오버레이 끄고 싶다면(원칙만 유지)
+		PlayerFieldHISM->SetOverlayMaterial(nullptr);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
 	}
 	else
 	{
+		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
-	}
-
-	if (PlayerFieldHISM && PlayerBenchHISM && !bIsOn)
-	{
-		PlayerFieldHISM->SetOverlayMaterial(nullptr);
-		PlayerBenchHISM->SetOverlayMaterial(nullptr);
 	}
 	
 }
@@ -85,17 +98,15 @@ void APCPlayerBoard::BuildHISM()
 	{
 		FieldLocs.SetNum(PlayerField.Num());
 		for (int32 i=0;i<PlayerField.Num();++i)
-			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);       // 로컬 좌표 저장
+			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);    
 
 		BenchLocs.SetNum(PlayerBench.Num());
 		for (int32 i=0;i<PlayerBench.Num();++i)
-			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);          // 로컬 좌표 저장
+			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);     
 
 		// 서버도 즉시 재구성(클라는 OnRep에서)
 		RebuildHISM_FromArrays();
-
-		// 변경을 즉시 밀고 싶으면:
-		ForceNetUpdate();
+		
 	}
 	else
 	{
@@ -109,7 +120,14 @@ void APCPlayerBoard::BeginPlay()
 {
 	Super::BeginPlay();
 
-	QuickSetUp();	
+	QuickSetUp();
+	
+	if (HasAuthority())
+	{
+		CurUnits = CountFieldUnits();
+	}
+
+	RefreshCapacityWidget();
 }
 
 void APCPlayerBoard::OnRep_FieldLocs()
@@ -147,6 +165,8 @@ void APCPlayerBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APCPlayerBoard, FieldLocs)
 	DOREPLIFETIME(APCPlayerBoard, BenchLocs)
+	DOREPLIFETIME_CONDITION(APCPlayerBoard, CurUnits, COND_OwnerOnly)
+	DOREPLIFETIME_CONDITION(APCPlayerBoard, MaxUnits, COND_OwnerOnly)
 }
 
 #if WITH_EDITOR
@@ -370,14 +390,29 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
 	if (!Unit || !IsInRange(Y,X)) return false;
+
+	if (HasAuthority())
+	{
+		const int32 i = IndexOf(Y,X);
+		const bool bOccupied = PlayerField.IsValidIndex(i) && IsValid(PlayerField[i].Unit);
+		const int32 Future = CountFieldUnits() + (bOccupied ? 0 : 1);
+		if (Future > MaxUnits)
+		{
+			return false;
+		}
+	}
+	
 	EnsureExclusive(Unit);
 	const int32 i = IndexOf(Y,X);
 	PlayerField[i].Unit = Unit;
 
-	// OwnerPlayerState->AddFieldUnit(Cast<APCHeroUnitCharacter>(Unit));
-
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
-	Unit->SetActorLocation(World);
+	Unit->SetActorLocation(World,false);
+
+	if (HasAuthority())
+	{
+		RecountAndPushToWidget_Server();
+	}
 	return true;
 }
 
@@ -386,12 +421,10 @@ bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacte
 	if (!Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
-
-	// OwnerPlayerState->AddBenchUnit(Cast<APCHeroUnitCharacter>(Unit));
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();
-	Unit->SetActorLocationAndRotation(World,ActorRot,false,nullptr);
+	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+20.f),ActorRot,false,nullptr);
 	return true;
 }
 
@@ -399,19 +432,17 @@ bool APCPlayerBoard::RemoveFromField(int32 Y, int32 X)
 {
 	const int32 i = IndexOf(Y,X);
 	if (!PlayerField.IsValidIndex(i)) return false;
-
-	// OwnerPlayerState->RemoveFieldUnit(Cast<APCHeroUnitCharacter>(PlayerField[i].Unit));
-	
 	PlayerField[i].Unit = nullptr;
+	if (HasAuthority())
+	{
+		RecountAndPushToWidget_Server();
+	}
 	return true;
 }
 
 bool APCPlayerBoard::RemoveFromBench(int32 LocalBenchIndex)
 {
 	if (!PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
-
-	// OwnerPlayerState->RemoveBenchUnit(Cast<APCHeroUnitCharacter>(PlayerBench[LocalBenchIndex].Unit));
-	
 	PlayerBench[LocalBenchIndex].Unit = nullptr;
 	return true;
 }
@@ -423,6 +454,7 @@ bool APCPlayerBoard::RemoveFromBoard(APCBaseUnitCharacter* Unit)
 		return RemoveFromField(p.X, p.Y); // FIX: (Y,X)
 	if (auto bi = GetBenchUnitIndex(Unit); bi != INDEX_NONE)
 		return RemoveFromBench(bi);
+	
 	return false;
 }
 
@@ -657,55 +689,6 @@ void APCPlayerBoard::ResnapBenchUnitsToBoard(bool bIsBattle)
 	}
 }
 
-bool APCPlayerBoard::CopyFieldToTileManager(class UPCTileManager* TM, bool bMirrorRows, bool bMirrorCols)
-{
-	if (!TM || TM->Rows != Rows || TM->Cols != Cols) return false;
-
-	// 내 필드에 있는 유닛만 TM.Field로 복제
-	for (int32 y=0;y<Cols;++y)
-		for (int32 x=0;x<Rows;++x)
-		{
-			const int32 i = IndexOf(y,x);
-			if (!PlayerField.IsValidIndex(i)) continue;
-			if (APCBaseUnitCharacter* U = PlayerField[i].Unit)
-			{
-				const int32 nRow = bMirrorRows ? (Rows-1-x) : x;
-				const int32 nCol = bMirrorCols ? (Cols-1-y) : y;
-				TM->PlaceUnitOnField(nCol, nRow, U, ETileFacing::Auto);
-			}
-		}
-	return true;
-}
-
-bool APCPlayerBoard::CopyTileManagerToField(class UPCTileManager* TM, bool bMirrorRows, bool bMirrorCols)
-{
-	if (!TM || TM->Rows != Rows || TM->Cols != Cols) return false;
-
-	// 일단 내 필드 비우고
-	for (auto& T : PlayerField) T.Unit = nullptr;
-
-	// TM 필드에서 유닛을 가져와서 내 필드에 기록
-	for (int32 y=0;y<TM->Cols;++y)
-		for (int32 x=0;x<TM->Rows;++x)
-		{
-			if (APCBaseUnitCharacter* U = TM->GetFieldUnit(y,x))
-			{
-				const int32 nRow = bMirrorRows ? (Rows-1-x) : x;
-				const int32 nCol = bMirrorCols ? (Cols-1-y) : y;
-				PlaceUnitOnField(nCol, nRow, U);
-			}
-		}
-	return true;                                                                    
-}
-
-void APCPlayerBoard::SetHighlight(bool bOnField, bool bOnBench)
-{
-	if (PlayerFieldHISM)
-		PlayerFieldHISM->SetOverlayMaterial(bOnField ? FieldTileOverlayMaterial : nullptr);
-	if (PlayerBenchHISM)
-		PlayerBenchHISM->SetOverlayMaterial(bOnBench ? BenchTileOverlayMaterial : nullptr);
-}
-
 void APCPlayerBoard::MakeSnapshot(FPlayerBoardSnapshot& Out) const
 {
 	Out.FieldUnits.SetNum(Rows*Cols);
@@ -728,6 +711,196 @@ FVector APCPlayerBoard::GetFieldWorldPos(int32 Y, int32 X)
 FVector APCPlayerBoard::GetBenchWorldPos(int32 LocalBenchIndex) 
 {
 	return PlayerBench.IsValidIndex(LocalBenchIndex) ? ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position) : FVector::ZeroVector;
+}
+
+void APCPlayerBoard::OnRep_FieldCount()
+{
+	RefreshCapacityWidget();
+}
+
+void APCPlayerBoard::OnRep_MaxUnits()
+{
+	RefreshCapacityWidget();
+}
+
+void APCPlayerBoard::RefreshCapacityWidget() const
+{
+	if (auto* Widget = Cast<UPCBoardWidget>(CapacityWidgetComp->GetUserWidgetObject()))
+	{
+		Widget->SetValues(CurUnits,MaxUnits);
+	}
+}
+
+int32 APCPlayerBoard::CountFieldUnits() const
+{
+	int32 Count = 0;
+	for (const auto& T : PlayerField)
+	{
+		if (IsValid(T.Unit))
+		{
+			++Count;
+		}
+	}
+	return Count;
+}
+
+void APCPlayerBoard::RecountAndPushToWidget_Server()
+{
+	if (!HasAuthority())
+		return;
+	CurUnits = CountFieldUnits();
+	OnRep_FieldCount();
+}
+
+void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(FGameplayTag GameState)
+{
+	const bool bVisible = GameState == GameStateTags::Game_State_NonCombat;
+
+	if (CapacityWidgetComp)
+	{
+		CapacityWidgetComp->SetVisibility(bVisible);
+		
+	}
+	
+}
+
+void APCPlayerBoard::OnLevelChanged(const FOnAttributeChangeData& Data)
+{
+	SyncMaxFromLevel();
+}
+
+void APCPlayerBoard::PlayerBoardDelegate()
+{
+	if (UAbilitySystemComponent* ASC = ResolveASC())
+	{
+		if (const UPCPlayerAttributeSet* Atr = ResolveSet())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(Atr->GetPlayerLevelAttribute())
+			.AddUObject(this, &ThisClass::OnLevelChanged);
+		}
+	}
+
+	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		PCGameState->OnGameStateTagChanged.AddUObject(this,&ThisClass::SetCapacityWidgetVisible);
+		PCGameState->OnGameStateTagChanged.AddUObject(this,&ThisClass::OnGameStateChangedForAutoFill);
+	}
+
+	SyncMaxFromLevel();
+}
+
+void APCPlayerBoard::SyncMaxFromLevel()
+{
+	int32 Level = 1;
+	if (const UPCPlayerAttributeSet* Attr = ResolveSet())
+	{
+		Level = Attr->GetPlayerLevel();
+	}
+	
+	MaxUnits = Level;
+	OnRep_MaxUnits();
+}
+
+APCPlayerState* APCPlayerBoard::ResolvePlayerState() const
+{
+	return OwnerPlayerState;
+}
+
+UAbilitySystemComponent* APCPlayerBoard::ResolveASC() const
+{
+	if (APCPlayerState* PS = ResolvePlayerState())
+	{
+		return PS->GetAbilitySystemComponent();
+	}
+	return nullptr;
+}
+
+const UPCPlayerAttributeSet* APCPlayerBoard::ResolveSet() const
+{
+	if (APCPlayerState* PCPlayerState = ResolvePlayerState())
+	{
+		return PCPlayerState->GetAttributeSet();
+	}
+	return nullptr;
+}
+
+void APCPlayerBoard::TryAutoFillFromBench_Server()
+{
+	if (!HasAuthority())
+		return;
+
+	const int32 Capacity = MaxUnits;
+	int32 Cur = CountFieldUnits();
+	if (Cur >= Capacity)
+		return;
+
+	while (Cur<Capacity)
+	{
+		int32 y = INDEX_NONE;
+		int32 x = INDEX_NONE;
+		if (!FindFirstEmptyField(y,x))
+			break;
+
+		const int32 BenchIdx = GetFirstOccupiedBenchIndex();
+		if (BenchIdx == INDEX_NONE)
+			break;
+
+		APCBaseUnitCharacter* Unit = PlayerBench[BenchIdx].Unit;
+		if (!IsValid(Unit))
+		{
+			PlayerBench[BenchIdx].Unit = nullptr;
+			continue;
+		}
+		
+		RemoveFromBench(BenchIdx);
+		const bool bPlaced = PlaceUnitOnField(y,x,Unit);		
+		if (!bPlaced)
+			break;
+
+		++Cur;
+	}
+}
+
+void APCPlayerBoard::OnGameStateChangedForAutoFill(const FGameplayTag GameState)
+{
+	if (!HasAuthority())
+		return;
+
+	if (GameState == GameStateTags::Game_State_Combat_Preparation || GameState == GameStateTags::Game_State_Combat_Preparation_Creep)
+	{
+		TryAutoFillFromBench_Server();
+	}
+}
+
+
+bool APCPlayerBoard::FindFirstEmptyField(int32& OutY, int32& OutX) const
+{
+	for (int32 y = 0; y < Cols; ++y)
+	{
+		for (int32 x = 0; x < Rows; ++x)
+		{
+			if (IsTileFree(y,x))
+			{
+				OutY = y;
+				OutX = x;
+				return true;
+			}
+		}
+	}
+	OutY = INDEX_NONE;
+	OutX = INDEX_NONE;
+	return false;
+}
+
+int32 APCPlayerBoard::GetFirstOccupiedBenchIndex() const
+{
+	for (int32 i = 0; i < PlayerBench.Num(); ++i)
+	{
+		if (PlayerBench[i].Unit)
+			return i;
+	}
+
+	return INDEX_NONE;
 }
 
 

@@ -63,6 +63,10 @@ protected:
 	// 좌석배정 유틸함수
 	int32 GetTotalSeatSlots() const;
 
+	// playerAttribute Delegate register
+	UFUNCTION()
+	void BindPlayerAttribute();
+
 private:
 	// 데이터 평탄화
 	TArray<FRoundStep> FlatRoundSteps;

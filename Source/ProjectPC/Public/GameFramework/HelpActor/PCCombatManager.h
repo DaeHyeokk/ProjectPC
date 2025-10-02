@@ -218,7 +218,8 @@ private:
 	
 	UFUNCTION()
 	void OnAnyUnitDied(APCBaseUnitCharacter* Unit);
-	void CheckPairVictory(int32 PairIndex);
+	
+	void CheckPairVictory(int32 PairIndex);	
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
 public:

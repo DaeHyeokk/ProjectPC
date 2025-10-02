@@ -197,6 +197,9 @@ void APCCombatManager::StartAllBattle()
 
 		Pair.bRunning = true;
 		Pair.bIsPvE   = false;
+
+		CheckPairVictory(PairIndex);
+		
 	}
 }
 
@@ -549,6 +552,7 @@ int32 APCCombatManager::StartPvEBattleForSeat(int32 HostSeatIndex)
 
 	CountAliveOnHostBoardForPair(PairIndex);
 	BindUnitOnBoardForPair(PairIndex);
+	CheckPairVictory(PairIndex);
 	return PairIndex;
 }
 

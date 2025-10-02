@@ -11,7 +11,6 @@
 #include "PCPlayerState.generated.h"
 
 
-
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
@@ -68,8 +67,8 @@ public:
 	UPROPERTY(Replicated)
 	int32 PlayerLevel = 30;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	void SetDisplayName_Server(const FString& InName);
+	
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
 	UFUNCTION()
 	void OnRep_LocalUserId() {}
@@ -79,6 +78,9 @@ public:
 	void OnRep_bIsReady()    {}
 	UFUNCTION()
 	void OnRep_SeatIndex();
+
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 #pragma endregion Login
 
 #pragma region AbilitySystem
@@ -156,4 +158,6 @@ public:
 	int32 GetPlayerWinningStreak() const;
 
 #pragma endregion Combat
+
+
 };

@@ -4,8 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayEffectTypes.h"        // FOnAttributeChangeData 선언
+#include "AbilitySystemComponent.h" 
 #include "PCPlayerBoard.generated.h"
 
+class UPCPlayerAttributeSet;
+class UAbilitySystemComponent;
+struct FOnAttributeChangeData;
+class UWidgetComponent;
 struct FGameplayTag;
 class UPCTileManager;
 class APCCombatBoard;
@@ -260,20 +266,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="PlayerBoard|Battle")
 	FVector AttachWorldOffset = FVector::ZeroVector;
-
-    // 플레이 보드(Field) → 전투 TM(Field) 복사 (전투 시작 시)
-    UFUNCTION(BlueprintCallable, Category="PlayerBoard|Battle")
-    bool CopyFieldToTileManager(UPCTileManager* TM, bool bMirrorRows, bool bMirrorCols);
-
-    // 전투 TM(Field) → 플레이 보드(Field) 복사 (필요 시, 전투 종료 후 복원용)
-    UFUNCTION(BlueprintCallable, Category="PlayerBoard|Battle")
-    bool CopyTileManagerToField(UPCTileManager* TM, bool bMirrorRows, bool bMirrorCols);
-
-    // ─────────────────────────────────────────────────────────────
-    // 5) 하이라이트/HISM 표시 제어 (CombatBoard의 HISM 제거 대비)
-    UFUNCTION(BlueprintCallable, Category="PlayerBoard|Visual")
-    void SetHighlight(bool bOnField, bool bOnBench);
-
+		
     // ─────────────────────────────────────────────────────────────
     // 6) 스냅샷/직렬화 (선택: 디버깅/저장/복원)
 
@@ -296,6 +289,70 @@ public:
 	{
 		return Root ? Root->GetComponentTransform().InverseTransformPosition(World) : World;
 	}
+
+	// Board UI
+
+public:
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	UWidgetComponent* CapacityWidgetComp;
+
+	UPROPERTY(ReplicatedUsing=OnRep_FieldCount)
+	int32 CurUnits = 0;
+
+	UPROPERTY(ReplicatedUsing=OnRep_MaxUnits)
+	int32 MaxUnits = 0;
+
+	UFUNCTION()
+	void OnRep_FieldCount();
+
+	UFUNCTION()
+	void OnRep_MaxUnits();
+
+	void RefreshCapacityWidget() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Capacity")
+	int32 CountFieldUnits() const;
+
+	void RecountAndPushToWidget_Server();
+
+
+	UFUNCTION(Client, Reliable)
+	void SetCapacityWidgetVisible(FGameplayTag GameState);
+
+	void PlayerBoardDelegate();
+
+protected:
+
+	// ASC 레벨 변화 델리게이트
+	void OnLevelChanged(const FOnAttributeChangeData& Data);
+	
+	void SyncMaxFromLevel();
+
+	APCPlayerState* ResolvePlayerState() const;
+	UAbilitySystemComponent* ResolveASC() const;
+	const UPCPlayerAttributeSet* ResolveSet() const;
+
+
+	// Board 자동 배치
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void TryAutoFillFromBench_Server();
+
+	void OnGameStateChangedForAutoFill(const FGameplayTag GameState);
+
+protected:
+
+	// 수용인원을 가져오는 헬퍼
+	int32 GetCapacityFromPlayer() const;
+
+	// 필드 빈칸을 가장 낮은 인덱스로 검색
+	bool FindFirstEmptyField(int32& OutY, int32& OutX) const;
+
+	// 가장 낮은 인덱스의 유닛이 들어있는 벤치 슬롯 찾기
+	int32 GetFirstOccupiedBenchIndex() const;
+	
+	
 };
 	
 

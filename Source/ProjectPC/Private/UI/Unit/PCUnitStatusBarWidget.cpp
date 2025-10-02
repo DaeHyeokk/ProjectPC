@@ -103,9 +103,7 @@ void UPCUnitStatusBarWidget::NativeDestruct()
 }
 
 void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	UE_LOG(LogTemp, Warning, TEXT("UI OnCurrentHealthChanged: New=%.1f"), Data.NewValue);
-	
+{	
 	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
 	const float NowValue = ASC.IsValid()
 		? ASC->GetNumericAttribute(HealthAttr)
@@ -116,9 +114,7 @@ void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
 }
 
 void UPCUnitStatusBarWidget::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
-{
-	UE_LOG(LogTemp, Warning, TEXT("UI OnMaxHealthChanged: New=%.1f"), Data.NewValue);
-	
+{	
 	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
 	const float NowValue = ASC.IsValid()
 		? ASC->GetNumericAttribute(MaxHealthAttr)
@@ -152,7 +148,6 @@ void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data
 
 void UPCUnitStatusBarWidget::ApplyToUI() const
 {
-	UE_LOG(LogTemp, Warning, TEXT("CurrentHealth: %f"), CachedHP);
 	// CachedMaxHP, MP는 항상 0보다 크다는 것이 보장돼있기 때문에 나누기 연산에서 안전함 (따로 체크 안해도됨)
 	if (HealthBar)
 		HealthBar->SetValues(CachedHP, CachedMaxHP);
