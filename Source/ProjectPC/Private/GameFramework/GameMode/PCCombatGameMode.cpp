@@ -611,6 +611,7 @@ void APCCombatGameMode::BindPlayerBoardsToPlayerStates()
 		
 		PlayerBoard->PlayerIndex = PCPS->SeatIndex;
 		PlayerBoard->OwnerPlayerState = PCPS;
+		PlayerBoard->SetOwner(PCPS);
 		// 보드에 내 Seat 기록(검색용)
 		PCPS->SetPlayerBoard(PlayerBoard);
 		ForceNetUpdate();

@@ -91,10 +91,10 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase, public IGameplay
 	GENERATED_BODY()
 
 public:
-	
 	APCCombatGameState();
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void BeginPlay() override;
 

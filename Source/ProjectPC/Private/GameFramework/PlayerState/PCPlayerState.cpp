@@ -9,8 +9,11 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Shop/PCShopManager.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -100,6 +103,7 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 				if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 				{
 					PlayerCharacter->PlayerDie();
+					ReturnAllUnitToShop();
 				}
 			}
 		}
@@ -153,6 +157,85 @@ void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 {
 	return ShopSlots;
+}
+
+void APCPlayerState::AddFieldUnit(APCHeroUnitCharacter* AddUnit)
+{
+	if (!HasAuthority()) return;
+
+	if (AddUnit)
+	{
+		FieldUnitSet.Add(AddUnit);
+	}
+}
+
+void APCPlayerState::AddBenchUnit(APCHeroUnitCharacter* AddUnit)
+{
+	if (!HasAuthority()) return;
+
+	if (AddUnit)
+	{
+		BenchUnitSet.Add(AddUnit);
+	}
+}
+
+void APCPlayerState::RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit)
+{
+	if (!HasAuthority()) return;
+
+	if (RemoveUnit)
+	{
+		FieldUnitSet.Remove(RemoveUnit);
+	}
+}
+
+void APCPlayerState::RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit)
+{
+	if (!HasAuthority()) return;
+
+	if (RemoveUnit)
+	{
+		BenchUnitSet.Remove(RemoveUnit);
+	}
+}
+
+void APCPlayerState::ReturnAllUnitToShop()
+{
+	if (!HasAuthority()) return;
+	
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		auto ShopManager = GS->GetShopManager();
+		ShopManager->ReturnUnitsToShopBySlotUpdate(ShopSlots, PurchasedSlots);
+
+		for (auto It = FieldUnitSet.CreateIterator(); It; ++It)
+		{
+			if (auto FieldUnit = It->Get())
+			{
+				ShopManager->SellUnit(FieldUnit->GetUnitTag(), FieldUnit->GetUnitLevel());
+
+				if (PlayerBoard)
+				{
+					PlayerBoard->RemoveFromBoard(FieldUnit);
+					FieldUnit->Destroy();
+				}
+			}
+		}
+
+		for (auto It = BenchUnitSet.CreateIterator(); It; ++It)
+		{
+			if (auto BenchUnit = It->Get())
+			{
+				ShopManager->SellUnit(BenchUnit->GetUnitTag(), BenchUnit->GetUnitLevel());
+				
+				if (PlayerBoard)
+				{
+					PlayerBoard->RemoveFromBoard(BenchUnit);
+					BenchUnit->Destroy();
+				}
+			}
+		}
+	}
 }
 
 void APCPlayerState::OnRep_PlayerWinningStreak()

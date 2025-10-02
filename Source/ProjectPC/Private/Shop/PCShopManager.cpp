@@ -68,7 +68,7 @@ void UPCShopManager::BeginPlay()
 
 void UPCShopManager::OnGameStateChanged(FGameplayTag NewTag)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!GetOwner()) return;
 	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
@@ -96,6 +96,7 @@ void UPCShopManager::OnGameStateChanged(FGameplayTag NewTag)
 
 void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 {
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 	if (!TargetPlayer) return;
 	
 	const auto& ShopSlots = TargetPlayer->GetShopSlots();
@@ -130,7 +131,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 
 void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!GetOwner()) return;
 	if (!TargetPlayer) return;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -158,7 +159,7 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	UnitCountByLevelMap.Add({2,0});
 	UnitCountByLevelMap.Add({3,0});
 
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return UnitCountByLevelMap;
+	if (!GetOwner()) return UnitCountByLevelMap;
 	if (!TargetPlayer) return UnitCountByLevelMap;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -178,9 +179,6 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	{
 		UnitList = PlayerBoard->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
-
-	// 테스트용, 실제 게임 적용할 때는 삭제
-	// UnitList = TileManager->GetAllUnitByTag(UnitTag);
 	
 	for (auto Unit : UnitList)
 	{
@@ -234,7 +232,7 @@ int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* Target
 
 void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!GetOwner()) return;
 	if (!TargetPlayer) return;
 	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
@@ -303,7 +301,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 
 void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (!GetOwner()) return;
 	
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;

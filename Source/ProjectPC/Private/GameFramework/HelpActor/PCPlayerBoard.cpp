@@ -4,8 +4,10 @@
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -372,6 +374,8 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const int32 i = IndexOf(Y,X);
 	PlayerField[i].Unit = Unit;
 
+	OwnerPlayerState->AddFieldUnit(Cast<APCHeroUnitCharacter>(Unit));
+
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
 	Unit->SetActorLocation(World);
 	return true;
@@ -382,6 +386,8 @@ bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacte
 	if (!Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
+
+	OwnerPlayerState->AddBenchUnit(Cast<APCHeroUnitCharacter>(Unit));
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();
@@ -393,6 +399,9 @@ bool APCPlayerBoard::RemoveFromField(int32 Y, int32 X)
 {
 	const int32 i = IndexOf(Y,X);
 	if (!PlayerField.IsValidIndex(i)) return false;
+
+	OwnerPlayerState->RemoveFieldUnit(Cast<APCHeroUnitCharacter>(PlayerField[i].Unit));
+	
 	PlayerField[i].Unit = nullptr;
 	return true;
 }
@@ -400,6 +409,9 @@ bool APCPlayerBoard::RemoveFromField(int32 Y, int32 X)
 bool APCPlayerBoard::RemoveFromBench(int32 LocalBenchIndex)
 {
 	if (!PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
+
+	OwnerPlayerState->RemoveBenchUnit(Cast<APCHeroUnitCharacter>(PlayerBench[LocalBenchIndex].Unit));
+	
 	PlayerBench[LocalBenchIndex].Unit = nullptr;
 	return true;
 }

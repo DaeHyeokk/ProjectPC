@@ -10,16 +10,18 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
-/**
- * 
- */
 
 
-class APCPlayerBoard;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
 
+class APCPlayerBoard;
+class APCHeroUnitCharacter;
+
+/**
+ * 
+ */
 UCLASS()
 class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -112,6 +114,13 @@ public:
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
 	TArray<FPCShopUnitData> ShopSlots;
+
+	UPROPERTY()
+	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> FieldUnitSet;
+
+	UPROPERTY()
+	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> BenchUnitSet;
+
 	
 	UFUNCTION()
 	void OnRep_ShopSlots();
@@ -127,6 +136,14 @@ public:
 	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
+
+	void AddFieldUnit(APCHeroUnitCharacter* AddUnit);
+	void AddBenchUnit(APCHeroUnitCharacter* AddUnit);
+
+	void RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit);
+	void RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit);
+
+	void ReturnAllUnitToShop();
 
 #pragma endregion Shop
 
