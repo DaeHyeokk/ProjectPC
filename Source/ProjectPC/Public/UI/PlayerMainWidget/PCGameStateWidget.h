@@ -46,6 +46,4 @@ private:
 
 	void ReFreshStatic();
 	void TickUpdate();
-	
-	
 };

@@ -7,7 +7,7 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
-class UPathFollowingComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTPC_API APCPlayerCharacter : public ACharacter
@@ -18,6 +18,7 @@ public:
 	APCPlayerCharacter();
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
@@ -27,6 +28,10 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer CharacterTags;
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")
+	UWidgetComponent* OverHeadWidgetComp;
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -46,12 +51,11 @@ public:
 
 	void PlayerDie();
 
+	UFUNCTION(Client, Reliable)
+	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
+	
 	UFUNCTION(BlueprintCallable)
 	void OnPlayerDeathAnimFinished();
 
 #pragma endregion PlayerDead
-
-public:
-	UFUNCTION(Client, Reliable)
-	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
 };

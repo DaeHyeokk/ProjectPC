@@ -987,6 +987,9 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	APCPlayerState* LoserPlayerState = FindPlayerStateBySeat(bHostWon ? GuestSeat : HostSeat);
 	if (!WinnerPlayerState || !LoserPlayerState) return;
 
+	WinnerPlayerState->PlayerWin();
+	LoserPlayerState->PlayerLose();
+
 	const int32 StageIndex      = GetCurrentStageIndex();
 	const int32 StageBaseDamage = GetStageBaseDamageFromDT(StageIndex);
 	const int32 Alive           = bHostWon ? Pair.HostAlive : Pair.GuestAlive;

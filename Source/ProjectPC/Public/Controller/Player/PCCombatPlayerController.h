@@ -78,13 +78,16 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void Server_StopMovement();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetRotation(const FVector& Destination);
 	
 	UFUNCTION(Server, Reliable)
 	void Server_MovetoLocation(const FVector& Destination);
 
 	UFUNCTION(Client, Reliable)
 	void Client_MovetoLocation(const FVector& Destination);
-
+	
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();

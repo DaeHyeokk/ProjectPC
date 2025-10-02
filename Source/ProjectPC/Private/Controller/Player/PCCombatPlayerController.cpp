@@ -148,6 +148,16 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 
 	if (APawn* ControlledPawn = GetPawn())
 	{
+		FVector CurrentLocation = ControlledPawn->GetActorLocation();
+		FVector Direction = CachedDestination - CurrentLocation;
+			     
+		FRotator TargetRotation = Direction.Rotation();
+		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
+			     
+		ControlledPawn->SetActorRotation(NewRotation);
+
+		Server_SetRotation(CachedDestination);
+		
 		if (FollowTime > PlayerInputData->ShortPressThreshold)
 		{
 			StopMovement();
@@ -163,17 +173,7 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
 	{
-		if (APawn* ControlledPawn = GetPawn())
-		{
-			FVector CurrentLocation = ControlledPawn->GetActorLocation();
-			FVector Direction = CachedDestination - CurrentLocation;
-			     
-			FRotator TargetRotation = Direction.Rotation();
-			FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-			     
-			ControlledPawn->SetActorRotation(NewRotation);
-			Server_MovetoLocation(CachedDestination);
-		}
+		Server_MovetoLocation(CachedDestination);
 	}
 	
 	FollowTime = 0.f;
@@ -184,6 +184,20 @@ void APCCombatPlayerController::Server_StopMovement_Implementation()
 	if (APawn* ControlledPawn = GetPawn())
 	{
 		StopMovement();
+	}
+}
+
+void APCCombatPlayerController::Server_SetRotation_Implementation(const FVector& Destination)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		FVector CurrentLocation = ControlledPawn->GetActorLocation();
+		FVector Direction = Destination - CurrentLocation;
+			     
+		FRotator TargetRotation = Direction.Rotation();
+		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
+			     
+		ControlledPawn->SetActorRotation(NewRotation);
 	}
 }
 

@@ -32,6 +32,9 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+
+	// 플레이어 이름 출력 테스트
+	LocalUserId = FString("HIHI");
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)

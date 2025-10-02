@@ -38,6 +38,7 @@ bool UPCShopWidget::Initialize()
 void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
+	CachedPlayerState = NewPlayerState;
 
 	// NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
 	// {
@@ -78,12 +79,11 @@ void UPCShopWidget::CloseMenu()
 void UPCShopWidget::SetupShopSlots()
 {
 	if (!ShopBox) return;
+	if (!CachedPlayerState) return;
+
 	ShopBox->ClearChildren();
 	
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS) return;
-	
-	const auto& ShopSlots = PS->GetShopSlots();
+	const auto& ShopSlots = CachedPlayerState->GetShopSlots();
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
 	int32 Index = 0;
@@ -102,14 +102,12 @@ void UPCShopWidget::SetupShopSlots()
 void UPCShopWidget::SetupPlayerInfo()
 {
 	if (!GoldBalance || !Level || !XP || !XPBar) return;
-
+	if (!CachedPlayerState) return;
+	
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS) return;
 	
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS) return;
-	
-	const auto AttributeSet = PS->GetAttributeSet();
+	const auto AttributeSet = CachedPlayerState->GetAttributeSet();
 	if (!AttributeSet) return;
 
 	// 플레이어 정보 (레벨) 세팅
@@ -183,11 +181,10 @@ void UPCShopWidget::OnClickedShopLock()
 
 void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 {
-	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS || !Level) return;
+	if (!XP || !XPBar || !Level) return;
 
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS || !XP || !XPBar) return;
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
 
 	PlayerLevel = static_cast<int32>(Data.NewValue);
 	auto LevelText = FString::Printf(TEXT("Lv.%d"), PlayerLevel);
@@ -214,12 +211,8 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 
 void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 {
-	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS) return;
+	if (!XP || !XPBar) return;
 	
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS || !XP || !XPBar) return;
-
 	PlayerXP = static_cast<int32>(Data.NewValue);
 	
 	FString XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
@@ -234,9 +227,6 @@ void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 {
 	if (!GoldBalance || !ShopBox) return;
-	
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS) return;
 	
 	GoldBalance->SetText(FText::AsNumber(static_cast<int32>(Data.NewValue)));
 	
@@ -253,11 +243,9 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 void UPCShopWidget::OnPlayerWinningStreakChanged()
 {
 	if (!WinningStreak || !Img_WinningStreak || !Winning || !Losing) return;
+	if (!CachedPlayerState) return;
 
-	auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>();
-	if (!PS) return;
-
-	auto WinningCount = PS->GetPlayerWinningStreak();
+	auto WinningCount = CachedPlayerState->GetPlayerWinningStreak();
 	if (WinningCount > 0)
 	{
 		Img_WinningStreak->SetBrushFromTexture(Winning);

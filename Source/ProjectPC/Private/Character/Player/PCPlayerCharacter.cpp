@@ -7,21 +7,21 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Controller/Player/PCCombatPlayerController.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/GameState/PCCombatGameState.h"
-#include "GameFramework/PlayerState/PCPlayerState.h"
-
-#include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
+
+#include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/PlayerMainWidget/PCPlayerOverheadWidget.h"
 
 
 APCPlayerCharacter::APCPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
-	// Move Test를 위한 카메라 세팅
+	bReplicates = true;
 	
 	GetCapsuleComponent()->InitCapsuleSize(60.f, 60.0f);
 
@@ -48,6 +48,18 @@ APCPlayerCharacter::APCPlayerCharacter()
 	TopDownCameraComponent->bUsePawnControlRotation = false;
 
 	bIsDead = false;
+	
+	OverHeadWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHeadWidget"));
+	OverHeadWidgetComp->SetupAttachment(RootComponent);
+	OverHeadWidgetComp->SetWidgetSpace(EWidgetSpace::Screen);
+	OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 1.0f));
+}
+
+void APCPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetReplicateMovement(true);
 }
 
 void APCPlayerCharacter::PossessedBy(AController* NewController)
@@ -76,6 +88,14 @@ void APCPlayerCharacter::OnRep_PlayerState()
 		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
 		{
 			ASC->InitAbilityActorInfo(PS, this);
+		}
+
+		if (OverHeadWidgetComp)
+		{
+			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+			{
+				OverheadWidget->BindToPlayerState(PS);
+			}
 		}
 	}
 }
