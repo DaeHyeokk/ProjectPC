@@ -25,7 +25,6 @@ APCCombatGameMode::APCCombatGameMode()
 	GameStateClass = APCCombatGameState::StaticClass();
 	PlayerStateClass = APCPlayerState::StaticClass();
 	PlayerControllerClass = APCCombatPlayerController::StaticClass();
-	bUseSeamlessTravel = true;
 }
 
 void APCCombatGameMode::BeginPlay()

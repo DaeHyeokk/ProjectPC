@@ -62,9 +62,11 @@ private:
 	UPROPERTY()
 	const AActor* Target;
 
+	bool bIsPlayerAttack = false;
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack = false);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetProjectileProperty();

@@ -9,6 +9,7 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
 class APCBaseUnitCharacter;
@@ -101,7 +102,7 @@ private:
 	bool bIsShopRequestInProgress = false;
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
+	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
@@ -323,4 +324,18 @@ protected:
 	float LerpDuration = 0.15f;
 
 #pragma endregion Drag&Drop
+
+#pragma region GameResult
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "GameResultWidget")
+	TSubclassOf<UUserWidget> GameResultWidgetClass;
+
+	UPROPERTY()
+	UPCGameResultWidget* GameResultWidget;
+
+	UFUNCTION(Client, Reliable)
+	void Client_LoadGameResultWidget(int32 Ranking);
+
+#pragma endregion GameResult
 };

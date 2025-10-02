@@ -25,6 +25,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
+#include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
@@ -1184,7 +1185,6 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	Client_TileHoverUnit(Unit);
 }
 
-
 void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsField, int32 Y, int32 X, int32 BenchIdx)
 {
 	APCPlayerBoard* PB = GetPlayerBoard();
@@ -1242,5 +1242,15 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 
 	// UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
 	// 	Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
-	
+}
+
+void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32 Ranking)
+{
+	if (!GameResultWidgetClass) return;
+		
+	GameResultWidget = CreateWidget<UPCGameResultWidget>(this, GameResultWidgetClass);
+	if (!GameResultWidget) return;
+
+	GameResultWidget->SetRanking(Ranking);
+	GameResultWidget->OpenMenu();
 }
