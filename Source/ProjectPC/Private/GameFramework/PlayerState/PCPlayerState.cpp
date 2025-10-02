@@ -32,9 +32,6 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
-
-	// 플레이어 이름 출력 테스트
-	LocalUserId = FString("HIHI");
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
@@ -166,46 +163,6 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 	return ShopSlots;
 }
 
-// void APCPlayerState::AddFieldUnit(APCHeroUnitCharacter* AddUnit)
-// {
-// 	if (!HasAuthority()) return;
-//
-// 	if (AddUnit)
-// 	{
-// 		FieldUnitSet.Add(AddUnit);
-// 	}
-// }
-//
-// void APCPlayerState::AddBenchUnit(APCHeroUnitCharacter* AddUnit)
-// {
-// 	if (!HasAuthority()) return;
-//
-// 	if (AddUnit)
-// 	{
-// 		BenchUnitSet.Add(AddUnit);
-// 	}
-// }
-//
-// void APCPlayerState::RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit)
-// {
-// 	if (!HasAuthority()) return;
-//
-// 	if (RemoveUnit)
-// 	{
-// 		FieldUnitSet.Remove(RemoveUnit);
-// 	}
-// }
-//
-// void APCPlayerState::RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit)
-// {
-// 	if (!HasAuthority()) return;
-//
-// 	if (RemoveUnit)
-// 	{
-// 		BenchUnitSet.Remove(RemoveUnit);
-// 	}
-// }
-
 void APCPlayerState::ReturnAllUnitToShop()
 {
 	if (!HasAuthority()) return;
@@ -237,34 +194,6 @@ void APCPlayerState::ReturnAllUnitToShop()
 				}
 			}
 		}
-
-		// for (auto It = FieldUnitSet.CreateIterator(); It; ++It)
-		// {
-		// 	if (auto FieldUnit = It->Get())
-		// 	{
-		// 		ShopManager->SellUnit(FieldUnit->GetUnitTag(), FieldUnit->GetUnitLevel());
-		//
-		// 		if (PlayerBoard)
-		// 		{
-		// 			PlayerBoard->RemoveFromBoard(FieldUnit);
-		// 			FieldUnit->Destroy();
-		// 		}
-		// 	}
-		// }
-		//
-		// for (auto It = BenchUnitSet.CreateIterator(); It; ++It)
-		// {
-		// 	if (auto BenchUnit = It->Get())
-		// 	{
-		// 		ShopManager->SellUnit(BenchUnit->GetUnitTag(), BenchUnit->GetUnitLevel());
-		// 		
-		// 		if (PlayerBoard)
-		// 		{
-		// 			PlayerBoard->RemoveFromBoard(BenchUnit);
-		// 			BenchUnit->Destroy();
-		// 		}
-		// 	}
-		// }
 	}
 }
 
@@ -334,5 +263,4 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 void APCPlayerState::OnRep_SeatIndex()
 {
 	ResolvePlayerBoardOnClient();
-	
 }

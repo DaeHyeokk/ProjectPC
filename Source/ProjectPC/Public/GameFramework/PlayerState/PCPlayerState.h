@@ -114,13 +114,6 @@ public:
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
 	TArray<FPCShopUnitData> ShopSlots;
-
-	UPROPERTY()
-	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> FieldUnitSet;
-
-	UPROPERTY()
-	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> BenchUnitSet;
-
 	
 	UFUNCTION()
 	void OnRep_ShopSlots();
@@ -136,12 +129,6 @@ public:
 	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
-
-	// void AddFieldUnit(APCHeroUnitCharacter* AddUnit);
-	// void AddBenchUnit(APCHeroUnitCharacter* AddUnit);
-	//
-	// void RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit);
-	// void RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit);
 
 	void ReturnAllUnitToShop();
 
