@@ -145,4 +145,16 @@ void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCPlayerCharacter, bIsDead);
 }
 
+void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
+{
+	if (PlayerStateTag == PlayerGameplayTags::Player_State_Normal)
+	{
+		OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 1.0f));
+	}
+	else if (PlayerStateTag == PlayerGameplayTags::Player_State_Carousel)
+	{
+		OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 2.2f));
+	}
+}
+
 

@@ -137,11 +137,11 @@ public:
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
 
-	void AddFieldUnit(APCHeroUnitCharacter* AddUnit);
-	void AddBenchUnit(APCHeroUnitCharacter* AddUnit);
-
-	void RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit);
-	void RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit);
+	// void AddFieldUnit(APCHeroUnitCharacter* AddUnit);
+	// void AddBenchUnit(APCHeroUnitCharacter* AddUnit);
+	//
+	// void RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit);
+	// void RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit);
 
 	void ReturnAllUnitToShop();
 

@@ -25,6 +25,8 @@ protected:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer CharacterTags;

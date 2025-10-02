@@ -101,12 +101,16 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 			PlayerAbilitySystemComponent->AddLooseGameplayTag(NewStateTag);
 			CurrentStateTag = NewStateTag;
 
-			if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
+			if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 			{
-				if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
+				if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
 				{
 					PlayerCharacter->PlayerDie();
 					ReturnAllUnitToShop();
+				}
+				else
+				{
+					PlayerCharacter->SetOverHeadWidgetPosition(CurrentStateTag);
 				}
 			}
 		}
@@ -162,45 +166,45 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 	return ShopSlots;
 }
 
-void APCPlayerState::AddFieldUnit(APCHeroUnitCharacter* AddUnit)
-{
-	if (!HasAuthority()) return;
-
-	if (AddUnit)
-	{
-		FieldUnitSet.Add(AddUnit);
-	}
-}
-
-void APCPlayerState::AddBenchUnit(APCHeroUnitCharacter* AddUnit)
-{
-	if (!HasAuthority()) return;
-
-	if (AddUnit)
-	{
-		BenchUnitSet.Add(AddUnit);
-	}
-}
-
-void APCPlayerState::RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit)
-{
-	if (!HasAuthority()) return;
-
-	if (RemoveUnit)
-	{
-		FieldUnitSet.Remove(RemoveUnit);
-	}
-}
-
-void APCPlayerState::RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit)
-{
-	if (!HasAuthority()) return;
-
-	if (RemoveUnit)
-	{
-		BenchUnitSet.Remove(RemoveUnit);
-	}
-}
+// void APCPlayerState::AddFieldUnit(APCHeroUnitCharacter* AddUnit)
+// {
+// 	if (!HasAuthority()) return;
+//
+// 	if (AddUnit)
+// 	{
+// 		FieldUnitSet.Add(AddUnit);
+// 	}
+// }
+//
+// void APCPlayerState::AddBenchUnit(APCHeroUnitCharacter* AddUnit)
+// {
+// 	if (!HasAuthority()) return;
+//
+// 	if (AddUnit)
+// 	{
+// 		BenchUnitSet.Add(AddUnit);
+// 	}
+// }
+//
+// void APCPlayerState::RemoveFieldUnit(APCHeroUnitCharacter* RemoveUnit)
+// {
+// 	if (!HasAuthority()) return;
+//
+// 	if (RemoveUnit)
+// 	{
+// 		FieldUnitSet.Remove(RemoveUnit);
+// 	}
+// }
+//
+// void APCPlayerState::RemoveBenchUnit(APCHeroUnitCharacter* RemoveUnit)
+// {
+// 	if (!HasAuthority()) return;
+//
+// 	if (RemoveUnit)
+// 	{
+// 		BenchUnitSet.Remove(RemoveUnit);
+// 	}
+// }
 
 void APCPlayerState::ReturnAllUnitToShop()
 {
@@ -211,33 +215,56 @@ void APCPlayerState::ReturnAllUnitToShop()
 		auto ShopManager = GS->GetShopManager();
 		ShopManager->ReturnUnitsToShopBySlotUpdate(ShopSlots, PurchasedSlots);
 
-		for (auto It = FieldUnitSet.CreateIterator(); It; ++It)
+		if (PlayerBoard)
 		{
-			if (auto FieldUnit = It->Get())
+			for (auto Field : PlayerBoard->PlayerField)
 			{
-				ShopManager->SellUnit(FieldUnit->GetUnitTag(), FieldUnit->GetUnitLevel());
-
-				if (PlayerBoard)
+				if (!Field.IsEmpty())
 				{
-					PlayerBoard->RemoveFromBoard(FieldUnit);
-					FieldUnit->Destroy();
+					ShopManager->SellUnit(Field.Unit->GetUnitTag(), Field.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Field.Unit);
+					Field.Unit->Destroy();
+				}
+			}
+
+			for (auto Bench : PlayerBoard->PlayerBench)
+			{
+				if (!Bench.IsEmpty())
+				{
+					ShopManager->SellUnit(Bench.Unit->GetUnitTag(), Bench.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Bench.Unit);
+					Bench.Unit->Destroy();
 				}
 			}
 		}
 
-		for (auto It = BenchUnitSet.CreateIterator(); It; ++It)
-		{
-			if (auto BenchUnit = It->Get())
-			{
-				ShopManager->SellUnit(BenchUnit->GetUnitTag(), BenchUnit->GetUnitLevel());
-				
-				if (PlayerBoard)
-				{
-					PlayerBoard->RemoveFromBoard(BenchUnit);
-					BenchUnit->Destroy();
-				}
-			}
-		}
+		// for (auto It = FieldUnitSet.CreateIterator(); It; ++It)
+		// {
+		// 	if (auto FieldUnit = It->Get())
+		// 	{
+		// 		ShopManager->SellUnit(FieldUnit->GetUnitTag(), FieldUnit->GetUnitLevel());
+		//
+		// 		if (PlayerBoard)
+		// 		{
+		// 			PlayerBoard->RemoveFromBoard(FieldUnit);
+		// 			FieldUnit->Destroy();
+		// 		}
+		// 	}
+		// }
+		//
+		// for (auto It = BenchUnitSet.CreateIterator(); It; ++It)
+		// {
+		// 	if (auto BenchUnit = It->Get())
+		// 	{
+		// 		ShopManager->SellUnit(BenchUnit->GetUnitTag(), BenchUnit->GetUnitLevel());
+		// 		
+		// 		if (PlayerBoard)
+		// 		{
+		// 			PlayerBoard->RemoveFromBoard(BenchUnit);
+		// 			BenchUnit->Destroy();
+		// 		}
+		// 	}
+		// }
 	}
 }
 
