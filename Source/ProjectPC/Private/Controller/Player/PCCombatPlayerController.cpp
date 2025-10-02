@@ -17,6 +17,7 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
+#include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -44,6 +45,14 @@ APCCombatPlayerController::APCCombatPlayerController()
 	bAutoManageActiveCameraTarget = false;
 
 	DragComponent = CreateDefaultSubobject<UPCDragComponent>(TEXT("DragComponent"));
+}
+
+void APCCombatPlayerController::ServerSubmitIdentity_Implementation(const FString& InDisplayName)
+{
+	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+	{
+		PCPlayerState->SetDisplayName_Server(InDisplayName);
+	}
 }
 
 void APCCombatPlayerController::SetupInputComponent()
@@ -77,11 +86,29 @@ void APCCombatPlayerController::SetupInputComponent()
 void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 플레이어 아이디 셋팅
+
+	if (IsLocalController())
+	{
+		if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
+		{
+			const FString Name = Profile->GetDisplayName();
+			if (!Name.IsEmpty())
+			{
+				ServerSubmitIdentity(Name);
+			}
+		}
+	}
+
+	
 	ApplyGameInputMode();
+
+	// 마우스 호버 풀링함수
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
-//	APCCombatGameState* CombatGS = GetWorld() 
+	
 }
 
 void APCCombatPlayerController::BeginPlayingState()

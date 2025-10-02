@@ -32,9 +32,7 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 		}
 		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); return; }
 
-		PS->LocalUserId = DisplayName;     // ★ 로그인 ID 저장
-		PS->SetPlayerName(DisplayName);    // APlayerState의 PlayerName도 동기화
-		PS->ForceNetUpdate();
+		PS->SetDisplayName_Server(DisplayName);
 	}
 }
 

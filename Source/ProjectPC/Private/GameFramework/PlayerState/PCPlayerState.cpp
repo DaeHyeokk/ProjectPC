@@ -213,6 +213,20 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
 }
 
+void APCPlayerState::SetDisplayName_Server(const FString& InName)
+{
+	if (HasAuthority())
+	{
+		FString Clean = InName;
+		Clean.TrimStartAndEndInline();
+		Clean = Clean.Left(24);
+		LocalUserId = Clean;
+
+		SetPlayerName(Clean);
+		
+	}
+}
+
 void APCPlayerState::OnRep_SeatIndex()
 {
 	ResolvePlayerBoardOnClient();

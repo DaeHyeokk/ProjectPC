@@ -25,6 +25,7 @@ APCCombatGameMode::APCCombatGameMode()
 	GameStateClass = APCCombatGameState::StaticClass();
 	PlayerStateClass = APCPlayerState::StaticClass();
 	PlayerControllerClass = APCCombatPlayerController::StaticClass();
+	bUseSeamlessTravel = true;
 }
 
 void APCCombatGameMode::BeginPlay()
@@ -86,8 +87,8 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
     
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
-
-	//OnOnePlayerArrived();
+	
+	OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -247,6 +248,7 @@ void APCCombatGameMode::Step_Setup()
 				}
 			}
 			PCPlayerController->Client_ShowWidget();
+			
 		}
 	}
 }
@@ -320,6 +322,7 @@ void APCCombatGameMode::Step_Return()
 		if (APCCombatGameState* PCGameState = GetCombatGameState())
 		{
 			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_End);
+			PCGameState->DebugPrintLeaderboard(true, 5.f);
 		}
 		
 		if (APCCombatManager* PCCombatManager = GetCombatManager())
@@ -668,7 +671,7 @@ APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
 
 bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 {
-	const APCCombatGameState* GS = GetCombatGameState();
+	APCCombatGameState* GS = GetCombatGameState();
 	if (!IsValid(GS))
 		{ WhyNot=TEXT("GameState null"); return false; }
 
@@ -693,6 +696,7 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		{
 			WhyNot = FString::Printf(TEXT("No PlayerBoard for Seat %d"), PS->SeatIndex); return false;
 		}
+
 	}
 	if (NumPlayers==0) { WhyNot=TEXT("No players"); return false; }
 
@@ -707,7 +711,7 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		return false;
 	}
 	
-
+	GS->BindAllPlayerHP();
 	return true;
 }
 

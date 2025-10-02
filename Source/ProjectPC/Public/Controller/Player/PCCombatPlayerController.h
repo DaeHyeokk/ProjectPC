@@ -54,6 +54,9 @@ class PROJECTPC_API APCCombatPlayerController : public APlayerController
 
 public:
 	APCCombatPlayerController();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSubmitIdentity(const FString& InDisplayName);
 	
 protected:
 	virtual void SetupInputComponent() override;
