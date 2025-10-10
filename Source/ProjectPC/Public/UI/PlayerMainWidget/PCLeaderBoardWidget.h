@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "PCLeaderBoardWidget.generated.h"
 
+class UVerticalBox;
+
 /**
  * 
  */
@@ -14,7 +16,11 @@ class PROJECTPC_API UPCLeaderBoardWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+protected:
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UVerticalBox* PlayerBox;
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "PlayerRowWidgetClass")
+	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 };

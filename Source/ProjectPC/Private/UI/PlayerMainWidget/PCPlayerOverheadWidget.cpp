@@ -48,10 +48,6 @@ void UPCPlayerOverheadWidget::SetupPlayerInfo()
 	PlayerLevel->SetText(FText::FromString(LevelText));
 	
 	// 플레이어 체력바 세팅
-
-	// HSV 0~255 값을 8등분해서 한 구간씩 쓰는 방법
-	// HPBar->SetFillColorAndOpacity(FLinearColor::MakeFromHSV8(CachedPlayerState->SeatIndex * 32, 255, 255));
-
 	auto PlayerIndex = CachedPlayerState->SeatIndex;
 	if (PlayerColors.IsValidIndex(PlayerIndex))
 	{

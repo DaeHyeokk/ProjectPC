@@ -46,7 +46,7 @@ protected:
 	UProgressBar* HPBar;
 
 public:
-	void BindToPlayerState(class APCPlayerState* NewPlayerState);
+	void BindToPlayerState(APCPlayerState* NewPlayerState);
 	void SetupPlayerInfo();
 	
 private:

@@ -4,7 +4,7 @@
 #include "DataAsset/Player/PCDataAsset_PlayerAttackAnim.h"
 
 
-TObjectPtr<UAnimMontage> UPCDataAsset_PlayerAttackAnim::GetAttackMontage(FGameplayTag CharacterTag, FGameplayTag AttackTypeTag)
+TSoftObjectPtr<UAnimMontage> UPCDataAsset_PlayerAttackAnim::GetAttackMontage(FGameplayTag CharacterTag, FGameplayTag AttackTypeTag)
 {
 	FAnimationFindKey Key(CharacterTag, AttackTypeTag);
 

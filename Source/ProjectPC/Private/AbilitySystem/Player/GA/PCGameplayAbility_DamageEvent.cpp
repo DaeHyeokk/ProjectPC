@@ -5,11 +5,13 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "GameFramework/Character.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 
 #include "BaseGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/Player/PCPlayerCharacter.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
 
@@ -106,17 +108,28 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 
 	if (PlayerAttackAnimData)
 	{
-		if (auto AttackMontage = PlayerAttackAnimData->GetAttackMontage(CharacterTag, AttackTypeTag))
+		if (auto AttackMontageSoftPtr = PlayerAttackAnimData->GetAttackMontage(CharacterTag, AttackTypeTag))
 		{
-			if (auto InstigatorChar = Cast<ACharacter>(InstigatorPawn))
-			{
-				InstigatorChar->PlayAnimMontage(AttackMontage);
+			FSoftObjectPath MontagePath = AttackMontageSoftPtr.ToSoftObjectPath();
+			FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
 
-				if (auto* PCChar = Cast<APCPlayerCharacter>(InstigatorChar))
+			auto CachedInstigatorPawn = InstigatorPawn;
+			
+			Streamable.RequestAsyncLoad(MontagePath, [this, MontagePath, CachedInstigatorPawn]()
+			{
+				if (UAnimMontage* LoadedMontage = Cast<UAnimMontage>(MontagePath.ResolveObject()))
 				{
-					PCChar->Client_PlayMontage(AttackMontage, 1.f);
+					if (auto InstigatorChar = Cast<ACharacter>(CachedInstigatorPawn))
+					{
+						InstigatorChar->PlayAnimMontage(LoadedMontage);
+
+						if (auto* PCChar = Cast<APCPlayerCharacter>(InstigatorChar))
+						{
+							PCChar->Client_PlayMontage(LoadedMontage, 1.f);
+						}
+					}
 				}
-			}
+			});
 		}
 	}
 

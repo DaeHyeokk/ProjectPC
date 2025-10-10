@@ -39,8 +39,8 @@ class PROJECTPC_API UPCDataAsset_PlayerAttackAnim : public UDataAsset
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TMap<FAnimationFindKey, TObjectPtr<UAnimMontage>> AttackMontages;
+	TMap<FAnimationFindKey, TSoftObjectPtr<UAnimMontage>> AttackMontages;
 
 public:
-	TObjectPtr<UAnimMontage> GetAttackMontage(FGameplayTag CharacterTag, FGameplayTag AttackTypeTag);
+	TSoftObjectPtr<UAnimMontage> GetAttackMontage(FGameplayTag CharacterTag, FGameplayTag AttackTypeTag);
 };
