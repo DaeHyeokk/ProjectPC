@@ -94,7 +94,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
