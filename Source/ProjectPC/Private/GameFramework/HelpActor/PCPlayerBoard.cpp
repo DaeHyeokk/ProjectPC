@@ -424,7 +424,7 @@ bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacte
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();
-	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+20.f),ActorRot,false,nullptr);
+	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+30.f),ActorRot,false,nullptr);
 	return true;
 }
 
