@@ -45,15 +45,15 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 	// 	SetupShopSlots();
 	// });
 
-	NewPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
-	NewPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
+	CachedPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
+	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
 	
 	SetupShopSlots();
 	SetupPlayerInfo();
 
-	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
-		if (auto AttributeSet = NewPlayerState->GetAttributeSet())
+		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
 		{
 			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
 			.AddUObject(this, &UPCShopWidget::OnPlayerLevelChanged);
@@ -90,7 +90,7 @@ void UPCShopWidget::SetupShopSlots()
 	for (const FPCShopUnitData& UnitData : ShopSlots)
 	{
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-		if (!UnitSlotWidget) return;
+		if (!UnitSlotWidget) continue;
 		
 		UnitSlotWidget->Setup(UnitData, Index);
 		ShopBox->AddChild(UnitSlotWidget);

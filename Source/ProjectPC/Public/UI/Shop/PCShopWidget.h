@@ -36,7 +36,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
-	void BindToPlayerState(class APCPlayerState* NewPlayerState);
+	void BindToPlayerState(APCPlayerState* NewPlayerState);
 
 protected:
 	int32 PlayerLevel;

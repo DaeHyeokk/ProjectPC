@@ -114,6 +114,9 @@ struct FPlayerStandingRow
 	/** HP 동률 안정화를 위한 마지막 변경 시각(서버시간) */
 	UPROPERTY(BlueprintReadOnly)
 	float LastChangeTime = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag CharacterTag;
 };
 
 

@@ -21,9 +21,9 @@ class PROJECTPC_API UPCPlayerRowWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
-private:
-	UPROPERTY()
-	APCPlayerState* CachedPlayerState;
+// private:
+// 	UPROPERTY()
+// 	APCPlayerState* CachedPlayerState;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Portrait")
@@ -42,12 +42,14 @@ protected:
 	UImage* Img_Portrait;
 
 public:
-	void BindToPlayerState(APCPlayerState* NewPlayerState);
-	void SetupPlayerInfo();
+	// void BindToPlayerState(APCPlayerState* NewPlayerState);
+	void SetupPlayerInfo(FString NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag);
 
+	void UpdatePlayerHP(float NewPlayerHP);
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetHP(float HPPercent);
 
-private:
-	void OnPlayerHPChanged(const FOnAttributeChangeData& Data);
+// private:
+// 	void OnPlayerHPChanged(const FOnAttributeChangeData& Data);
 };
