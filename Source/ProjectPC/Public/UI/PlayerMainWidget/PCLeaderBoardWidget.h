@@ -19,9 +19,6 @@ UCLASS()
 class PROJECTPC_API UPCLeaderBoardWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
-protected:
-	virtual bool Initialize() override;
 	
 private:
 	UPROPERTY()

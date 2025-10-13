@@ -8,11 +8,6 @@
 #include "UI/PlayerMainWidget/PCPlayerRowWidget.h"
 
 
-bool UPCLeaderBoardWidget::Initialize()
-{
-	return Super::Initialize();
-}
-
 void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
 	if (!NewGameState || !PlayerBox) return;

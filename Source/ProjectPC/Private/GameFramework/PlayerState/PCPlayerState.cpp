@@ -32,8 +32,6 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
-
-	LocalUserId = FString("HIHNI");
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
