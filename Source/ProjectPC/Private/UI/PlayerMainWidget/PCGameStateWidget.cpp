@@ -3,6 +3,8 @@
 
 #include "UI/PlayerMainWidget/PCGameStateWidget.h"
 
+#include "Blueprint/WidgetTree.h"
+#include "Components/HorizontalBox.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -39,7 +41,18 @@ void UPCGameStateWidget::GameStateBinding()
 		ReFreshStatic();
 	}
 
+	// LayOutHandle = PCGameState->OnRoundsLayoutChanged.AddLambda([this]()
+	// {
+	// 	if (!PCGameState.IsValid())
+	// 		return;
+	// 	RebuildRoundChipsForStage(PCGameState->GetStageIndex());
+	// 	UpdateRoundChipsState();
+	// });
+
 	GetWorld()->GetTimerManager().SetTimer(TickHandle, this, &UPCGameStateWidget::TickUpdate, 0.1f, true);
+
+	// RebuildRoundChipsForStage(PCGameState->GetStageIndex());
+	// UpdateRoundChipsState();
 }
 
 void UPCGameStateWidget::ReFreshStatic()
@@ -69,17 +82,50 @@ void UPCGameStateWidget::TickUpdate()
 	{
 		Time_Bar->SetPercent(1.f - TProg);
 	}
+
+	//UpdateRoundChipsState();
 }
 
-// void UPCGameStateWidget::RebuildRoundCellsIfNeeded()
+// void UPCGameStateWidget::ClearHB()
 // {
-// 	if (!HB_Rounds || !RoundCellClass || !PCGameState.IsValid())
-// 		return;
+// 	if (!HB_Rounds) return;
+// 	HB_Rounds->ClearChildren();
+// 	Chips.Reset();
+// 	
+// }
 //
-// 	const int32 RoundCount = PCGameState->StageRuntimeState.RoundIdx;
+// void UPCGameStateWidget::RebuildRoundChipsForStage(int32 StageIdx)
+// {
+// 	if (!HB_Rounds || !PCGameState.IsValid()) return;
+//
+// 	ClearHB();
+//
+// 	const int32 Count = PCGameState->GetNumRoundsInStage(StageIdx);
+// 	if (Count <= 0) return;
+//
+// 	Chips.SetNum(Count);
+//
+// 	for (int32 i = 0; i < Count; ++i)
+// 	{
+// 		UHorizontalBox* CellBox = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+// 		UImage* Icon = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+// 		UImage* Arrow = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+//
+// 		//UHorizontalBox* Slot
+// 	}
 // }
 
-void UPCGameStateWidget::UpdateArrow(bool bForce)
-{
-}
+// void UPCGameStateWidget::UpdateRoundChipsState()
+// {
+// }
+//
+// UTexture2D* UPCGameStateWidget::ResolveIconForRound(int32 StageIdx, int32 RoundIdx, bool bCurrent, bool bPastWin,
+// 	bool bPastLose) const
+// {
+// }
+//
+//
+// void UPCGameStateWidget::UpdateArrow(bool bForce)
+// {
+// }
 

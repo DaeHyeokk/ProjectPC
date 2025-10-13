@@ -50,7 +50,7 @@ protected:
 	UImage* Img_Stage;
 	// UPROPERTY(meta = (BindWidget))
 	// UHorizontalBox* HB_Rounds;
-
+	//
 	// // 아이콘 세트
 	// UPROPERTY(EditAnywhere, Category = "Icons")
 	// UPCStageIconData* IconData = nullptr;
@@ -71,12 +71,26 @@ private:
 	TWeakObjectPtr<APCCombatGameState> PCGameState;
 	FDelegateHandle RepHandle;
 	FTimerHandle TickHandle;
+	FDelegateHandle LayOutHandle;
+
+	// 칩 캐시
+	TArray<FRoundChip> Chips;
 
 	void ReFreshStatic();
 	void TickUpdate();
 
-	//void RebuildRoundCellsIfNeeded();
-	void UpdateArrow(bool bForce);
+	// // 신규 : 라운드 트레커
+	// void RebuildRoundChipsForStage(int32 StageIdx);
+	// void UpdateRoundChipsState();
+	//
+	// // 아이콘 Resolve
+	// UTexture2D* ResolveIconForRound(int32 StageIdx, int32 RoundIdx, bool bCurrent, bool bPastWin, bool bPastLose) const;
+	//
+	// // 헬퍼
+	// void ClearHB();
+	//
+	// //void RebuildRoundCellsIfNeeded();
+	// void UpdateArrow(bool bForce);
 	
 	
 };
