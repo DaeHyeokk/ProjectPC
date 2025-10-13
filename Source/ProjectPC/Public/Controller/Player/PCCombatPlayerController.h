@@ -343,7 +343,5 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);
 
-
-
 #pragma endregion GameResult
 };

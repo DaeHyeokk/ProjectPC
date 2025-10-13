@@ -11,7 +11,6 @@
 void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
 	if (!NewGameState || !PlayerBox) return;
-	// CachedGameState = NewGameState;
 
 	NewGameState->OnLeaderboardMapUpdated.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
 	
@@ -24,7 +23,6 @@ void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 		PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
 		PlayerBox->AddChild(PlayerRowWidget);
 	}
-	
 }
 
 void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap)
@@ -63,6 +61,11 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingR
 	// 		PlayerBox->InsertChildAt(i, PlayerRowWidget);
 	// 	}
 	// }
+}
+
+void UPCLeaderBoardWidget::OpenMenu()
+{
+	AddToViewport(150);
 }
 
 
