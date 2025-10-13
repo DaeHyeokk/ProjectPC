@@ -103,10 +103,25 @@ void APCCombatPlayerController::BeginPlay()
 		
 	ApplyGameInputMode();
 
+	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
+	}
+	else
+	{
+		// 안전책: 월드 틱 이후 GameState를 다시 확인
+		GetWorldTimerManager().SetTimerForNextTick([this]()
+		{
+			if (APCCombatGameState* GS2 = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				GS2->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
+			}
+		});
+	}
+
 	// 마우스 호버 풀링함수
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-
 	
 }
 
@@ -137,11 +152,8 @@ void APCCombatPlayerController::BeginPlayingState()
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
 
-	APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>();
-	PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::EnsureMainHUDCreated);
-	
-	//GetWorldTimerManager().SetTimer(LoadShop, this, &ThisClass::LoadMainWidget, 10.f , false, 0.f);
-	
+	LoadShopWidget();
+		
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -254,7 +266,7 @@ void APCCombatPlayerController::OnSellUnitStarted()
 	ShopRequest_SellUnit();
 }
 
-void APCCombatPlayerController::LoadMainWidget_Implementation()
+void APCCombatPlayerController::LoadShopWidget()
 {
 	if (IsLocalController())
 	{
@@ -264,10 +276,33 @@ void APCCombatPlayerController::LoadMainWidget_Implementation()
 		if (!ShopWidget) return;
 
 		ShopRequest_ShopRefresh(0);
-		
-		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
-		ShopWidget->OpenMenu();
 
+		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+		{
+			ShopWidget->BindToPlayerState(PCPlayerState);
+			ShopWidget->OpenMenu();
+		}
+		else
+		{
+			// 안전책: 월드 틱 이후 GameState를 다시 확인
+			GetWorldTimerManager().SetTimerForNextTick([this]()
+			{
+				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
+				{
+					ShopWidget->BindToPlayerState(PCPS2);
+					ShopWidget->OpenMenu();
+				}
+			});
+		}
+		
+		
+	}
+}
+
+void APCCombatPlayerController::LoadMainWidget()
+{
+	if (IsLocalController())
+	{
 		EnsureMainHUDCreated();
 
 		if (PlayerMainWidget)

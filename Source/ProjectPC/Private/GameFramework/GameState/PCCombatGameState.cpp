@@ -575,8 +575,6 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 	Leaderboard = MoveTemp(NewReaderBoard);
 	ForceNetUpdate();
-
-	
 	
 }
 
