@@ -8,6 +8,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/PlayerMainWidget/PCRoundCellWidget.h"
 
 
 void UPCGameStateWidget::NativeOnInitialized()
@@ -49,11 +50,6 @@ void UPCGameStateWidget::ReFreshStatic()
 	{
 		Txt_Stage->SetText((FText::FromString(PCGameState->GetStageLabelString())));
 	}
-	if (Img_Stage)
-	{
-		if (UTexture2D** Found = StageIcons.Find(PCGameState->GetCurrentStageType()))
-			Img_Stage->SetBrushFromTexture(*Found, true);
-	}
 }
 
 void UPCGameStateWidget::TickUpdate()
@@ -73,5 +69,17 @@ void UPCGameStateWidget::TickUpdate()
 	{
 		Time_Bar->SetPercent(1.f - TProg);
 	}
+}
+
+// void UPCGameStateWidget::RebuildRoundCellsIfNeeded()
+// {
+// 	if (!HB_Rounds || !RoundCellClass || !PCGameState.IsValid())
+// 		return;
+//
+// 	const int32 RoundCount = PCGameState->StageRuntimeState.RoundIdx;
+// }
+
+void UPCGameStateWidget::UpdateArrow(bool bForce)
+{
 }
 

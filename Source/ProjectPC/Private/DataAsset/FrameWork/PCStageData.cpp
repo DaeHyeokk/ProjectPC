@@ -3,6 +3,7 @@
 
 #include "DataAsset/FrameWork/PCStageData.h"
 
+#include "BaseGameplayTags.h"
 
 
 float UPCStageData::GetDefaultDuration(EPCStageType Type) const
@@ -30,6 +31,18 @@ float UPCStageData::GetRoundDuration(const FRoundStep& RoundStep) const
 	return (RoundStep.DurationOverride > 0.f) ? RoundStep.DurationOverride : GetDefaultDuration(RoundStep.StageType);
 }
 
+struct FSRKey
+{
+	int32 Stage = 0;
+	int32 Round = 0;
+	bool operator == (const FSRKey& O) const { return Stage == O.Stage && Round == O.Round; }
+};
+
+FORCEINLINE uint32 GetTypeHash(const FSRKey& Key)
+{
+	return HashCombine(::GetTypeHash(Key.Stage), ::GetTypeHash(Key.Round));
+}
+
 // Flattener
 static void AppendRound(TArray<FRoundStep>& Steps, TArray<int32>& StageIdx, TArray<int32>& RoundIdx, TArray<int32>& StepIdxInRound,
 	int32 S, int32 R, const TArray<FRoundStep>& Def)
@@ -44,12 +57,25 @@ static void AppendRound(TArray<FRoundStep>& Steps, TArray<int32>& StageIdx, TArr
 }
 
 void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32>& RoundIdx,
-	TArray<int32>& StepIdxInRound) const
+	TArray<int32>& StepIdxInRound, TArray<FGameplayTag>& OutRoundMajorFlat, TArray<FGameplayTag>& OutPvESubTagFlat) const
 {
 	RoundsStep.Reset();
 	StageIdx.Reset();
 	RoundIdx.Reset();
 	StepIdxInRound.Reset();
+
+	TMap<FSRKey, FGameplayTag> MajorMap;
+	TMap<FSRKey, FGameplayTag> PvEMap;
+
+	auto TagRound = [&](int32 Stage, int32 Round, FGameplayTag Major, const FGameplayTag& PvESubTag = FGameplayTag())
+	{
+		const FSRKey Key{Stage, Round};
+		MajorMap.FindOrAdd(Key) = Major;
+		if (Major == GameRoundTags::GameRound_PvE)
+		{
+			PvEMap.FindOrAdd(Key) = PvESubTag;
+		}
+	};
 
 	// 내가 제작한 데이터에셋기준 스테이지 생성
 	if (Stages.Num() > 0)
@@ -90,6 +116,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
         S(EPCStageType::Start, 5.f),
     	S(EPCStageType::Return, 3.f)
     });
+	TagRound(1,1, GameRoundTags::GameRound_Start);
 
     // (1) Stage 1 — 1-2, 1-3, 1-4 (PvE)
     {
@@ -102,6 +129,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             S(EPCStageType::PvE,   20.f),
         	S(EPCStageType::Return, 2.f)
         });
+		TagRound(SIdx, 2 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
 
         // 1-3 : Setup 15, Travel 3, PvE 30
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 3, {
@@ -110,6 +138,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
+		TagRound(SIdx, 2 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
 
         // 1-4 : Setup 20, Travel 3, PvE 30
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 4, {
@@ -118,6 +147,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
+		TagRound(SIdx, 2 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
     }
 
     // (2) Stage 2 ~ 8 공통 패턴
@@ -132,7 +162,9 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
                 S(EPCStageType::PvP,     30.f),
                 S(EPCStageType::Return,   3.f)
             });
+        	TagRound(SIdx, R, GameRoundTags::GameRound_PvP);
         };
+    	
 
         auto AddCarousel = [&](int32 R)
         {
@@ -146,6 +178,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
                 S(EPCStageType::Carousel, CaroLen),
             	S(EPCStageType::Return, 3.f)
             });
+        	TagRound(SIdx, R, GameRoundTags::GameRound_Carousel);
         };
 
         auto AddCreep7 = [&](int32 R)
@@ -156,6 +189,18 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
                 S(EPCStageType::Travel,  3.f),
                 S(EPCStageType::PvE,    30.f)
             });
+
+            switch (SIdx)
+            {
+            case 2 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE,GameRoundTags::GameRound_PvE_MinionsLv2); break;
+            case 3 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv3); break;
+            case 4 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv4); break;
+            case 5 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv4); break;
+            case 6 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv4); break;
+            case 7 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv4); break;
+            case 8 : TagRound(SIdx, R, GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv4); break;
+            	default: break;
+            }
         };
 
         // 1,2,3
@@ -176,6 +221,42 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
 
     for (int32 SIdx=2; SIdx<=8; ++SIdx)
         AddStage(SIdx);
+
+	TMap<int32, TArray<int32>> RoundByStage;
+	for (const auto& It : MajorMap)
+	{
+		RoundByStage.FindOrAdd(It.Key.Stage).AddUnique(It.Key.Round);
+	}
+
+	for (auto& It : RoundByStage)
+	{
+		It.Value.Sort();
+	}
+
+	TArray<int32> StageOrder;
+	RoundByStage.GetKeys(StageOrder);
+	StageOrder.Sort();
+
+	int32 TotalRounds = 0;
+	for (int32 Stage : StageOrder)
+	{
+		TotalRounds += RoundByStage[Stage].Num();
+	}
+
+	OutRoundMajorFlat.Init(FGameplayTag(), TotalRounds);
+	OutPvESubTagFlat.Init(FGameplayTag(), TotalRounds);
+
+	int32 Flat = 0;
+	for (int32 Stage : StageOrder)
+	{
+		for (int32 Round : RoundByStage[Stage])
+		{
+			const FSRKey Key{Stage, Round};
+			OutRoundMajorFlat[Flat] = MajorMap.Contains(Key) ? MajorMap[Key] : FGameplayTag();
+			OutPvESubTagFlat[Flat] = PvEMap.Contains(Key) ? PvEMap[Key] : FGameplayTag();
+			++Flat;
+		}
+	}
 }
 
 FString UPCStageData::MakeStageRoundLabel(int32 FloatIndex, const TArray<int32>& StageIdx,

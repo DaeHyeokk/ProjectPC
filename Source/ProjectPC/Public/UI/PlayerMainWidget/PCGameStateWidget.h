@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "PCGameStateWidget.generated.h"
 
+class UPCRoundCellWidget;
+class UHorizontalBox;
 class APCCombatGameState;
 enum class EPCStageType : uint8;
 class UImage;
@@ -14,6 +16,17 @@ class UTextBlock;
 /**
  * 
  */
+
+USTRUCT()
+struct FRoundChip
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	UImage* Icon;
+
+	UPROPERTY()
+	UImage* Arrow;
+};
 UCLASS()
 class PROJECTPC_API UPCGameStateWidget : public UUserWidget
 {
@@ -35,9 +48,24 @@ protected:
 	UProgressBar* Time_Bar;
 	UPROPERTY(meta = (BindWidget))
 	UImage* Img_Stage;
+	// UPROPERTY(meta = (BindWidget))
+	// UHorizontalBox* HB_Rounds;
+
+	// // 아이콘 세트
+	// UPROPERTY(EditAnywhere, Category = "Icons")
+	// UPCStageIconData* IconData = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Visual")
 	TMap<EPCStageType, UTexture2D*> StageIcons;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UPCRoundCellWidget> RoundCellClass;
+
+	UPROPERTY(EditAnywhere)
+	TArray<UPCRoundCellWidget*> Cells;
+	
+	int32 CachedRoundCount = 0;
+	int32 CachedLitBoundary = -1;
 
 private:
 	TWeakObjectPtr<APCCombatGameState> PCGameState;
@@ -46,4 +74,9 @@ private:
 
 	void ReFreshStatic();
 	void TickUpdate();
+
+	//void RebuildRoundCellsIfNeeded();
+	void UpdateArrow(bool bForce);
+	
+	
 };

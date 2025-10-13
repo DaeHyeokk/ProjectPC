@@ -137,14 +137,10 @@ void APCCombatPlayerController::BeginPlayingState()
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
 
-	// 3) HUD/상점 생성 및 가시성 보정
-	EnsureMainHUDCreated();   // 내부에서 AddToViewport
-	if (IsValid(PlayerMainWidget))
-	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-	}
-
-	GetWorldTimerManager().SetTimer(LoadShop, this, &ThisClass::LoadShopWidget, 3.f , false, 0.1f);
+	APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>();
+	PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::EnsureMainHUDCreated);
+	
+	//GetWorldTimerManager().SetTimer(LoadShop, this, &ThisClass::LoadMainWidget, 10.f , false, 0.f);
 	
 }
 
@@ -258,9 +254,8 @@ void APCCombatPlayerController::OnSellUnitStarted()
 	ShopRequest_SellUnit();
 }
 
-void APCCombatPlayerController::LoadShopWidget()
+void APCCombatPlayerController::LoadMainWidget_Implementation()
 {
-	GetWorldTimerManager().ClearTimer(LoadShop);
 	if (IsLocalController())
 	{
 		if (!ShopWidgetClass) return;
@@ -272,7 +267,15 @@ void APCCombatPlayerController::LoadShopWidget()
 		
 		ShopWidget->BindToPlayerState(GetPlayerState<APCPlayerState>());
 		ShopWidget->OpenMenu();
-	}
+
+		EnsureMainHUDCreated();
+
+		if (PlayerMainWidget)
+		{
+			PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+		
+	}	
 }
 
 TArray<int32> APCCombatPlayerController::GetSameShopSlotIndices(int32 SlotIndex)
@@ -645,13 +648,24 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
 		PlayerMainWidget->AddToViewport();
-		PlayerMainWidget->InitAndBind();
+
+		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			PlayerMainWidget->InitAndBind(PCCombatGameState);
+		}
+		
 		
 		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
 		FTimerHandle Th;
 		GetWorld()->GetTimerManager().SetTimer(Th, [this]()
 		{
-			if (IsValid(PlayerMainWidget)) PlayerMainWidget->InitAndBind();
+			if (IsValid(PlayerMainWidget))
+			{
+				if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+				{
+					PlayerMainWidget->InitAndBind(PCCombatGameState);
+				}
+			}
 		}, 0.f, false);
 	}
 	else
@@ -659,7 +673,10 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
 			PlayerMainWidget->AddToViewport();
-		PlayerMainWidget->InitAndBind();
+		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			PlayerMainWidget->InitAndBind(PCCombatGameState);
+		}
 	}
 }
 

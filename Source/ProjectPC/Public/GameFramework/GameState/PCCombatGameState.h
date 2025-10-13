@@ -121,11 +121,13 @@ struct FPlayerStandingRow
 
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
+DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 /**
  * 
  */
@@ -192,8 +194,41 @@ public:
 	UFUNCTION(BlueprintPure)
 	EPCStageType GetCurrentStageType() const;
 
+	// UI 헬퍼
+	UFUNCTION(BlueprintPure, Category = "Stage")
+	FORCEINLINE int32 GetStageIndex() const { return StageRuntimeState.StageIdx;}
+
+	UFUNCTION(BlueprintPure, Category = "Stage")
+	FORCEINLINE int32 GetRoundIndex() const { return StageRuntimeState.RoundIdx;}
+
+	// Round Layout
+	void SetRoundsPerStage(const TArray<int32>& InCounts);
+	void SetRoundMajorsFloat(const TArray<FGameplayTag>& InFlatMajors);
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 GetNumStages() const { return RoundsPerStage.Num();}
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 GetNumRoundsInStage(int32 StageIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	FGameplayTag GetMajorStageForRound(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	FGameplayTag GetPvETagForRound(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 StagesStartFlatIndex(int32 StageIdx) const;
+
+	
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<FGameplayTag> RoundPvETagFlat;
+		
+	
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
+	FOnRoundsLayoutChanged OnRoundsLayoutChanged;
+
 
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
 	FStageRuntimeState StageRuntimeState;
@@ -202,6 +237,18 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_StageRunTime();
+
+	// 라운드 개수
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<int32> RoundsPerStage;
+
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<FGameplayTag> RoundMajorFlat;
+
+	UFUNCTION()
+	void OnRep_RoundsLayout();
+
+	int32 TotalRoundsFloat() const;
 
 	
 #pragma endregion UI
@@ -314,6 +361,7 @@ private:
 public:
 
 	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
+	FOnLeaderBoardReadyNative OnLeaderBoardReady;
 	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
@@ -322,6 +370,11 @@ public:
 	// LocalUserId -> 확정 최종 등수
 	UPROPERTY(BlueprintReadOnly, Category = "Ranking")
 	TMap<FString, int32> FinalRanks;
+
+	bool IsLeaderboardReady() const { return bLeaderBoardReady;}
+
+	// 최초 도착 감지용
+	bool bLeaderBoardReady = false;
 
 	// 어트리뷰트 바인딩 함수
 	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")

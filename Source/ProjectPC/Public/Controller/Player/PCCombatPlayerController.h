@@ -116,8 +116,8 @@ public:
 
 	FTimerHandle LoadShop;
 
-	UFUNCTION(BlueprintCallable)
-	void LoadShopWidget();
+	UFUNCTION(Client, Reliable)
+	void LoadMainWidget();
 
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
 

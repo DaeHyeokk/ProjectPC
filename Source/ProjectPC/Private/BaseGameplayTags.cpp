@@ -163,3 +163,16 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_Event_ProjectileHit, "Player.Event.ProjectileHit")
 	
 }
+
+namespace GameRoundTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_Start, "GameRound.Start")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_SetUp, "GameRound.SetUp")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvP, "GameRound.PvP")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE, "GameRound.PvE")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv1, "GameRound.PvE.MinionsLv1")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv2, "GameRound.PvE.MinionsLv2")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv3, "GameRound.PvE.MinionsLv3")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv4, "GameRound.PvE.MinionsLv4")
+	UE_DEFINE_GAMEPLAY_TAG(GameRound_Carousel, "GameRound.Carousel")
+}

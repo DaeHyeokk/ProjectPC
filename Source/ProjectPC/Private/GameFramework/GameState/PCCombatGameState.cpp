@@ -150,6 +150,87 @@ EPCStageType APCCombatGameState::GetCurrentStageType() const
 	return StageRuntimeState.Stage;
 }
 
+void APCCombatGameState::SetRoundsPerStage(const TArray<int32>& InCounts)
+{
+	if (HasAuthority())
+	{
+		RoundsPerStage = InCounts;
+		OnRep_RoundsLayout();
+		ForceNetUpdate();
+	}
+}
+
+
+
+void APCCombatGameState::SetRoundMajorsFloat(const TArray<FGameplayTag>& InFlatMajors)
+{
+	RoundMajorFlat = InFlatMajors;
+	OnRep_RoundsLayout();
+	ForceNetUpdate();
+}
+
+int32 APCCombatGameState::GetNumRoundsInStage(int32 StageIdx) const
+{
+	return RoundsPerStage.IsValidIndex(StageIdx) ? RoundsPerStage[StageIdx] : 0;
+}
+
+int32 APCCombatGameState::StagesStartFlatIndex(int32 StageIdx) const
+{
+	if (RoundsPerStage.Num() <= 0)
+		return 0;
+
+	int32 Acc = 0;
+	for (int32 Stage = 0; Stage<StageIdx && Stage < RoundsPerStage.Num(); ++Stage)
+	{
+		Acc += FMath::Max(0, RoundsPerStage[Stage]);
+	}
+
+	return Acc;
+}
+
+int32 APCCombatGameState::TotalRoundsFloat() const
+{
+	int32 Sum = 0;
+	for (int32 V : RoundsPerStage)
+	{
+		Sum += FMath::Max(0, V);
+	}
+	return Sum;
+}
+
+FGameplayTag APCCombatGameState::GetMajorStageForRound(int32 StageIdx, int32 RoundIdx) const
+{
+	const int32 flat = StagesStartFlatIndex(StageIdx) + RoundIdx;
+	return RoundMajorFlat.IsValidIndex(flat) ? RoundMajorFlat[flat] : FGameplayTag();
+}
+
+FGameplayTag APCCombatGameState::GetPvETagForRound(int32 StageIdx, int32 RoundIdx) const
+{
+	const int32 flat = StagesStartFlatIndex(StageIdx) + RoundIdx;
+	return RoundPvETagFlat.IsValidIndex(flat) ? RoundPvETagFlat[flat] : FGameplayTag();
+}
+
+void APCCombatGameState::OnRep_RoundsLayout()
+{
+	const int32 Total = TotalRoundsFloat();
+	if (RoundMajorFlat.Num() < Total)
+	{
+		RoundMajorFlat.SetNum(Total);
+	}
+
+	if (RoundPvETagFlat.Num() < Total)
+	{
+		RoundPvETagFlat.SetNum(Total);
+	}
+
+	OnRoundsLayoutChanged.Broadcast();
+}
+
+
+
+
+
+
 void APCCombatGameState::OnRep_StageRunTime()
 {
 	OnStageRuntimeChanged.Broadcast();
@@ -494,6 +575,8 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 	Leaderboard = MoveTemp(NewReaderBoard);
 	ForceNetUpdate();
+
+	
 	
 }
 
@@ -526,6 +609,12 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
+
+	if (!bLeaderBoardReady)
+	{
+		bLeaderBoardReady = true;
+		OnLeaderBoardReady.Broadcast();
+	}
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const

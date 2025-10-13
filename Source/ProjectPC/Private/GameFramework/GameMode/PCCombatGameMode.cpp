@@ -51,7 +51,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	//GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -94,7 +94,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	//OnOnePlayerArrived();
+	OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -110,6 +110,26 @@ void APCCombatGameMode::BindPlayerAttribute()
 	if (APCCombatGameState* CombatGameState = GetCombatGameState())
 	{
 		CombatGameState->BindAllPlayerHP();
+	}
+}
+
+void APCCombatGameMode::BindPlayerMainHuD()
+{
+	APCCombatGameState* CombatGameState = GetCombatGameState();
+	if (!CombatGameState) return;
+	
+	for (int32 i = 0; i < CombatGameState->Leaderboard.Num(); ++i)
+	{
+		FString UserId = CombatGameState->Leaderboard[i].LocalUserId;
+		UE_LOG(LogTemp, Warning, TEXT("LeaderBoard idx : %d LocalUserId : %s"), i, *UserId );
+	}
+	
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APCCombatPlayerController* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			PCPlayerController->LoadMainWidget();
+		}
 	}
 }
 
@@ -154,15 +174,28 @@ void APCCombatGameMode::BuildStageData()
 	FlatRoundIdx.Reset();
 	FlatStepIdxInRound.Reset();
 
-	if (ensure(StageData))
+	TArray<FRoundStep> Steps; TArray<int32> SIdx, RIdx, KIdx;
+	TArray<FGameplayTag> RoundMajorFlat;
+	TArray<FGameplayTag>  PvESubTagFlat;
+
+	StageData->BuildFlattenedPhase(Steps, SIdx, RIdx, KIdx, RoundMajorFlat, PvESubTagFlat);
+
+	// 네가 쓰는 플랫 스텝/인덱스 유지
+	FlatRoundSteps     = Steps;
+	FlatStageIdx       = SIdx;
+	FlatRoundIdx       = RIdx;
+	FlatStepIdxInRound = KIdx;
+
+	// 라운드 개수는 SIdx/RIdx에서 유니크 카운트로 만들거나
+	// (이전 답변의 Counts 계산 로직 그대로 사용)
+	TArray<int32> Counts;
+
+	if (APCCombatGameState* GS = GetGameState<APCCombatGameState>())
 	{
-		StageData->BuildFlattenedPhase(FlatRoundSteps, FlatStageIdx, FlatRoundIdx, FlatStepIdxInRound);
-	}
-	else
-	{
-		// 최소 Fallback: 한 스텝만
-		FlatRoundSteps = { {EPCStageType::Start, 5.f} };
-		FlatStageIdx = {0}; FlatRoundIdx = {0}; FlatStepIdxInRound = {0};
+		GS->SetRoundsPerStage(Counts);
+		GS->SetRoundMajorsFloat(RoundMajorFlat);
+		GS->RoundPvETagFlat = PvESubTagFlat;
+		GS->ForceNetUpdate();
 	}
 }
 
@@ -234,6 +267,7 @@ void APCCombatGameMode::EndCurrentStep()
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
+	//BindPlayerMainHuD();
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -336,7 +370,6 @@ void APCCombatGameMode::Step_Return()
 		if (APCCombatGameState* PCGameState = GetCombatGameState())
 		{
 			PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_End);
-			PCGameState->DebugPrintLeaderboard(true, 5.f);
 		}
 		
 		if (APCCombatManager* PCCombatManager = GetCombatManager())
@@ -724,6 +757,7 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		WhyNot = TEXT("Shop Manager null");
 		return false;
 	}
+	
 	
 	return true;
 }
