@@ -40,6 +40,7 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 
 	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	
 	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
 	{
 		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))

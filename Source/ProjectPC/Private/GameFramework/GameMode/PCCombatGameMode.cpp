@@ -3,8 +3,10 @@
 
 #include "GameFramework/GameMode/PCCombatGameMode.h"
 
-#include "BaseGameplayTags.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "BaseGameplayTags.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
@@ -17,7 +19,6 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
-#include "Kismet/GameplayStatics.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -50,7 +51,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	//GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -93,7 +94,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -252,7 +253,7 @@ void APCCombatGameMode::Step_Setup()
 {
 	const int32 Stage = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
 	const int32 Round = FlatRoundIdx.IsValidIndex(Cursor) ? FlatRoundIdx[Cursor] : 0;
-	const bool NotReword = (Stage == 1.f && Round == 2.f);
+	const bool NotReward = (Stage == 1.f && Round == 2.f);
 
 	if (APCCombatGameState* PCCombatGameState = GetCombatGameState())
 	{
@@ -268,7 +269,7 @@ void APCCombatGameMode::Step_Setup()
 
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				if (!NotReword)
+				if (!NotReward)
 				{
 					PCPlayerState->ApplyRoundReward();
 				}

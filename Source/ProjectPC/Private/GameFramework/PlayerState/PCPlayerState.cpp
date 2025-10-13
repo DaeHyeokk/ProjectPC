@@ -9,8 +9,11 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Shop/PCShopManager.h"
 
 
 APCPlayerState::APCPlayerState()
@@ -29,6 +32,8 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+
+	LocalUserId = FString("HIHNI");
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
@@ -95,11 +100,16 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 			PlayerAbilitySystemComponent->AddLooseGameplayTag(NewStateTag);
 			CurrentStateTag = NewStateTag;
 
-			if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
+			if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 			{
-				if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
+				if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
 				{
 					PlayerCharacter->PlayerDie();
+					ReturnAllUnitToShop();
+				}
+				else
+				{
+					PlayerCharacter->SetOverHeadWidgetPosition(CurrentStateTag);
 				}
 			}
 		}
@@ -153,6 +163,40 @@ void APCPlayerState::SetShopSlots(const TArray<FPCShopUnitData>& NewSlots)
 const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 {
 	return ShopSlots;
+}
+
+void APCPlayerState::ReturnAllUnitToShop()
+{
+	if (!HasAuthority()) return;
+	
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		auto ShopManager = GS->GetShopManager();
+		ShopManager->ReturnUnitsToShopBySlotUpdate(ShopSlots, PurchasedSlots);
+
+		if (PlayerBoard)
+		{
+			for (auto Field : PlayerBoard->PlayerField)
+			{
+				if (!Field.IsEmpty())
+				{
+					ShopManager->SellUnit(Field.Unit->GetUnitTag(), Field.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Field.Unit);
+					Field.Unit->Destroy();
+				}
+			}
+
+			for (auto Bench : PlayerBoard->PlayerBench)
+			{
+				if (!Bench.IsEmpty())
+				{
+					ShopManager->SellUnit(Bench.Unit->GetUnitTag(), Bench.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Bench.Unit);
+					Bench.Unit->Destroy();
+				}
+			}
+		}
+	}
 }
 
 void APCPlayerState::OnRep_PlayerWinningStreak()
@@ -235,5 +279,4 @@ void APCPlayerState::SetDisplayName_Server(const FString& InName)
 void APCPlayerState::OnRep_SeatIndex()
 {
 	ResolvePlayerBoardOnClient();
-	
 }

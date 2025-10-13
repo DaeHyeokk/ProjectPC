@@ -8,6 +8,7 @@
 
 struct FOnAttributeChangeData;
 
+class APCPlayerState;
 class UImage;
 class UHorizontalBox;
 class UOverlay;
@@ -26,12 +27,16 @@ class PROJECTPC_API UPCShopWidget : public UUserWidget
 
 protected:
 	virtual bool Initialize() override;
+
+private:
+	UPROPERTY()
+	APCPlayerState* CachedPlayerState;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
-	void BindToPlayerState(class APCPlayerState* NewPlayerState);
+	void BindToPlayerState(APCPlayerState* NewPlayerState);
 
 protected:
 	int32 PlayerLevel;

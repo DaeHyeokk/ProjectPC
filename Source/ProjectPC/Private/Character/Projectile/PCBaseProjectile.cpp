@@ -61,12 +61,12 @@ void APCBaseProjectile::BeginPlay()
 }
 
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack)
 {
 	if (SpawnActor && TargetActor)
 	{
-		ProjectileDataUnitTag = UnitTag;
-		ProjectileDataTypeTag = TypeTag;
+		ProjectileDataCharacterTag = CharacterTag;
+		ProjectileDataAttackTypeTag = AttackTypeTag;
 		
 		SetInstigator(SpawnActor->GetInstigator());
 		
@@ -85,9 +85,9 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 
 void APCBaseProjectile::SetProjectileProperty()
 {
-	if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
+	if (auto Unit = ProjectileData.Find(ProjectileDataCharacterTag))
 	{
-		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
+		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataAttackTypeTag);
 		if (Projectile.Mesh && MeshComp)
 		{
 			MeshComp->SetStaticMesh(Projectile.Mesh);
@@ -177,8 +177,8 @@ void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataUnitTag);
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataTypeTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataCharacterTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataAttackTypeTag);
 }
 
 void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)

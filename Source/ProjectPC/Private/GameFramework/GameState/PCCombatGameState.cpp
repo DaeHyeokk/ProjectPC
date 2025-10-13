@@ -484,6 +484,21 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 			Row.StableOrder = StableOrderCache.FindRef(Id);
 			Row.LastChangeTime = LastChangeTimeCache.FindRef(Id);
 			Row.LiveRank = 0;
+			
+			if (auto ASC = PCS->GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer PlayerTags;
+				ASC->GetOwnedGameplayTags(PlayerTags);
+
+				for (const FGameplayTag& Tag : PlayerTags)
+				{
+					if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Player.Type"))))
+					{
+						Row.CharacterTag = Tag;
+						break;
+					}
+				}
+			}
 
 			RowById.Add(Id, Row);
 		}

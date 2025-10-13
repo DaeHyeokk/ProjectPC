@@ -10,18 +10,17 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
-/**
- * 
- */
 
-
-
-
-class APCPlayerBoard;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
 
+class APCPlayerBoard;
+class APCHeroUnitCharacter;
+
+/**
+ * 
+ */
 UCLASS()
 class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -132,6 +131,8 @@ public:
 	
 	void SetShopSlots(const TArray<FPCShopUnitData>& NewSlots);
 	const TArray<FPCShopUnitData>& GetShopSlots();
+
+	void ReturnAllUnitToShop();
 
 #pragma endregion Shop
 
