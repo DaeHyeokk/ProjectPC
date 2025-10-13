@@ -127,6 +127,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 /**
  * 
  */
@@ -360,6 +361,7 @@ private:
 public:
 
 	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
+	FOnLeaderBoardReadyNative OnLeaderBoardReady;
 	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
@@ -368,6 +370,11 @@ public:
 	// LocalUserId -> 확정 최종 등수
 	UPROPERTY(BlueprintReadOnly, Category = "Ranking")
 	TMap<FString, int32> FinalRanks;
+
+	bool IsLeaderboardReady() const { return bLeaderBoardReady;}
+
+	// 최초 도착 감지용
+	bool bLeaderBoardReady = false;
 
 	// 어트리뷰트 바인딩 함수
 	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")

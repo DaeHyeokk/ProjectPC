@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class APCCombatGameState;
 class APCPlayerState;
 /**
  * 
@@ -17,11 +18,14 @@ class PROJECTPC_API UPCPlayerMainWidget : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitAndBind();
+	void InitAndBind(APCCombatGameState* PCCombatGameState);
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCGameStateWidget> W_GameStateWidget;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<class UPCLeaderBoardWidget> W_LeaderBoardWidget;
 	
 	
 };

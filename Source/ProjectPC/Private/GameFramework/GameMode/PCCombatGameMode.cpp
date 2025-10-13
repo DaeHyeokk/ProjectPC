@@ -51,7 +51,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	//GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -94,7 +94,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	//OnOnePlayerArrived();
+	OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -110,6 +110,26 @@ void APCCombatGameMode::BindPlayerAttribute()
 	if (APCCombatGameState* CombatGameState = GetCombatGameState())
 	{
 		CombatGameState->BindAllPlayerHP();
+	}
+}
+
+void APCCombatGameMode::BindPlayerMainHuD()
+{
+	APCCombatGameState* CombatGameState = GetCombatGameState();
+	if (!CombatGameState) return;
+	
+	for (int32 i = 0; i < CombatGameState->Leaderboard.Num(); ++i)
+	{
+		FString UserId = CombatGameState->Leaderboard[i].LocalUserId;
+		UE_LOG(LogTemp, Warning, TEXT("LeaderBoard idx : %d LocalUserId : %s"), i, *UserId );
+	}
+	
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APCCombatPlayerController* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			PCPlayerController->LoadMainWidget();
+		}
 	}
 }
 
@@ -247,6 +267,7 @@ void APCCombatGameMode::EndCurrentStep()
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
+	//BindPlayerMainHuD();
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -736,6 +757,7 @@ bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) const
 		WhyNot = TEXT("Shop Manager null");
 		return false;
 	}
+	
 	
 	return true;
 }

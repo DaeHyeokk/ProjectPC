@@ -67,6 +67,9 @@ protected:
 	UFUNCTION()
 	void BindPlayerAttribute();
 
+	UFUNCTION()
+	void BindPlayerMainHuD();
+
 private:
 	// 데이터 평탄화
 	TArray<FRoundStep> FlatRoundSteps;

@@ -575,6 +575,8 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 	Leaderboard = MoveTemp(NewReaderBoard);
 	ForceNetUpdate();
+
+	
 	
 }
 
@@ -607,6 +609,12 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
+
+	if (!bLeaderBoardReady)
+	{
+		bLeaderBoardReady = true;
+		OnLeaderBoardReady.Broadcast();
+	}
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const
