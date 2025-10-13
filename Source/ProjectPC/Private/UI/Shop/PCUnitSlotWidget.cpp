@@ -12,8 +12,6 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
 
@@ -30,22 +28,41 @@ bool UPCUnitSlotWidget::Initialize()
 
 void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 {
-	if (!Text_UnitName || !Text_Cost || !Img_UnitThumbnail || !Img_CostBorder) return;
+	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
 	
 	SlotIndex = NewSlotIndex;
 	UnitCost = UnitData.UnitCost;
-	
+
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
 
+	FString SpeciesTag = UnitData.UnitSpeciesTag.GetTagName().ToString();
+	int32 SpeciesLastDotIndex;
+	if (SpeciesTag.FindLastChar('.', SpeciesLastDotIndex))
+	{
+		Text_Species->SetText(FText::FromString(SpeciesTag.RightChop(SpeciesLastDotIndex + 1)));
+	}
+	
+	FString JobTag = UnitData.UnitJobTag.GetTagName().ToString();
+	int32 JobLastDotIndex;
+	if (JobTag.FindLastChar('.', JobLastDotIndex))
+	{
+		Text_Job->SetText(FText::FromString(JobTag.RightChop(JobLastDotIndex + 1)));
+	}
+	
+	// 유닛 썸네일 세팅 (SoftObjectPtr 비동기 로드)
 	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	TWeakObjectPtr<UPCUnitSlotWidget> WeakThis = this;
 	
-	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+	Streamable.RequestAsyncLoad(TexturePath, [WeakThis, TexturePath]()
 	{
-		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
+		if (WeakThis.IsValid())
 		{
-			Img_UnitThumbnail->SetBrushFromTexture(Texture);
+			if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
+			{
+				WeakThis->Img_UnitThumbnail->SetBrushFromTexture(Texture);
+			}
 		}
 	});
 	

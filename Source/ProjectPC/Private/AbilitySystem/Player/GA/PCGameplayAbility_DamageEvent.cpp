@@ -113,19 +113,23 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 			FSoftObjectPath MontagePath = AttackMontageSoftPtr.ToSoftObjectPath();
 			FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
 
-			auto CachedInstigatorPawn = InstigatorPawn;
+			TWeakObjectPtr<UPCGameplayAbility_DamageEvent> WeakThis = this;
+			TWeakObjectPtr<APawn> WeakInstigatorPawn = InstigatorPawn;
 			
-			Streamable.RequestAsyncLoad(MontagePath, [this, MontagePath, CachedInstigatorPawn]()
+			Streamable.RequestAsyncLoad(MontagePath, [WeakThis, MontagePath, WeakInstigatorPawn]()
 			{
-				if (UAnimMontage* LoadedMontage = Cast<UAnimMontage>(MontagePath.ResolveObject()))
+				if (WeakThis.IsValid())
 				{
-					if (auto InstigatorChar = Cast<ACharacter>(CachedInstigatorPawn))
+					if (UAnimMontage* LoadedMontage = Cast<UAnimMontage>(MontagePath.ResolveObject()))
 					{
-						InstigatorChar->PlayAnimMontage(LoadedMontage);
-
-						if (auto* PCChar = Cast<APCPlayerCharacter>(InstigatorChar))
+						if (auto InstigatorChar = Cast<ACharacter>(WeakInstigatorPawn))
 						{
-							PCChar->Client_PlayMontage(LoadedMontage, 1.f);
+							InstigatorChar->PlayAnimMontage(LoadedMontage);
+
+							if (auto* PCChar = Cast<APCPlayerCharacter>(InstigatorChar))
+							{
+								PCChar->Client_PlayMontage(LoadedMontage, 1.f);
+							}
 						}
 					}
 				}

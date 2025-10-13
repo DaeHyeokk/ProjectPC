@@ -7,6 +7,8 @@
 #include "Shop/PCShopUnitData.h"
 #include "PCUnitSlotWidget.generated.h"
 
+struct FStreamableHandle;
+
 class UButton;
 class UImage;
 class UTextBlock;
@@ -42,6 +44,10 @@ protected:
 	UTextBlock* Text_Cost;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* Text_UnitName;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_Species;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_Job;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost1Border;
