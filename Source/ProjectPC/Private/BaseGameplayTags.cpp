@@ -120,7 +120,7 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_AttackSpeed, "GE.Caller.Stat.AttackSpeed")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_PhysicalDefense, "GE.Caller.Stat.PhysicalDefense")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MagicDefense, "GE.Caller.Stat.MagicDefense")
-	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CritChance, "GE.Caller.Stat.CritChange")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CritChance, "GE.Caller.Stat.CritChance")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_LifeSteal, "GE.Caller.Stat.LifeSteal")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_SpellVamp, "GE.Caller.Stat.SpellVamp")
 	
@@ -175,4 +175,46 @@ namespace GameRoundTags
 	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv3, "GameRound.PvE.MinionsLv3")
 	UE_DEFINE_GAMEPLAY_TAG(GameRound_PvE_MinionsLv4, "GameRound.PvE.MinionsLv4")
 	UE_DEFINE_GAMEPLAY_TAG(GameRound_Carousel, "GameRound.Carousel")
+}
+
+namespace ItemTags
+{
+	// ==== Base Item Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_BFSword, "Item.Type.Base.BFSword")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_ChainVest, "Item.Type.Base.ChainVest")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_GiantsBelt, "Item.Type.Base.GiantsBelt")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_LargeRod, "Item.Type.Base.LargeRod")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_NegatronCloak, "Item.Type.Base.NegatronCloak")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_RecurveBow, "Item.Type.Base.RecurveBow")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_SparringGloves, "Item.Type.Base.SparringGloves")
+
+	// ==== Advanced Item Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_BloodThirster, "Item.Type.Advanced.BloodThirster")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_BrambleVest, "Item.Type.Advanced.BrambleVest")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_CrownGuard, "Item.Type.Advanced.CrownGuard")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_DeathBlade, "Item.Type.Advanced.DeathBlade")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_DeathCap, "Item.Type.Advanced.DeathCap")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_DragonsClaw, "Item.Type.Advanced.DragonsClaw")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_EdgeofNight, "Item.Type.Advanced.EdgeofNight")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_EvenShroud, "Item.Type.Advanced.EvenShroud")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_GargoyleStoneplate, "Item.Type.Advanced.GargoyleStoneplate")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_GiantSlayer, "Item.Type.Advanced.GiantSlayer")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_GuinsoosRageblade, "Item.Type.Advanced.GuinsoosRageblade")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_HextechGunblade, "Item.Type.Advanced.HextechGunblade")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_InfintiyEdge, "Item.Type.Advanced.InfintiyEdge")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_IonicSpark, "Item.Type.Advanced.IonicSpark")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_JeweledGauntlet, "Item.Type.Advanced.JeweledGauntlet")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_KrakensFury, "Item.Type.Advanced.KrakensFury")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_LastWhisper, "Item.Type.Advanced.LastWhisper")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_Morellonomicon, "Item.Type.Advanced.Morellonomicon")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_NashorsTooth, "Item.Type.Advanced.NashorsTooth")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_QuickSilver, "Item.Type.Advanced.QuickSilver")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_RedBuff, "Item.Type.Advanced.RedBuff")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_SteadfastHeart, "Item.Type.Advanced.SteadfastHeart")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_SteraksGage, "Item.Type.Advanced.SteraksGage")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_StrikersFrail, "Item.Type.Advanced.StrikersFrail")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_SunfireCape, "Item.Type.Advanced.SunfireCape")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_ThiefsGloves, "Item.Type.Advanced.ThiefsGloves")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_TitansResolve, "Item.Type.Advanced.TitansResolve")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_WarmogsArmor, "Item.Type.Advanced.WarmogsArmor")
 }

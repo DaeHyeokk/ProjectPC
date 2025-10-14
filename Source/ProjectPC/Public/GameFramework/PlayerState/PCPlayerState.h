@@ -10,13 +10,13 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
-
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
 
 class APCPlayerBoard;
 class APCHeroUnitCharacter;
+class UGameplayEffect;
 
 /**
  * 
@@ -138,6 +138,10 @@ public:
 
 #pragma region Combat
 
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GE")
+	TSubclassOf<UGameplayEffect> GE_PlayerGoldChange;
+	
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)
 	int32 PlayerWinningStreak = 0;
@@ -158,6 +162,4 @@ public:
 	int32 GetPlayerWinningStreak() const;
 
 #pragma endregion Combat
-
-
 };
