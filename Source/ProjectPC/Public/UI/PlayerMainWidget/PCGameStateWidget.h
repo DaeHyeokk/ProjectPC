@@ -6,6 +6,11 @@
 #include "Blueprint/UserWidget.h"
 #include "PCGameStateWidget.generated.h"
 
+class USizeBox;
+class ISlateTextureAtlasInterface;
+struct FStageIconVariant;
+struct FGameplayTag;
+class UPCWidgetIconData;
 class UPCRoundCellWidget;
 class UHorizontalBox;
 class APCCombatGameState;
@@ -17,16 +22,18 @@ class UTextBlock;
  * 
  */
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FRoundChip
 {
 	GENERATED_BODY()
+	
 	UPROPERTY()
 	UImage* Icon;
 
 	UPROPERTY()
 	UImage* Arrow;
 };
+
 UCLASS()
 class PROJECTPC_API UPCGameStateWidget : public UUserWidget
 {
@@ -48,24 +55,30 @@ protected:
 	UProgressBar* Time_Bar;
 	UPROPERTY(meta = (BindWidget))
 	UImage* Img_Stage;
-	// UPROPERTY(meta = (BindWidget))
-	// UHorizontalBox* HB_Rounds;
-	//
-	// // 아이콘 세트
-	// UPROPERTY(EditAnywhere, Category = "Icons")
-	// UPCStageIconData* IconData = nullptr;
+	UPROPERTY(meta = (BindWidget))
+	UHorizontalBox* HB_Rounds;
 
-	UPROPERTY(EditAnywhere, Category = "Visual")
-	TMap<EPCStageType, UTexture2D*> StageIcons;
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* SB_StateBar;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UPCRoundCellWidget> RoundCellClass;
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* SB_Timer;
 
-	UPROPERTY(EditAnywhere)
-	TArray<UPCRoundCellWidget*> Cells;
+	UPROPERTY(EditAnywhere, Category = "Layout")
+	TScriptInterface<ISlateTextureAtlasInterface> Img_Arrow = nullptr;
 	
-	int32 CachedRoundCount = 0;
-	int32 CachedLitBoundary = -1;
+	// 아이콘 세트
+	UPROPERTY(EditAnywhere, Category = "Icons")
+	UPCWidgetIconData* IconData = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Layout")
+	FVector2D RoundIconSize = FVector2D(32.f, 32.f);
+
+	UPROPERTY(EditAnywhere, Category = "Layout")
+	FVector2D ArrowSize = FVector2D(40.f,40.f);
+			
+	int32 CachedStageIdx = -1;
+	int32 CachedChipCount = 0;
 
 private:
 	TWeakObjectPtr<APCCombatGameState> PCGameState;
@@ -79,18 +92,25 @@ private:
 	void ReFreshStatic();
 	void TickUpdate();
 
-	// // 신규 : 라운드 트레커
-	// void RebuildRoundChipsForStage(int32 StageIdx);
-	// void UpdateRoundChipsState();
-	//
-	// // 아이콘 Resolve
-	// UTexture2D* ResolveIconForRound(int32 StageIdx, int32 RoundIdx, bool bCurrent, bool bPastWin, bool bPastLose) const;
-	//
-	// // 헬퍼
-	// void ClearHB();
-	//
-	// //void RebuildRoundCellsIfNeeded();
-	// void UpdateArrow(bool bForce);
+	// 레이아웃 체인지 핸들러
+	void OnRoundsLayoutChanged_Handler();
+
+	// 신규 : 라운드 트레커
+	void RebuildRoundChipsForStage(int32 StageIdx);
+	void UpdateRoundChipsState();
+	
+	// 아이콘 선택
+	const FStageIconVariant* ChooseVariantFor(FGameplayTag Major) const;
+	UTexture2D* PickIconFor(FGameplayTag Major, bool bCurrent, bool bPastWin, bool bPastLose) const;
+
+	bool WasRoundVictory(int32 StageIdx, int32 RoundIdx) const {return false;}
+ 
+	
+	// 헬퍼
+	void ClearHB();
+	
+	//void RebuildRoundCellsIfNeeded();
+	void UpdateArrow(bool bForce);
 	
 	
 };

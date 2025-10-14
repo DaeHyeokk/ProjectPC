@@ -550,6 +550,8 @@ int32 APCCombatManager::StartPvEBattleForSeat(int32 HostSeatIndex)
 			{ Pair.PvECreeps.Add(Creep); UnitToPairIndex.Add(Creep, PairIndex); Creep->OnUnitDied.AddDynamic(this, &ThisClass::OnAnyUnitDied); }
 	}
 
+	Pair.GuestAlive = Pair.PvECreeps.Num();
+
 	CountAliveOnHostBoardForPair(PairIndex);
 	BindUnitOnBoardForPair(PairIndex);
 	CheckPairVictory(PairIndex);
@@ -790,7 +792,7 @@ APCBaseUnitCharacter* APCCombatManager::SpawnCreepAt(APCCombatBoard* Board, int3
 void APCCombatManager::CountAliveOnHostBoardForPair(int32 PairIndex)
 {
 	auto& Pair = Pairs[PairIndex];
-	APCCombatBoard* Host = Pair.Host.Get();
+	APCCombatBoard* Host  = Pair.Host.Get();
 	APCCombatBoard* Guest = Pair.Guest.Get();
 
 	if (!Host || !Host->TileManager)
@@ -800,33 +802,54 @@ void APCCombatManager::CountAliveOnHostBoardForPair(int32 PairIndex)
 		return;
 	}
 
-	const int32 HostSeat = Host->BoardSeatIndex;
+	UPCTileManager* TM = Host->TileManager;
+
+	const int32 HostSeat  = Host->BoardSeatIndex;
 	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
 
-	int32 HostCnt = 0;
+	int32 HostCnt  = 0;
 	int32 GuestCnt = 0;
 
-	UPCTileManager* TM = Host->TileManager;
-	for (int32 y = 0; y < TM->Cols; ++y)
+	if (Pair.bIsPvE)
 	{
-		for (int32 x = 0; x < TM->Rows; ++x)
+		const int32 CreepTeam = GetCreepTeamIndexForBoard(Host);
+
+		for (int32 y = 0; y < TM->Cols; ++y)
 		{
-			if (APCBaseUnitCharacter* Unit = TM->GetFieldUnit(y,x))
+			for (int32 x = 0; x < TM->Rows; ++x)
 			{
-				const int32 Team = Unit->GetTeamIndex();
-				if (Team == HostSeat)
+				if (APCBaseUnitCharacter* Unit = TM->GetFieldUnit(y, x))
 				{
-					++HostCnt;
+					const int32 Team = Unit->GetTeamIndex();
+					if (Team == HostSeat)
+					{
+						++HostCnt;
+					}
+					else if (Team == CreepTeam || Pair.PvECreeps.Contains(Unit))
+					{
+						++GuestCnt; // 크립 카운트!
+					}
 				}
-				else if (Team == GuestSeat)
+			}
+		}
+	}
+	else
+	{
+		for (int32 y = 0; y < TM->Cols; ++y)
+		{
+			for (int32 x = 0; x < TM->Rows; ++x)
+			{
+				if (APCBaseUnitCharacter* Unit = TM->GetFieldUnit(y, x))
 				{
-					++GuestCnt;
+					const int32 Team = Unit->GetTeamIndex();
+					if (Team == HostSeat)      ++HostCnt;
+					else if (Team == GuestSeat) ++GuestCnt;
 				}
 			}
 		}
 	}
 
-	Pair.HostAlive = HostCnt;
+	Pair.HostAlive  = HostCnt;
 	Pair.GuestAlive = GuestCnt;
 }
 
@@ -975,10 +998,19 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 		UnbindAllForPair(PairIndex);
 		Pair.bRunning = false;
 
-		const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
-		OnCombatPairResult.Broadcast(bHostWon ? HostSeat : INDEX_NONE,
-									 bHostWon ? INDEX_NONE : HostSeat,
-									 Pair.HostAlive, Pair.GuestAlive);
+		if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			int32 StageOne=0, RoundOne=0;
+			GetCurrentStageRoundOne(StageOne, RoundOne);
+			const int32 StageIdx = StageOne;      
+			const int32 RoundIdx = RoundOne;
+
+			const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
+			const int32 WinnerSeat = bHostWon ? HostSeat : INDEX_NONE;
+			const int32 LoserSeat  = bHostWon ? INDEX_NONE : HostSeat;
+
+			GS->ApplyRoundResultForSeat(HostSeat, StageIdx, RoundIdx, bHostWon ? ERoundResult::Victory : ERoundResult::Defeat);
+		}
 		return;
 	}
 
@@ -1012,6 +1044,18 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 
 	const int32 WinnerSeat = bHostWon ? HostSeat : GuestSeat;
 	const int32 LoserSeat  = bHostWon ? GuestSeat : HostSeat;
+
+	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		const int32 StageIdx = GetCurrentStageIndex();
+		int32 StageOne = 0;
+		int32 RoundOne = 0;
+		GetCurrentStageRoundOne(StageOne, RoundOne);
+		const int32 RoundIdx = RoundOne;
+		
+		PCGameState->ApplyRoundResultForSeat(WinnerSeat, StageIdx, RoundIdx, ERoundResult::Victory);
+		PCGameState->ApplyRoundResultForSeat(LoserSeat,  StageIdx, RoundIdx, ERoundResult::Defeat);
+	}
 	OnCombatPairResult.Broadcast(WinnerSeat, LoserSeat, Pair.HostAlive, Pair.GuestAlive);
 }
 

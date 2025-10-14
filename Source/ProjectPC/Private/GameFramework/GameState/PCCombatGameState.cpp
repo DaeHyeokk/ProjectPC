@@ -162,7 +162,7 @@ void APCCombatGameState::SetRoundsPerStage(const TArray<int32>& InCounts)
 
 
 
-void APCCombatGameState::SetRoundMajorsFloat(const TArray<FGameplayTag>& InFlatMajors)
+void APCCombatGameState::SetRoundMajorsFlat(const TArray<FGameplayTag>& InFlatMajors)
 {
 	RoundMajorFlat = InFlatMajors;
 	OnRep_RoundsLayout();
@@ -186,6 +186,73 @@ int32 APCCombatGameState::StagesStartFlatIndex(int32 StageIdx) const
 	}
 
 	return Acc;
+}
+
+void APCCombatGameState::OnRep_RoundResult()
+{
+	OnStageRuntimeChanged.Broadcast();
+}
+
+void APCCombatGameState::ApplyRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx, ERoundResult Result)
+{
+	const int32 TotalRounds = TotalRoundsFloat();
+	if (TotalRounds <= 0) return;
+
+	const int32 FlatRound = StagesStartFlatIndex(StageIdx) + RoundIdx;
+	if (SeatIdx < 0 || FlatRound < 0) return;
+	const int32 Flat = SeatIdx * TotalRounds + FlatRound;
+
+	if (SeatRoundResult.Num() <= Flat)
+	{
+		SeatRoundResult.SetNum(Flat + 1, false);
+	}
+
+	SeatRoundResult[Flat] = Result;
+
+	OnRep_RoundResult();
+	ForceNetUpdate();
+}
+
+int32 APCCombatGameState::GetMySeatIndex() const
+{
+	if (const APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
+	{
+		if (const APCPlayerState* PS = PC->GetPlayerState<APCPlayerState>())
+		{
+			return PS->SeatIndex;
+		}
+	}
+	return -1;
+}
+
+
+ERoundResult APCCombatGameState::GetRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx) const
+{
+	const int32 TotalRounds = TotalRoundsFloat();
+	const int32 FlatRound = StagesStartFlatIndex(StageIdx) + RoundIdx;
+	const int32 Flat = SeatIdx * TotalRounds + FlatRound;
+
+	if (SeatRoundResult.IsValidIndex(Flat))
+	{
+		return SeatRoundResult[Flat];
+	}
+
+	return ERoundResult::None;
+}
+
+bool APCCombatGameState::WasRoundVictory(int32 StageIdx, int32 RoundIdx) const
+{
+	return GetRoundResultForSeat(GetMySeatIndex(), StageIdx, RoundIdx) == ERoundResult::Victory;
+}
+
+bool APCCombatGameState::WasRoundDefeat(int32 StageIdx, int32 RoundIdx) const
+{
+	return GetRoundResultForSeat(GetMySeatIndex(), StageIdx, RoundIdx) == ERoundResult::Defeat;
+}
+
+bool APCCombatGameState::WasRoundDraw(int32 StageIdx, int32 RoundIdx) const
+{
+	return GetRoundResultForSeat(GetMySeatIndex(),StageIdx, RoundIdx) == ERoundResult::Draw;
 }
 
 int32 APCCombatGameState::TotalRoundsFloat() const
@@ -246,6 +313,11 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	DOREPLIFETIME(APCCombatGameState, Leaderboard);
+
+	DOREPLIFETIME(APCCombatGameState, RoundsPerStage);
+	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
+	DOREPLIFETIME(APCCombatGameState, RoundPvETagFlat);
+	DOREPLIFETIME(APCCombatGameState, SeatRoundResult);
 	
 }
 
@@ -445,7 +517,7 @@ void APCCombatGameState::OnHpChanged_Server(APCPlayerState* PCPlayerState, float
 {
 	const FString& Id = PCPlayerState->LocalUserId;
 	HpCache.FindOrAdd(Id) = NewHp;
-	LastChangeTimeCache.FindOrAdd(Id) = NewHp;
+	LastChangeTimeCache.FindOrAdd(Id) = GetServerWorldTimeSeconds();
 	RebuildAndReplicatedLeaderboard();
 }
 

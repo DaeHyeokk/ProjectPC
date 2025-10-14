@@ -119,6 +119,14 @@ struct FPlayerStandingRow
 	FGameplayTag CharacterTag;
 };
 
+UENUM(BlueprintType)
+enum class ERoundResult : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Victory UMETA(DisplayName = "Victory"),
+	Defeat UMETA(DisplayName = "Defeat"),
+	Draw UMETA(DisplayName = "Draw")
+};
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
@@ -203,7 +211,7 @@ public:
 
 	// Round Layout
 	void SetRoundsPerStage(const TArray<int32>& InCounts);
-	void SetRoundMajorsFloat(const TArray<FGameplayTag>& InFlatMajors);
+	void SetRoundMajorsFlat(const TArray<FGameplayTag>& InFlatMajors);
 
 	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
 	int32 GetNumStages() const { return RoundsPerStage.Num();}
@@ -228,10 +236,36 @@ public:
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
 	FOnRoundsLayoutChanged OnRoundsLayoutChanged;
-
-
+	
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
 	FStageRuntimeState StageRuntimeState;
+
+	// 전투결과 반영
+	// 클라 로컬 캐시
+	UPROPERTY(ReplicatedUsing=OnRep_RoundResult)
+	TArray<ERoundResult> SeatRoundResult;
+
+	UFUNCTION()
+	void OnRep_RoundResult();
+
+	void ApplyRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx, ERoundResult Result);
+	
+
+	UFUNCTION(BlueprintPure)
+	int32 GetMySeatIndex() const;
+	
+	ERoundResult GetRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx) const;
+
+	// UI 헬퍼
+	UFUNCTION(BlueprintPure)
+	bool WasRoundVictory(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure)
+	bool WasRoundDefeat(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure)
+	bool WasRoundDraw(int32 StageIdx, int32 RoundIdx) const;
+	
 	
 protected:
 	

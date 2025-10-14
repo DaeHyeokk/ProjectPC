@@ -190,12 +190,33 @@ void APCCombatGameMode::BuildStageData()
 	// (이전 답변의 Counts 계산 로직 그대로 사용)
 	TArray<int32> Counts;
 
+	int32 MaxStage = -1;
+	for (int32 v : SIdx)
+	{
+		MaxStage = FMath::Max(MaxStage, v);
+	}
+	Counts.Init(0, MaxStage + 1);
+
+	for (int32 i = 0; i < SIdx.Num() && i < KIdx.Num(); ++i)
+	{
+		const int32 Stage = SIdx[i];
+		const int32 StepInRound = KIdx[i];
+		if (Stage >= 0 && Stage < Counts.Num() && StepInRound == 0)
+		{
+			++Counts[Stage];
+		}
+	}
+	
+
 	if (APCCombatGameState* GS = GetGameState<APCCombatGameState>())
 	{
-		GS->SetRoundsPerStage(Counts);
-		GS->SetRoundMajorsFloat(RoundMajorFlat);
-		GS->RoundPvETagFlat = PvESubTagFlat;
-		GS->ForceNetUpdate();
+		if (HasAuthority())
+		{
+			GS->SetRoundsPerStage(Counts);
+			GS->SetRoundMajorsFlat(RoundMajorFlat);
+			GS->RoundPvETagFlat = PvESubTagFlat;
+			GS->ForceNetUpdate();
+		}
 	}
 }
 

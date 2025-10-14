@@ -138,7 +138,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
-		TagRound(SIdx, 2 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
+		TagRound(SIdx, 3 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
 
         // 1-4 : Setup 20, Travel 3, PvE 30
         AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, 4, {
@@ -147,7 +147,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             S(EPCStageType::PvE,    30.f),
         	S(EPCStageType::Return, 2.f)
         });
-		TagRound(SIdx, 2 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
+		TagRound(SIdx, 4 , GameRoundTags::GameRound_PvE, GameRoundTags::GameRound_PvE_MinionsLv1);
     }
 
     // (2) Stage 2 ~ 8 공통 패턴
