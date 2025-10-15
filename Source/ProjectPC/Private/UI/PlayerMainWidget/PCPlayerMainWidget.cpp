@@ -2,12 +2,9 @@
 
 
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
-
-#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "UI/PlayerMainWidget/PCGameStateWidget.h"
 #include "UI/PlayerMainWidget/PCLeaderBoardWidget.h"
-#include "UI/PlayerMainWidget/PCPlayerRowWidget.h"
-#include "UI/Shop/PCShopWidget.h"
+#include "UI/Unit/PCHeroStatusHoverPanel.h"
 
 
 void UPCPlayerMainWidget::InitAndBind(APCCombatGameState* PCCombatGameState)
@@ -19,5 +16,9 @@ void UPCPlayerMainWidget::InitAndBind(APCCombatGameState* PCCombatGameState)
 	if (!W_LeaderBoardWidget && !PCCombatGameState)
 		return;
 	W_LeaderBoardWidget->BindToGameState(PCCombatGameState);
+
+	if (!W_HeroStatus)
+		return;
+	W_HeroStatus->SetVisibility(ESlateVisibility::Hidden);
 	
 }

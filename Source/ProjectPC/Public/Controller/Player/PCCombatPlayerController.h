@@ -269,9 +269,15 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
 
+	UFUNCTION(Client, Reliable)
+	void Client_CheckHeroStatus(APCBaseUnitCharacter* Unit);
+
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
 	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() const { return CachedHoverUnit; }
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseUnitCharacter> CachedCheckStatusUnit;
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)

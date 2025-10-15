@@ -28,6 +28,7 @@
 #include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
+#include "UI/Unit/PCHeroStatusHoverPanel.h"
 
 
 APCCombatPlayerController::APCCombatPlayerController()
@@ -158,12 +159,29 @@ void APCCombatPlayerController::BeginPlayingState()
 
 void APCCombatPlayerController::OnInputStarted()
 {
+
+	UPCHeroStatusHoverPanel* HeroStatusWidget =  PlayerMainWidget->GetHeroStatusWidget();
+	if (!HeroStatusWidget)
+		return;
+
+	if (CachedCheckStatusUnit.Get())
+	{
+		if (APCHeroUnitCharacter* HoverUnit = Cast<APCHeroUnitCharacter>(CachedCheckStatusUnit.Get()))
+		{
+			HeroStatusWidget->ShowPanelForHero(HoverUnit);
+			return;
+		}
+	}
+	
 	FHitResult Hit;
 	if (bool bHitSucceeded = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
 	{
 		CachedDestination = Hit.Location;
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PlayerInputData->FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f,1.f,1.f), true, true, ENCPoolMethod::None, true);
 	}
+
+	HeroStatusWidget->HidePanel();
+	
 }
 
 void APCCombatPlayerController::OnSetDestinationTriggered()
@@ -820,7 +838,7 @@ void APCCombatPlayerController::OnMouse_Released()
 void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector World, int32 DragId)
 {
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
+	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
 
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
@@ -878,7 +896,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int32 DragId)
 {
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
-    const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
+    const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
 
     // 드래그 유효성
     if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
@@ -1045,13 +1063,14 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	if (!GS)
 		return;
 	
-	bool bIsBattle = GS->bIsbattle();
+	const bool bInBattle = IsBattleTag(GS->GetGameStateTag());
+	
 	
 	if (bOk && PreviewHero)
 	{
 		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
-			PlayerBoard->OnHISM(true,bIsBattle);
+			PlayerBoard->OnHISM(true,bInBattle);
 		}
 		if (ShopWidget)
 		{
@@ -1201,6 +1220,7 @@ void APCCombatPlayerController::PollHover()
 		ClearHoverHighLight();
 		return;
 	}
+	
 
 	if (CachedHoverUnit == nullptr)
 	{
@@ -1217,7 +1237,20 @@ void APCCombatPlayerController::PollHover()
 	LastTime = Now;
 
 	Server_QueryHoverFromWorld(HitResult.Location);
+
+	FHitResult HitUnit;
+	if (GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Pawn), false, HitUnit))
+	{
+		if (APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(HitUnit.GetActor()))
+		{
+			Client_CheckHeroStatus(Unit);
+			return;
+		}
+	}
+
+	Client_CheckHeroStatus(nullptr);
 }
+
 
 void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const FVector& World)
 {
@@ -1228,7 +1261,7 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 	}
 
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
-	const bool bInBattle = GS && (IsBattleTag(GS->GetGameStateTag()) || IsBattleCreep(GS->GetGameStateTag()));
+	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
 
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
@@ -1247,12 +1280,13 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 
 	if (bInBattle && bField)
 	{
-		Client_TileHoverUnit(nullptr);
+		Client_TileHoverUnit(nullptr);		
 		return;
 	}
 
 	APCBaseUnitCharacter* Unit = bField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
 	Client_TileHoverUnit(Unit);
+	
 }
 
 void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsField, int32 Y, int32 X, int32 BenchIdx)
@@ -1260,7 +1294,8 @@ void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsFiel
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
 	{
-		Client_TileHoverUnit(nullptr); return;
+		Client_TileHoverUnit(nullptr);
+		return;
 	}
 
 	APCBaseUnitCharacter* Unit = bIsField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
@@ -1283,6 +1318,20 @@ void APCCombatPlayerController::Client_CurrentDragUnit_Implementation(APCBaseUni
 	}
 }
 
+void APCCombatPlayerController::Client_CheckHeroStatus_Implementation(APCBaseUnitCharacter* Unit)
+{
+	if (!IsLocalController())
+		return;
+
+	if (Unit != nullptr)
+	{
+		CachedCheckStatusUnit = Unit;
+	}
+	else
+	{
+		CachedCheckStatusUnit = nullptr;
+	}
+}
 
 void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
@@ -1303,15 +1352,6 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 		ClearHoverHighLight();
 	}
 	
-	// 안전하게 이름/팀 추출
-	const bool bValid = IsValid(Unit);
-	const FString UnitName   = bValid ? Unit->GetName() : TEXT("NULL");
-	const int32   TeamIndex  = bValid ? Unit->GetTeamIndex() : -1;
-	const ENetMode NetMode   = GetWorld() ? GetWorld()->GetNetMode() : NM_Standalone;
-	const float    Now       = GetWorld() ? GetWorld()->TimeSeconds : 0.f;
-
-	// UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
-	// 	Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
 }
 
 void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32 Ranking)

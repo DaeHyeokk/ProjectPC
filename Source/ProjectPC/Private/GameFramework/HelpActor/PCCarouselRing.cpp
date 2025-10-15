@@ -224,11 +224,11 @@ void APCCarouselRing::SetRotationOnActive(bool bOn)
 
 void APCCarouselRing::BuildGates()
 {
-	for (UBoxComponent* GateBox : GateBoxes)
+	for (UStaticMeshComponent* GateMesh : GateMeshes)
 	{
-		if (GateBox)
+		if (GateMesh)
 		{
-			GateBox->DestroyComponent();
+			GateMesh->DestroyComponent();
 		}
 	}
 	GateBoxes.Reset();
@@ -236,53 +236,41 @@ void APCCarouselRing::BuildGates()
 	if (PlayerNumSlots <= 0 )
 		return;
 
+	if (PlayerNumSlots <= 0 || !GateRoot || !GateStaticMesh)
+		return;
+
+	const FVector CenterWorld = GetRingCenterWorld(PlayerRingRoot);
+
 	for (int32 i = 0; i < PlayerNumSlots; ++i)
 	{
-		// 각 Seat의 전면을 막는 박스
-		const float CenterAngle = GetPlayerSeatAngelDeg(i);
-		const float HalfArc = GateArcDeg * 0.5f;
+		const float CenterAngleDeg = GetPlayerSeatAngelDeg(i);
+		const FVector Dir = FRotator(0.f, CenterAngleDeg, 0.f).Vector();
+		const FVector Pos = CenterWorld + Dir * PlayerRingRadius + FVector(0,0, GateHeight);
 
-		// 박스의 중심 각도
-		const FVector CenterWorld = GetRingCenterWorld(PlayerRingRoot);
-		const FVector Dir = FRotator(0.f, CenterAngle, 0.f).Vector();
+		UStaticMeshComponent* Gate = NewObject<UStaticMeshComponent>(this);
+		Gate->SetMobility(EComponentMobility::Movable);
+		Gate->SetStaticMesh(GateStaticMesh);
+		Gate->SetCollisionProfileName(GateCollisionProfile);
+		Gate->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-		// 박스를 플레이어보다 약간 앞 으로 두어 이동 차단
-		const float Radial = PlayerRingRadius - GateThickness * 0.5f;
-		const FVector Pos = CenterWorld + Dir * Radial + FVector(0,0,PlayerRingHeight + GateHeight*0.5f);
+		Gate->RegisterComponent();
+		Gate->AttachToComponent(GateRoot, FAttachmentTransformRules::KeepWorldTransform);
+		Gate->SetWorldLocation(Pos);
 
-		// 상자 크기
-		const float ArcLen = 2.f * Radial * FMath::Sin(FMath::DegreesToRadians(HalfArc));
-		const FVector BoxExtent(ArcLen, GateThickness * 0.5f, GateHeight*0.5);
-
-		UBoxComponent* Box = NewObject<UBoxComponent>(this);
-		Box->RegisterComponent();
-		Box->AttachToComponent(GateRoot, FAttachmentTransformRules::KeepWorldTransform);
-		Box->SetBoxExtent(BoxExtent, true);
-		Box->SetCollisionProfileName(GateCollisionProfile);
-		Box->SetHiddenInGame(true);
-
-		FRotator Rotator(0.f, CenterAngle, 0.f);
-		Box->SetWorldLocationAndRotation(Pos,Rotator);
-
-		GateBoxes.Add(Box);
+		GateMeshes.Add(Gate);
 	}
 }
 
 void APCCarouselRing::OpenGateForSeat(int32 SeatIndex, bool bOpen)
 {
-	if (!GateBoxes.IsValidIndex(SeatIndex))
-		return;
-	UBoxComponent* Box = GateBoxes[SeatIndex];
-	if (!Box)
-		return;
-	if (bOpen)
-	{
-		Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	else
-	{
-		Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	}
+	if (!GateMeshes.IsValidIndex(SeatIndex)) return;
+
+	UStaticMeshComponent* Gate = GateMeshes[SeatIndex];
+
+	if (!Gate) return;
+
+	Gate->SetCollisionEnabled(bOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryAndPhysics);
+	Gate->SetHiddenInGame(true);
 }
 
 void APCCarouselRing::OpenAllGates(bool bOpen)

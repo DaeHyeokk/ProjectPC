@@ -51,7 +51,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	//GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -94,7 +94,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -288,7 +288,6 @@ void APCCombatGameMode::EndCurrentStep()
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
-	//BindPlayerMainHuD();
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -354,6 +353,7 @@ void APCCombatGameMode::Step_Travel()
 			
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();
+			
 			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 			{
 				if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
@@ -441,7 +441,7 @@ void APCCombatGameMode::Step_PvE()
 {
 	if (APCCombatGameState* PCGameState = GetCombatGameState())
 	{
-		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active_Creep);
+		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
 	}
 }
 
@@ -451,7 +451,7 @@ void APCCombatGameMode::Step_CreepSpawn()
 	APCCombatGameState* PCGameState = GetCombatGameState();
 	if (!PCGameState) return;
 
-	PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation_Creep);
+	PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{

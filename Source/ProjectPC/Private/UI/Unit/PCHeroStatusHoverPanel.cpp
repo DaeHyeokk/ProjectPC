@@ -46,6 +46,7 @@ void UPCHeroStatusHoverPanel::ShowPanelForHero(APCHeroUnitCharacter* InHero)
 
 void UPCHeroStatusHoverPanel::HidePanel()
 {
+	UnbindAll();
 	SetVisibility(ESlateVisibility::Collapsed);
 }
 

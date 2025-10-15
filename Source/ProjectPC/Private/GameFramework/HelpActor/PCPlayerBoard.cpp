@@ -424,7 +424,7 @@ bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacte
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();
-	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+30.f),ActorRot,false,nullptr);
+	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+50.f),ActorRot,false,nullptr);
 	return true;
 }
 
@@ -581,7 +581,7 @@ bool APCPlayerBoard::WorldToBench(const FVector& World, int32& OutLocalBenchInde
 bool APCPlayerBoard::WorldAnyTile(const FVector& World, bool bPreferField, bool& bOutIsField, int32& OutY, int32& OutX,
 	int32& OutLocalBenchIndex, FVector& OutSnapPos, float MaxSnapField, float MaxSnapBench, bool bRequireUnit) const
 {
-	 bOutIsField = false;
+	bOutIsField = false;
     OutY = OutX = INDEX_NONE;
     OutLocalBenchIndex = INDEX_NONE;
     OutSnapPos = World;

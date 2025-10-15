@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class UPCHeroStatusHoverPanel;
 class APCCombatGameState;
 class APCPlayerState;
 /**
@@ -19,6 +20,9 @@ class PROJECTPC_API UPCPlayerMainWidget : public UUserWidget
 public:
 	UFUNCTION(BlueprintCallable)
 	void InitAndBind(APCCombatGameState* PCCombatGameState);
+
+	UFUNCTION(BlueprintCallable)
+	UPCHeroStatusHoverPanel* GetHeroStatusWidget() { return W_HeroStatus;}
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -26,6 +30,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCLeaderBoardWidget> W_LeaderBoardWidget;
-	
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<class UPCHeroStatusHoverPanel> W_HeroStatus;
 	
 };
