@@ -124,7 +124,7 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_MagicDefense)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_CritChance)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_LifeSteal)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_SpellVamp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_DamageMultiplier)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Cooldown_BasicAttack)
 }

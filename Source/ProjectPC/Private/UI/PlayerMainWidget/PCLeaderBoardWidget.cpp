@@ -51,16 +51,6 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingR
 			PlayerBox->AddChild(RankPair.Value);
 		}
 	}
-	
-	// for (int32 i = 0; i < RankArray.Num(); ++i)
-	// {
-	// 	auto PlayerRowWidget = RankArray[i].Value;
-	// 	if (PlayerRowWidget && PlayerBox->GetChildAt(i) != PlayerRowWidget)
-	// 	{
-	// 		PlayerBox->RemoveChild(PlayerRowWidget);
-	// 		PlayerBox->InsertChildAt(i, PlayerRowWidget);
-	// 	}
-	// }
 }
 
 void UPCLeaderBoardWidget::OpenMenu()

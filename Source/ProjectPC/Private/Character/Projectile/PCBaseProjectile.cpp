@@ -88,29 +88,29 @@ void APCBaseProjectile::SetProjectileProperty()
 	if (auto Unit = ProjectileData.Find(ProjectileDataCharacterTag))
 	{
 		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataAttackTypeTag);
-		if (Projectile.Mesh && MeshComp)
+		if (Projectile->Mesh && MeshComp)
 		{
-			MeshComp->SetStaticMesh(Projectile.Mesh);
+			MeshComp->SetStaticMesh(Projectile->Mesh);
 		}
-		if (Projectile.TrailEffect && TrailEffectComp)
+		if (Projectile->TrailEffect && TrailEffectComp)
 		{
-			TrailEffectComp->SetTemplate(Projectile.TrailEffect);
+			TrailEffectComp->SetTemplate(Projectile->TrailEffect);
 			TrailEffectComp->SetActive(true);
 		}
-		if (Projectile.HitEffect)
+		if (Projectile->HitEffect)
 		{
-			HitEffect = Projectile.HitEffect;
+			HitEffect = Projectile->HitEffect;
 		}
 
-		ProjectileMovement->InitialSpeed = Projectile.Speed;
-		ProjectileMovement->MaxSpeed = Projectile.Speed;
+		ProjectileMovement->InitialSpeed = Projectile->Speed;
+		ProjectileMovement->MaxSpeed = Projectile->Speed;
 		ProjectileMovement->Velocity = GetActorForwardVector();
-		bIsHomingProjectile = Projectile.bIsHomingProjectile;
-		bIsPenetrating = Projectile.bIsPenetrating;
+		bIsHomingProjectile = Projectile->bIsHomingProjectile;
+		bIsPenetrating = Projectile->bIsPenetrating;
 	
-		if (Projectile.LifeTime > 0.f)
+		if (Projectile->LifeTime > 0.f)
 		{
-			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
+			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile->LifeTime, false);
 		}
 	}
 }
