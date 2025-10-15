@@ -39,6 +39,4 @@ public:
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
 	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap);
-
-	void OpenMenu();
 };

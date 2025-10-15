@@ -27,4 +27,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> ItemTexture;
+
+	bool IsValid() const
+	{
+		return ItemTag.IsValid() && !ItemName.IsNone();
+	}
 };

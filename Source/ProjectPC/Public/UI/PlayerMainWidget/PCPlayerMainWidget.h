@@ -26,6 +26,4 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCLeaderBoardWidget> W_LeaderBoardWidget;
-	
-	
 };

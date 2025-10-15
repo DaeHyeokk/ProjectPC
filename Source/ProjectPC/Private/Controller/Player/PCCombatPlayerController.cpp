@@ -26,6 +26,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
 #include "UI/GameResult/PCGameResultWidget.h"
+#include "UI/Item/PCPlayerInventoryWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 
@@ -153,7 +154,15 @@ void APCCombatPlayerController::BeginPlayingState()
 	}
 
 	LoadShopWidget();
-		
+
+	// 아이템 테스트
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_BloodThirster);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_EdgeofNight);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_RedBuff);
+	
+	LoadInventoryWidget();
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -559,6 +568,37 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
 {
 	bIsShopRequestInProgress = false;
+}
+
+void APCCombatPlayerController::LoadInventoryWidget()
+{
+	if (IsLocalController())
+	{
+		if (!InventoryWidgetClass) return;
+		
+		InventoryWidget = CreateWidget<UPCPlayerInventoryWidget>(this, InventoryWidgetClass);
+		if (!InventoryWidget) return;
+
+		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+		{
+			InventoryWidget->BindToPlayerState(PCPlayerState);
+			InventoryWidget->AddToViewport();
+		}
+		else
+		{
+			// 안전책: 월드 틱 이후 GameState를 다시 확인
+			GetWorldTimerManager().SetTimerForNextTick([this]()
+			{
+				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
+				{
+					InventoryWidget->BindToPlayerState(PCPS2);
+					InventoryWidget->AddToViewport();
+				}
+			});
+		}
+		
+		
+	}
 }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()

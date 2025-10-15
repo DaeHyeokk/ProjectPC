@@ -26,7 +26,7 @@ protected:
 	virtual bool Initialize() override;
 	
 public:
-	void Setup(FPCShopUnitData UnitData, int32 NewSlotIndex);
+	void Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex);
 
 protected:
 	int32 SlotIndex;
@@ -68,4 +68,7 @@ public:
 	void OnClickedUnitSlot();
 
 	void SetSlotHidden(bool IsHidden);
+
+private:
+	FString TagToString(FGameplayTag Tag);
 };

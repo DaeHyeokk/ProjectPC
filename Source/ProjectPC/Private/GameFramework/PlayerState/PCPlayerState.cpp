@@ -13,11 +13,13 @@
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "Item/PCPlayerInventory.h"
 #include "Shop/PCShopManager.h"
 
 
 APCPlayerState::APCPlayerState()
 {
+	// ASC 세팅
 	bReplicates = true;
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
 	PlayerAbilitySystemComponent->AddAttributeSetSubobject(CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet")));
@@ -32,6 +34,9 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Normal);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
+
+	// Inventory 세팅
+	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)

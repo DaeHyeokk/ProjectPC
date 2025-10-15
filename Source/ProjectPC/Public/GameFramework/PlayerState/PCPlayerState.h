@@ -10,6 +10,7 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
+class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
@@ -43,7 +44,6 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	
 
 #pragma region Login
 	
@@ -162,4 +162,15 @@ public:
 	int32 GetPlayerWinningStreak() const;
 
 #pragma endregion Combat
+
+#pragma region Inventory
+
+protected:
+	UPROPERTY(VisibleDefaultsOnly, Category = "Inventory")
+	UPCPlayerInventory* PlayerInventory;
+
+public:
+	FORCEINLINE UPCPlayerInventory* GetPlayerInventory() const { return PlayerInventory; }
+	
+#pragma endregion Inventory
 };

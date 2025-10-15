@@ -29,10 +29,15 @@ const FPCItemData* UPCItemManagerSubsystem::GetItemData(FGameplayTag ItemTag) co
 
 const FPCItemData* UPCItemManagerSubsystem::CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const
 {
-	if (const auto AdvancedItemTag = ItemCombineDataMap.Find(FBaseItemPair(ItemTag1, ItemTag2)))
+	const FGameplayTag ItemTypeTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
+	
+	if (ItemTag1.MatchesTag(ItemTypeTag) && ItemTag2.MatchesTag(ItemTypeTag))
 	{
-		return GetItemData(*AdvancedItemTag);
+		if (const auto AdvancedItemTag = ItemCombineDataMap.Find(FBaseItemPair(ItemTag1, ItemTag2)))
+		{
+			return GetItemData(*AdvancedItemTag);
+		}
 	}
-
+	
 	return nullptr;
 }

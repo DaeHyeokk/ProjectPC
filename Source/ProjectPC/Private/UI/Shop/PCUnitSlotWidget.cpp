@@ -3,13 +3,13 @@
 
 #include "UI/Shop/PCUnitSlotWidget.h"
 
-#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -26,7 +26,7 @@ bool UPCUnitSlotWidget::Initialize()
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
+void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex)
 {
 	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
 	
@@ -35,20 +35,8 @@ void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
 
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
-
-	FString SpeciesTag = UnitData.UnitSpeciesTag.GetTagName().ToString();
-	int32 SpeciesLastDotIndex;
-	if (SpeciesTag.FindLastChar('.', SpeciesLastDotIndex))
-	{
-		Text_Species->SetText(FText::FromString(SpeciesTag.RightChop(SpeciesLastDotIndex + 1)));
-	}
-	
-	FString JobTag = UnitData.UnitJobTag.GetTagName().ToString();
-	int32 JobLastDotIndex;
-	if (JobTag.FindLastChar('.', JobLastDotIndex))
-	{
-		Text_Job->SetText(FText::FromString(JobTag.RightChop(JobLastDotIndex + 1)));
-	}
+	Text_Species->SetText(FText::FromString(TagToString(UnitData.UnitSpeciesTag)));
+	Text_Job->SetText(FText::FromString(TagToString(UnitData.UnitJobTag)));
 	
 	// 유닛 썸네일 세팅 (SoftObjectPtr 비동기 로드)
 	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
@@ -133,4 +121,17 @@ void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
 	{
 		this->SetVisibility(ESlateVisibility::Hidden);
 	}
+}
+
+FString UPCUnitSlotWidget::TagToString(FGameplayTag Tag)
+{
+	FString TagStr = Tag.GetTagName().ToString();
+	int32 DotIndex;
+	
+	if (TagStr.FindLastChar('.', DotIndex))
+	{
+		return TagStr.RightChop(DotIndex + 1);
+	}
+
+	return TagStr;
 }

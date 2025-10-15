@@ -53,9 +53,4 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingR
 	}
 }
 
-void UPCLeaderBoardWidget::OpenMenu()
-{
-	AddToViewport(150);
-}
-
 
