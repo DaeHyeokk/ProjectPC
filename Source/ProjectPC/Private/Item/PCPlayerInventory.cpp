@@ -112,8 +112,6 @@ void UPCPlayerInventory::DropItemAtInventory_Implementation(int32 DraggedInvento
 
 void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc)
 {
-	UE_LOG(LogTemp, Error, TEXT("World Location X : %f, Y : %f, Z : %f"), DroppedWorldLoc.X, DroppedWorldLoc.Y, DroppedWorldLoc.Z);
-	
 	if (Inventory.IsValidIndex(DraggedInventoryIndex))
 	{
 		if (auto PS = Cast<APCPlayerState>(GetOwner()))
@@ -130,8 +128,6 @@ void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 Dragged
 				{
 					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
 					{
-						UE_LOG(LogTemp, Error, TEXT("Hit Actor : %s"), *Unit->GetName());
-
 						// 여기에 유닛 아이템 장착 추가
 						
 						RemoveItemFromInventory(DraggedInventoryIndex);

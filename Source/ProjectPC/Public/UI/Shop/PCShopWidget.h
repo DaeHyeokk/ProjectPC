@@ -33,7 +33,7 @@ private:
 	APCPlayerState* CachedPlayerState;
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
+	UPROPERTY(EditDefaultsOnly, Category = "UnitSlotWidgetClass")
 	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
 	void BindToPlayerState(APCPlayerState* NewPlayerState);

@@ -7,8 +7,19 @@
 #include "Engine/AssetManager.h"
 
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
+#include "UI/Item/PCItemRecipeWidget.h"
 #include "UI/Item/PCPlayerInventoryWidget.h"
 
+
+bool UPCItemSlotWidget::Initialize()
+{
+	if (!Super::Initialize()) return false;
+
+	ItemRecipeWidget = CreateWidget<UPCItemRecipeWidget>(GetWorld(), ItemRecipeWidgetClass);
+	if (!ItemRecipeWidget) return false;
+	
+	return true;
+}
 
 void UPCItemSlotWidget::SetSlotIndex(int32 NewSlotIndex)
 {
@@ -42,6 +53,9 @@ void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 						}
 					}
 				});
+				
+				if (!ItemRecipeWidget) return;
+				ItemRecipeWidget->Setup(NewItemTag);
 			}
 		}
 	}
@@ -49,7 +63,7 @@ void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 
 void UPCItemSlotWidget::RemoveItem()
 {
-	if (!Img_Item) return;
+	if (!Img_Item || !ItemRecipeWidget) return;
 
 	Img_Item->SetBrushFromTexture(nullptr);
 	Img_Item->SetColorAndOpacity(FLinearColor::Black);
@@ -64,4 +78,25 @@ UTexture2D* UPCItemSlotWidget::GetThumbnail() const
 bool UPCItemSlotWidget::IsItemSet() const
 {
 	return bIsItemSet;
+}
+
+void UPCItemSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+
+	if (!bIsItemSet || !ItemRecipeWidget) return;
+	
+	ItemRecipeWidget->AddToViewport(9999);
+	ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
+	ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, -50.0f));
+}
+
+void UPCItemSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+
+	if (!ItemRecipeWidget) return;
+	
+	ItemRecipeWidget->RemoveFromParent();
 }

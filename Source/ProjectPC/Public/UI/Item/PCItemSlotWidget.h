@@ -7,6 +7,7 @@
 #include "Item/PCItemData.h"
 #include "PCItemSlotWidget.generated.h"
 
+class UPCItemRecipeWidget;
 class UImage;
 
 /**
@@ -16,8 +17,16 @@ UCLASS()
 class PROJECTPC_API UPCItemSlotWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 protected:
+	virtual bool Initialize() override;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "ItemRecipeWidgetClass")
+	TSubclassOf<UUserWidget> ItemRecipeWidgetClass;
+
+	UPROPERTY()
+	UPCItemRecipeWidget* ItemRecipeWidget;
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_Item;
 	
@@ -35,4 +44,8 @@ public:
 
 	UTexture2D* GetThumbnail() const;
 	bool IsItemSet() const;
+
+protected:
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 };
