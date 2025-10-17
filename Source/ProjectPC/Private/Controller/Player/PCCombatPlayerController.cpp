@@ -154,14 +154,6 @@ void APCCombatPlayerController::BeginPlayingState()
 	}
 
 	LoadShopWidget();
-
-	// 아이템 테스트
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_BloodThirster);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_EdgeofNight);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Advanced_RedBuff);
-	
 	LoadInventoryWidget();
 }
 
@@ -396,8 +388,16 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
-	if (GoldCost == 0 && bIsShopLocked) return;
+	if (GoldCost == 0 && bIsShopLocked)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 	
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
@@ -433,25 +433,43 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS) return;
+	if (!GS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return;
+	if (!PS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	// 팀 확인
 	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
+	{
+		Client_ShopRequestFinished();
 		return;
+	}
 
 	// ✅ PlayerBoard 기준으로 소유/존재 확인
 	APCPlayerBoard* PB = GetPlayerBoard();
-	if (!IsValid(PB)) return;
-
+	if (!IsValid(PB))
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
+	
 	const bool bOnMyBoard =
 		(PB->GetBenchUnitIndex(Unit) != INDEX_NONE) ||
 		(PB->GetFieldUnitGridPoint(Unit) != FIntPoint::NoneValue);
 
 	if (!bOnMyBoard)
+	{
+		Client_ShopRequestFinished();
 		return;
+	}
 	
 	if (auto ASC = PS->GetAbilitySystemComponent())
 	{
@@ -475,16 +493,32 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 {
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS) return;
+	if (!GS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return;
+	if (!PS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto ASC = PS->GetAbilitySystemComponent();
-	if (!ASC) return;
+	if (!ASC)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 	
 	APCPlayerBoard* PB = GetPlayerBoard();
-	if (!IsValid(PB)) return;
+	if (!IsValid(PB))
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	int32 RequiredCount = 0;
 
@@ -499,6 +533,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			// 모두 구매가 가능한지 골드 확인
 			if (RequiredCount == 0 || AttributeSet->GetPlayerGold() < PS->GetShopSlots()[SlotIndex].UnitCost * RequiredCount)
 			{
+				Client_ShopRequestFinished();
 				return;
 			}
 
@@ -513,6 +548,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 			else
 			{
+				Client_ShopRequestFinished();
 				return;
 			}
 		}
@@ -582,7 +618,7 @@ void APCCombatPlayerController::LoadInventoryWidget()
 		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
 		{
 			InventoryWidget->BindToPlayerState(PCPlayerState);
-			InventoryWidget->AddToViewport();
+			InventoryWidget->AddToViewport(8000);
 		}
 		else
 		{
@@ -592,7 +628,7 @@ void APCCombatPlayerController::LoadInventoryWidget()
 				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
 				{
 					InventoryWidget->BindToPlayerState(PCPS2);
-					InventoryWidget->AddToViewport();
+					InventoryWidget->AddToViewport(8000);
 				}
 			});
 		}
@@ -765,7 +801,6 @@ void APCCombatPlayerController::ShowWidget()
 		return;
 	}
 	ShopWidget->SetVisibility(ESlateVisibility::Visible);
-	
 }
 
 void APCCombatPlayerController::HideWidget()

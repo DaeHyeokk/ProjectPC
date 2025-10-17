@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> ItemTexture;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FGameplayTag> ItemEffectClassTags;
+
 	bool IsValid() const
 	{
 		return ItemTag.IsValid() && !ItemName.IsNone();

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
-#include "BaseGameplayTags.h"
 #include "Shop/PCShopUnitData.h"
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
@@ -171,6 +170,8 @@ protected:
 
 public:
 	FORCEINLINE UPCPlayerInventory* GetPlayerInventory() const { return PlayerInventory; }
+
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion Inventory
 };

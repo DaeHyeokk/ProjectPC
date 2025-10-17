@@ -3,29 +3,36 @@
 
 #include "Item/PCPlayerInventory.h"
 
+#include "BlendSpaceAnalysis.h"
+#include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 
+#include "Character/Unit/PCHeroUnitCharacter.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
 
-bool UPCPlayerInventory::AddItemToInventory(FGameplayTag AddedItemTag)
+void UPCPlayerInventory::OnRep_Inventory()
 {
-	if (Inventory.Num() < MaxInventorySlots)
+	OnInventoryUpdated.Broadcast();
+}
+
+void UPCPlayerInventory::AddItemToInventory(FGameplayTag AddedItemTag)
+{
+	if (Inventory.Num() >= MaxInventorySlots)
+		return;
+
+	if (const auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 	{
-		if (auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
+		if (const auto NewItem = ItemManagerSubsystem->GetItemData(AddedItemTag))
 		{
-			if (const auto NewItem = ItemManagerSubsystem->GetItemData(AddedItemTag))
+			if (NewItem->IsValid())
 			{
-				if (NewItem->IsValid())
-				{
-					Inventory.Add(*NewItem);
-					return true;
-				}
+				Inventory.Add(AddedItemTag);
 			}
 		}
 	}
-
-	return false;
 }
 
 void UPCPlayerInventory::RemoveItemFromInventory(int32 ItemIndex)
@@ -43,13 +50,17 @@ void UPCPlayerInventory::CombineItem(int32 ItemIndex1, int32 ItemIndex2)
 
 	if (Inventory[ItemIndex1].IsValid() && Inventory[ItemIndex2].IsValid())
 	{
-		if (auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
+		if (const auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 		{
-			if (const auto NewItem = ItemManagerSubsystem->CombineItem(Inventory[ItemIndex1].ItemTag, Inventory[ItemIndex2].ItemTag))
+			auto NewItemTag = ItemManagerSubsystem->CombineItem(Inventory[ItemIndex1], Inventory[ItemIndex2]);
+			if (const auto NewItem = ItemManagerSubsystem->GetItemData(NewItemTag))
 			{
-				Inventory[ItemIndex1] = *NewItem;
-				RemoveItemFromInventory(ItemIndex2);
-				return;
+				if (NewItem->IsValid())
+				{
+					Inventory[ItemIndex1] = NewItemTag;
+					RemoveItemFromInventory(ItemIndex2);
+					return;
+				}
 			}
 		}
 
@@ -65,48 +76,70 @@ void UPCPlayerInventory::SwapItem(int32 ItemIndex1, int32 ItemIndex2)
 	Inventory.Swap(ItemIndex1, ItemIndex2);
 }
 
-void UPCPlayerInventory::StartDragItem(int32 ItemIndex)
+void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, int32 TargetInventoryIndex)
 {
-	if (Inventory.IsValidIndex(ItemIndex))
+	if (Inventory.IsValidIndex(DraggedInventoryIndex) && Inventory.IsValidIndex(TargetInventoryIndex))
 	{
-		CachedDragItemIndex = ItemIndex;
+		DropItemAtInventory(DraggedInventoryIndex, TargetInventoryIndex);
 	}
 }
 
-void UPCPlayerInventory::EndDragItem(EItemDropTarget DropTarget, int32 TargetInventoryIndex)
+void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, const FVector2D& DroppedScreenLoc)
 {
-	switch (DropTarget)
+	if (Inventory.IsValidIndex(DraggedInventoryIndex))
 	{
-	case EItemDropTarget::Inventory:
-		{
-			if (Inventory.IsValidIndex(CachedDragItemIndex) && Inventory.IsValidIndex(TargetInventoryIndex))
-			{
-				CombineItem(TargetInventoryIndex, CachedDragItemIndex);
-			}
-			
-			break;
-		}
+		FHitResult Hit;
 		
-	case EItemDropTarget::Unit:
+		if (auto PS = Cast<APlayerState>(GetOwner()))
 		{
-			if (Inventory.IsValidIndex(CachedDragItemIndex))
+			if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
 			{
-				RemoveItemFromInventory(CachedDragItemIndex);
+				PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
 			}
+		}
 
-			break;
-		}
-		
-	default:
-		break;
+		DropItemAtOutsideInventory(DraggedInventoryIndex, Hit.Location);
 	}
-
-	CachedDragItemIndex = -1;
 }
 
-void UPCPlayerInventory::OnRep_Inventory()
+void UPCPlayerInventory::DropItemAtInventory_Implementation(int32 DraggedInventoryIndex, int32 TargetInventoryIndex)
 {
-	OnInventoryUpdated.Broadcast();
+	if (Inventory.IsValidIndex(DraggedInventoryIndex) && Inventory.IsValidIndex(TargetInventoryIndex))
+	{
+		CombineItem(TargetInventoryIndex, DraggedInventoryIndex);
+	}
+}
+
+void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc)
+{
+	UE_LOG(LogTemp, Error, TEXT("World Location X : %f, Y : %f, Z : %f"), DroppedWorldLoc.X, DroppedWorldLoc.Y, DroppedWorldLoc.Z);
+	
+	if (Inventory.IsValidIndex(DraggedInventoryIndex))
+	{
+		if (auto PS = Cast<APCPlayerState>(GetOwner()))
+		{
+			if (auto PB = PS->PlayerBoard)
+			{
+				bool bIsOnField = false;
+				int32 X = -1;
+				int32 Y = -1;
+				int32 BenchIndex=-1;
+				FVector Snap = DroppedWorldLoc;
+				
+				if (PB->WorldAnyTile(DroppedWorldLoc, false, bIsOnField, Y, X, BenchIndex, Snap))
+				{
+					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
+					{
+						UE_LOG(LogTemp, Error, TEXT("Hit Actor : %s"), *Unit->GetName());
+
+						// 여기에 유닛 아이템 장착 추가
+						
+						RemoveItemFromInventory(DraggedInventoryIndex);
+					}
+				}
+			}
+		}
+	}
 }
 
 void UPCPlayerInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

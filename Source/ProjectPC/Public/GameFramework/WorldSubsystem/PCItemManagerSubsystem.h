@@ -46,7 +46,7 @@ public:
 	void InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable);
 
 	const FPCItemData* GetItemData(FGameplayTag ItemTag) const;
-	const FPCItemData* CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
+	FGameplayTag CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
 
 #pragma region TemplateFunc
 

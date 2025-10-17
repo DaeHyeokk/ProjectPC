@@ -22,7 +22,7 @@ protected:
 	UImage* Img_Item;
 	
 private:
-	int32 SlotIndex;
+	int32 SlotIndex = -1;
 	bool bIsItemSet = false;
 
 	UPROPERTY()
@@ -30,11 +30,9 @@ private:
 	
 public:
 	void SetSlotIndex(int32 NewSlotIndex);
-	void SetItem(const FPCItemData& NewItem);
+	void SetItem(FGameplayTag NewItemTag);
 	void RemoveItem();
 
 	UTexture2D* GetThumbnail() const;
 	bool IsItemSet() const;
-
-	bool IsUnderLocation(const FVector2D& ScreenPos) const;
 };

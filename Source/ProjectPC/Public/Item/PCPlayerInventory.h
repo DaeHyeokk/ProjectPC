@@ -9,46 +9,42 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnInventoryUpdated);
 
-UENUM(BlueprintType)
-enum class EItemDropTarget : uint8
-{
-	None UMETA(DisplayName="None"),
-	Inventory UMETA(DisplayName="Inventory"),
-	Unit UMETA(DisplayName="Unit")
-};
+class APCHeroUnitCharacter;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCPlayerInventory : public UActorComponent
 {
 	GENERATED_BODY()
-
+	
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	int32 MaxInventorySlots = 10;
-
-	int32 CachedDragItemIndex = -1;
 
 	FOnInventoryUpdated OnInventoryUpdated;
 	
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_Inventory)
-	TArray<FPCItemData> Inventory;
-
-public:
-	const TArray<FPCItemData>& GetInventory() const { return Inventory; }
+	TArray<FGameplayTag> Inventory;
 	
-	bool AddItemToInventory(FGameplayTag AddedItemTag);
-	void RemoveItemFromInventory(int32 ItemIndex);
-	
-	void CombineItem(int32 ItemIndex1, int32 ItemIndex2);
-	void SwapItem(int32 ItemIndex1, int32 ItemIndex2);
-
-	void StartDragItem(int32 ItemIndex);
-	void EndDragItem(EItemDropTarget DropTarget, int32 TargetInventoryIndex);
-
-private:
 	UFUNCTION()
 	void OnRep_Inventory();
+
+public:
+	const TArray<FGameplayTag>& GetInventory() const { return Inventory; }
+
+	void AddItemToInventory(FGameplayTag AddedItemTag);
+	void RemoveItemFromInventory(int32 ItemIndex);
+
+	void CombineItem(int32 ItemIndex1, int32 ItemIndex2);
+	void SwapItem(int32 ItemIndex1, int32 ItemIndex2);
+	
+	void EndDragItem(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
+	void EndDragItem(int32 DraggedInventoryIndex, const FVector2D& DroppedScreenLoc);
+
+	UFUNCTION(Server, Reliable)
+	void DropItemAtInventory(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
+	UFUNCTION(Server, Reliable)
+	void DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

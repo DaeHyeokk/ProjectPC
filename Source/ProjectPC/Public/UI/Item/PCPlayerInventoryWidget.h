@@ -7,6 +7,7 @@
 #include "Item/PCPlayerInventory.h"
 #include "PCPlayerInventoryWidget.generated.h"
 
+class APCHeroUnitCharacter;
 class UCanvasPanel;
 class UImage;
 class APCPlayerState;
@@ -24,6 +25,9 @@ protected:
 	UPROPERTY()
 	TArray<UPCItemSlotWidget*> ItemSlots;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* DragImage;
+
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
 
@@ -32,11 +36,19 @@ private:
 	UPCPlayerInventory* PlayerInventory;
 	
 	int32 DragSlotIndex = -1;
-	
-public:
-	void StartDragItem(int32 SlotIndex);
-	void EndDragItemAtEmptySpace();
+	bool bIsDragging = false;
+
+	FVector2D LastMousePos;
+
+protected:
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
 	void SetupInventory();
+
+	int32 GetSlotIndexAtMousePos(const FGeometry& InGeometry, const FVector2d& MousePos);
 };

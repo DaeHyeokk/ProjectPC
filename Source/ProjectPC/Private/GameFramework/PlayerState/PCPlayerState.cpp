@@ -12,6 +12,7 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "Engine/ActorChannel.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Item/PCPlayerInventory.h"
 #include "Shop/PCShopManager.h"
@@ -261,6 +262,19 @@ void APCPlayerState::PlayerResult(int32 Ranking)
 int32 APCPlayerState::GetPlayerWinningStreak() const
 {
 	return PlayerWinningStreak;
+}
+
+bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
+	FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (PlayerInventory)
+	{
+		bWroteSomething |= Channel->ReplicateSubobject(PlayerInventory, *Bunch, *RepFlags);
+	}
+
+	return bWroteSomething;
 }
 
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
