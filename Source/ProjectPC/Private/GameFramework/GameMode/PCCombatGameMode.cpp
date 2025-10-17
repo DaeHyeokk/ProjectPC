@@ -53,7 +53,7 @@ void APCCombatGameMode::BeginPlay()
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
 
-	GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
+	// GetWorldTimerManager().SetTimer(WaitAllPlayerController, this, &APCCombatGameMode::TryPlacePlayersAfterTravel,2.f, true, 0.f);
 }
 
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
@@ -96,7 +96,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 		PC->Client_RequestIdentity();
 	}
 	
-	//OnOnePlayerArrived();
+	OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const

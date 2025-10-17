@@ -40,11 +40,6 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
-	// NewPlayerState->OnShopSlotsUpdated.AddLambda([this, NewPlayerState]()
-	// {
-	// 	SetupShopSlots();
-	// });
-
 	CachedPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
 	

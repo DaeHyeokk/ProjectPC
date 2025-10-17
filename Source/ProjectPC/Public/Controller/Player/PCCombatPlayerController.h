@@ -9,6 +9,7 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCPlayerInventoryWidget;
 class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
@@ -107,13 +108,14 @@ private:
 	bool bIsShopLocked = false;
 	bool bIsShopRequestInProgress = false;
 	
-public:
+protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
 	UPCShopWidget* ShopWidget;
 
+public:
 	FTimerHandle LoadShop;
 
 	void LoadShopWidget();
@@ -144,6 +146,20 @@ public:
 	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
+
+#pragma region Inventory
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
+	TSubclassOf<UUserWidget> InventoryWidgetClass;
+
+	UPROPERTY()
+	UPCPlayerInventoryWidget* InventoryWidget;
+
+public:
+	void LoadInventoryWidget();
+	
+#pragma endregion Inventory
 
 #pragma region Camera
 	// 게임 카메라 세팅
@@ -226,12 +242,12 @@ public:
 	void Client_HideWidget();
 
 private:
-	
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
+	
 #pragma endregion UI
 
 #pragma region Drag&Drop
@@ -348,8 +364,6 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);
-
-
 
 #pragma endregion GameResult
 };

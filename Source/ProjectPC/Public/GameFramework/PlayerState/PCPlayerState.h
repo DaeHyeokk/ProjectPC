@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
-#include "BaseGameplayTags.h"
 #include "Shop/PCShopUnitData.h"
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
-
+class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
 
 class APCPlayerBoard;
 class APCHeroUnitCharacter;
+class UGameplayEffect;
 
 /**
  * 
@@ -43,7 +43,6 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	
 
 #pragma region Login
 	
@@ -138,6 +137,10 @@ public:
 
 #pragma region Combat
 
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GE")
+	TSubclassOf<UGameplayEffect> GE_PlayerGoldChange;
+	
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)
 	int32 PlayerWinningStreak = 0;
@@ -159,5 +162,16 @@ public:
 
 #pragma endregion Combat
 
+#pragma region Inventory
 
+protected:
+	UPROPERTY(VisibleDefaultsOnly, Category = "Inventory")
+	UPCPlayerInventory* PlayerInventory;
+
+public:
+	FORCEINLINE UPCPlayerInventory* GetPlayerInventory() const { return PlayerInventory; }
+
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+	
+#pragma endregion Inventory
 };

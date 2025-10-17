@@ -7,6 +7,8 @@
 #include "Shop/PCShopUnitData.h"
 #include "PCUnitSlotWidget.generated.h"
 
+struct FStreamableHandle;
+
 class UButton;
 class UImage;
 class UTextBlock;
@@ -24,7 +26,7 @@ protected:
 	virtual bool Initialize() override;
 	
 public:
-	void Setup(FPCShopUnitData UnitData, int32 NewSlotIndex);
+	void Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex);
 
 protected:
 	int32 SlotIndex;
@@ -42,6 +44,10 @@ protected:
 	UTextBlock* Text_Cost;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* Text_UnitName;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_Species;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_Job;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	UTexture2D* Cost1Border;
@@ -62,4 +68,7 @@ public:
 	void OnClickedUnitSlot();
 
 	void SetSlotHidden(bool IsHidden);
+
+private:
+	FString TagToString(FGameplayTag Tag);
 };

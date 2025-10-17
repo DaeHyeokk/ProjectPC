@@ -12,12 +12,15 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "Engine/ActorChannel.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "Item/PCPlayerInventory.h"
 #include "Shop/PCShopManager.h"
 
 
 APCPlayerState::APCPlayerState()
 {
+	// ASC 세팅
 	bReplicates = true;
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
 	PlayerAbilitySystemComponent->AddAttributeSetSubobject(CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet")));
@@ -33,7 +36,8 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
 
-	LocalUserId = FString("HIHNI");
+	// Inventory 세팅
+	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
@@ -216,6 +220,19 @@ void APCPlayerState::PlayerWin()
 	{
 		PlayerWinningStreak++;
 	}
+
+	// 승리 보상 1원 지급
+	if (PlayerAbilitySystemComponent && GE_PlayerGoldChange)
+	{
+		FGameplayEffectContextHandle EffectContext = PlayerAbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle GoldSpecHandle = PlayerAbilitySystemComponent->MakeOutgoingSpec(GE_PlayerGoldChange, 1.f, EffectContext);
+
+		if (GoldSpecHandle.IsValid())
+		{
+			GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
+			PlayerAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+		}
+	}
 }
 
 void APCPlayerState::PlayerLose()
@@ -245,6 +262,19 @@ void APCPlayerState::PlayerResult(int32 Ranking)
 int32 APCPlayerState::GetPlayerWinningStreak() const
 {
 	return PlayerWinningStreak;
+}
+
+bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
+	FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (PlayerInventory)
+	{
+		bWroteSomething |= Channel->ReplicateSubobject(PlayerInventory, *Bunch, *RepFlags);
+	}
+
+	return bWroteSomething;
 }
 
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

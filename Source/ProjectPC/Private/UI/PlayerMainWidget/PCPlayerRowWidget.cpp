@@ -10,23 +10,6 @@
 #include "Engine/StreamableManager.h"
 
 
-// void UPCPlayerRowWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
-// {
-// 	if (!NewPlayerState) return;
-// 	CachedPlayerState = NewPlayerState;
-//
-// 	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
-// 	{
-// 		if (auto AttributeSet = NewPlayerState->GetAttributeSet())
-// 		{
-// 			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
-// 			.AddUObject(this, &UPCPlayerRowWidget::OnPlayerHPChanged);
-// 		}
-// 	}
-//
-// 	SetupPlayerInfo();
-// }
-
 void UPCPlayerRowWidget::SetupPlayerInfo(FString NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
 {
 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
@@ -80,23 +63,3 @@ void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)
 {
 }
-
-// void UPCPlayerRowWidget::OnPlayerHPChanged(const FOnAttributeChangeData& Data)
-// {
-// 	if (!PlayerHP || !CircularHPBar) return;
-// 	
-// 	auto HP = Data.NewValue;
-// 	auto HPPercent = HP / 100.f;
-// 	SetHP(HPPercent);
-//
-// 	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-// 	PlayerHP->SetText(FText::FromString(HPText));
-//
-// 	if (HP <= 0)
-// 	{
-// 		if (Img_Portrait)
-// 		{
-// 			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
-// 		}
-// 	}
-// }

@@ -3,17 +3,15 @@
 
 #include "UI/Shop/PCUnitSlotWidget.h"
 
-#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/AssetManager.h"
 #include "Engine/Texture2D.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
 
@@ -28,24 +26,31 @@ bool UPCUnitSlotWidget::Initialize()
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(FPCShopUnitData UnitData, int32 NewSlotIndex)
+void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex)
 {
-	if (!Text_UnitName || !Text_Cost || !Img_UnitThumbnail || !Img_CostBorder) return;
+	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
 	
 	SlotIndex = NewSlotIndex;
 	UnitCost = UnitData.UnitCost;
-	
+
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
-
+	Text_Species->SetText(FText::FromString(TagToString(UnitData.UnitSpeciesTag)));
+	Text_Job->SetText(FText::FromString(TagToString(UnitData.UnitJobTag)));
+	
+	// 유닛 썸네일 세팅 (SoftObjectPtr 비동기 로드)
 	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	TWeakObjectPtr<UPCUnitSlotWidget> WeakThis = this;
 	
-	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+	Streamable.RequestAsyncLoad(TexturePath, [WeakThis, TexturePath]()
 	{
-		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
+		if (WeakThis.IsValid())
 		{
-			Img_UnitThumbnail->SetBrushFromTexture(Texture);
+			if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
+			{
+				WeakThis->Img_UnitThumbnail->SetBrushFromTexture(Texture);
+			}
 		}
 	});
 	
@@ -116,4 +121,17 @@ void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
 	{
 		this->SetVisibility(ESlateVisibility::Hidden);
 	}
+}
+
+FString UPCUnitSlotWidget::TagToString(FGameplayTag Tag)
+{
+	FString TagStr = Tag.GetTagName().ToString();
+	int32 DotIndex;
+	
+	if (TagStr.FindLastChar('.', DotIndex))
+	{
+		return TagStr.RightChop(DotIndex + 1);
+	}
+
+	return TagStr;
 }

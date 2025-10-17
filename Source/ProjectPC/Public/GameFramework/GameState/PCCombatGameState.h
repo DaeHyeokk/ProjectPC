@@ -307,7 +307,7 @@ public:
 	
 protected:
 	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
 	UDataTable* LevelMaxXPDataTable;
 
 private:
@@ -481,6 +481,17 @@ public:
 	void Multicast_DebugPrintToScreen(const TArray<FString>& Lines, float ScreenSeconds);
 	
 #pragma endregion Ranking
+
+#pragma region Item
+
+protected:
+	// 아이템 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
+	UDataTable* ItemDataTable;
+
+	// 아이템 조합 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
+	UDataTable* ItemCombineDataTable;
 	
-	
+#pragma endregion Item
 };

@@ -8,15 +8,9 @@
 #include "UI/PlayerMainWidget/PCPlayerRowWidget.h"
 
 
-bool UPCLeaderBoardWidget::Initialize()
-{
-	return Super::Initialize();
-}
-
 void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
 	if (!NewGameState || !PlayerBox) return;
-	// CachedGameState = NewGameState;
 
 	NewGameState->OnLeaderboardMapUpdated.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
 	
@@ -29,7 +23,6 @@ void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 		PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
 		PlayerBox->AddChild(PlayerRowWidget);
 	}
-	
 }
 
 void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap)
@@ -58,16 +51,6 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingR
 			PlayerBox->AddChild(RankPair.Value);
 		}
 	}
-	
-	// for (int32 i = 0; i < RankArray.Num(); ++i)
-	// {
-	// 	auto PlayerRowWidget = RankArray[i].Value;
-	// 	if (PlayerRowWidget && PlayerBox->GetChildAt(i) != PlayerRowWidget)
-	// 	{
-	// 		PlayerBox->RemoveChild(PlayerRowWidget);
-	// 		PlayerBox->InsertChildAt(i, PlayerRowWidget);
-	// 	}
-	// }
 }
 
 

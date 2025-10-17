@@ -26,6 +26,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
 #include "UI/GameResult/PCGameResultWidget.h"
+#include "UI/Item/PCPlayerInventoryWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 #include "UI/Unit/PCHeroStatusHoverPanel.h"
@@ -155,6 +156,8 @@ void APCCombatPlayerController::BeginPlayingState()
 
 	//LoadShopWidget();
 		
+	LoadShopWidget();
+	LoadInventoryWidget();
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -428,7 +431,11 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
-	if (GoldCost == 0 && bIsShopLocked) return;
+	if (GoldCost == 0 && bIsShopLocked)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 	
 	if (auto PS = GetPlayerState<APCPlayerState>())
 	{
@@ -464,25 +471,43 @@ void APCCombatPlayerController::Server_BuyXP_Implementation()
 void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharacter* Unit)
 {
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS) return;
+	if (!GS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return;
+	if (!PS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	// 팀 확인
 	if (!Unit || Unit->IsActorBeingDestroyed() || Unit->GetTeamIndex() != PS->SeatIndex)
+	{
+		Client_ShopRequestFinished();
 		return;
+	}
 
 	// ✅ PlayerBoard 기준으로 소유/존재 확인
 	APCPlayerBoard* PB = GetPlayerBoard();
-	if (!IsValid(PB)) return;
-
+	if (!IsValid(PB))
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
+	
 	const bool bOnMyBoard =
 		(PB->GetBenchUnitIndex(Unit) != INDEX_NONE) ||
 		(PB->GetFieldUnitGridPoint(Unit) != FIntPoint::NoneValue);
 
 	if (!bOnMyBoard)
+	{
+		Client_ShopRequestFinished();
 		return;
+	}
 	
 	if (auto ASC = PS->GetAbilitySystemComponent())
 	{
@@ -506,16 +531,32 @@ void APCCombatPlayerController::Server_SellUnit_Implementation(APCBaseUnitCharac
 void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 {
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
-	if (!GS) return;
+	if (!GS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return;
+	if (!PS)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	auto ASC = PS->GetAbilitySystemComponent();
-	if (!ASC) return;
+	if (!ASC)
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 	
 	APCPlayerBoard* PB = GetPlayerBoard();
-	if (!IsValid(PB)) return;
+	if (!IsValid(PB))
+	{
+		Client_ShopRequestFinished();
+		return;
+	}
 
 	int32 RequiredCount = 0;
 
@@ -530,6 +571,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			// 모두 구매가 가능한지 골드 확인
 			if (RequiredCount == 0 || AttributeSet->GetPlayerGold() < PS->GetShopSlots()[SlotIndex].UnitCost * RequiredCount)
 			{
+				Client_ShopRequestFinished();
 				return;
 			}
 
@@ -544,6 +586,7 @@ void APCCombatPlayerController::Server_BuyUnit_Implementation(int32 SlotIndex)
 			}
 			else
 			{
+				Client_ShopRequestFinished();
 				return;
 			}
 		}
@@ -599,6 +642,37 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
 {
 	bIsShopRequestInProgress = false;
+}
+
+void APCCombatPlayerController::LoadInventoryWidget()
+{
+	if (IsLocalController())
+	{
+		if (!InventoryWidgetClass) return;
+		
+		InventoryWidget = CreateWidget<UPCPlayerInventoryWidget>(this, InventoryWidgetClass);
+		if (!InventoryWidget) return;
+
+		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+		{
+			InventoryWidget->BindToPlayerState(PCPlayerState);
+			InventoryWidget->AddToViewport(8000);
+		}
+		else
+		{
+			// 안전책: 월드 틱 이후 GameState를 다시 확인
+			GetWorldTimerManager().SetTimerForNextTick([this]()
+			{
+				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
+				{
+					InventoryWidget->BindToPlayerState(PCPS2);
+					InventoryWidget->AddToViewport(8000);
+				}
+			});
+		}
+		
+		
+	}
 }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()
@@ -771,6 +845,11 @@ void APCCombatPlayerController::ShowWidget()
 
 	PlayerMainWidget->SetShopWidgetVisible(true);
 	
+	if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
+	{
+		return;
+	}
+	ShopWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
 void APCCombatPlayerController::HideWidget()

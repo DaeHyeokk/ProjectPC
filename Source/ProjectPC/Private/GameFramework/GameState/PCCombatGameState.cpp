@@ -8,6 +8,7 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
@@ -33,6 +34,14 @@ void APCCombatGameState::BeginPlay()
 		if (ProjectilePoolData)
 		{
 			ProjectilePoolSubsystem->InitializeProjectilePoolData(ProjectilePoolData->ProjectilePoolData);
+		}
+	}
+
+	if (auto* ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
+	{
+		if (ItemDataTable && ItemCombineDataTable)
+		{
+			ItemManagerSubsystem->InitializeItemManager(ItemDataTable, ItemCombineDataTable);
 		}
 	}
 
