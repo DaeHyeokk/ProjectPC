@@ -51,6 +51,9 @@ public:
 	bool bIsCombatActive;
 
 	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bIsStunned;
+	
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
 	bool bIsDead;
 	
 	void PlayLevelStartMontage();
@@ -89,6 +92,12 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> JumpRecovery;
 
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> StunStart;
+
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> StunIdle;
+	
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> Death;
 

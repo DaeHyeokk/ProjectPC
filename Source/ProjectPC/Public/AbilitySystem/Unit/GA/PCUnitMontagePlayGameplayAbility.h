@@ -15,13 +15,15 @@ class PROJECTPC_API UPCUnitMontagePlayGameplayAbility : public UPCBaseUnitGamepl
 {
 	GENERATED_BODY()
 	
-
+public:
+	UPCUnitMontagePlayGameplayAbility();
+	
 protected:
 	virtual void OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
 	FMontageConfig MontageConfig;
 
-	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
+	virtual void SetMontageConfig();
 	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
 	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
 	

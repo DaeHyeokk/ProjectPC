@@ -11,7 +11,7 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
-class APCUnitTakenDamageTextActor;
+class APCUnitCombatTextActor;
 class UPCTileManager;
 class APCCombatBoard;
 class UPCShopManager;
@@ -46,6 +46,9 @@ struct FSpawnSubsystemConfig
 
 	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
 	TSoftClassPtr<class APCPreviewHeroActor> DefaultPreviewHeroClass;
+	
+	UPROPERTY(EditAnywhere, Category="Spawner|CarouselHero")
+	TSoftClassPtr<class APCCarouselHeroCharacter> DefaultCarouselHeroClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
@@ -82,7 +85,7 @@ struct FStageRuntimeState
 };
 
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag&);
 /**
  * 
  */
@@ -205,6 +208,8 @@ public:
 	
 #pragma endregion Unit
 
+#pragma region Combat
+	
 public:
 	void SetGameStateTag(const FGameplayTag& InGameStateTag);
 	UFUNCTION(BlueprintPure)
@@ -234,6 +239,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
+#pragma endregion Combat
+	
 #pragma region ObjectPool
 
 protected:
@@ -241,7 +248,7 @@ protected:
 	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
 
 	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
-	TSoftClassPtr<APCUnitTakenDamageTextActor> DamageTextClass;
+	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
 	
 #pragma endregion ObjectPool
 	

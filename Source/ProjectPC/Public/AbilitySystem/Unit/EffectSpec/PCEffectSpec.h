@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
+#include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
-#include "UObject/NoExportTypes.h"
 #include "PCEffectSpec.generated.h"
 
 /**
@@ -30,25 +31,26 @@ class PROJECTPC_API UPCEffectSpec : public UObject
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	EEffectTargetGroup TargetGroup = EEffectTargetGroup::Hostile;
+	EEffectTargetGroup TargetGroup = EEffectTargetGroup::Self;
 
-	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	FGameplayTag EffectClassTag;
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Duration", meta=(InlineEditConditionToggle))
+	bool bUseDurationSetByCaller = false;
 
-	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	FGameplayTag EffectCallerTag;
-
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Duration", meta=(EditCondition="bUseDurationSetByCaller", Categories="GE.Caller"))
+	FGameplayTag DurationCallerTag;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Effect|Duration", meta=(EditCondition="bUseDurationSetByCaller", ClampMin="0.0"))
+	float DurationByCallerSeconds = 0.f;
+	
 	int32 DefaultLevel = 1.f;
 	
-	void ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target);
-	void ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel);
-
+	FActiveGameplayEffectHandle  ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel = -1);
+	FActiveGameplayEffectHandle ApplyEffectSelf(UAbilitySystemComponent* ASC, int32 EffectLevel = -1);
+	
 protected:
-	virtual void ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) PURE_VIRTUAL(UPCEffectSpec::ApplyEffectImpl, );	
-
-	UPROPERTY(Transient)
-	TSubclassOf<UGameplayEffect> CachedGEClass;
-
-	TSubclassOf<UGameplayEffect> ResolveGEClass(const UWorld* World);
+	virtual FActiveGameplayEffectHandle  ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) PURE_VIRTUAL(UPCEffectSpec::ApplyEffectImpl, return FActiveGameplayEffectHandle();)
+	
 	bool IsTargetEligibleByGroup(const AActor* Source, const AActor* Target) const;
+
+	void ApplyDurationOptions(FGameplayEffectSpec& Spec) const;
 };

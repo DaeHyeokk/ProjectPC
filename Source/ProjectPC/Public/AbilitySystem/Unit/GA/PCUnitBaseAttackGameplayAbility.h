@@ -38,17 +38,17 @@ protected:
 	TWeakObjectPtr<const AActor> CurrentTarget;
 
 	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
-	const FGameplayTag HitSucceedTag = UnitGameplayTags::Unit_Event_HitSucceed;
+	const FGameplayTag AttackSucceedTag = UnitGameplayTags::Unit_Event_AttackSucceed;
 	
 protected:
-	void StartHitSucceedWaitTask();
+	void StartAttackSucceedWaitTask();
 	void StartProjectileSpawnSucceedWaitTask();
 	
 	UFUNCTION()
-	void AttackCommit();
+	virtual void AttackCommit();
 	
 	UFUNCTION()
-	void OnHitSucceed(FGameplayEventData Payload);
+	void OnAttackSucceed(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void OnSpawnProjectileSucceed(FGameplayEventData Payload);

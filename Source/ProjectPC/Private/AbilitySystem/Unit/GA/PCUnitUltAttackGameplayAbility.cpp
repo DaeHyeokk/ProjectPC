@@ -10,7 +10,7 @@
 
 UPCUnitUltAttackGameplayAbility::UPCUnitUltAttackGameplayAbility()
 {
-	AbilityTags.AddTag(UnitGameplayTags::Unit_Action_Attack_Ultimate);
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_Attack_Ultimate);
 }
 
 bool UPCUnitUltAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
@@ -25,6 +25,7 @@ bool UPCUnitUltAttackGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle
 		return false;
 
 	const float UltCost = ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetUltimateCostAttribute());
+
 	const float CurrentValue = ASC->GetNumericAttribute(AbilityConfig.CostGameplayAttribute);
 
 	return CurrentValue >= UltCost;

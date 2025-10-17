@@ -19,9 +19,8 @@ class PROJECTPC_API APCCreepUnitCharacter : public APCBaseUnitCharacter
 public:
 	APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
-	virtual FGameplayTag GetUnitTypeTag() const override;
 
-	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return CreepUnitDataAsset; }
+	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return CreepUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
 	
 protected:
@@ -37,7 +36,7 @@ protected:
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 
 	// 전투 관련 //
-	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) override;
+	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) override;
 	
 public:
 	virtual void Die() override;

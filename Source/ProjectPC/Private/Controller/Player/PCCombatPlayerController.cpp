@@ -16,6 +16,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Component/PCSynergyComponent.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -821,9 +822,16 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 		}
 
 		bool bPlaced = bField ? TM->PlaceUnitOnField(Y,X,Unit,ETileFacing::Auto) : TM->PlaceUnitOnBench(BenchIdx, Unit,ETileFacing::Auto);
-
+		
 		if (bPlaced)
 		{
+			if (bField)
+			{
+				APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+				UPCSynergyComponent* SynergyComp = PS->GetSynergyComponent();
+				SynergyComp->RegisterHero(Cast<APCHeroUnitCharacter>(Unit));
+			}
+			
 			Multicast_LerpMove(Unit, Snap, LerpDuration);
 			Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
 		}
@@ -1229,8 +1237,4 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 	const int32   TeamIndex  = bValid ? Unit->GetTeamIndex() : -1;
 	const ENetMode NetMode   = GetWorld() ? GetWorld()->GetNetMode() : NM_Standalone;
 	const float    Now       = GetWorld() ? GetWorld()->TimeSeconds : 0.f;
-
-	UE_LOG(LogTemp, Log, TEXT("[Client_TileHoverUnit] t=%.3f NetMode=%d IsLocal=%d Unit=%s Ptr=%p Team=%d"),
-		Now, (int32)NetMode, (int32)IsLocalController(), *UnitName, Unit, TeamIndex);
-	
 }

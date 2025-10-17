@@ -23,6 +23,15 @@ public:
 protected:
 	virtual void OnAvatarSet(
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+
+	virtual void OnGiveAbility(
+		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+
+	virtual TArray<FActiveGameplayEffectHandle> ApplyActivatedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
+	virtual TArray<FActiveGameplayEffectHandle> ApplyCommittedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
+	virtual TArray<FActiveGameplayEffectHandle> ApplyReceivedEventEffectSpec(UAbilitySystemComponent* ASC, const FGameplayTag& ReceivedEventTag, const AActor* Target = nullptr);
+
+	virtual TArray<FActiveGameplayEffectHandle> ApplyEffectSpec(const FPCEffectSpecList* EffectSpecList, UAbilitySystemComponent* ASC, const AActor* Target);
 	
 	UPROPERTY(Transient)
 	TObjectPtr<APCBaseUnitCharacter> Unit;

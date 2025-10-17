@@ -22,6 +22,7 @@ class PROJECTPC_API UPCUnitAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 	
 public:
+	UPCUnitAttributeSet();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
@@ -31,8 +32,18 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, BaseDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackRange);
 	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeedIncreaseMultiplier);
+	ATTRIBUTE_ACCESSORS(ThisClass, AttackSpeedDecreaseMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, PhysicalDefense);
 	ATTRIBUTE_ACCESSORS(ThisClass, MagicDefense);
+	
+	// 시너지로 증감되는 속성들 //
+	ATTRIBUTE_ACCESSORS(ThisClass, FlatDamageBlock);
+	ATTRIBUTE_ACCESSORS(ThisClass, EvasionChance);
+	//ATTRIBUTE_ACCESSORS(ThisClass, Shield);
+
+	UFUNCTION(BlueprintPure, Category="Unit|Attributes")
+	float GetEffectiveAttackSpeed() const;
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_MaxHealth)
@@ -49,11 +60,26 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_AttackSpeed)
 	FGameplayAttributeData AttackSpeed;
 
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_AttackSpeedIncreaseMultiplier)
+	FGameplayAttributeData AttackSpeedIncreaseMultiplier;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_AttackSpeedDecreaseMultiplier)
+	FGameplayAttributeData AttackSpeedDecreaseMultiplier;
+
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_PhysicalDefense)
 	FGameplayAttributeData PhysicalDefense;
 
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_MagicDefense)
 	FGameplayAttributeData MagicDefense;
+
+	UPROPERTY(BlueprintReadOnly, Category="Synergy|Defense")
+	FGameplayAttributeData FlatDamageBlock;
+	
+	UPROPERTY(BlueprintReadOnly, Category="Synergy|Defense")
+	FGameplayAttributeData EvasionChance;
+
+	// UPROPERTY(BlueprintReadOnly, Category="Synergy|Defense")
+	// FGameplayAttributeData Shield;
 	
 	UFUNCTION()
 	void AdjustAttributeForMaxChange(
@@ -76,6 +102,10 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed);
+	UFUNCTION()
+	void OnRep_AttackSpeedIncreaseMultiplier(const FGameplayAttributeData& OldAttackSpeedIncreaseMultiplier);
+	UFUNCTION()
+	void OnRep_AttackSpeedDecreaseMultiplier(const FGameplayAttributeData& OldAttackSpeedDecreaseMultiplier);
 	
 	UFUNCTION()
 	void OnRep_PhysicalDefense(const FGameplayAttributeData& OldPhysicalDefense);

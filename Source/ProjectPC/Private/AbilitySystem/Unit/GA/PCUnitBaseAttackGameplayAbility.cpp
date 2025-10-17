@@ -4,24 +4,20 @@
 #include "AbilitySystem/Unit/GA/PCUnitBaseAttackGameplayAbility.h"
 
 #include "AbilitySystemComponent.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Animation/Unit/Notify/PCAnimNotify_SpawnProjectile.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Projectile/PCBaseProjectile.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
-#include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
-#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
-#include "Kismet/KismetMathLibrary.h"
 
 UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 {
-	AbilityTags.AddTag(UnitGameplayTags::Unit_Action_Attack);
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_Attack);
 
 	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
 
-	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Action_Attack);
+	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Ability_Attack);
 	
 	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
 }
@@ -32,7 +28,7 @@ void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorIn
 	Super::OnAvatarSet(ActorInfo, Spec);
 	
 	if (Unit)
-		SetMontageConfig(ActorInfo);
+		SetMontageConfig();
 }
 
 void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -63,7 +59,7 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 		}
 		else
 		{
-			StartHitSucceedWaitTask();
+			StartAttackSucceedWaitTask();
 		}
 	}
 	else
@@ -87,17 +83,17 @@ void UPCUnitBaseAttackGameplayAbility::SetCurrentTarget(const AActor* Avatar)
 	}
 }
 
-void UPCUnitBaseAttackGameplayAbility::StartHitSucceedWaitTask()
+void UPCUnitBaseAttackGameplayAbility::StartAttackSucceedWaitTask()
 {
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 	this,
-	HitSucceedTag,
+	AttackSucceedTag,
 	nullptr,
 	true
 	);
 	if (WaitEventTask)
 	{
-		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnHitSucceed);
+		WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnAttackSucceed);
 		WaitEventTask->ReadyForActivation();
 	}
 }
@@ -117,7 +113,7 @@ void UPCUnitBaseAttackGameplayAbility::StartProjectileSpawnSucceedWaitTask()
 	}
 }
 
-void UPCUnitBaseAttackGameplayAbility::OnHitSucceed(FGameplayEventData Payload)
+void UPCUnitBaseAttackGameplayAbility::OnAttackSucceed(FGameplayEventData Payload)
 {
 	AActor* Avatar = GetAvatarActorFromActorInfo();
 	UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent();
@@ -126,14 +122,7 @@ void UPCUnitBaseAttackGameplayAbility::OnHitSucceed(FGameplayEventData Payload)
 	
 	if (CurrentTarget.IsValid())
 	{
-		if (const FPCEffectSpecList* List = AbilityConfig.OnReceivedEventEffectsMap.Find(HitSucceedTag))
-		{
-			for (auto& Spec : List->EffectSpecs)
-			{
-				if (Spec)
-					Spec->ApplyEffect(ASC, CurrentTarget.Get());
-			}
-		}
+		ApplyReceivedEventEffectSpec(ASC, AttackSucceedTag, CurrentTarget.Get());
 	}
 
 	AttackCommit();
@@ -164,18 +153,10 @@ void UPCUnitBaseAttackGameplayAbility::AttackCommit()
 		return;
 	}
 	
-	// 공격 완료 즉시 자신에게 적용하는 GE Apply
+	// 공격 완료 즉시 적용하는 GE Apply
 	if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
 	{
-		const FPCEffectSpecList& List = AbilityConfig.OnCommittedEffectSpecs;
-		if (List.EffectSpecs.Num() > 0)
-		{
-			for (const auto& EffectSpec : List.EffectSpecs)
-			{
-				if (EffectSpec)
-					EffectSpec->ApplyEffect(ASC, GetAvatarActorFromActorInfo());
-			}
-		}
+		ApplyCommittedEffectSpec(ASC, CurrentTarget.Get());
 	}
 	
 	// 후딜 없으면 바로 어빌리티 종료

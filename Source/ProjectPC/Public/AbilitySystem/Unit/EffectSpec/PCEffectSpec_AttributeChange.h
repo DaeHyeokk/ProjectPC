@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
+#include "PCEffectSpec_SetByCaller.h"
 #include "ScalableFloat.h"
-#include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "PCEffectSpec_AttributeChange.generated.h"
 
 /**
@@ -14,8 +14,8 @@
 UENUM(BlueprintType)
 enum class EMagnitudeMode : uint8
 {
-	Constant,       // 그냥 상수 (아이템/고정 효과)
-	Scalable,       // FScalableFloat (시너지/레벨 의존)
+	Constant,       // 상수 (고정 효과)
+	Scalable,       // FScalableFloat (레벨 의존)
 };
 
 USTRUCT(BlueprintType)
@@ -52,16 +52,13 @@ struct FMagnitudeParam
 };
 
 UCLASS()
-class PROJECTPC_API UPCEffectSpec_AttributeChange : public UPCEffectSpec
+class PROJECTPC_API UPCEffectSpec_AttributeChange : public UPCEffectSpec_SetByCaller
 {
 	GENERATED_BODY()
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	FGameplayAttribute ChangeAttribute;
-
-	UPROPERTY(EditDefaultsOnly, Category="Effect")
-	FMagnitudeParam Magnitude;
-
-	virtual void ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) override;
+	FMagnitudeParam EffectMagnitude;
+	
+	virtual FActiveGameplayEffectHandle ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) override;
 };

@@ -31,11 +31,6 @@ UPCUnitAbilitySystemComponent* APCCreepUnitCharacter::GetUnitAbilitySystemCompon
 	return UnitAbilitySystemComponent;
 }
 
-FGameplayTag APCCreepUnitCharacter::GetUnitTypeTag() const
-{
-	return UnitGameplayTags::Unit_Type_Creep;
-}
-
 void APCCreepUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)
 {
 	CreepUnitDataAsset = Cast<UPCDataAsset_CreepUnitData>(InUnitDataAsset);
@@ -57,7 +52,7 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 }
 
-void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
+void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;

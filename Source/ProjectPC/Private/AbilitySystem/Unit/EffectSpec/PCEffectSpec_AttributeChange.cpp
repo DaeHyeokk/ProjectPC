@@ -6,40 +6,48 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 
-void UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target,
-	int32 EffectLevel)
+FActiveGameplayEffectHandle  UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target,
+                                                                            int32 EffectLevel)
 {
+	FActiveGameplayEffectHandle OutHandle;
+	
 	if (!SourceASC || !Target || !Target->HasAuthority())
-		return;
+		return OutHandle;
 	
 	if (!IsTargetEligibleByGroup(SourceASC->GetAvatarActor(), Target))
-		return;
+		return OutHandle;
 	
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
 	if (!TargetASC)
-		return;
+		return OutHandle;
 
 	const TSubclassOf<UGameplayEffect> GEClass = ResolveGEClass(SourceASC->GetWorld());
 	if (!GEClass)
-		return;
+		return OutHandle;
 
 	const int32 Level = (EffectLevel > 0) ? EffectLevel : DefaultLevel;
 	
 	FGameplayEffectContextHandle Ctx = SourceASC->MakeEffectContext();
 	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GEClass, Level, Ctx);
 	if (!SpecHandle.IsValid())
-		return;
+		return OutHandle;
 
-	const float FinalMag = Magnitude.Evaluate(Level);
+	FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
+	ApplyDurationOptions(Spec);
 	
-	SpecHandle.Data->SetSetByCallerMagnitude(EffectCallerTag, FinalMag);
+	const float Value = EffectMagnitude.Evaluate(Level);
+	SpecHandle.Data->SetSetByCallerMagnitude(EffectCallerTag, Value);
 
 	if (TargetGroup == EEffectTargetGroup::Self)
 	{
-		SourceASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		OutHandle = SourceASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		if (!OutHandle.IsValid())
+			UE_LOG(LogTemp, Warning, TEXT("OutHandle NotValid"));
 	}
 	else
 	{
-		SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);	
+		OutHandle = SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);	
 	}
+	
+	return OutHandle;
 }

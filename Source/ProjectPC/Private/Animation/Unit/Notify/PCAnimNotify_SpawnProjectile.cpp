@@ -3,8 +3,8 @@
 
 #include "Animation/Unit/Notify/PCAnimNotify_SpawnProjectile.h"
 
-#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AIController.h"
 #include "BaseGameplayTags.h"
 #include "Character/Projectile/PCBaseProjectile.h"
@@ -49,7 +49,7 @@ void UPCAnimNotify_SpawnProjectile::Notify(USkeletalMeshComponent* MeshComp, UAn
 	if (!Projectile)
 		return;
 
-	if (UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Owner))
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Owner))
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;

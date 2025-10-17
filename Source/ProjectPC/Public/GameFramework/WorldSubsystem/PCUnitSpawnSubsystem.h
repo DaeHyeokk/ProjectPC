@@ -12,6 +12,7 @@
  * 
  */
 
+class APCCarouselHeroCharacter;
 class APCPlayerState;
 class APCCombatBoard;
 class APCHeroUnitCharacter;
@@ -85,7 +86,7 @@ private:
 private:
 	UPROPERTY()
 	TSubclassOf<APCPreviewHeroActor> DefaultPreviewHeroClass;
-
+	
 public:
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCPreviewHeroActor* SpawnPreviewHeroBySourceHero(
@@ -95,7 +96,25 @@ public:
 		ESpawnActorCollisionHandlingMethod HandlingMethod =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn) const;
 
+	// Carousel Hero
+private:
+	UPROPERTY()
+	TSubclassOf<APCCarouselHeroCharacter> DefaultCarouselHeroClass;
+	
+	void ApplyDefinitionDataForCarouselServerOnly(APCCarouselHeroCharacter* Carousel, const UPCDataAsset_UnitDefinition* Definition) const;
 
+public:
+	UFUNCTION(BlueprintCallable, Category="Spawner")
+	APCCarouselHeroCharacter* SpawnCarouselHeroByTag(
+		const FGameplayTag UnitTag,
+		const FGameplayTag ItemTag,
+		AActor* InOwner = nullptr,
+		APawn* InInstigator = nullptr,
+		ESpawnActorCollisionHandlingMethod HandlingMethod =
+			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+
+	void ApplyDefinitionData(APCCarouselHeroCharacter* CarouselHero, const UPCDataAsset_UnitDefinition* Definition) const;
+	
 	// 전투중 스폰 델리게이트
 public:
 	FOnUnitSpawnedNative OnUnitSpawned;

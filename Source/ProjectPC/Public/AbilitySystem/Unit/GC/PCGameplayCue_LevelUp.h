@@ -22,4 +22,5 @@ public:
 	FName SocketName = TEXT("Root");
 	
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
+	virtual bool OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 };

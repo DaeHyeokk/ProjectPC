@@ -7,16 +7,24 @@
 #include "Character/Unit/PCBaseUnitCharacter.h"
 
 
+UPCUnitMontagePlayGameplayAbility::UPCUnitMontagePlayGameplayAbility()
+{
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
+	
+	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
+	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
+}
+
 void UPCUnitMontagePlayGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
                                                     const FGameplayAbilitySpec& Spec)
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
 	
 	if (Unit)
-		SetMontageConfig(ActorInfo);
+		SetMontageConfig();
 }
 
-void UPCUnitMontagePlayGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
+void UPCUnitMontagePlayGameplayAbility::SetMontageConfig()
 {
 	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
 	{

@@ -95,8 +95,6 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
     
     ShowGhost(Snap, nullptr);
     LastSnep = World;
-    
-
 }
 
 void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector& StartSnap, APCHeroUnitCharacter* PreviewHero)

@@ -8,6 +8,7 @@
 #include "BaseGameplayTags.h"
 #include "Shop/PCShopUnitData.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "PCPlayerState.generated.h"
 
 /**
@@ -15,10 +16,11 @@
  */
 
 
+class UPCSynergyComponent;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 
 UCLASS()
-class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
+class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -109,4 +111,16 @@ public:
 	const TArray<FPCShopUnitData>& GetShopSlots();
 
 #pragma endregion Shop
+
+#pragma region Synergy
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category="Synergy")
+	TObjectPtr<UPCSynergyComponent> SynergyComponent;
+
+public:
+	UFUNCTION(BlueprintCallable, Category="Synergy")
+	UPCSynergyComponent* GetSynergyComponent() const { return SynergyComponent; }
+	
+#pragma endregion Synergy
 };

@@ -15,25 +15,29 @@ class PROJECTPC_API UPCHeroUnitAttributeSet : public UPCUnitAttributeSet
 	GENERATED_BODY()
 	
 public:
+	UPCHeroUnitAttributeSet();
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, CurrentMana);
+	ATTRIBUTE_ACCESSORS(ThisClass, CombatStartMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, UltimateDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, UltimateCost);
 	ATTRIBUTE_ACCESSORS(ThisClass, PhysicalDamageMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, MagicDamageMultiplier);
+	ATTRIBUTE_ACCESSORS(ThisClass, DamageMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, CritChance);
 	ATTRIBUTE_ACCESSORS(ThisClass, CritMultiplier);
 	ATTRIBUTE_ACCESSORS(ThisClass, LifeSteal);
-	ATTRIBUTE_ACCESSORS(ThisClass, SpellVamp);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_MaxMana)
 	FGameplayAttributeData MaxMana;
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_CurrentMana)
 	FGameplayAttributeData CurrentMana;
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_CombatStartMana)
+	FGameplayAttributeData CombatStartMana;
 
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_UltimateDamage)
 	FGameplayAttributeData UltimateDamage;
@@ -46,6 +50,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_MagicDamageMultiplier)
 	FGameplayAttributeData MagicDamageMultiplier;
+
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_DamageMultiplier)
+	FGameplayAttributeData DamageMultiplier;
 	
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_CritChance)
 	FGameplayAttributeData CritChance;
@@ -56,13 +63,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_LifeSteal)
 	FGameplayAttributeData LifeSteal;
 
-	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes", ReplicatedUsing=OnRep_SpellVamp)
-	FGameplayAttributeData SpellVamp;
-
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana);
 	UFUNCTION()
 	void OnRep_CurrentMana(const FGameplayAttributeData& OldCurrentMana);
+	UFUNCTION()
+	void OnRep_CombatStartMana(const FGameplayAttributeData& OldCombatStartMana);
 
 	UFUNCTION()
 	void OnRep_UltimateDamage(const FGameplayAttributeData& OldUltimateDamage);
@@ -74,6 +80,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_MagicDamageMultiplier(const FGameplayAttributeData& OldMagicDamageMultiplier);
+	
+	UFUNCTION()
+	void OnRep_DamageMultiplier(const FGameplayAttributeData& OldDamageMultiplier);
 
 	UFUNCTION()
 	void OnRep_CritChance(const FGameplayAttributeData& OldCritChance);
@@ -83,7 +92,4 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_LifeSteal(const FGameplayAttributeData& OldLifeSteal);
-	
-	UFUNCTION()
-	void OnRep_SpellVamp(const FGameplayAttributeData& OldSpellVamp);
 };

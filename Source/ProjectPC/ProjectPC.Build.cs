@@ -14,7 +14,8 @@ public class ProjectPC : ModuleRules
 			"GameplayAbilities", "GameplayTags", "GameplayTasks",
 			"UMG", "Niagara", "NiagaraCore",
 			"AIModule", "NavigationSystem",
-			"AnimGraphRuntime"
+			"AnimGraphRuntime",
+			"NetCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });

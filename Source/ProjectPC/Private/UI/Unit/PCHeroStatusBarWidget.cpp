@@ -17,8 +17,6 @@ void UPCHeroStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC,
 	MaxManaAttr = InMaxManaAttr;
 
 	SetVariantByLevel(InLevel);
-
-	OnVisibilityChanged.AddDynamic(this, &ThisClass::HandleVisibilityChanged);
 }
 
 void UPCHeroStatusBarWidget::SetVariantByLevel(int32 Level)
@@ -49,17 +47,6 @@ void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBar
 		const float MaxMana = SrcASC->GetNumericAttribute(SourceStatusBar->MaxManaAttr);
 
 		ActiveStatusBar->SetInstant(HP, MaxHP, Mana, MaxMana);
-	}
-}
-
-void UPCHeroStatusBarWidget::HandleVisibilityChanged(ESlateVisibility NewVis)
-{
-	if (NewVis == ESlateVisibility::Visible)
-	{
-		if (UPCUnitStatusBarWidget* ActiveStatusBar = Cast<UPCUnitStatusBarWidget>(StatusSwitcher->GetActiveWidget()))
-		{
-			ActiveStatusBar->UpdateUI();
-		}
 	}
 }
 

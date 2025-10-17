@@ -8,11 +8,11 @@
 #include "Character/Unit/PCCreepUnitCharacter.h"
 #include "Character/Unit/PCAppearanceChangedHeroCharacter.h"
 #include "Character/Unit/PCAppearanceFixedHeroCharacter.h"
+#include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Character/Unit/PCPreviewHeroActor.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "Controller/Unit/PCUnitAIController.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -26,6 +26,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultHeroStatusBarWidgetClass = SpawnConfig.HeroStatusBarWidgetClass.LoadSynchronous();
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass.LoadSynchronous();
 	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass.LoadSynchronous();
+	DefaultCarouselHeroClass = SpawnConfig.DefaultCarouselHeroClass.LoadSynchronous();
 	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
 
@@ -177,8 +178,44 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Uni
 	}
 }
 
-void UPCUnitSpawnSubsystem::ApplyDefinitionDataServerOnly(APCBaseUnitCharacter* Unit,
+void UPCUnitSpawnSubsystem::ApplyDefinitionData(APCCarouselHeroCharacter* CarouselHero,
 	const UPCDataAsset_UnitDefinition* Definition) const
+{
+	if (!CarouselHero || !Definition)
+		return;
+
+	if (USkeletalMeshComponent* SKComp = CarouselHero->GetMesh())
+	{
+		if (Definition->Mesh)
+			SKComp->SetSkeletalMesh(Definition->Mesh, true);
+		
+		if (Definition->CarouselHeroAnimBP)
+			SKComp->SetAnimInstanceClass(Definition->CarouselHeroAnimBP);
+		
+		SKComp->SetVisibility(true, true);
+	}
+
+	if (UPCDataAsset_HeroUnitData* HeroData = Cast<UPCDataAsset_HeroUnitData>(Definition->UnitDataAsset))
+	{
+		CarouselHero->SetHeroUnitDataAsset(HeroData);
+	}
+}
+
+void UPCUnitSpawnSubsystem::ApplyDefinitionDataForCarouselServerOnly(APCCarouselHeroCharacter* Carousel,
+	const UPCDataAsset_UnitDefinition* Definition) const
+{
+	if (!Carousel || !Definition || GetWorld()->GetNetMode() == NM_Client)
+		return;
+
+	ApplyDefinitionData(Carousel, Definition);
+	
+	// 움직임/회전이 있으므로 도르만시 깨어있게 유지
+	Carousel->SetNetDormancy(DORM_Awake);
+	Carousel->ForceNetUpdate();
+}
+
+void UPCUnitSpawnSubsystem::ApplyDefinitionDataServerOnly(APCBaseUnitCharacter* Unit,
+                                                          const UPCDataAsset_UnitDefinition* Definition) const
 {
 	if (!Unit || GetWorld()->GetNetMode() == NM_Client) return;
 
@@ -234,4 +271,33 @@ APCPreviewHeroActor* UPCUnitSpawnSubsystem::SpawnPreviewHeroBySourceHero(APCHero
 	PreviewHero->SetActorHiddenInGame(false);
 
 	return PreviewHero;
+}
+
+APCCarouselHeroCharacter* UPCUnitSpawnSubsystem::SpawnCarouselHeroByTag(const FGameplayTag UnitTag, const FGameplayTag ItemTag,
+	AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
+{
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)
+		return nullptr;
+	
+	const UPCDataAsset_UnitDefinition* Definition = ResolveDefinition(UnitTag);
+	if (!Definition)
+		return nullptr;
+
+	FTransform SpawnTransform = FTransform::Identity;
+	SpawnTransform.SetLocation(FVector(0.f, 0.f, 99999.f));
+
+	APCCarouselHeroCharacter* Carousel = GetWorld()->SpawnActorDeferred<APCCarouselHeroCharacter>(
+		DefaultCarouselHeroClass, SpawnTransform, InOwner, InInstigator, HandlingMethod);
+
+	if (!Carousel)
+		return nullptr;
+
+	Carousel->SetUnitTag(UnitTag);
+	Carousel->SetItemTag(ItemTag);
+	
+	ApplyDefinitionDataForCarouselServerOnly(Carousel, Definition);
+
+	UGameplayStatics::FinishSpawningActor(Carousel, SpawnTransform);
+
+	return Carousel;
 }

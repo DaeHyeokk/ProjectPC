@@ -18,8 +18,7 @@ UPCDataAsset_HeroUnitData::UPCDataAsset_HeroUnitData()
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetUltimateCostAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetMaxManaAttribute());
-	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCritChanceAttribute(), 25.f);
-	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCritMultiplierAttribute(), 0.3f);
+	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCombatStartManaAttribute());
 }
 
 void UPCDataAsset_HeroUnitData::FillInitStatMap(int32 Level, TMap<FGameplayAttribute, float>& Out) const
@@ -45,12 +44,12 @@ void UPCDataAsset_HeroUnitData::FillStartupUltimateAbilities(TArray<TSubclassOf<
 	}
 }
 
-FGameplayTag UPCDataAsset_HeroUnitData::GetJobSynergyTag() const
+const FGameplayTag& UPCDataAsset_HeroUnitData::GetJobSynergyTag() const
 {
 	return SynergyTagConfig.JobSynergyTag;
 }
 
-FGameplayTag UPCDataAsset_HeroUnitData::GetSpeciesSynergyTag() const
+const FGameplayTag& UPCDataAsset_HeroUnitData::GetSpeciesSynergyTag() const
 {
 	return SynergyTagConfig.SpeciesSynergyTag;
 }

@@ -76,6 +76,7 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Direction =  UKismetAnimationLibrary::CalculateDirection(CachedUnitCharacter->GetVelocity(), CachedUnitCharacter->GetActorRotation());
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
 	bIsDead = CachedUnitCharacter->IsDead();
+	bIsStunned = CachedUnitCharacter->IsStunned();
 }
 
 void UPCUnitAnimInstance::SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet)
@@ -96,10 +97,7 @@ void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 	JumpLoop = AnimSet->LocomotionSet.JumpLoop.LoadSynchronous();
 	JumpLand = AnimSet->LocomotionSet.JumpLand.LoadSynchronous();
 	JumpRecovery = AnimSet->LocomotionSet.JumpRecovery.LoadSynchronous();
+	StunStart = AnimSet->LocomotionSet.StunStart.LoadSynchronous();
+	StunIdle = AnimSet->LocomotionSet.StunIdle.LoadSynchronous();
 	Death = AnimSet->LocomotionSet.Death.LoadSynchronous();
 }
-
-// void UPCUnitAnimInstance::OnDeadTagChanged(const FGameplayTag Tag, const int32 NewCount)
-// {
-// 	bIsDead = (NewCount > 0);
-// }
