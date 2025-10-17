@@ -11,6 +11,6 @@ bool UPCDataAsset_UnitAbilityConfig::TryFindAbilityConfigByTag(const FGameplayTa
 		OutConfig = AbilityConfigMap.FindRef(AbilityTag);
 		return true;
 	}
-	else
-		return false;
+
+	return false;
 }

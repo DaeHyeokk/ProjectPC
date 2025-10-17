@@ -7,34 +7,15 @@
 #include "GenericTeamAgentInterface.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
-void UPCEffectSpec::ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target)
+FActiveGameplayEffectHandle UPCEffectSpec::ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel)
 {
-	ApplyEffectImpl(SourceASC, Target, -1);
+	return ApplyEffectImpl(SourceASC, Target, EffectLevel);
 }
 
-void UPCEffectSpec::ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel)
+FActiveGameplayEffectHandle UPCEffectSpec::ApplyEffectSelf(UAbilitySystemComponent* ASC, int32 EffectLevel)
 {
-	ApplyEffectImpl(SourceASC, Target, EffectLevel);
-}
-
-TSubclassOf<UGameplayEffect> UPCEffectSpec::ResolveGEClass(const UWorld* World)
-{
-	if (CachedGEClass)
-		return CachedGEClass;
-
-	if (!World || !EffectClassTag.IsValid())
-		return nullptr;
-	
-	if (auto* GERegistrySubsystem = World->GetSubsystem<UPCUnitGERegistrySubsystem>())
-	{
-		if (TSubclassOf<UGameplayEffect> GEClass = GERegistrySubsystem->GetGEClass(EffectClassTag))
-		{
-			CachedGEClass = GEClass;
-			return GEClass;
-		}
-	}
-
-	return nullptr;
+	const AActor* Avatar = ASC ? ASC->GetAvatarActor() : nullptr;
+	return ApplyEffect(ASC, Avatar, EffectLevel);
 }
 
 bool UPCEffectSpec::IsTargetEligibleByGroup(const AActor* Source, const AActor* Target) const
@@ -47,4 +28,12 @@ bool UPCEffectSpec::IsTargetEligibleByGroup(const AActor* Source, const AActor* 
 	if (TargetGroup == EEffectTargetGroup::Ally)    return Attitude == ETeamAttitude::Friendly && Source != Target;
 	if (TargetGroup == EEffectTargetGroup::Hostile) return Attitude == ETeamAttitude::Hostile;
 	return false;
+}
+
+void UPCEffectSpec::ApplyDurationOptions(FGameplayEffectSpec& Spec) const
+{
+	if (bUseDurationSetByCaller && DurationCallerTag.IsValid())
+	{
+		Spec.SetSetByCallerMagnitude(DurationCallerTag, DurationByCallerSeconds);
+	}
 }

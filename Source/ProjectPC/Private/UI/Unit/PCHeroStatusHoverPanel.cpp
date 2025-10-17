@@ -3,14 +3,12 @@
 
 #include "UI/Unit/PCHeroStatusHoverPanel.h"
 
-#include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
-#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
-
-void UPCHeroStatusHoverPanel::InitFromHero(APCHeroUnitCharacter* InHero)
+void UPCHeroStatusHoverPanel::InitFromHero(AActor* InHero)
 {
 	if (!InHero)
 	{
@@ -19,16 +17,15 @@ void UPCHeroStatusHoverPanel::InitFromHero(APCHeroUnitCharacter* InHero)
 		return;
 	}
 	
-	if (Hero.IsValid() && Hero.Get() == InHero)
+	if (CurHero.IsValid() && CurHero.Get() == InHero)
 		return;
 	
 	UnbindAll();
 
-	Hero = InHero;
-	if (UPCHeroUnitAbilitySystemComponent* InHeroASC = Hero->GetHeroUnitAbilitySystemComponent())
+	CurHero = InHero;
+	ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(InHero);
+	if (ASC.IsValid())
 	{
-		HeroASC = InHeroASC;
-
 		BindAll();
 		ApplyAll();
 	}
@@ -38,7 +35,7 @@ void UPCHeroStatusHoverPanel::InitFromHero(APCHeroUnitCharacter* InHero)
 	}
 }
 
-void UPCHeroStatusHoverPanel::ShowPanelForHero(APCHeroUnitCharacter* InHero)
+void UPCHeroStatusHoverPanel::ShowPanelForHero(AActor* InHero)
 {
 	InitFromHero(InHero);
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
@@ -74,35 +71,37 @@ void UPCHeroStatusHoverPanel::BuildRoutes()
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetBaseDamageAttribute(), EHeroHoverStat::AD);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetAttackRangeAttribute(), EHeroHoverStat::Range);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetAttackSpeedAttribute(), EHeroHoverStat::AS);
+	AttrRoute.Add(UPCHeroUnitAttributeSet::GetAttackSpeedIncreaseMultiplierAttribute(), EHeroHoverStat::ASInc);
+	AttrRoute.Add(UPCHeroUnitAttributeSet::GetAttackSpeedDecreaseMultiplierAttribute(), EHeroHoverStat::ASDec);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetPhysicalDefenseAttribute(), EHeroHoverStat::PDef);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetMagicDefenseAttribute(), EHeroHoverStat::MDef);
 	
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute(), EHeroHoverStat::PMul);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetMagicDamageMultiplierAttribute(), EHeroHoverStat::MMul);
+	AttrRoute.Add(UPCHeroUnitAttributeSet::GetDamageMultiplierAttribute(), EHeroHoverStat::DamageMul);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetCritChanceAttribute(), EHeroHoverStat::CritChance);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetLifeStealAttribute(), EHeroHoverStat::LifeSteal);
-	AttrRoute.Add(UPCHeroUnitAttributeSet::GetSpellVampAttribute(), EHeroHoverStat::SpellVamp);
 }
 
 void UPCHeroStatusHoverPanel::BindAll()
 {
-	if (!HeroASC.IsValid())
+	if (!ASC.IsValid())
 		return;
 
 	HandleMap.Reset();
 	for (const auto& KV : AttrRoute)
 	{
 		HandleMap.Add(KV.Key,
-			HeroASC->GetGameplayAttributeValueChangeDelegate(KV.Key)
+			ASC->GetGameplayAttributeValueChangeDelegate(KV.Key)
 				.AddUObject(this, &ThisClass::OnAttrChanged));
 	}
 }
 
 void UPCHeroStatusHoverPanel::UnbindAll()
 {
-	if (HeroASC.IsValid())
+	if (ASC.IsValid())
 	{
-		auto* A = HeroASC.Get();
+		auto* A = ASC.Get();
 		for (const auto& KV : HandleMap)
 		{
 			A->GetGameplayAttributeValueChangeDelegate(KV.Key).Remove(KV.Value);
@@ -110,13 +109,13 @@ void UPCHeroStatusHoverPanel::UnbindAll()
 	}
 
 	HandleMap.Reset();
-	HeroASC = nullptr;
+	ASC = nullptr;
 	Hero = nullptr;
 }
 
 void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 {
-	if (!HeroASC.IsValid())
+	if (!ASC.IsValid())
 		return;
 
 	if (const EHeroHoverStat* ChangeAttr = AttrRoute.Find(Data.Attribute))
@@ -144,6 +143,8 @@ void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 			break;
 
 		case EHeroHoverStat::AS:
+		case EHeroHoverStat::ASInc:
+		case EHeroHoverStat::ASDec:
 			if (AttackSpeedText)
 				UpdateText_F2(AttackSpeedText, UPCHeroUnitAttributeSet::GetAttackSpeedAttribute());
 			break;
@@ -160,27 +161,27 @@ void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 
 		case EHeroHoverStat::PMul:
 			if (PMultiplierText)
-				UpdateText_PctMul(PMultiplierText, UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute());
+				UpdateText_PctValue(PMultiplierText, UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute());
 			break;
 
 		case EHeroHoverStat::MMul:
 			if (MMultiplierText)
-				UpdateText_PctMul(MMultiplierText, UPCHeroUnitAttributeSet::GetMagicDamageMultiplierAttribute());
+				UpdateText_PctValue(MMultiplierText, UPCHeroUnitAttributeSet::GetMagicDamageMultiplierAttribute());
 			break;
 
 		case EHeroHoverStat::CritChance:
 			if (CritChanceText)
-				UpdateText_Pct01(CritChanceText, UPCHeroUnitAttributeSet::GetCritChanceAttribute());
+				UpdateText_PctValue(CritChanceText, UPCHeroUnitAttributeSet::GetCritChanceAttribute());
 			break;
 
 		case EHeroHoverStat::LifeSteal:
 			if (LifeStealText)
-				UpdateText_Pct01(LifeStealText, UPCHeroUnitAttributeSet::GetLifeStealAttribute());
+				UpdateText_PctValue(LifeStealText, UPCHeroUnitAttributeSet::GetLifeStealAttribute());
 			break;
 
-		case EHeroHoverStat::SpellVamp:
-			if (SpellVampText)
-				UpdateText_Pct01(SpellVampText, UPCHeroUnitAttributeSet::GetSpellVampAttribute());
+		case EHeroHoverStat::DamageMul:
+			if (DamageMultiplierText)
+				UpdateText_PctValue(DamageMultiplierText, UPCHeroUnitAttributeSet::GetDamageMultiplierAttribute());
 			break;
 
 		default:
@@ -191,49 +192,59 @@ void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 
 void UPCHeroStatusHoverPanel::UpdateHP() const
 {
-	if (!HeroASC.IsValid()) return;
-	const float MaxHP = FMath::Max(1.f, HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMaxHealthAttribute()));
-	const float CurHP = HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCurrentHealthAttribute());
+	if (!ASC.IsValid()) return;
+	const float MaxHP = FMath::Max(1.f, ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMaxHealthAttribute()));
+	const float CurHP = ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCurrentHealthAttribute());
 	if (HealthBar) HealthBar->SetPercent(CurHP / MaxHP);
 	if (HealthText) HealthText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurHP, MaxHP)));
 }
 
 void UPCHeroStatusHoverPanel::UpdateMP() const
 {
-	if (!HeroASC.IsValid()) return;
-	const float MaxMP = FMath::Max(0.f, HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMaxManaAttribute()));
-	const float CurMP = HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
+	if (!ASC.IsValid()) return;
+	const float MaxMP = FMath::Max(0.f, ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMaxManaAttribute()));
+	const float CurMP = ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	if (ManaBar) ManaBar->SetPercent(MaxMP > 0.f ? CurMP / MaxMP : 0.f);
 	if (ManaText) ManaText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurMP, MaxMP)));
 }
 
 void UPCHeroStatusHoverPanel::UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
 {
-	if (!TextBlock || !HeroASC.IsValid()) return;
-	TextBlock->SetText(AsInt(HeroASC->GetNumericAttribute(Attr)));
+	if (!TextBlock || !ASC.IsValid()) return;
+	TextBlock->SetText(AsInt(ASC->GetNumericAttribute(Attr)));
 }
 
 void UPCHeroStatusHoverPanel::UpdateText_F2(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
 {
-	if (!TextBlock || !HeroASC.IsValid()) return;
-	TextBlock->SetText(AsFloat2(HeroASC->GetNumericAttribute(Attr)));
+	if (!TextBlock || !ASC.IsValid()) return;
+	
+	if (Attr == UPCUnitAttributeSet::GetAttackSpeedAttribute())
+	{
+		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
+		const float AttackSpd = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;
+		TextBlock->SetText(AsFloat2(AttackSpd));	
+	}
+	else
+	{
+		TextBlock->SetText(AsFloat2(ASC->GetNumericAttribute(Attr)));	
+	}
 }
 
 void UPCHeroStatusHoverPanel::UpdateText_Pct01(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
 {
-	if (!TextBlock || !HeroASC.IsValid()) return;
-	TextBlock->SetText(AsPercent0_From01(HeroASC->GetNumericAttribute(Attr)));
+	if (!TextBlock || !ASC.IsValid()) return;
+	TextBlock->SetText(AsPercent0_From01(ASC->GetNumericAttribute(Attr)));
 }
 
-void UPCHeroStatusHoverPanel::UpdateText_PctMul(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
+void UPCHeroStatusHoverPanel::UpdateText_PctValue(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
 {
-	if (!TextBlock || !HeroASC.IsValid()) return;
-	TextBlock->SetText(AsPercent0_FromMul(HeroASC->GetNumericAttribute(Attr)));
+	if (!TextBlock || !ASC.IsValid()) return;
+	TextBlock->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(Attr)));
 }
 
 void UPCHeroStatusHoverPanel::ApplyAll() const
 {
-	if (!HeroASC.IsValid())
+	if (!ASC.IsValid())
 		return;
 
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
@@ -241,10 +252,10 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 	const auto MaxMPAttr = UPCHeroUnitAttributeSet::GetMaxManaAttribute();
 	const auto CurMPAttr = UPCHeroUnitAttributeSet::GetCurrentManaAttribute();
 
-	const float MaxHP = FMath::Max(1.f, HeroASC->GetNumericAttribute(MaxHPAttr));
-	const float CurHP = HeroASC->GetNumericAttribute(CurHPAttr);
-	const float MaxMP = FMath::Max(0.f, HeroASC->GetNumericAttribute(MaxMPAttr));
-	const float CurMP = HeroASC->GetNumericAttribute(CurMPAttr);
+	const float MaxHP = FMath::Max(1.f, ASC->GetNumericAttribute(MaxHPAttr));
+	const float CurHP = ASC->GetNumericAttribute(CurHPAttr);
+	const float MaxMP = FMath::Max(0.f, ASC->GetNumericAttribute(MaxMPAttr));
+	const float CurMP = ASC->GetNumericAttribute(CurMPAttr);
 
 	if (HealthBar)
 		HealthBar->SetPercent(CurHP / MaxHP);
@@ -257,25 +268,29 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 
 	// 스탯들
 	if (AttackRangeText)
-		AttackRangeText->SetText(AsInt(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetAttackRangeAttribute())));
+		AttackRangeText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetAttackRangeAttribute())));
 	if (BaseDamageText)
-		BaseDamageText->SetText(AsInt(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetBaseDamageAttribute())));
+		BaseDamageText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetBaseDamageAttribute())));
 	if (AttackSpeedText)
-		AttackSpeedText->SetText(AsFloat2(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetAttackSpeedAttribute())));
+	{
+		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
+		const float AttackSpd = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;
+		AttackSpeedText->SetText(AsFloat2(AttackSpd));
+	}
 	if (PDefText)
-		PDefText->SetText(AsInt(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetPhysicalDefenseAttribute())));
+		PDefText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetPhysicalDefenseAttribute())));
 	if (MDefText)
-		MDefText->SetText(AsInt(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMagicDefenseAttribute())));
+		MDefText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMagicDefenseAttribute())));
 
 	// 배수/확률 → % 표시
 	if (PMultiplierText)
-		PMultiplierText->SetText(AsPercent0_FromMul(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute())));
+		PMultiplierText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute())));
 	if (MMultiplierText)
-		MMultiplierText->SetText(AsPercent0_FromMul(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMagicDamageMultiplierAttribute())));
+		MMultiplierText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMagicDamageMultiplierAttribute())));
 	if (CritChanceText)
-		CritChanceText->SetText(AsPercent0_From01(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCritChanceAttribute())));
+		CritChanceText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCritChanceAttribute())));
 	if (LifeStealText)
-		LifeStealText->SetText(AsPercent0_From01(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetLifeStealAttribute())));
-	if (SpellVampText)
-		SpellVampText->SetText(AsPercent0_From01(HeroASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetSpellVampAttribute())));
+		LifeStealText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetLifeStealAttribute())));
+	if (DamageMultiplierText)
+		DamageMultiplierText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetDamageMultiplierAttribute())));
 }

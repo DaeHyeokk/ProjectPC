@@ -11,18 +11,6 @@
 void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGameplayAttribute InHealthAttr,
                                          FGameplayAttribute InMaxHealthAttr, FGameplayAttribute InManaAttr, FGameplayAttribute InMaxManaAttr)
 {
-	if (UAbilitySystemComponent* OldASC = ASC.Get())
-	{
-		if (HealthHandle.IsValid())
-			OldASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
-		if (MaxHealthHandle.IsValid())
-			OldASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
-		if (ManaHandle.IsValid())
-			OldASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
-		if (MaxManaHandle.IsValid())
-			OldASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
-	}
-	
 	ASC = InASC;
 	HealthAttr = InHealthAttr;
 	MaxHealthAttr = InMaxHealthAttr;
@@ -84,26 +72,13 @@ void UPCUnitStatusBarWidget::UpdateUI() const
 
 void UPCUnitStatusBarWidget::NativeDestruct()
 {
-	if (ASC.IsValid())
-	{
-		if (HealthHandle.IsValid())
-			ASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
-		
-		if (MaxHealthHandle.IsValid())
-			ASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
-		
-		if (ManaHandle.IsValid())
-			ASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
-		
-		if (MaxManaHandle.IsValid())
-			ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
-	}
+	ClearDelegate();
 	
 	Super::NativeDestruct();
 }
 
 void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
-{	
+{
 	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
 	const float NowValue = ASC.IsValid()
 		? ASC->GetNumericAttribute(HealthAttr)
@@ -159,3 +134,22 @@ void UPCUnitStatusBarWidget::ApplyToUI() const
 		ManaBar->SetPercent(0.f);
 	}
 }
+
+void UPCUnitStatusBarWidget::ClearDelegate() const
+{
+	if (ASC.IsValid())
+	{
+		if (HealthHandle.IsValid())
+			ASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
+		
+		if (MaxHealthHandle.IsValid())
+			ASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
+		
+		if (ManaHandle.IsValid())
+			ASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
+		
+		if (MaxManaHandle.IsValid())
+			ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
+	}
+}
+

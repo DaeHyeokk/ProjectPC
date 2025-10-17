@@ -22,7 +22,7 @@ class UGameplayEffect;
  * 
  */
 UCLASS()
-class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
+class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -174,4 +174,16 @@ public:
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 #pragma endregion Inventory
+
+#pragma region Synergy
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category="Synergy")
+	TObjectPtr<UPCSynergyComponent> SynergyComponent;
+
+public:
+	UFUNCTION(BlueprintCallable, Category="Synergy")
+	UPCSynergyComponent* GetSynergyComponent() const { return SynergyComponent; }
+	
+#pragma endregion Synergy
 };

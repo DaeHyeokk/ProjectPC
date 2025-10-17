@@ -12,8 +12,8 @@ UENUM()
 enum class EHeroHoverStat : uint8
 {
 	MaxHP, CurHP, MaxMP, CurMP,
-	AD, Range, AS, PDef, MDef,
-	PMul, MMul, CritChance, LifeSteal, SpellVamp
+	AD, Range, AS, ASInc, ASDec, PDef, MDef,
+	PMul, MMul, CritChance, LifeSteal, DamageMul
 };
 
 class FProperty;
@@ -32,11 +32,11 @@ class PROJECTPC_API UPCHeroStatusHoverPanel : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitFromHero(APCHeroUnitCharacter* InHero);
+	void InitFromHero(AActor* InHero);
 
 	// 유닛이 호버 될 때 UI를 띄우면서 UI 갱신
 	UFUNCTION(BlueprintCallable)
-	void ShowPanelForHero(APCHeroUnitCharacter* InHero);
+	void ShowPanelForHero(AActor* InHero);
 
 	UFUNCTION(BlueprintCallable)
 	void HidePanel();
@@ -44,12 +44,15 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
-
-private:
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<APCHeroUnitCharacter> Hero;
+	
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroASC;
+	TWeakObjectPtr<AActor> CurHero;
+
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 
 	TMap<FGameplayAttribute, EHeroHoverStat> AttrRoute;
 	TMap<FGameplayAttribute, FDelegateHandle> HandleMap;
@@ -82,7 +85,7 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> LifeStealText = nullptr;
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> SpellVampText = nullptr;
+	TObjectPtr<UTextBlock> DamageMultiplierText = nullptr;
 
 	void BuildRoutes();
 
@@ -100,7 +103,7 @@ private:
 	void UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_F2(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_Pct01(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const; // 0~1 -> %
-	void UpdateText_PctMul(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const; // 1.x -> %
+	void UpdateText_PctValue(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const; // 0~100 -> 0~100%
 
 	static FText AsInt(const float Value)
 	{
@@ -115,15 +118,14 @@ private:
 	// 0~1 비율을 %로 (0.2 -> 20%)
 	static FText AsPercent0_From01(float Ratio01)
 	{
-		const float Clamped = FMath::Clamp(Ratio01, 0.1, 1.f);
+		const float Clamped = FMath::Clamp(Ratio01, 0.f, 1.f);
 		return FText::FromString(FString::Printf(TEXT("%d%%"), FMath::RoundToInt(Clamped * 100.f)));
 	}
 
-	// 배수의 증감만 표현 (1.2 -> 20%)
-	static FText AsPercent0_FromMul(float Multiplier)
+	// % 값 표현 (20 -> 20%)
+	static FText AsPercent0_FromPctValue(float PctValue)
 	{
-		const float Delta01 = Multiplier - 1.f;
-		const int32 Pct = FMath::RoundToInt(Delta01 * 100.f);
+		const int32 Pct = FMath::RoundToInt(PctValue);
 		return FText::FromString(FString::Printf(TEXT("%d%%"), Pct));
 	}
 };

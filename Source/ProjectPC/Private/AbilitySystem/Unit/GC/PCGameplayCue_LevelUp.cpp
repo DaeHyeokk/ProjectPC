@@ -8,7 +8,6 @@
 
 bool UPCGameplayCue_LevelUp::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Execute GC Level up!"));
 	if (!LevelUpFX || !IsValid(MyTarget))
 		return false;
 	
@@ -41,7 +40,6 @@ bool UPCGameplayCue_LevelUp::OnExecute_Implementation(AActor* MyTarget, const FG
 
 bool UPCGameplayCue_LevelUp::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Active GC Level up!"));
 	if (!LevelUpFX || !IsValid(MyTarget))
 		return false;
 	
@@ -68,6 +66,6 @@ bool UPCGameplayCue_LevelUp::OnActive_Implementation(AActor* MyTarget, const FGa
 		MyTarget->GetActorTransform(),
 		/*bAutoDestroy=*/true
 	);
-
+	
 	return true;
 }

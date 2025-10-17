@@ -4,7 +4,6 @@
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 
 #include "Camera/CameraComponent.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Net/UnrealNetwork.h"
@@ -201,6 +200,3 @@ void APCCombatBoard::ClearAllForUnit(APCBaseUnitCharacter* InUnit)
 		TileManager->ClearAllForUnit(InUnit);
 	}
 }
-
-
-

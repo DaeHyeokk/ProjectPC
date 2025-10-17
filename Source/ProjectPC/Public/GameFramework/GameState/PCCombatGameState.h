@@ -12,6 +12,7 @@
 #include "PCCombatGameState.generated.h"
 
 class UAbilitySystemComponent;
+class APCUnitCombatTextActor;
 class UPCTileManager;
 class APCCombatBoard;
 class UPCShopManager;
@@ -23,29 +24,32 @@ struct FSpawnSubsystemConfig
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category="Spawner|Registry")
-	TObjectPtr<class UPCDataAsset_UnitDefinitionReg> Registry = nullptr;
+	TSoftObjectPtr<class UPCDataAsset_UnitDefinitionReg> Registry = nullptr;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
-	TSubclassOf<class APCCreepUnitCharacter> DefaultCreepClass;
+	TSoftClassPtr<class APCCreepUnitCharacter> DefaultCreepClass;
 	
 	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
-	TSubclassOf<class APCAppearanceChangedHeroCharacter> DefaultAppearanceChangedHeroClass;
+	TSoftClassPtr<class APCAppearanceChangedHeroCharacter> DefaultAppearanceChangedHeroClass;
 	
 	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
-	TSubclassOf<class APCAppearanceFixedHeroCharacter> DefaultAppearanceFixedHeroClass;
+	TSoftClassPtr<class APCAppearanceFixedHeroCharacter> DefaultAppearanceFixedHeroClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
-	TSubclassOf<class UPCUnitStatusBarWidget> CreepStatusBarWidgetClass;
+	TSoftClassPtr<class UPCUnitStatusBarWidget> CreepStatusBarWidgetClass;
 	
 	UPROPERTY(EditAnywhere, Category="Spawner|Defaults")
-	TSubclassOf<class UPCHeroStatusBarWidget> HeroStatusBarWidgetClass;
+	TSoftClassPtr<class UPCHeroStatusBarWidget> HeroStatusBarWidgetClass;
 	
 	// == 공통 AI Controller (전 유닛 공유) ==
 	UPROPERTY(EditAnywhere, Category="Spawner|AI")
-	TSubclassOf<class APCUnitAIController> DefaultAIControllerClass;
+	TSoftClassPtr<class APCUnitAIController> DefaultAIControllerClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|PreviewHero")
 	TSoftClassPtr<class APCPreviewHeroActor> DefaultPreviewHeroClass;
+	
+	UPROPERTY(EditAnywhere, Category="Spawner|CarouselHero")
+	TSoftClassPtr<class APCCarouselHeroCharacter> DefaultCarouselHeroClass;
 
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
@@ -130,8 +134,8 @@ enum class ERoundResult : uint8
 
 // GameStateWidget 표시용 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag&);
 DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
@@ -330,6 +334,8 @@ public:
 	
 #pragma endregion Unit
 
+#pragma region Combat
+	
 public:
 	void SetGameStateTag(const FGameplayTag& InGameStateTag);
 	UFUNCTION(BlueprintPure)
@@ -359,11 +365,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
+#pragma endregion Combat
+	
 #pragma region ObjectPool
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
 	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+
+	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
+	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
 	
 #pragma endregion ObjectPool
 	

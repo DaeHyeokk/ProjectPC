@@ -16,6 +16,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Component/PCSynergyComponent.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -817,15 +818,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 
 void APCCombatPlayerController::ShowWidget()
 {
-	// if (!IsLocalController() || !IsValid(ShopWidget))
-	// 	return;
-	//
-	// if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
-	// {
-	// 	return;
-	// }
-	// ShopWidget->SetVisibility(ESlateVisibility::Visible);
-
 	if (!IsLocalController() || !IsValid(PlayerMainWidget))
 		return;
 

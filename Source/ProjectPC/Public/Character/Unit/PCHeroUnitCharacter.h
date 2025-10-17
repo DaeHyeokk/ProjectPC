@@ -24,26 +24,28 @@ public:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
-	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent();
+	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent() const;
 	const UPCHeroUnitAttributeSet* GetHeroUnitAttributeSet();
 	virtual UPCUnitAbilitySystemComponent* GetUnitAbilitySystemComponent() const override;
-	virtual FGameplayTag GetUnitTypeTag() const override;
 	
 	virtual bool HasLevelSystem() const override { return true; }
 	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 	virtual void SetUnitLevel(const int32 Level) override;
 	void LevelUp();
 	
-	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
+	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
 
 	void UpdateStatusBarUI() const;
 	
 	UFUNCTION(BlueprintCallable)
-	FGameplayTag GetJobSynergyTag() const;
+	const FGameplayTag& GetJobSynergyTag() const;
 
 	UFUNCTION(BlueprintCallable)
-	FGameplayTag GetSpeciesSynergyTag() const;
+	const FGameplayTag& GetSpeciesSynergyTag() const;
+
+	UFUNCTION()
+	bool HasMatchingSynergyTag(const FGameplayTag& SynergyTag) const;
 	
 protected:
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
@@ -64,7 +66,7 @@ protected:
 	virtual void OnRep_HeroLevel();
 
 	// 전투 관련 //
-	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) override;
+	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) override;
 	
 public:
 	virtual void ChangedOnTile(const bool IsOnField) override;

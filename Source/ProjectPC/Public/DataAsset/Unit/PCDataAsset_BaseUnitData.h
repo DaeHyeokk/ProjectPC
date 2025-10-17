@@ -16,6 +16,19 @@ class UGameplayEffect;
 class UGameplayAbility;
 
 USTRUCT(BlueprintType)
+struct FUnitSynergyTagConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(Categories="Synergy.Job"))
+	FGameplayTag JobSynergyTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(Categories="Synergy.Species"))
+	FGameplayTag SpeciesSynergyTag;
+};
+
+
+USTRUCT(BlueprintType)
 struct FUnitStaticStatConfig
 {
 	GENERATED_BODY()
@@ -56,6 +69,9 @@ public:
 
 	UFUNCTION()
 	UPCDataAsset_ProjectileData* GetProjectileData() const;
+
+	UFUNCTION()
+	void GetSynergyTags(FGameplayTagContainer& Out) const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Static")
@@ -81,4 +97,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Projectile")
 	TObjectPtr<UPCDataAsset_ProjectileData> ProjectileData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Synergy")
+	FUnitSynergyTagConfig SynergyTagConfig;
 };

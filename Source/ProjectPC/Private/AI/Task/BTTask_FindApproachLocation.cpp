@@ -60,7 +60,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	Visited.Add(StartPoint);
 
 	// 탐색 방향 랜덤으로 섞인 Direction 배열 가져옴 (랜덤성 부여)
-	for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
+	for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(StartPoint.Y % 2 == 0))
 	{
 		FIntPoint NextPoint = StartPoint + Dir;
 
@@ -79,7 +79,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 
 		const FIntPoint HerePoint = HereData.GridPoint;
 		
-		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections())
+		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(HerePoint.Y % 2 == 0))
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
 			if (Board->IsInRange(NextPoint.Y, NextPoint.X) && !Visited.Contains(NextPoint))

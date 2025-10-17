@@ -19,7 +19,7 @@ public:
 	void UpdateGAS();
 	
 protected:
-	virtual void GrantStartupAbilities() override;
+	virtual void GrantStartupAbilities(UPCDataAsset_BaseUnitData* UnitData) override;
 	void UpdateBaseStatForLevel();
 	void UpdateUltimateAbilityForLevel();
 };

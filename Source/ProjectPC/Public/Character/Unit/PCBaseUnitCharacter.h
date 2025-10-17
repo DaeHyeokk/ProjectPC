@@ -9,6 +9,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "PCBaseUnitCharacter.generated.h"
 
 class UPCDataAsset_UnitAbilityConfig;
@@ -34,9 +35,8 @@ public:
 	UPCDataAsset_UnitAnimSet* GetUnitAnimSetDataAsset() const;
 	const UPCDataAsset_UnitAbilityConfig* GetUnitAbilityConfigDataAsset() const;
 	UPCDataAsset_ProjectileData* GetUnitProjectileDataAsset() const;
-	virtual FGameplayTag GetUnitTypeTag() const;
 	
-	virtual const UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
+	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const;
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) { }
 
 	void SetStatusBarClass(const TSubclassOf<UUserWidget>& InStatusBarClass) { StatusBarClass = InStatusBarClass; }
@@ -105,7 +105,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	int32 GetTeamIndex() const { return TeamIndex; }
 
-	virtual FGenericTeamId GetGenericTeamId() const override final;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void SetOnCombatBoard(APCCombatBoard* InCombatBoard) { if (HasAuthority()) OnCombatBoard = InCombatBoard; }
@@ -121,6 +121,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsDead() const { return bIsDead; }
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsStunned() const { return bIsStunned; }
 	
 	UFUNCTION(BlueprintCallable)
 	virtual void Die();
@@ -129,7 +132,7 @@ public:
 	void OnDeathAnimCompleted();
 
 protected:
-	virtual void HandleGameStateChanged(const FGameplayTag NewStateTag) { };
+	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) { };
 	FDelegateHandle GameStateChangedHandle;
 	
 	UPROPERTY()
@@ -138,8 +141,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
 
-	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
+	UPROPERTY(BlueprintReadOnly, Category="Combat")
 	bool bIsDead = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Combat")
+	bool bIsStunned = false;
+
+	FDelegateHandle DeadHandle;
+	FDelegateHandle StunHandle;
+
+	void OnUnitStateChanged(FGameplayTag Tag, int32 NewCount);
 	
 public:
 	UPROPERTY(BlueprintAssignable)

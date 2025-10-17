@@ -9,6 +9,7 @@
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Component/PCSynergyComponent.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "Controller/Player/PCCombatPlayerController.h"
@@ -64,6 +65,8 @@ void APCPlayerState::ResolvePlayerBoardOnClient()
 			break;
 		}
 	}
+
+	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
 }
 
 void APCPlayerState::BeginPlay()

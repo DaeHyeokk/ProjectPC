@@ -46,7 +46,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	StatusBarComp->SetIsReplicated(true);
 	StatusBarComp->SetupAttachment(GetMesh());
 	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
-	StatusBarComp->SetDrawSize({300.f, 100.f});
+	//StatusBarComp->SetDrawSize({300.f, 100.f});
+	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
 	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
 }
@@ -76,7 +77,7 @@ UPCDataAsset_ProjectileData* APCBaseUnitCharacter::GetUnitProjectileDataAsset() 
 	return GetUnitDataAsset() ? GetUnitDataAsset()->GetProjectileData() : nullptr;
 }
 
-const UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
+UPCDataAsset_BaseUnitData* APCBaseUnitCharacter::GetUnitDataAsset() const
 {
 	return nullptr;
 }
@@ -110,11 +111,6 @@ void APCBaseUnitCharacter::SetOutlineEnabled(bool bEnable) const
 	}
 }
 
-FGameplayTag APCBaseUnitCharacter::GetUnitTypeTag() const
-{
-	return FGameplayTag::EmptyTag;
-}
-
 FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 {
 	const uint8 Clamped = static_cast<uint8>(FMath::Clamp(TeamIndex, 0, 254));
@@ -135,6 +131,16 @@ void APCBaseUnitCharacter::BeginPlay()
 	}
 	
 	InitAbilitySystem();
+	
+	if (auto* ASC = GetAbilitySystemComponent())
+	{
+		DeadHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Dead)
+		.AddUObject(this, &ThisClass::OnUnitStateChanged);
+
+		StunHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Stun)
+		.AddUObject(this, &ThisClass::OnUnitStateChanged);
+	}
+	
 	SetAnimSetData();
 
 	if (StatusBarClass)
@@ -149,7 +155,7 @@ void APCBaseUnitCharacter::BeginPlay()
 	}
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	//GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
@@ -169,6 +175,11 @@ void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		}
 	}
 
+	if (DeadHandle.IsValid())
+		GetAbilitySystemComponent()->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Dead).Remove(DeadHandle);
+	if (StunHandle.IsValid())
+		GetAbilitySystemComponent()->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Stun).Remove(StunHandle);
+	
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -184,7 +195,6 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, UnitTag);
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
-	DOREPLIFETIME(APCBaseUnitCharacter, bIsDead);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -286,7 +296,8 @@ void APCBaseUnitCharacter::Die()
 			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-				bIsDead = true;
+				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+				//bIsDead = true;
 			}
 			ASC->CancelAllAbilities();
 			OnUnitDied.Broadcast(this);
@@ -297,4 +308,16 @@ void APCBaseUnitCharacter::Die()
 void APCBaseUnitCharacter::OnDeathAnimCompleted()
 {
 	SetActorLocation(FVector(99999.f,99999.f,99999.f));
+}
+
+void APCBaseUnitCharacter::OnUnitStateChanged(FGameplayTag Tag, int32 NewCount)
+{
+	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
+	{
+		bIsDead = (NewCount > 0);
+	}
+	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
+	{
+		bIsStunned = (NewCount > 0);
+	}
 }

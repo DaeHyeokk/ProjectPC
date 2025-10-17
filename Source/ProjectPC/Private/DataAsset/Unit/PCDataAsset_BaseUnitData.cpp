@@ -61,3 +61,14 @@ UPCDataAsset_ProjectileData* UPCDataAsset_BaseUnitData::GetProjectileData() cons
 {
 	return ProjectileData;
 }
+
+void UPCDataAsset_BaseUnitData::GetSynergyTags(FGameplayTagContainer& Out) const
+{
+	Out.Reset();
+	
+	if (SynergyTagConfig.JobSynergyTag.IsValid())
+		Out.AddTag(SynergyTagConfig.JobSynergyTag);
+
+	if (SynergyTagConfig.SpeciesSynergyTag.IsValid())
+		Out.AddTag(SynergyTagConfig.SpeciesSynergyTag);
+}

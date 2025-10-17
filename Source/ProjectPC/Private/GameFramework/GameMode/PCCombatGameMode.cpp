@@ -47,8 +47,9 @@ void APCCombatGameMode::BeginPlay()
 	if (auto* UnitGERegistrySubsystem = GetWorld()->GetSubsystem<UPCUnitGERegistrySubsystem>())
 	{
 		FGameplayTagContainer PreloadGEClassTag;
-		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_HealthChange_Instant);
-		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_ManaChange_Instant);
+		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Unit_Damage);
+		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Unit_Heal);
+		PreloadGEClassTag.AddTag(GameplayEffectTags::GE_Class_Unit_ManaChange);
 		
 		UnitGERegistrySubsystem->InitializeUnitGERegistry(UnitGEDictionary, PreloadGEClassTag);
 	}
@@ -87,7 +88,8 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 			break;
 		}
 	}
-    
+
+	PS->SetGenericTeamId(FGenericTeamId(SeatIndex)); // 병합 후 수정할 곳
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
 	
@@ -879,6 +881,7 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 		{
 			P->SeatIndex = NextFree();
 			Used.Add(P->SeatIndex);
+			P->SetGenericTeamId(FGenericTeamId(P->SeatIndex)); // 병합 후 수정할곳
 			P->ForceNetUpdate();
 			UE_LOG(LogTemp, Warning, TEXT("Assigned SeatIndex=%d to PID=%d"), P->SeatIndex, P->GetPlayerId());
 		}

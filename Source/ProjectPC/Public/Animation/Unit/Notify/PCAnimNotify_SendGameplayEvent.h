@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "GameplayTagContainer.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
 #include "PCAnimNotify_SendGameplayEvent.generated.h"
@@ -22,7 +23,7 @@ public:
 	const FAnimNotifyEventReference& EventReference) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gameplay Event")
-	FGameplayTag EventTag;
+	FGameplayTag EventTag = UnitGameplayTags::Unit_Event_AttackSucceed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gameplay Event")
 	bool bServerOnly = true;

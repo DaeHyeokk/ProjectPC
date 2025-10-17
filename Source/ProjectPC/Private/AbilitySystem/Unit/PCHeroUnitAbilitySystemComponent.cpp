@@ -5,6 +5,7 @@
 
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 
 void UPCHeroUnitAbilitySystemComponent::UpdateGAS()
@@ -13,32 +14,26 @@ void UPCHeroUnitAbilitySystemComponent::UpdateGAS()
 	UpdateUltimateAbilityForLevel();
 }
 
-void UPCHeroUnitAbilitySystemComponent::GrantStartupAbilities()
+void UPCHeroUnitAbilitySystemComponent::GrantStartupAbilities(UPCDataAsset_BaseUnitData* UnitData)
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority())
 		return;
 	
-	const APCBaseUnitCharacter* UnitCharacter = Cast<APCBaseUnitCharacter>(GetOwner());
-	if (!UnitCharacter)
-		return;
-	
-	const UPCDataAsset_BaseUnitData* UnitData = UnitCharacter->GetUnitDataAsset();
-	if (!UnitData)
-		return;
-	
-	Super::GrantStartupAbilities();
+	Super::GrantStartupAbilities(UnitData);
 
 	if (const UPCDataAsset_HeroUnitData* HeroUnitData = Cast<UPCDataAsset_HeroUnitData>(UnitData))
 	{
 		TArray<TSubclassOf<UGameplayAbility>> GrantUltAbilities;
 		HeroUnitData->FillStartupUltimateAbilities(GrantUltAbilities);
 
+		UPCDataAsset_UnitAbilityConfig* UnitAbilityConfig = UnitData->GetAbilityConfigData();
+		
 		for (const auto& GAClass : GrantUltAbilities)
 		{
 			if (!*GAClass || FindAbilitySpecFromClass(GAClass))
 				continue;
 
-			GiveAbility(FGameplayAbilitySpec(GAClass, 1, INDEX_NONE, GetOwner()));
+			GiveAbility(FGameplayAbilitySpec(GAClass, 1, INDEX_NONE, UnitAbilityConfig));
 		}
 	}
 }
@@ -77,7 +72,7 @@ void UPCHeroUnitAbilitySystemComponent::UpdateUltimateAbilityForLevel()
 		return;
 	
 	FGameplayTagContainer UltimateTagContainer;
-	UltimateTagContainer.AddTag(UnitGameplayTags::Unit_Action_Attack_Ultimate);
+	UltimateTagContainer.AddTag(UnitGameplayTags::Unit_Ability_Attack_Ultimate);
 	
 	TArray<FGameplayAbilitySpecHandle> UltHandles;
 	FindAllAbilitiesWithTags(UltHandles, UltimateTagContainer, false);

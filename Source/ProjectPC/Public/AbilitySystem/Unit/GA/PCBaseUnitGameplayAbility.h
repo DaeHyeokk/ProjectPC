@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
-#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCBaseUnitGameplayAbility.generated.h"
 
 class APCBaseUnitCharacter;
@@ -24,13 +23,18 @@ public:
 protected:
 	virtual void OnAvatarSet(
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
-	
-	virtual void SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo);
-	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
+
+	virtual void OnGiveAbility(
+		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+
+	virtual TArray<FActiveGameplayEffectHandle> ApplyActivatedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
+	virtual TArray<FActiveGameplayEffectHandle> ApplyCommittedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
+	virtual TArray<FActiveGameplayEffectHandle> ApplyReceivedEventEffectSpec(UAbilitySystemComponent* ASC, const FGameplayTag& ReceivedEventTag, const AActor* Target = nullptr);
+
+	virtual TArray<FActiveGameplayEffectHandle> ApplyEffectSpec(const FPCEffectSpecList* EffectSpecList, UAbilitySystemComponent* ASC, const AActor* Target);
 	
 	UPROPERTY(Transient)
 	TObjectPtr<APCBaseUnitCharacter> Unit;
 
 	FAbilityConfig AbilityConfig;
-	FMontageConfig MontageConfig;
 };

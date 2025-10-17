@@ -39,7 +39,7 @@ void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCHeroUnitCharacter, HeroLevel);
 }
 
-UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent()
+UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent() const
 {
 	return HeroUnitAbilitySystemComponent;
 }
@@ -61,11 +61,6 @@ UPCUnitAbilitySystemComponent* APCHeroUnitCharacter::GetUnitAbilitySystemCompone
 	return HeroUnitAbilitySystemComponent;
 }
 
-FGameplayTag APCHeroUnitCharacter::GetUnitTypeTag() const
-{
-	return UnitGameplayTags::Unit_Type_Hero;
-}
-
 void APCHeroUnitCharacter::LevelUp()
 {
 	// LevelUp은 서버권한
@@ -74,7 +69,7 @@ void APCHeroUnitCharacter::LevelUp()
 
 	FGameplayCueParameters Params;
 	Params.TargetAttachComponent = GetMesh();
-	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Unit_LevelUp, Params);
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
@@ -92,7 +87,7 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 	}
 }
 
-FGameplayTag APCHeroUnitCharacter::GetJobSynergyTag() const
+const FGameplayTag& APCHeroUnitCharacter::GetJobSynergyTag() const
 {
 	if (!HeroUnitDataAsset)
 		return FGameplayTag::EmptyTag;
@@ -100,12 +95,23 @@ FGameplayTag APCHeroUnitCharacter::GetJobSynergyTag() const
 	return HeroUnitDataAsset->GetJobSynergyTag();
 }
 
-FGameplayTag APCHeroUnitCharacter::GetSpeciesSynergyTag() const
+const FGameplayTag& APCHeroUnitCharacter::GetSpeciesSynergyTag() const
 {
 	if (!HeroUnitDataAsset)
 		return FGameplayTag::EmptyTag;
 
 	return HeroUnitDataAsset->GetSpeciesSynergyTag();
+}
+
+bool APCHeroUnitCharacter::HasMatchingSynergyTag(const FGameplayTag& SynergyTag) const
+{
+	if (GetJobSynergyTag().MatchesTagExact(SynergyTag))
+		return true;
+
+	if (GetSpeciesSynergyTag().MatchesTagExact(SynergyTag))
+		return true;
+
+	return false;
 }
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
@@ -136,9 +142,20 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-			bIsDead = false;
+			HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+			//bIsDead = false;
 		}
 
+		// 스턴 상태일 경우 스턴 태그 제거
+		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Stun))
+		{
+			HeroUnitAbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(
+				FGameplayTagContainer(UnitGameplayTags::Unit_State_Combat_Stun));
+			//bIsStunned = false;
+		}
+		
+		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.2f);
+		
 		// 블랙보드 키값 초기화
 		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
 		{
@@ -170,7 +187,7 @@ void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
 	Super::ChangedOnTile(IsOnField);
 }
 
-void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag NewStateTag)
+void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;

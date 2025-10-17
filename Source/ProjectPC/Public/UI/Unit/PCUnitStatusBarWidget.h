@@ -68,4 +68,5 @@ private:
 	void OnMaxManaChanged(const FOnAttributeChangeData& Data);
 	
 	void ApplyToUI() const;
+	void ClearDelegate() const;
 };

@@ -160,6 +160,5 @@ public:
 	// 그 유닛이 갖고있던 타일 상태 전부 풀기 ( 사망 / 취소 시)
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	void ClearAllForUnit(APCBaseUnitCharacter* InUnit);
-
 	
 };

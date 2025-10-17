@@ -10,6 +10,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitCombatTextSpawnSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
@@ -29,6 +30,11 @@ void APCCombatGameState::BeginPlay()
 		UnitSpawnSubsystem->InitializeUnitSpawnConfig(SpawnConfig);
 	}
 
+	if (auto* DamageTextSpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitCombatTextSpawnSubsystem>())
+	{
+		DamageTextSpawnSubsystem->InitCombatTextSpawnSubsystem(CombatTextClass);
+	}
+	
 	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
 	{
 		if (ProjectilePoolData)

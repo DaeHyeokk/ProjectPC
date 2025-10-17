@@ -11,7 +11,7 @@
 
 UPCUnitBasicAttackGameplayAbility::UPCUnitBasicAttackGameplayAbility()
 {
-	AbilityTags.AddTag(UnitGameplayTags::Unit_Action_Attack_Basic);
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_Attack_Basic);
 }
 
 void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle,
@@ -23,7 +23,8 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 	UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent();
 	if (CooldownGameplayEffectClass && ASC)
 	{
-		const float AttackSpeed = ASC->GetNumericAttribute(UPCUnitAttributeSet::GetAttackSpeedAttribute());
+		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
+		const float AttackSpeed = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;
 		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
 		
 		FGameplayEffectSpecHandle CooldownSpec = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel());
@@ -32,7 +33,6 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 			const FGameplayTag CooldownEffectCallerTag = AbilityConfig.CooldownCallerTag;
 			
 			CooldownSpec.Data->SetSetByCallerMagnitude(CooldownEffectCallerTag, CooldownDuration);
-		//	(void)ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, CooldownSpec);
 			ASC->ApplyGameplayEffectSpecToSelf(*CooldownSpec.Data.Get());
 		}
 	}
@@ -48,15 +48,14 @@ void UPCUnitBasicAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 		return;
 	}
 	
-	SetMontageConfig(ActorInfo);
+	SetMontageConfig();
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
-void UPCUnitBasicAttackGameplayAbility::SetMontageConfig(const FGameplayAbilityActorInfo* ActorInfo)
+void UPCUnitBasicAttackGameplayAbility::SetMontageConfig()
 {
 	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
 	{
-		const FGameplayTag MontageTag = GetMontageTag();
 		UnitAnimSet->TryGetRandomBasicAttackMontageConfigByTag(MontageConfig);
 	}
 }
@@ -68,7 +67,8 @@ float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate(const UAnimMontage* 
 	
 	if (CooldownGameplayEffectClass && ASC)
 	{
-		const float AttackSpeed = ASC->GetNumericAttribute(UPCUnitAttributeSet::GetAttackSpeedAttribute());
+		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
+		const float AttackSpeed = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;
 		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
 		const float MontageLength = Montage->GetPlayLength();
 

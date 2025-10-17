@@ -7,6 +7,7 @@
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "PCUnitAbilitySystemComponent.generated.h"
 
+class APCBaseUnitCharacter;
 class UPCDataAsset_BaseUnitData;
 /**
  * 
@@ -21,8 +22,9 @@ protected:
 	
 public:
 	virtual void InitGAS();
-	
+
 protected:
-	virtual void ApplyInitBaseStat();
-	virtual void GrantStartupAbilities();
+	virtual void ApplyInitBaseStat(const APCBaseUnitCharacter* Unit, const UPCDataAsset_BaseUnitData* UnitData);
+	virtual void GrantStartupAbilities(UPCDataAsset_BaseUnitData* UnitData);
+	void GrantSynergyTags(const UPCDataAsset_BaseUnitData* UnitData);
 };

@@ -6,6 +6,24 @@
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Net/UnrealNetwork.h"
 
+UPCUnitAttributeSet::UPCUnitAttributeSet()
+{
+	InitAttackSpeedIncreaseMultiplier(0.f);
+	InitAttackSpeedDecreaseMultiplier(0.f);
+}
+
+float UPCUnitAttributeSet::GetEffectiveAttackSpeed() const
+{
+	const float Base = GetAttackSpeed();
+	const float IncPercent = FMath::Max(0.f, GetAttackSpeedIncreaseMultiplier());
+	const float DecPercent = FMath::Clamp(GetAttackSpeedDecreaseMultiplier(), 0.f, 100.f);
+
+	const float IncFactor = 1.f + (IncPercent * 0.01f);
+	const float DecFactor = 1.f - (DecPercent * 0.01f);
+
+	const float Effective = Base * IncFactor * DecFactor;
+	return FMath::Max(0.f, Effective);
+}
 void UPCUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -15,6 +33,8 @@ void UPCUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,BaseDamage, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,AttackRange, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,AttackSpeed, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,AttackSpeedIncreaseMultiplier, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,AttackSpeedDecreaseMultiplier, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,PhysicalDefense, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCUnitAttributeSet,MagicDefense, COND_None, REPNOTIFY_OnChanged);
 }
@@ -26,6 +46,14 @@ void UPCUnitAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		AdjustAttributeForMaxChange(CurrentHealth, MaxHealth, NewValue, GetCurrentHealthAttribute());
+	}
+	else if (Attribute == GetEvasionChanceAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, 100.f);
+	}
+	else if (Attribute == GetFlatDamageBlockAttribute()) // || Attribute == GetShieldAttribute()
+	{
+		NewValue = FMath::Max(0.f, NewValue);
 	}
 }
 
@@ -44,6 +72,11 @@ void UPCUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 			OwnerUnit->Die();
 		}
 	}
+	// else if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+	// {
+	// 	// 음수 방지
+	// 	SetShield(FMath::Max(0.f, GetShield()));
+	// }
 }
 
 void UPCUnitAttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeData& AffectedAttribute,
@@ -83,6 +116,18 @@ void UPCUnitAttributeSet::OnRep_AttackRange(const FGameplayAttributeData& OldAtt
 void UPCUnitAttributeSet::OnRep_AttackSpeed(const FGameplayAttributeData& OldAttackSpeed)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackSpeed, OldAttackSpeed);
+}
+
+void UPCUnitAttributeSet::OnRep_AttackSpeedIncreaseMultiplier(
+	const FGameplayAttributeData& OldAttackSpeedIncreaseMultiplier)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackSpeedIncreaseMultiplier, OldAttackSpeedIncreaseMultiplier);
+}
+
+void UPCUnitAttributeSet::OnRep_AttackSpeedDecreaseMultiplier(
+	const FGameplayAttributeData& OldAttackSpeedDecreaseMultiplier)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCUnitAttributeSet, AttackSpeedDecreaseMultiplier, OldAttackSpeedDecreaseMultiplier);
 }
 
 void UPCUnitAttributeSet::OnRep_PhysicalDefense(const FGameplayAttributeData& OldPhysicalDefense)
