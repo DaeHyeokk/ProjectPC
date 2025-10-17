@@ -39,6 +39,7 @@ APCPlayerState::APCPlayerState()
 
 	// Inventory 세팅
 	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
+	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
@@ -65,8 +66,7 @@ void APCPlayerState::ResolvePlayerBoardOnClient()
 			break;
 		}
 	}
-
-	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
+	
 }
 
 void APCPlayerState::BeginPlay()

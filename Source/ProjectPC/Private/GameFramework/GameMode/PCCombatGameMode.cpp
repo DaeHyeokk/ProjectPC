@@ -88,8 +88,7 @@ void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 			break;
 		}
 	}
-
-	PS->SetGenericTeamId(FGenericTeamId(SeatIndex)); // 병합 후 수정할 곳
+	
 	PS->SeatIndex = SeatIndex;
 	PS->ForceNetUpdate();
 	
@@ -881,7 +880,6 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 		{
 			P->SeatIndex = NextFree();
 			Used.Add(P->SeatIndex);
-			P->SetGenericTeamId(FGenericTeamId(P->SeatIndex)); // 병합 후 수정할곳
 			P->ForceNetUpdate();
 			UE_LOG(LogTemp, Warning, TEXT("Assigned SeatIndex=%d to PID=%d"), P->SeatIndex, P->GetPlayerId());
 		}

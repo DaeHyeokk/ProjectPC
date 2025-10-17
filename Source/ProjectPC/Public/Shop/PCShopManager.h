@@ -36,7 +36,7 @@ private:
 
 public:
 	// 매 라운드 레벨업 체크
-	void OnGameStateChanged(FGameplayTag NewTag);
+	void OnGameStateChanged(const FGameplayTag& NewTag);
 	
 	// 상점 업데이트
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);

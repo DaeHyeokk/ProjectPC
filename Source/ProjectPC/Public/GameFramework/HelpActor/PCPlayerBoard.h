@@ -317,7 +317,7 @@ public:
 
 
 	UFUNCTION(Client, Reliable)
-	void SetCapacityWidgetVisible(FGameplayTag GameState);
+	void SetCapacityWidgetVisible(const FGameplayTag& GameState);
 
 	void PlayerBoardDelegate();
 
@@ -339,7 +339,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TryAutoFillFromBench_Server();
 
-	void OnGameStateChangedForAutoFill(const FGameplayTag GameState);
+	void OnGameStateChangedForAutoFill(const FGameplayTag& GameState);
 
 protected:
 

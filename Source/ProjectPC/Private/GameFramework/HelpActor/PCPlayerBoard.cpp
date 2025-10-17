@@ -753,7 +753,7 @@ void APCPlayerBoard::RecountAndPushToWidget_Server()
 	OnRep_FieldCount();
 }
 
-void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(FGameplayTag GameState)
+void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(const FGameplayTag& GameState)
 {
 	const bool bVisible = GameState == GameStateTags::Game_State_NonCombat;
 
@@ -862,7 +862,7 @@ void APCPlayerBoard::TryAutoFillFromBench_Server()
 	}
 }
 
-void APCPlayerBoard::OnGameStateChangedForAutoFill(const FGameplayTag GameState)
+void APCPlayerBoard::OnGameStateChangedForAutoFill(const FGameplayTag& GameState)
 {
 	if (!HasAuthority())
 		return;

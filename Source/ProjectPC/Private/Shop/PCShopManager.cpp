@@ -66,7 +66,7 @@ void UPCShopManager::BeginPlay()
 	}
 }
 
-void UPCShopManager::OnGameStateChanged(FGameplayTag NewTag)
+void UPCShopManager::OnGameStateChanged(const FGameplayTag& NewTag)
 {
 	if (!GetOwner()) return;
 	

@@ -22,7 +22,7 @@ class UGameplayEffect;
  * 
  */
 UCLASS()
-class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface, public IGenericTeamAgentInterface
+class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
