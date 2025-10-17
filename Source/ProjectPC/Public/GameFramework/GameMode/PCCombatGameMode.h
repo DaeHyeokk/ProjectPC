@@ -91,12 +91,11 @@ private:
 	void BeginCurrentStep();
 	void EndCurrentStep();
 	
-
-	// 개별 Step 처리
-	void Step_Start();
-
 	// Start 헬퍼 함수
 	void PlayerStartUnitSpawn();
+	
+	// 개별 Step 처리
+	void Step_Start();
 	void Step_Setup();
 	void Step_Travel();
 	void Step_Return();
@@ -161,7 +160,24 @@ private:
 	bool bTriggeredAfterTravel = false;
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	void OnOnePlayerArrived();
-	
+
+	// ── Carousel wave open schedule ──────────────────────────────
+protected:
+	// 웨이브 시트(두 명씩 / 마지막 웨이브 8초)
+	TArray<TArray<int32>> CarouselWaves; // 각 웨이브에 열 SeatIndex 모음
+
+	FTimerHandle ThCarouselWave;         // 5초마다(마지막 8초) 다음 웨이브
+	FTimerHandle ThCarouselWaveStageUI;  // UI 카운트다운(서브 웨이브 타이머 표시용)
+	int32 CurrentWaveIdx = -1;
+
+	// 내부 헬퍼
+	void BuildCarouselWavesByHP(TArray<TArray<int32>>& OutWaves);
+	void StartCarouselWaves();
+	void OpenCarouselWave(int32 WaveIdx);
+	void FinishCarouselRound();
+
+	// 서브 웨이브 타이머를 UI에 1초 단위로 보여주고 싶으면 이걸로 GameState StageRuntime 갱신
+	void StartSubWaveTimerUI(float DurationSeconds);
 };
 
 

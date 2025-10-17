@@ -65,9 +65,17 @@ struct FCombatManager_Pair
 	FBoardFieldSnapShot HostSnapShot;
 	UPROPERTY()
 	FBoardFieldSnapShot GuestSnapShot;
-
 	UPROPERTY()
 	FPlayerBoardSnapshot PvESnapShot;
+
+	UPROPERTY()
+	bool bIsClone = false;
+
+	UPROPERTY()
+	int32 CloneSourceSeat = INDEX_NONE;
+
+	UPROPERTY()
+	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> CloneUnits;
 	
 	// PVE 지원
 	UPROPERTY()
@@ -148,9 +156,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FinishAllBattle();
 
-	UFUNCTION(BlueprintCallable, Category = "Combat")
-	void PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTileManager* TM, bool MirrorRows, bool MirrorCols, ETileFacing Facing);
-
+	
 	// 플레이어 전체 이동
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat|Travel")
@@ -222,6 +228,18 @@ private:
 	void CheckPairVictory(int32 PairIndex);	
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
+	// Clone PvP
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void BuildCloneForHost(int32 PairIndex, int32 DonorSeat);
+
+	// Clone 파괴 헬퍼
+	void DestroyCloneForPair(int32 PairIndex, bool bRemoveFromTM = true);
+
+	// 전투시 전투 필드로 이동
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTileManager* TM, bool MirrorRows, bool MirrorCols, ETileFacing Facing);
+
+
 public:
 	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;
@@ -248,7 +266,7 @@ protected:
 	bool GetCurrentStageRoundOne(int32& OutStageOne, int32& OutRoundOne) const;
 
 	// ===== PvE 유틸 =====
-	static constexpr int32 CREEP_TEAM_BASE = 1000;
+	static constexpr int32 CREEP_TEAM_BASE = 50;
 	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board) { return Board ? (Board->BoardSeatIndex + CREEP_TEAM_BASE) : CREEP_TEAM_BASE; }
 
 	// Stage/Round 기반 크립 태그/레벨 (필요 시 프로젝트 태그로 수정)

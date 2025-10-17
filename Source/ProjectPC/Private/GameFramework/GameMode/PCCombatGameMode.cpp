@@ -7,8 +7,10 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
@@ -185,9 +187,7 @@ void APCCombatGameMode::BuildStageData()
 	FlatStageIdx       = SIdx;
 	FlatRoundIdx       = RIdx;
 	FlatStepIdxInRound = KIdx;
-
-	// 라운드 개수는 SIdx/RIdx에서 유니크 카운트로 만들거나
-	// (이전 답변의 Counts 계산 로직 그대로 사용)
+	
 	TArray<int32> Counts;
 
 	int32 MaxStage = -1;
@@ -409,6 +409,11 @@ void APCCombatGameMode::Step_Return()
 				PCCombatPlayerController->Client_ShowWidget();
 			}
 		}
+
+		if (CarouselRing)
+		{
+			CarouselRing->Multicast_OpenAllGates(false);
+		}
 	}
 	else if (Prev->StageType == EPCStageType::Start)
 	{
@@ -472,7 +477,36 @@ void APCCombatGameMode::Step_Carousel()
 {
 	if (!CarouselRing) return;
 
-	// TODO 게이트 열리는 체력순으로 열리는 로직 추가
+	BuildCarouselWavesByHP(CarouselWaves);
+	if (CarouselWaves.Num() == 0)
+	{
+		FinishCarouselRound();
+		return;
+	}
+
+	const int32 WaveCount = CarouselWaves.Num();
+	const float TotalDuration = (WaveCount > 1) ? (WaveCount-1)*5.f + 8.f : 8.f;
+	
+	if (APCCombatGameState* GS = GetCombatGameState())
+	{
+		FStageRuntimeState S;
+		S.FloatIndex       = Cursor;
+		S.StageIdx         = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
+		S.RoundIdx         = FlatRoundIdx.IsValidIndex(Cursor) ? FlatRoundIdx[Cursor] : 0;
+		S.StepIdxInRound   = FlatStepIdxInRound.IsValidIndex(Cursor) ? FlatStepIdxInRound[Cursor] : 0;
+		S.Stage            = EPCStageType::Carousel;
+		S.Duration         = TotalDuration;
+		S.ServerStartTime  = NowServer();
+		S.ServerEndTime    = S.ServerStartTime + TotalDuration;
+		GS->SetStageRunTime(S);
+	}
+
+	// 기존 RoundTimer(상위 BeginCurrentStep에서 잡힌 것) 무시하고, 우리 스케줄로 교체
+	GetWorldTimerManager().ClearTimer(RoundTimer);
+	GetWorldTimerManager().SetTimer(RoundTimer, this, &APCCombatGameMode::EndCurrentStep, TotalDuration, false);
+
+	// 웨이브 진행 시작
+	StartCarouselWaves();
 }
 
 void APCCombatGameMode::PlayerStartUnitSpawn()
@@ -879,4 +913,123 @@ void APCCombatGameMode::OnOnePlayerArrived()
 		});
 	}
 }
+
+
+// Carousel Helper
+void APCCombatGameMode::BuildCarouselWavesByHP(TArray<TArray<int32>>& OutWaves)
+{
+	OutWaves.Reset();
+	
+	struct FSeatHp { int32 Seat; float Hp; int32 StableKey;};
+	TArray<FSeatHp> Seats;
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			if (auto* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
+			{
+				float Hp = 0.f;
+				if (auto* PCASC = PCPlayerState->GetAbilitySystemComponent())
+				{
+					Hp = PCASC->GetNumericAttribute(UPCPlayerAttributeSet::GetPlayerHPAttribute());
+					if (Hp <= 0.f)
+					{
+						continue;
+					}
+				}
+
+				const int32 Stable = PCPlayerState->GetPlayerId();
+				Seats.Add({PCPlayerState->SeatIndex, Hp, Stable});
+			}
+		}
+	}
+
+	Seats.Sort([](const FSeatHp& A, const FSeatHp& B)
+	{
+		if (!FMath::IsNearlyEqual(A.Hp, B.Hp))
+		{
+			return A.Hp < B.Hp;
+		}
+		return A.StableKey < B.StableKey;
+	});
+
+	for (int32 i = 0; i < Seats.Num(); i += 2)
+	{
+		TArray<int32> Wave;
+		Wave.Add(Seats[i].Seat);
+		if (i + 1 < Seats.Num())
+		{
+			Wave.Add(Seats[i + 1].Seat);
+		}
+		OutWaves.Add(Wave);
+	}
+}
+
+void APCCombatGameMode::StartCarouselWaves()
+{
+	CurrentWaveIdx = -1;
+
+	OpenCarouselWave(0);
+
+	for (int32 w = 1; w < CarouselWaves.Num(); ++w)
+	{
+		const bool bLast = (w == CarouselWaves.Num() - 1);
+		const float PrevTicks = (w - 1) * 5.f;
+		const float Delay = bLast ? (PrevTicks + 5.f) : PrevTicks + 5.f;
+
+		FTimerHandle Th;
+		GetWorldTimerManager().SetTimer(Th, FTimerDelegate::CreateWeakLambda(this,[this, w]()
+		{
+			OpenCarouselWave(w);
+		}),
+		Delay, false
+		);
+	}
+
+	const int32 WaveCnt = CarouselWaves.Num();
+	const float EndDelay = (WaveCnt > 1) ? (WaveCnt - 1) * 5.f +8.f : 8.f;
+	FTimerHandle ThEnd;
+	GetWorldTimerManager().SetTimer(ThEnd, FTimerDelegate::CreateWeakLambda(this,[this]()
+	{
+		FinishCarouselRound();
+	}),
+	EndDelay, false
+	);
+}
+
+void APCCombatGameMode::OpenCarouselWave(int32 WaveIdx)
+{
+	if (!CarouselRing || !CarouselWaves.IsValidIndex(WaveIdx)) return;
+
+	CurrentWaveIdx = WaveIdx;
+
+	for (int32 Seat : CarouselWaves[WaveIdx])
+	{
+		CarouselRing->Multicast_SetGateOpen(Seat, true);
+	}
+
+	const bool bLast = (WaveIdx == CarouselWaves.Num() - 1);
+	StartSubWaveTimerUI(bLast ? 8.f : 5.f);
+}
+
+void APCCombatGameMode::StartSubWaveTimerUI(float DurationSeconds)
+{
+	if (auto* GS = GetCombatGameState())
+	{
+		FStageRuntimeState S;
+		S.Stage            = EPCStageType::Carousel; // 그대로
+		S.Duration         = DurationSeconds;
+		S.ServerStartTime  = NowServer();
+		S.ServerEndTime    = S.ServerStartTime + DurationSeconds;
+		GS->SetStageRunTime(S);
+	}
+}
+
+void APCCombatGameMode::FinishCarouselRound()
+{
+	EndCurrentStep();
+}
+
+
 

@@ -37,7 +37,7 @@ void UPCGameStateWidget::NativeDestruct()
 
 		if (LayOutHandle.IsValid())
 		{
-			PCGameState->OnStageRuntimeChanged.Remove(LayOutHandle);
+			PCGameState->OnRoundsLayoutChanged.Remove(LayOutHandle);
 		}
 		
 	}
@@ -72,6 +72,17 @@ void UPCGameStateWidget::ReFreshStatic()
 {
 	if (!PCGameState.IsValid())
 		return;
+
+	// 캐러셀 단계면 레이아웃 그대로 두고 타이머/ 아이콘 상태만 갱신
+	if (PCGameState->GetCurrentStageType() == EPCStageType::Carousel)
+	{
+		UpdateRoundChipsState();
+		if (Txt_Stage)
+		{
+			Txt_Stage->SetText(FText::FromString(PCGameState->GetStageLabelString()));
+		}
+		return;
+	}
 
 	const int32 NewStageIdx = PCGameState->GetStageIndex();
 	const int32 NewChipCount = PCGameState->GetNumRoundsInStage(NewStageIdx);
@@ -121,6 +132,12 @@ void UPCGameStateWidget::TickUpdate()
 void UPCGameStateWidget::OnRoundsLayoutChanged_Handler()
 {
 	if (!PCGameState.IsValid()) return;
+
+	if (PCGameState->GetCurrentStageType() == EPCStageType::Carousel)
+	{
+		UpdateRoundChipsState();
+		return;
+	}
 
 	const int32 StageIdx = PCGameState->GetStageIndex();
 	CachedStageIdx = StageIdx;

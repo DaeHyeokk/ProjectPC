@@ -293,11 +293,6 @@ void APCCombatGameState::OnRep_RoundsLayout()
 	OnRoundsLayoutChanged.Broadcast();
 }
 
-
-
-
-
-
 void APCCombatGameState::OnRep_StageRunTime()
 {
 	OnStageRuntimeChanged.Broadcast();

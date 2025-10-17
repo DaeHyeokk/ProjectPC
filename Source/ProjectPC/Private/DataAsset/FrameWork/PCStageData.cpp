@@ -98,7 +98,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
 					FixedSteps.Add(S);
 				}
 
-				AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, RIdx, FixedSteps);
+				AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx+1, RIdx+1, FixedSteps);
 			}
 		}
 		return;

@@ -94,6 +94,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gate")
 	void OpenAllGates(bool bOpen);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetGateOpen(int32 SeatIndex, bool bOpen);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OpenAllGates(bool bOpen);
+
 	// 카메라
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	bool bCameraInheritActorRotation = false;
@@ -186,9 +192,6 @@ protected:
 	// 스폰한 픽업 게이트 핸들
 	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> SpawnedPickups;
-
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UBoxComponent>> GateBoxes;
 
 	// 내부 헬퍼
 	FVector GetRingCenterWorld(const USceneComponent* Root) const;

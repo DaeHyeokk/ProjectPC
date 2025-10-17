@@ -128,6 +128,7 @@ enum class ERoundResult : uint8
 	Draw UMETA(DisplayName = "Draw")
 };
 
+// GameStateWidget 표시용 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
@@ -136,6 +137,9 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag);
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
 DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
+
+// Carousel 전용 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnCarouselGetScheduleChanged);
 /**
  * 
  */
@@ -250,7 +254,6 @@ public:
 
 	void ApplyRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx, ERoundResult Result);
 	
-
 	UFUNCTION(BlueprintPure)
 	int32 GetMySeatIndex() const;
 	
@@ -428,6 +431,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ranking")
 	int32 GetFinalRankFor(const FString& LocalUserId) const;
 
+	
+
 protected:
 
 	virtual void RemovePlayerState(APlayerState* PlayerState) override;
@@ -448,13 +453,15 @@ protected:
 
 	void BroadCastLeaderboardMap() const;
 
+
 private:
+
 	/** 서버 캐시들 (키 = LocalUserId) */
 	TMap<FString, float> HpCache;             // 최신 HP
 	TMap<FString, float> LastChangeTimeCache; // 마지막 HP 변경시간(서버)
 	TMap<FString, int32> StableOrderCache;    // 최초 관측 순서
 	TSet<FString>        EliminatedSet;       // 사망자 집합
-
+	
 	int32 AliveCount = 0;
 	int32 StableOrderCounter = 0;
 
@@ -473,7 +480,7 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_DebugPrintToScreen(const TArray<FString>& Lines, float ScreenSeconds);
 	
-	
-	
 #pragma endregion Ranking
+	
+	
 };

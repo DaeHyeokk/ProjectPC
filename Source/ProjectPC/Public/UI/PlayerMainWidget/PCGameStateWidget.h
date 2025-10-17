@@ -28,10 +28,10 @@ struct FRoundChip
 	GENERATED_BODY()
 	
 	UPROPERTY()
-	UImage* Icon;
+	TObjectPtr<UImage> Icon;
 
 	UPROPERTY()
-	UImage* Arrow;
+	TObjectPtr<UImage> Arrow;
 };
 
 UCLASS()

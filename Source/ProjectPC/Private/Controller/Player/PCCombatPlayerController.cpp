@@ -153,7 +153,7 @@ void APCCombatPlayerController::BeginPlayingState()
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
 
-	LoadShopWidget();
+	//LoadShopWidget();
 		
 }
 
@@ -312,8 +312,6 @@ void APCCombatPlayerController::LoadShopWidget()
 				}
 			});
 		}
-		
-		
 	}
 }
 
@@ -326,6 +324,30 @@ void APCCombatPlayerController::LoadMainWidget()
 		if (PlayerMainWidget)
 		{
 			PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+			UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+			if (!ShopWidgetRef) return;
+
+			ShopRequest_ShopRefresh(0);
+
+			if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+			{
+				ShopWidgetRef->BindToPlayerState(PCPlayerState);
+				ShopWidgetRef->InitWithPC(this);
+			}
+			else
+			{
+				// 안전책: 월드 틱 이후 GameState를 다시 확인
+				GetWorldTimerManager().SetTimerForNextTick([this]()
+				{
+					if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
+					{
+						UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+						if (!ShopWidgetRef) return;
+						ShopWidgetRef->BindToPlayerState(PCPS2);
+						ShopWidgetRef->InitWithPC(this);
+					}
+				});
+			}
 		}
 		
 	}	
@@ -689,9 +711,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 {
 	if (!IsLocalController()) return;
 	if (!PlayerMainWidgetClass) { UE_LOG(LogTemp, Warning, TEXT("HUD Class NULL")); return; }
-	if (!ShopWidgetClass)
-		return;
-	
 
 	// 이미 있으면 보장만
 	if (!IsValid(PlayerMainWidget))
@@ -705,6 +724,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
 			PlayerMainWidget->InitAndBind(PCCombatGameState);
+			ShopWidget = PlayerMainWidget->GetShopWidget();
 		}
 		
 		
@@ -717,6 +737,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 				if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 				{
 					PlayerMainWidget->InitAndBind(PCCombatGameState);
+					ShopWidget = PlayerMainWidget->GetShopWidget();
 				}
 			}
 		}, 0.f, false);
@@ -729,28 +750,35 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
 			PlayerMainWidget->InitAndBind(PCCombatGameState);
+			ShopWidget = PlayerMainWidget->GetShopWidget();
 		}
 	}
 }
 
 void APCCombatPlayerController::ShowWidget()
 {
-	if (!IsLocalController() || !IsValid(ShopWidget))
+	// if (!IsLocalController() || !IsValid(ShopWidget))
+	// 	return;
+	//
+	// if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
+	// {
+	// 	return;
+	// }
+	// ShopWidget->SetVisibility(ESlateVisibility::Visible);
+
+	if (!IsLocalController() || !IsValid(PlayerMainWidget))
 		return;
 
-	if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
-	{
-		return;
-	}
-	ShopWidget->SetVisibility(ESlateVisibility::Visible);
+	PlayerMainWidget->SetShopWidgetVisible(true);
 	
 }
 
 void APCCombatPlayerController::HideWidget()
 {
-	if (!IsLocalController() || !IsValid(ShopWidget))
+	if (!IsLocalController() || !IsValid(PlayerMainWidget))
 		return;
-	ShopWidget->SetVisibility(ESlateVisibility::Hidden);
+
+	PlayerMainWidget->SetShopWidgetVisible(false);
 }
 
 void APCCombatPlayerController::ApplyGameInputMode()

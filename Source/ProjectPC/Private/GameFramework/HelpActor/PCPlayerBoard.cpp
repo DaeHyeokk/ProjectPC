@@ -677,6 +677,7 @@ void APCPlayerBoard::ResnapBenchUnitsToBoard(bool bIsBattle)
 		if (APCBaseUnitCharacter* Unit = PlayerBench[i].Unit)
 		{
 			const FVector Loc = ToWorld(SceneRoot,PlayerBench[i].Position);
+			FVector NewLoc =FVector(Loc.X, Loc.Y, Loc.Z + 30);
 			FRotator Rot = FRotator(0,0,0);
 
 			if (bIsBattle)
@@ -684,7 +685,7 @@ void APCPlayerBoard::ResnapBenchUnitsToBoard(bool bIsBattle)
 				Rot = FRotator(0,180,0);
 			}
 			
-			Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
+			Unit->SetActorLocationAndRotation(NewLoc , Rot, false, nullptr, ETeleportType::TeleportPhysics);
 		}
 	}
 }

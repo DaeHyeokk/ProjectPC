@@ -65,6 +65,11 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 	}
 }
 
+void UPCShopWidget::InitWithPC(APCCombatPlayerController* InPC)
+{
+	CachedController = InPC;
+}
+
 void UPCShopWidget::OpenMenu()
 {
 	AddToViewport(100);
@@ -143,26 +148,28 @@ void UPCShopWidget::SetupPlayerInfo()
 
 void UPCShopWidget::OnClickedBuyXP()
 {
-	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	if (CachedController.IsValid())
 	{
-		PC->ShopRequest_BuyXP();
+		CachedController->ShopRequest_BuyXP();
 	}
+	
 }
 
 void UPCShopWidget::OnClickedReroll()
-{
-	if (auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+{	
+	if (CachedController.IsValid())
 	{
-		PC->ShopRequest_ShopRefresh(2);
+		CachedController->ShopRequest_ShopRefresh(2);
 	}
+	
 }
 
 void UPCShopWidget::OnClickedShopLock()
 {
-	if (!Img_ShopLock || !ShopLock || !ShopUnlock) return;
+	if (!Img_ShopLock || !ShopLock || !ShopUnlock || !CachedController.IsValid()) return;
 
-	auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer());
-	if (!PC) return;
+	// auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer());
+	// if (!PC) return;
 
 	const auto& CurrentBrush = Img_ShopLock->GetBrush();
 	auto CurrentResource = CurrentBrush.GetResourceObject();
@@ -170,12 +177,14 @@ void UPCShopWidget::OnClickedShopLock()
 	if (CurrentResource && CurrentResource == ShopLock)
 	{
 		Img_ShopLock->SetBrushFromTexture(ShopUnlock);
-		PC->ShopRequest_ShopLock(false);
+		//PC->ShopRequest_ShopLock(false);
+		CachedController->ShopRequest_ShopLock(false);
 	}
 	else
 	{
 		Img_ShopLock->SetBrushFromTexture(ShopLock);
-		PC->ShopRequest_ShopLock(true);
+		//PC->ShopRequest_ShopLock(true);
+		CachedController->ShopRequest_ShopLock(true);
 	}
 }
 

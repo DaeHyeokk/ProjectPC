@@ -20,6 +20,7 @@
 APCCarouselRing::APCCarouselRing()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
@@ -81,14 +82,7 @@ void APCCarouselRing::OnConstruction(const FTransform& transform)
 
 	DrawDebugCircle(GetWorld(), COuter, PlayerRingRadius, 64, DebugColorOuter, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
 	DrawDebugCircle(GetWorld(), CInner, UnitRingRadius, 64, DebugColorInner, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
-
-	// 게이트 박스 미리 보기
-	for (UBoxComponent* B : GateBoxes)
-	{
-		if (!B) continue;
-		const FTransform T = B->GetComponentTransform();
-		DrawDebugBox(GetWorld(), T.GetLocation(), B->GetUnscaledBoxExtent(), T.GetRotation(), DebugColorGate, false, 0.f, 0, 1.5f);
-	}
+	
 }
 #endif
 
@@ -231,7 +225,7 @@ void APCCarouselRing::BuildGates()
 			GateMesh->DestroyComponent();
 		}
 	}
-	GateBoxes.Reset();
+	GateMeshes.Reset();
 
 	if (PlayerNumSlots <= 0 )
 		return;
@@ -270,19 +264,29 @@ void APCCarouselRing::OpenGateForSeat(int32 SeatIndex, bool bOpen)
 	if (!Gate) return;
 
 	Gate->SetCollisionEnabled(bOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryAndPhysics);
-	Gate->SetHiddenInGame(true);
+	Gate->SetHiddenInGame(bOpen);
 }
 
 void APCCarouselRing::OpenAllGates(bool bOpen)
 {
-	for (int32 i = 0; i < GateBoxes.Num(); ++i)
+	for (int32 i = 0; i < GateMeshes.Num(); ++i)
 	{
 		OpenGateForSeat(i, bOpen);
 	}
 }
 
+void APCCarouselRing::Multicast_OpenAllGates_Implementation(bool bOpen)
+{
+	OpenAllGates(bOpen);
+}
+
+void APCCarouselRing::Multicast_SetGateOpen_Implementation(int32 SeatIndex, bool bOpen)
+{
+	OpenGateForSeat(SeatIndex, bOpen);
+}
+
 void APCCarouselRing::ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime,
-	float ExtraYawDeg)
+                                              float ExtraYawDeg)
 {
 	if (!PC || !SpringArm) return;
 

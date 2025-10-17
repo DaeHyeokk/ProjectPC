@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCShopWidget.generated.h"
 
+class APCCombatPlayerController;
 struct FOnAttributeChangeData;
 
 class APCPlayerState;
@@ -31,12 +32,17 @@ protected:
 private:
 	UPROPERTY()
 	APCPlayerState* CachedPlayerState;
+
+	UPROPERTY()
+	TWeakObjectPtr<APCCombatPlayerController> CachedController;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
+
+	void InitWithPC(APCCombatPlayerController* InPC);
 
 protected:
 	int32 PlayerLevel;
