@@ -8,7 +8,7 @@
 
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "UI/Item/PCItemRecipeWidget.h"
-#include "UI/Item/PCPlayerInventoryWidget.h"
+#include "UI/Item/PCItemInfoWidget.h"
 
 
 bool UPCItemSlotWidget::Initialize()
@@ -17,6 +17,8 @@ bool UPCItemSlotWidget::Initialize()
 
 	ItemRecipeWidget = CreateWidget<UPCItemRecipeWidget>(GetWorld(), ItemRecipeWidgetClass);
 	if (!ItemRecipeWidget) return false;
+	ItemInfoWidget = CreateWidget<UPCItemInfoWidget>(GetWorld(), ItemInfoWidgetClass);
+	if (!ItemInfoWidget) return false;
 	
 	return true;
 }

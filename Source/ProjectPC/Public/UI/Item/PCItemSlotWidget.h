@@ -7,6 +7,7 @@
 #include "Item/PCItemData.h"
 #include "PCItemSlotWidget.generated.h"
 
+class UPCItemInfoWidget;
 class UPCItemRecipeWidget;
 class UImage;
 
@@ -23,9 +24,13 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "ItemRecipeWidgetClass")
 	TSubclassOf<UUserWidget> ItemRecipeWidgetClass;
-
+	UPROPERTY(EditDefaultsOnly, Category = "ItemInfoWidgetClass")
+	TSubclassOf<UUserWidget> ItemInfoWidgetClass;
+	
 	UPROPERTY()
 	UPCItemRecipeWidget* ItemRecipeWidget;
+	UPROPERTY()
+	UPCItemInfoWidget* ItemInfoWidget;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_Item;
