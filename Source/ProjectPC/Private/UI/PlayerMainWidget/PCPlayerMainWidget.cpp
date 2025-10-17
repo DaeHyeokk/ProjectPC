@@ -4,6 +4,7 @@
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "UI/Item/PCPlayerInventoryWidget.h"
 #include "UI/PlayerMainWidget/PCGameStateWidget.h"
 #include "UI/PlayerMainWidget/PCLeaderBoardWidget.h"
 #include "UI/Shop/PCShopWidget.h"
@@ -27,6 +28,7 @@ void UPCPlayerMainWidget::InitAndBind(APCCombatGameState* PCCombatGameState)
 	if (!W_ShopWidget) return;
 
 	W_ShopWidget->SetVisibility(ESlateVisibility::Hidden);
+	
 }
 
 void UPCPlayerMainWidget::SetShopWidgetVisible(bool bVisible)

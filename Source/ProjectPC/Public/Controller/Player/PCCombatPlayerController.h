@@ -148,16 +148,16 @@ public:
 #pragma endregion Shop
 
 #pragma region Inventory
-
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
-	TSubclassOf<UUserWidget> InventoryWidgetClass;
-
-	UPROPERTY()
-	UPCPlayerInventoryWidget* InventoryWidget;
-
-public:
-	void LoadInventoryWidget();
+//
+// protected:
+// 	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
+// 	TSubclassOf<UUserWidget> InventoryWidgetClass;
+//
+// 	UPROPERTY()
+// 	UPCPlayerInventoryWidget* InventoryWidget;
+//
+// public:
+// 	void LoadInventoryWidget();
 	
 #pragma endregion Inventory
 

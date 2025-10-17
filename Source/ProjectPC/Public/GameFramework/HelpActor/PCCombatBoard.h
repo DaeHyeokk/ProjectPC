@@ -39,7 +39,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* SceneRoot;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USpringArmComponent* SpringArm;
 
@@ -48,7 +48,7 @@ public:
 
 	// 해당 보드 번호 (SeatIndex와 1:1)
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Board")
-	int32 BoardSeatIndex = 0;
+	int32 BoardSeatIndex = -1;
 
 	// SeatAnchor 소켓 부모를 에디터에서 지정
 	UPROPERTY(EditAnywhere, Category = "Seat")
@@ -87,24 +87,28 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyClientMirrorView();
+
+	FVector HomeCameraOffset = FVector(-110.f, 0.f, -110.f);
+	FRotator HomeCameraRotation = FRotator(3.f, 0.f,0.f);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FVector HomeCam_LocPreset = FVector(-1400.f,0.f, 1200.f);
+	FVector HomeCam_LocPreset = FVector(-1150.f,0.f, 1000.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FRotator HomeCam_RocPreset = FRotator(-47.f, 0.f, 0.f);
+	FRotator HomeCam_RocPreset = FRotator(-50.f, 0.f, 0.f);
 	
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FVector BattleCameraChangeLocation = FVector(1400.f, 0.f, 1200.f);
+	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1000.f);
 
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FRotator BattleCameraChangeRotation = FRotator(-47.f, 180.f,0.f);
+	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
 
 	
 
 protected:
 	
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -117,7 +121,7 @@ protected:
 	// Tile Manager
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true), Category = "Tile")
 	UPCTileManager* TileManager;
 
 	// 보드에서 바로 타일 쿼리하고 싶을때 (래퍼)

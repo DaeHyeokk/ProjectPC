@@ -22,15 +22,14 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(SceneRoot);
 	SpringArm->bDoCollisionTest = false;
-	SpringArm->TargetArmLength = 3000.f;
-	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
-	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
+	SpringArm->TargetArmLength = 1000.f;
+	
 
 	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
 	BoardCamera->SetupAttachment(SpringArm);
-	BoardCamera->FieldOfView = 55.f;
+	BoardCamera->FieldOfView = 60.f;
 
-	// TIle Manger
+	// Tile Manger
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
 }
 
@@ -45,12 +44,35 @@ void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 void APCCombatBoard::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SpringArm->SetRelativeLocation(HomeCam_LocPreset);
+	SpringArm->SetRelativeRotation(HomeCam_RocPreset);
+
+	BoardCamera->SetRelativeLocation(HomeCameraOffset);
+	BoardCamera->SetRelativeRotation(HomeCameraRotation);
+
 	RebuildAnchors();
 
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
 	}
+}
+
+void APCCombatBoard::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (!TileManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Board %s] TileManager was null. Recreate at runtime."), *GetName());
+
+		TileManager = NewObject<UPCTileManager>(this, TEXT("TileManager_Runtime"));
+		// 컴포넌트면 반드시 RegisterComponent 호출
+		TileManager->RegisterComponent();
+		// 필요시 초기화 코드 호출
+	}
+	
 }
 
 #if WITH_EDITOR

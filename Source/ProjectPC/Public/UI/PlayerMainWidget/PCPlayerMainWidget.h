@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class UPCPlayerInventoryWidget;
 class UPCShopWidget;
 class UPCHeroStatusHoverPanel;
 class APCCombatGameState;
@@ -28,6 +29,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UPCShopWidget* GetShopWidget() { return W_ShopWidget;}
 
+	UFUNCTION(BlueprintCallable)
+	UPCPlayerInventoryWidget* GetInventoryWidget() { return W_InventoryWidget;}
+
 	void SetShopWidgetVisible(bool bVisible);
 	
 protected:
@@ -42,5 +46,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCShopWidget> W_ShopWidget;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<class UPCPlayerInventoryWidget> W_InventoryWidget;
 	
 };

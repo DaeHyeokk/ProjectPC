@@ -154,10 +154,23 @@ void APCCombatPlayerController::BeginPlayingState()
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
 
-	//LoadShopWidget();
+	if (PlayerMainWidget)
+	{
+		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
+		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
 		
-	LoadShopWidget();
-	LoadInventoryWidget();
+		if (!PCPlayerState) return;
+		
+		if (!ShopWidgetRef) return;
+		
+		ShopWidgetRef->BindToPlayerState(PCPlayerState);
+		ShopWidgetRef->InitWithPC(this);
+		
+		if (!InventoryWidget) return;
+		InventoryWidget->BindToPlayerState(PCPlayerState);
+	}
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -323,36 +336,6 @@ void APCCombatPlayerController::LoadMainWidget()
 	if (IsLocalController())
 	{
 		EnsureMainHUDCreated();
-
-		if (PlayerMainWidget)
-		{
-			PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
-			UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
-			if (!ShopWidgetRef) return;
-
-			ShopRequest_ShopRefresh(0);
-
-			if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
-			{
-				ShopWidgetRef->BindToPlayerState(PCPlayerState);
-				ShopWidgetRef->InitWithPC(this);
-			}
-			else
-			{
-				// 안전책: 월드 틱 이후 GameState를 다시 확인
-				GetWorldTimerManager().SetTimerForNextTick([this]()
-				{
-					if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
-					{
-						UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
-						if (!ShopWidgetRef) return;
-						ShopWidgetRef->BindToPlayerState(PCPS2);
-						ShopWidgetRef->InitWithPC(this);
-					}
-				});
-			}
-		}
-		
 	}	
 }
 
@@ -430,6 +413,9 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
 	{
@@ -644,36 +630,36 @@ void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
 	bIsShopRequestInProgress = false;
 }
 
-void APCCombatPlayerController::LoadInventoryWidget()
-{
-	if (IsLocalController())
-	{
-		if (!InventoryWidgetClass) return;
-		
-		InventoryWidget = CreateWidget<UPCPlayerInventoryWidget>(this, InventoryWidgetClass);
-		if (!InventoryWidget) return;
-
-		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
-		{
-			InventoryWidget->BindToPlayerState(PCPlayerState);
-			InventoryWidget->AddToViewport(8000);
-		}
-		else
-		{
-			// 안전책: 월드 틱 이후 GameState를 다시 확인
-			GetWorldTimerManager().SetTimerForNextTick([this]()
-			{
-				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
-				{
-					InventoryWidget->BindToPlayerState(PCPS2);
-					InventoryWidget->AddToViewport(8000);
-				}
-			});
-		}
-		
-		
-	}
-}
+// void APCCombatPlayerController::LoadInventoryWidget()
+// {
+// 	if (IsLocalController())
+// 	{
+// 		if (!InventoryWidgetClass) return;
+// 		
+// 		InventoryWidget = CreateWidget<UPCPlayerInventoryWidget>(this, InventoryWidgetClass);
+// 		if (!InventoryWidget) return;
+//
+// 		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+// 		{
+// 			InventoryWidget->BindToPlayerState(PCPlayerState);
+// 			InventoryWidget->AddToViewport(8000);
+// 		}
+// 		else
+// 		{
+// 			// 안전책: 월드 틱 이후 GameState를 다시 확인
+// 			GetWorldTimerManager().SetTimerForNextTick([this]()
+// 			{
+// 				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
+// 				{
+// 					InventoryWidget->BindToPlayerState(PCPS2);
+// 					InventoryWidget->AddToViewport(8000);
+// 				}
+// 			});
+// 		}
+// 		
+// 		
+// 	}
+// }
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
