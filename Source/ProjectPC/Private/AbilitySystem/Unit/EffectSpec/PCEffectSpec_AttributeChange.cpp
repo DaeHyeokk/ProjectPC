@@ -41,8 +41,6 @@ FActiveGameplayEffectHandle  UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbi
 	if (TargetGroup == EEffectTargetGroup::Self)
 	{
 		OutHandle = SourceASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-		if (!OutHandle.IsValid())
-			UE_LOG(LogTemp, Warning, TEXT("OutHandle NotValid"));
 	}
 	else
 	{

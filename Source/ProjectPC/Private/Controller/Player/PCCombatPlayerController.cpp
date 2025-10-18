@@ -831,7 +831,12 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 				UPCSynergyComponent* SynergyComp = PS->GetSynergyComponent();
 				SynergyComp->RegisterHero(Cast<APCHeroUnitCharacter>(Unit));
 			}
-			
+			else
+			{
+				APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+				UPCSynergyComponent* SynergyComp = PS->GetSynergyComponent();
+				SynergyComp->UnRegisterHero(Cast<APCHeroUnitCharacter>(Unit));
+			}
 			Multicast_LerpMove(Unit, Snap, LerpDuration);
 			Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
 		}

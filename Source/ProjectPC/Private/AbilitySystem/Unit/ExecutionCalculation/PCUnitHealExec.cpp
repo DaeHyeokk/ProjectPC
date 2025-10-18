@@ -24,7 +24,7 @@ void UPCUnitHealExec::Execute_Implementation(const FGameplayEffectCustomExecutio
 	float BaseHeal = Spec.GetSetByCallerMagnitude(HealCallerTag, 0.f);
 	if (BaseHeal <= 0.f)
 	{
-		return; // 줄 데미지 없음
+		return; // 힐량 없음
 	}
 	
 	// Health에 양수로 적용

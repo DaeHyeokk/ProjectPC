@@ -17,14 +17,7 @@ APCCarouselHeroCharacter::APCCarouselHeroCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
-	bReplicates = true;
 	SetReplicates(true);
-	
-	PrimaryActorTick.bCanEverTick = false;
-
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
-	bUseControllerRotationYaw = true;
 
 	AbilitySystemComp = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 

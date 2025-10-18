@@ -52,7 +52,7 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 	}
 }
 
-void APCCreepUnitCharacter::HandleGameStateChanged(const FGameplayTag& NewStateTag)
+void APCCreepUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;

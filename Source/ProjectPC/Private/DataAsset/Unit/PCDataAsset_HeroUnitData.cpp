@@ -54,11 +54,11 @@ const FGameplayTag& UPCDataAsset_HeroUnitData::GetSpeciesSynergyTag() const
 	return SynergyTagConfig.SpeciesSynergyTag;
 }
 
-float UPCDataAsset_HeroUnitData::GetDefaultCurrentMana() const
+float UPCDataAsset_HeroUnitData::GetCombatStartMana() const
 {
 	for (const FUnitStaticStatConfig& StatConfig : HeroStaticStatConfigs)
 	{
-		if (StatConfig.StatAttribute == UPCHeroUnitAttributeSet::GetCurrentManaAttribute())
+		if (StatConfig.StatAttribute == UPCHeroUnitAttributeSet::GetCombatStartManaAttribute())
 			return StatConfig.StatValue;
 	}
 
