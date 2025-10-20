@@ -125,9 +125,9 @@ void APCBaseUnitCharacter::BeginPlay()
 	{
 		GameStateChangedHandle =
 			GS->OnGameStateTagChanged.AddUObject(
-				this, &ThisClass::HandleGameStateChanged);
+				this, &ThisClass::OnGameStateChanged);
 	
-		HandleGameStateChanged(GS->GetGameStateTag());
+		OnGameStateChanged(GS->GetGameStateTag());
 	}
 	
 	InitAbilitySystem();
@@ -135,10 +135,10 @@ void APCBaseUnitCharacter::BeginPlay()
 	if (auto* ASC = GetAbilitySystemComponent())
 	{
 		DeadHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Dead)
-		.AddUObject(this, &ThisClass::OnUnitStateChanged);
+		.AddUObject(this, &ThisClass::OnUnitStateTagChanged);
 
 		StunHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Stun)
-		.AddUObject(this, &ThisClass::OnUnitStateChanged);
+		.AddUObject(this, &ThisClass::OnUnitStateTagChanged);
 	}
 	
 	SetAnimSetData();
@@ -297,7 +297,6 @@ void APCBaseUnitCharacter::Die()
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-				//bIsDead = true;
 			}
 			ASC->CancelAllAbilities();
 			OnUnitDied.Broadcast(this);
@@ -310,7 +309,7 @@ void APCBaseUnitCharacter::OnDeathAnimCompleted()
 	SetActorLocation(FVector(99999.f,99999.f,99999.f));
 }
 
-void APCBaseUnitCharacter::OnUnitStateChanged(FGameplayTag Tag, int32 NewCount)
+void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
 	{

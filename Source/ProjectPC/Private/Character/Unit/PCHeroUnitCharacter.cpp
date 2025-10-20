@@ -87,31 +87,26 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 	}
 }
 
-const FGameplayTag& APCHeroUnitCharacter::GetJobSynergyTag() const
+void APCHeroUnitCharacter::BeginPlay()
 {
-	if (!HeroUnitDataAsset)
-		return FGameplayTag::EmptyTag;
-
-	return HeroUnitDataAsset->GetJobSynergyTag();
+	Super::BeginPlay();
+	
+	if (auto* ASC = GetAbilitySystemComponent())
+	{
+		SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy)
+		.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+	}
 }
 
-const FGameplayTag& APCHeroUnitCharacter::GetSpeciesSynergyTag() const
+void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (!HeroUnitDataAsset)
-		return FGameplayTag::EmptyTag;
-
-	return HeroUnitDataAsset->GetSpeciesSynergyTag();
-}
-
-bool APCHeroUnitCharacter::HasMatchingSynergyTag(const FGameplayTag& SynergyTag) const
-{
-	if (GetJobSynergyTag().MatchesTagExact(SynergyTag))
-		return true;
-
-	if (GetSpeciesSynergyTag().MatchesTagExact(SynergyTag))
-		return true;
-
-	return false;
+	OnHeroDestroyed.Broadcast(this);
+	
+	if (SynergyTagChangedHandle.IsValid())
+		GetAbilitySystemComponent()->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy).Remove(SynergyTagChangedHandle);
+	
+	Super::EndPlay(EndPlayReason);
+	
 }
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
@@ -136,7 +131,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
 			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
 			EGameplayModOp::Override,
-			HeroUnitDataAsset->GetDefaultCurrentMana());
+			HeroUnitDataAsset->GetCombatStartMana());
 
 		// 이전 전투에서 사망했을 경우 사망 태그 제거
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
@@ -176,6 +171,25 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 	}
 }
 
+void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const
+{
+	// 벤치에 있는 경우 해당 이벤트 무시
+	if (!bIsOnField)
+		return;
+	
+	if (Tag.MatchesTag(SynergyGameplayTags::Synergy))
+	{
+		if (NewCount >= 1)
+		{
+			OnHeroSynergyTagChanged.Broadcast(this, Tag, true);
+		}
+		else
+		{
+			OnHeroSynergyTagChanged.Broadcast(this, Tag, false);
+		}
+	}
+}
+
 void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
@@ -187,7 +201,7 @@ void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
 	Super::ChangedOnTile(IsOnField);
 }
 
-void APCHeroUnitCharacter::HandleGameStateChanged(const FGameplayTag& NewStateTag)
+void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;

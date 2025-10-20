@@ -10,6 +10,13 @@
 class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHeroDestroyed, APCHeroUnitCharacter*);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(
+	FOnHeroSynergyTagChanged,
+	const APCHeroUnitCharacter*,
+	const FGameplayTag&,
+	bool);
+
 /**
  * 
  */
@@ -20,9 +27,6 @@ class PROJECTPC_API APCHeroUnitCharacter : public APCBaseUnitCharacter
 
 public:
 	APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-public:
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPCHeroUnitAbilitySystemComponent* GetHeroUnitAbilitySystemComponent() const;
 	const UPCHeroUnitAttributeSet* GetHeroUnitAttributeSet();
@@ -38,16 +42,11 @@ public:
 
 	void UpdateStatusBarUI() const;
 	
-	UFUNCTION(BlueprintCallable)
-	const FGameplayTag& GetJobSynergyTag() const;
-
-	UFUNCTION(BlueprintCallable)
-	const FGameplayTag& GetSpeciesSynergyTag() const;
-
-	UFUNCTION()
-	bool HasMatchingSynergyTag(const FGameplayTag& SynergyTag) const;
-	
 protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
@@ -66,7 +65,7 @@ protected:
 	virtual void OnRep_HeroLevel();
 
 	// 전투 관련 //
-	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) override;
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
 	
 public:
 	virtual void ChangedOnTile(const bool IsOnField) override;
@@ -77,4 +76,13 @@ private:
 public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
+
+	// 시너지 관련 //
+public:
+	FOnHeroDestroyed OnHeroDestroyed;
+	FOnHeroSynergyTagChanged OnHeroSynergyTagChanged;
+	FDelegateHandle SynergyTagChangedHandle;
+	
+private:
+	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const;
 };

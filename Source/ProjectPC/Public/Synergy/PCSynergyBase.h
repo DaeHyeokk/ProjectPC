@@ -30,9 +30,6 @@ struct FSynergyApplyParams
 
 	UPROPERTY()
 	AActor* Instigator = nullptr;
-
-	UPROPERTY()
-	bool bForceReapplyUnits = false;
 };
 
 UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
@@ -41,9 +38,13 @@ class PROJECTPC_API UPCSynergyBase : public UObject
 	GENERATED_BODY()
 
 public:
-	void Apply(const FSynergyApplyParams& Params);
-	void ResetGrantGAs();
-	void ResetGrantGEs();
+	void GrantGE(const FSynergyApplyParams& Params);
+	void CombatActiveGrant(const FSynergyApplyParams& Params);
+	void CombatEndRevoke();
+	void RevokeAllGrantGAs();
+	void RevokeAllGrantGEs();
+	void RevokeHeroGrantGEs(const APCHeroUnitCharacter* Hero);
+	void RevokeHeroGrantGAs(const APCHeroUnitCharacter* Hero);
 	void ResetAll();
 
 	FORCEINLINE void SetSynergyData(UPCDataAsset_SynergyData* InSynergyData) { SynergyData = InSynergyData; }
@@ -56,10 +57,6 @@ protected:
 	virtual void SelectRecipients(const FSynergyApplyParams& Params, const struct FSynergyTier& Tier,
 		TArray<APCHeroUnitCharacter*>& OutRecipients) const;
 
-	// 추후에 이벤트 받아서 이펙트 연출할거면 사용
-	virtual void OnBeforeApply(const FSynergyApplyParams& Params, int32 NewTierIndex) {}
-	virtual void OnAfterApply(const FSynergyApplyParams& Params, int32 NewTierIndex) {}
-
 private:
 	UPROPERTY(EditAnywhere, Category="Synergy")
 	TObjectPtr<UPCDataAsset_SynergyData> SynergyData = nullptr;
@@ -68,9 +65,9 @@ private:
 
 	TMap<TWeakObjectPtr<UAbilitySystemComponent>, TArray<FGameplayAbilitySpecHandle>> ActiveGrantGAs;
 	TMap<TWeakObjectPtr<UAbilitySystemComponent>, TArray<FActiveGameplayEffectHandle>> ActiveGrantGEs;
+	
+	void GrantAbility(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 Level);
+	void GrantEffects(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 Level);
 
-	void RevokeAllGrantGAs();
-	void RevokeAllGrantGEs();
-	void GrantTier(const FSynergyApplyParams& Params, int32 TierIndex);
-	void ApplyTierEffects(const FSynergyApplyParams& Params, int32 TierIndex);
+	bool IsRandomAmongPolicy(const FSynergyTier* SynergyTier) const;
 };

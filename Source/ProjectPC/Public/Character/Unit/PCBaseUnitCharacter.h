@@ -132,7 +132,7 @@ public:
 	void OnDeathAnimCompleted();
 
 protected:
-	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) { };
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) { };
 	FDelegateHandle GameStateChangedHandle;
 	
 	UPROPERTY()
@@ -150,7 +150,7 @@ protected:
 	FDelegateHandle DeadHandle;
 	FDelegateHandle StunHandle;
 
-	void OnUnitStateChanged(FGameplayTag Tag, int32 NewCount);
+	void OnUnitStateTagChanged(const FGameplayTag Tag, int32 NewCount);
 	
 public:
 	UPROPERTY(BlueprintAssignable)

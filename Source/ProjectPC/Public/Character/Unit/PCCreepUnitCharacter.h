@@ -36,7 +36,7 @@ protected:
 	TObjectPtr<UPCDataAsset_CreepUnitData> CreepUnitDataAsset;
 
 	// 전투 관련 //
-	virtual void HandleGameStateChanged(const FGameplayTag& NewStateTag) override;
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
 	
 public:
 	virtual void Die() override;

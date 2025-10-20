@@ -4,14 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Components/ActorComponent.h"
 #include "Synergy/PCSynergyCountRep.h"
 #include "PCSynergyComponent.generated.h"
 
-
 class UPCSynergyBase;
 class UPCDataAsset_SynergyDefinitionSet;
 class APCHeroUnitCharacter;
+
+USTRUCT()
+struct FHeroSynergyTally
+{
+	GENERATED_BODY()
+	
+	TMap<FGameplayTag, int32> SynergyCountMap;
+
+	void IncreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsUnique);
+	void DecreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsRemoved);
+	bool IsEmpty() const { return SynergyCountMap.IsEmpty(); }
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCSynergyComponent : public UActorComponent
@@ -23,44 +35,49 @@ public:
 
 	void RegisterHero(APCHeroUnitCharacter* Hero);
 	void UnRegisterHero(APCHeroUnitCharacter* Hero);
-	void RefreshHero(APCHeroUnitCharacter* Hero);
-	void RebuildAll();
-
-	const FSynergyCountArray& GetSynergyCountArray() const { return SynergyCountArray; }
-	void GetSynergyCountMap(TMap<FGameplayTag, int32>& Out) const;
+	
+	const TArray<FSynergyCountEntry>& GetSynergyCountArray() const { return SynergyCountArray.Entries; };
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Synergy|Config")
+	
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Synergy|Config", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UPCDataAsset_SynergyDefinitionSet> SynergyDefinitionSet;
 
 	UPROPERTY(Transient)
-	TMap<FGameplayTag, TObjectPtr<UPCSynergyBase>> SynergyHandlers;
+	TMap<FGameplayTag, TObjectPtr<UPCSynergyBase>> SynergyToTagMap;
 	
-	UPROPERTY(ReplicatedUsing=OnRep_SynergyCounts)
+	TMap<FGameplayTag, int32> SynergyCountMap;
+	
+	TMap<FGameplayTag, int32> HeroTagCountMap;
+	TMap<FGameplayTag, FHeroSynergyTally> HeroSynergyMap;
+	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> RegisterHeroSet;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_SynergyCountArray)
 	FSynergyCountArray SynergyCountArray;
 	UFUNCTION()
-	void OnRep_SynergyCounts();
+	void OnRep_SynergyCountArray();
 	
-private:
-	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> RegisterHeroSet;
-
 	void InitializeSynergyHandlersFromDefinitionSet();
-	void RecomputeAndReplicate();
 
-	void RecomputeForTags(const FGameplayTagContainer& AffectedTags, bool bForceReapplyUnits);
-	void ApplyForSynergyTag(const FGameplayTag& Tag, bool bForceReapplyUnits);
-	
-	void ApplyAllSynergies(const TMap<FGameplayTag, int32>& CountMap);
+	void UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero);
+	void ApplySynergyEffects(const FGameplayTag& SynergyTag);
 	
 	void GetHeroSynergyTags(const APCHeroUnitCharacter* Hero, FGameplayTagContainer& OutSynergyTags) const;
-	void GatherRegisteredHeroes(TArray<APCHeroUnitCharacter*>& OutHeroes) const;
+	void GatherRegisteredHeroes(TArray<APCHeroUnitCharacter*>& OutHeroes);
 
+	FDelegateHandle GameStateDelegateHandle;
+	
 	void BindGameStateDelegates();
-	void OnGameStateTagChanged(const FGameplayTag NewTag);
+	void OnGameStateTagChanged(const FGameplayTag& NewTag);
+
+	void OnCombatActiveAction();
+	void OnCombatEndAction();
+	
+	void OnHeroDestroyed(APCHeroUnitCharacter* DestroyedHero);
+	void OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero, const FGameplayTag& SynergyTag, bool bIsAdded);
 	
 	// 디버그용
 public:

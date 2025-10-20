@@ -36,7 +36,7 @@ public:
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 	const FGameplayTag& GetJobSynergyTag() const;
 	const FGameplayTag& GetSpeciesSynergyTag() const;
-	float GetDefaultCurrentMana() const;
+	float GetCombatStartMana() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Scalable")
@@ -48,7 +48,4 @@ protected:
 	// 마나가 가득 찼을 때 사용하는 궁극기 능력
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TSubclassOf<UGameplayAbility> UltimateAttackAbility;
-
-	UPROPERTY()
-	float CachedDefaultCurrentMana = 0.f;
 };

@@ -25,7 +25,7 @@ bool UPCEffectSpec::IsTargetEligibleByGroup(const AActor* Source, const AActor* 
 	if (TargetGroup == EEffectTargetGroup::All) return true;
 
 	const ETeamAttitude::Type Attitude = FGenericTeamId::GetAttitude(Source, Target);
-	if (TargetGroup == EEffectTargetGroup::Ally)    return Attitude == ETeamAttitude::Friendly && Source != Target;
+	if (TargetGroup == EEffectTargetGroup::Ally)    return Attitude == ETeamAttitude::Friendly; //&& Source != Target;
 	if (TargetGroup == EEffectTargetGroup::Hostile) return Attitude == ETeamAttitude::Hostile;
 	return false;
 }

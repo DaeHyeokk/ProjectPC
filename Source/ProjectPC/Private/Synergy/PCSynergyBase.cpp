@@ -11,7 +11,7 @@
 #include "DataAsset/Synergy/PCDataAsset_SynergyData.h"
 
 
-void UPCSynergyBase::Apply(const FSynergyApplyParams& Params)
+void UPCSynergyBase::GrantGE(const FSynergyApplyParams& Params)
 {
 	if (!SynergyData || !SynergyData->IsValidData())
 		return;
@@ -19,39 +19,67 @@ void UPCSynergyBase::Apply(const FSynergyApplyParams& Params)
 		return;
 
 	const int32 DefaultTier = SynergyData->ComputeActiveTierIndex(Params.Count);
-	const int32 NewTierIdx = ComputeActiveTierIndex(Params, DefaultTier);
+	const int32 TierIdx = ComputeActiveTierIndex(Params, DefaultTier);
 
-	// 티어 변동 없고 유닛 재적용 강제 플래그도 false면 스킵
-	if (NewTierIdx == CachedTierIndex && !Params.bForceReapplyUnits)
-		return;
-
-	OnBeforeApply(Params, NewTierIdx);
-
-	// 기존 부여했던 능력 해제 후 새로운 티어 부여
-	RevokeAllGrantGAs();
-	RevokeAllGrantGEs();
-	
-	if (NewTierIdx >= 0)
+	// 시너지 티어가 바뀌었을 경우 기존에 부여한 GE 회수
+	if (CachedTierIndex != TierIdx)
 	{
-		if (!SynergyData->GetGrantGAs().IsEmpty())
-			GrantTier(Params, NewTierIdx);
-		
-		if (!SynergyData->GetApplyEffects().IsEmpty())
-			ApplyTierEffects(Params, NewTierIdx);
+		RevokeAllGrantGEs();
+		CachedTierIndex = TierIdx;
 	}
 	
-	CachedTierIndex = NewTierIdx;
-	OnAfterApply(Params, NewTierIdx);
+	const FSynergyTier* Tier = SynergyData->GetTier(TierIdx);
+	if (!Tier)
+		return;
+
+	// 아군 중 랜덤으로 적용하는 시너지일 경우 전투 시작 타이밍에 부여한다
+	if (IsRandomAmongPolicy(Tier))
+		return;
+	
+	if (!SynergyData->GetApplyEffects().IsEmpty())
+	{
+		GrantEffects(Params, Tier, TierIdx + 1);
+	}
 }
 
-void UPCSynergyBase::ResetGrantGAs()
+void UPCSynergyBase::CombatActiveGrant(const FSynergyApplyParams& Params)
 {
+	if (!SynergyData || !SynergyData->IsValidData())
+		return;
+	if (!Params.Instigator || !Params.Instigator->HasAuthority())
+		return;
+
+	const int32 DefaultTier = SynergyData->ComputeActiveTierIndex(Params.Count);
+	const int32 TierIdx = ComputeActiveTierIndex(Params, DefaultTier);
+	const FSynergyTier* Tier = SynergyData->GetTier(TierIdx);
+
+	if (!Tier)
+		return;
+	
+	if (IsRandomAmongPolicy(Tier))
+	{
+		RevokeAllGrantGEs();
+		GrantEffects(Params, Tier, TierIdx + 1);
+	}
+
 	RevokeAllGrantGAs();
+	GrantAbility(Params, Tier, TierIdx + 1);
 }
 
-void UPCSynergyBase::ResetGrantGEs()
+void UPCSynergyBase::CombatEndRevoke()
 {
-	RevokeAllGrantGEs();
+	const FSynergyTier* Tier = SynergyData->GetTier(CachedTierIndex);
+	if (!Tier)
+		return;
+
+	// 라운드 종료 시 랜덤 유닛에게 부여한 GE일 경우 회수
+	if (IsRandomAmongPolicy(Tier))
+	{
+		RevokeAllGrantGEs();
+	}
+
+	// 부여한 GA 회수
+	RevokeAllGrantGAs();
 }
 
 void UPCSynergyBase::ResetAll()
@@ -61,7 +89,7 @@ void UPCSynergyBase::ResetAll()
 	CachedTierIndex = -1;
 }
 
-void UPCSynergyBase::SelectRecipients(const FSynergyApplyParams& Params, const struct FSynergyTier& Tier,
+void UPCSynergyBase::SelectRecipients(const FSynergyApplyParams& Params, const FSynergyTier& Tier,
                                       TArray<APCHeroUnitCharacter*>& OutRecipients) const
 {
 	OutRecipients.Reset();
@@ -158,9 +186,51 @@ void UPCSynergyBase::RevokeAllGrantGEs()
 	ActiveGrantGEs.Reset();
 }
 
-void UPCSynergyBase::GrantTier(const FSynergyApplyParams& Params, int32 TierIndex)
+void UPCSynergyBase::RevokeHeroGrantGAs(const APCHeroUnitCharacter* Hero)
 {
-	const FSynergyTier* Tier = SynergyData->GetTier(TierIndex);
+	if (!Hero || !Hero->HasAuthority())
+		return;
+	
+	UAbilitySystemComponent* ASC = Hero->GetAbilitySystemComponent();
+	if (!ASC)
+		return;
+	
+	if (TArray<FGameplayAbilitySpecHandle>* ActiveGAs = ActiveGrantGAs.Find(ASC))
+	{
+		for (const auto& Handle : *ActiveGAs)
+		{
+			if (Handle.IsValid())
+				ASC->ClearAbility(Handle);
+		}
+	
+		ActiveGrantGAs.Remove(ASC);
+	}
+}
+
+void UPCSynergyBase::RevokeHeroGrantGEs(const APCHeroUnitCharacter* Hero)
+{
+	if (!Hero || !Hero->HasAuthority())
+		return;
+	
+	UAbilitySystemComponent* ASC = Hero->GetAbilitySystemComponent();
+	if (!ASC)
+		return;
+	
+	if (TArray<FActiveGameplayEffectHandle>* ActiveGEs = ActiveGrantGEs.Find(ASC))
+	{
+		for (const auto& Handle : *ActiveGEs)
+		{
+			if (Handle.IsValid())
+				ASC->RemoveActiveGameplayEffect(Handle);
+		}
+
+		ActiveGrantGEs.Remove(ASC);
+	}
+}
+
+
+void UPCSynergyBase::GrantAbility(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 TierIndex)
+{
 	if (!Tier)
 		return;
 
@@ -174,6 +244,10 @@ void UPCSynergyBase::GrantTier(const FSynergyApplyParams& Params, int32 TierInde
 		if (!Hero) continue;
 		if (UAbilitySystemComponent* HeroASC = Hero->GetAbilitySystemComponent())
 		{
+			// 이미 부여돼있을 경우 스킵 (라운드 종료 시 초기화 하기 때문에 부여돼있을 경우는 없지만 방어코드)
+			if (ActiveGrantGAs.Contains(HeroASC))
+				continue;
+			
 			TArray<FGameplayAbilitySpecHandle>& Handles = ActiveGrantGAs.FindOrAdd(HeroASC);
 
 			for (const FSynergyGrantGA& GrantGA : SynergyData->GetGrantGAs())
@@ -193,9 +267,8 @@ void UPCSynergyBase::GrantTier(const FSynergyApplyParams& Params, int32 TierInde
 	}
 }
 
-void UPCSynergyBase::ApplyTierEffects(const FSynergyApplyParams& Params, int32 TierIndex)
+void UPCSynergyBase::GrantEffects(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 Level)
 {
-	const FSynergyTier* Tier = SynergyData->GetTier(TierIndex);
 	if (!Tier)
 		return;
 	
@@ -203,19 +276,22 @@ void UPCSynergyBase::ApplyTierEffects(const FSynergyApplyParams& Params, int32 T
 	SelectRecipients(Params, *Tier, Recipients);
 	if (Recipients.Num() == 0) return;
 
-	for (APCHeroUnitCharacter* Hero : Recipients)
+	for (const APCHeroUnitCharacter* Hero : Recipients)
 	{
 		if (!Hero) continue;
 
 		if (UAbilitySystemComponent* HeroASC = Hero->GetAbilitySystemComponent())
 		{
+			// 이미 부여돼있을 경우 스킵
+			if (ActiveGrantGEs.Contains(HeroASC))
+				continue;
+			
 			TArray<FActiveGameplayEffectHandle>& Handles = ActiveGrantGEs.FindOrAdd(HeroASC);
 
 			for (const auto& EffectSpec : SynergyData->GetApplyEffects().EffectSpecs)
 			{
 				if (!EffectSpec) continue;
-
-				const int32 Level = TierIndex + 1;
+				
 				const FActiveGameplayEffectHandle Handle = EffectSpec->ApplyEffectSelf(HeroASC, Level);
 				
 				if (Handle.IsValid())
@@ -223,4 +299,11 @@ void UPCSynergyBase::ApplyTierEffects(const FSynergyApplyParams& Params, int32 T
 			}
 		}
 	}
+}
+
+bool UPCSynergyBase::IsRandomAmongPolicy(const FSynergyTier* SynergyTier) const
+{
+	const ESynergyRecipientPolicy& RecipientPolicy = SynergyTier->RecipientPolicy;
+
+	return RecipientPolicy == ESynergyRecipientPolicy::RandomAmongAllies || RecipientPolicy == ESynergyRecipientPolicy::RandomAmongOwners;
 }

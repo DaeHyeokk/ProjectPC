@@ -44,11 +44,11 @@ public:
 	
 	int32 DefaultLevel = 1.f;
 	
-	FActiveGameplayEffectHandle  ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel = -1);
+	FActiveGameplayEffectHandle ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel = -1);
 	FActiveGameplayEffectHandle ApplyEffectSelf(UAbilitySystemComponent* ASC, int32 EffectLevel = -1);
 	
 protected:
-	virtual FActiveGameplayEffectHandle  ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) PURE_VIRTUAL(UPCEffectSpec::ApplyEffectImpl, return FActiveGameplayEffectHandle();)
+	virtual FActiveGameplayEffectHandle ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) PURE_VIRTUAL(UPCEffectSpec::ApplyEffectImpl, return FActiveGameplayEffectHandle();)
 	
 	bool IsTargetEligibleByGroup(const AActor* Source, const AActor* Target) const;
 
