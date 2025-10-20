@@ -324,6 +324,7 @@ void APCCombatGameMode::Step_Setup()
 
 void APCCombatGameMode::Step_Travel()
 {
+	const int32 Stage = FlatStageIdx.IsValidIndex(Cursor) ? FlatStageIdx[Cursor] : 0;
 	const FRoundStep* Next = PeekNextStep();
 	if (!Next) return;
 
@@ -349,7 +350,7 @@ void APCCombatGameMode::Step_Travel()
 		{
 			if (CarouselRing)
 			{
-				CarouselRing->SpawnPickups();
+				CarouselRing->SpawnPickups(Stage);
 			}
 			
 			PlaceAllPlayersOnCarousel();

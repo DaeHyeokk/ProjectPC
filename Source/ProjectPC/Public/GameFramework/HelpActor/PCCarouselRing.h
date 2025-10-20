@@ -144,7 +144,7 @@ public:
 
 	// 픽업 제어
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
-	void SpawnPickups();
+	void SpawnPickups(int32 Stage);
 
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void ClearPickups();

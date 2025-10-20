@@ -146,7 +146,7 @@ void APCCarouselRing::ClearPickups()
 	SpawnedPickups.Reset();
 }
 
-void APCCarouselRing::SpawnPickups()
+void APCCarouselRing::SpawnPickups(int32 Stage)
 {
 	ClearPickups();
 
@@ -155,7 +155,7 @@ void APCCarouselRing::SpawnPickups()
 	if ( APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		auto ShopManager = PCGameState->GetShopManager();
-		SpawnTag = ShopManager->GetCarouselUnitTags(1);
+		SpawnTag = ShopManager->GetCarouselUnitTags(Stage);
 	}
 
 	// 부모(부착 대상) 스케일이 0이면 자식 월드스케일도 0 됩니다.
