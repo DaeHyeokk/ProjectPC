@@ -6,8 +6,11 @@
 #include "Blueprint/UserWidget.h"
 #include "PCShopWidget.generated.h"
 
+class APCCombatPlayerController;
 struct FOnAttributeChangeData;
 
+class APCPlayerState;
+class UImage;
 class UHorizontalBox;
 class UOverlay;
 class UButton;
@@ -25,34 +28,55 @@ class PROJECTPC_API UPCShopWidget : public UUserWidget
 
 protected:
 	virtual bool Initialize() override;
+
+private:
+	UPROPERTY()
+	APCPlayerState* CachedPlayerState;
+
+	UPROPERTY()
+	TWeakObjectPtr<APCCombatPlayerController> CachedController;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "UnitSlotWidgetClass")
 	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 
-	void BindToPlayerState(class APCPlayerState* NewPlayerState);
+	void BindToPlayerState(APCPlayerState* NewPlayerState);
+
+	void InitWithPC(APCCombatPlayerController* InPC);
 
 protected:
+	int32 PlayerLevel;
+	int32 PlayerMaxXP;
+	int32 PlayerXP;
+	int32 PlayerGold;
+	
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* PlayerShopBox;
-	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UHorizontalBox* ShopBox;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UOverlay* SellBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UWidgetSwitcher* WidgetSwitcher;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_BuyXP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_Reroll;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UButton* Btn_ShopLock;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* GoldBalance;
-	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UWidgetSwitcher* WidgetSwitcher;
+	UTextBlock* WinningStreak;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_ShopLock;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_WinningStreak;
 
 	// Cost Probability
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -74,14 +98,27 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UProgressBar* XPBar;
 
+	// ShopLock
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* ShopLock;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* ShopUnlock;
+
+	// WinningStreak
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* Winning;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UTexture2D* Losing;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
 	UFUNCTION(BlueprintCallable)
 	void CloseMenu();
-	UFUNCTION(BlueprintCallable)
+	
+	UFUNCTION()
 	void SetupShopSlots();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void SetupPlayerInfo();
 	
 private:
@@ -89,10 +126,13 @@ private:
 	void OnClickedBuyXP();
 	UFUNCTION()
 	void OnClickedReroll();
+	UFUNCTION()
+	void OnClickedShopLock();
 	
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
+	void OnPlayerWinningStreakChanged();
 
 public:
 	void SetSlotHidden(int32 SlotIndex);

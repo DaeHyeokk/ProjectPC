@@ -3,6 +3,10 @@
 
 #include "Character/Projectile/PCBaseProjectile.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemGlobals.h"
+#include "BaseGameplayTags.h"
+#include "AbilitySystem/Player/GA/PCGameplayAbility_DamageEvent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -10,6 +14,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
+#include "GameFramework/PlayerState.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
@@ -56,12 +61,12 @@ void APCBaseProjectile::BeginPlay()
 }
 
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack)
 {
 	if (SpawnActor && TargetActor)
 	{
-		ProjectileDataUnitTag = UnitTag;
-		ProjectileDataTypeTag = TypeTag;
+		ProjectileDataCharacterTag = CharacterTag;
+		ProjectileDataAttackTypeTag = AttackTypeTag;
 		
 		SetInstigator(SpawnActor->GetInstigator());
 		
@@ -73,37 +78,39 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 		SetTarget(TargetActor);
 		
 		Target = TargetActor;
+
+		bIsPlayerAttack = IsPlayerAttack;
 	}
 }
 
 void APCBaseProjectile::SetProjectileProperty()
 {
-	if (auto Unit = ProjectileData.Find(ProjectileDataUnitTag))
+	if (auto Unit = ProjectileData.Find(ProjectileDataCharacterTag))
 	{
-		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataTypeTag);
-		if (Projectile.Mesh && MeshComp)
+		auto Projectile = Unit->Get()->GetProjectileData(ProjectileDataAttackTypeTag);
+		if (Projectile->Mesh && MeshComp)
 		{
-			MeshComp->SetStaticMesh(Projectile.Mesh);
+			MeshComp->SetStaticMesh(Projectile->Mesh);
 		}
-		if (Projectile.TrailEffect && TrailEffectComp)
+		if (Projectile->TrailEffect && TrailEffectComp)
 		{
-			TrailEffectComp->SetTemplate(Projectile.TrailEffect);
+			TrailEffectComp->SetTemplate(Projectile->TrailEffect);
 			TrailEffectComp->SetActive(true);
 		}
-		if (Projectile.HitEffect)
+		if (Projectile->HitEffect)
 		{
-			HitEffect = Projectile.HitEffect;
+			HitEffect = Projectile->HitEffect;
 		}
 
-		ProjectileMovement->InitialSpeed = Projectile.Speed;
-		ProjectileMovement->MaxSpeed = Projectile.Speed;
+		ProjectileMovement->InitialSpeed = Projectile->Speed;
+		ProjectileMovement->MaxSpeed = Projectile->Speed;
 		ProjectileMovement->Velocity = GetActorForwardVector();
-		bIsHomingProjectile = Projectile.bIsHomingProjectile;
-		bIsPenetrating = Projectile.bIsPenetrating;
+		bIsHomingProjectile = Projectile->bIsHomingProjectile;
+		bIsPenetrating = Projectile->bIsPenetrating;
 	
-		if (Projectile.LifeTime > 0.f)
+		if (Projectile->LifeTime > 0.f)
 		{
-			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile.LifeTime, false);
+			GetWorldTimerManager().SetTimer(LifeTimer, this, &APCBaseProjectile::ReturnToPool, Projectile->LifeTime, false);
 		}
 	}
 }
@@ -170,45 +177,58 @@ void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataUnitTag);
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataTypeTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataCharacterTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataAttackTypeTag);
 }
 
 void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (!HasAuthority()) return;
 	Super::NotifyActorBeginOverlap(OtherActor);
-	
-	if (OtherActor != GetInstigator())
-	{
-		if (bIsHomingProjectile && OtherActor != Target)
-		{
-			return;
-		}
-		
-		if (HitEffect)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
-			Multicast_Overlap(OtherActor);
-		}
 
-		for (auto EffectSpec : EffectSpecs)
+	if (AActor* InstigatorActor = GetInstigator())
+	{
+		if (OtherActor != InstigatorActor)
 		{
-			if (EffectSpec)
+			if (bIsHomingProjectile && OtherActor != Target) return;
+		
+			if (HitEffect)
 			{
-				if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
+				Multicast_Overlap(OtherActor);
+			}
+
+			if (bIsPlayerAttack)
+			{
+				if (auto InstigatorPawn = Cast<APawn>(InstigatorActor))
 				{
-					if (auto ASC = Unit->GetAbilitySystemComponent())
+					if (auto InstigatorPS = InstigatorPawn->GetPlayerState())
 					{
-						EffectSpec->ApplyEffect(ASC, Target);
+						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorPS, PlayerGameplayTags::Player_Event_ProjectileHit, FGameplayEventData());
 					}
 				}
 			}
-		}
-
-		if (!bIsPenetrating)
-		{
-			ReturnToPool();
+			else
+			{
+				for (auto EffectSpec : EffectSpecs)
+				{
+					if (EffectSpec)
+					{
+						if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+						{
+							if (auto ASC = Unit->GetAbilitySystemComponent())
+							{
+								EffectSpec->ApplyEffect(ASC, Target);
+							}
+						}
+					}
+				}
+			}
+			
+			if (!bIsPenetrating)
+			{
+				ReturnToPool();
+			}
 		}
 	}
 }

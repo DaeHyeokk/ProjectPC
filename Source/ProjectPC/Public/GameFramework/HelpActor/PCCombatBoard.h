@@ -39,7 +39,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* SceneRoot;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USpringArmComponent* SpringArm;
 
@@ -48,7 +48,7 @@ public:
 
 	// 해당 보드 번호 (SeatIndex와 1:1)
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Board")
-	int32 BoardSeatIndex = 0;
+	int32 BoardSeatIndex = -1;
 
 	// SeatAnchor 소켓 부모를 에디터에서 지정
 	UPROPERTY(EditAnywhere, Category = "Seat")
@@ -71,13 +71,7 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Seat")
 	USceneComponent* EnemySeatAnchor = nullptr;
-
-	// HISM On / Off
-	UFUNCTION(BlueprintCallable, Category = "HISM")
-	void OnHism(bool bOn) const;
-
-	UFUNCTION(BLueprintCallable, Category = "HISM")
-	void OnEnemyHism(bool bEnemySide) const;
+	
 
 	// 보드 좌석 스폰용 헬퍼
 	UFUNCTION(BlueprintCallable)
@@ -93,24 +87,28 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplyClientMirrorView();
+
+	FVector HomeCameraOffset = FVector(-110.f, 0.f, -110.f);
+	FRotator HomeCameraRotation = FRotator(3.f, 0.f,0.f);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FVector HomeCam_LocPreset = FVector(-1400.f,0.f, 1200.f);
+	FVector HomeCam_LocPreset = FVector(-1150.f,0.f, 1000.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	FRotator HomeCam_RocPreset = FRotator(-47.f, 0.f, 0.f);
+	FRotator HomeCam_RocPreset = FRotator(-50.f, 0.f, 0.f);
 	
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FVector BattleCameraChangeLocation = FVector(1400.f, 0.f, 1200.f);
+	FVector BattleCameraChangeLocation = FVector(1150.f, 0.f, 1000.f);
 
 	UPROPERTY(EditAnywhere, Category= "Camera")
-	FRotator BattleCameraChangeRotation = FRotator(-47.f, 180.f,0.f);
+	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
 
 	
 
 protected:
 	
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -119,91 +117,11 @@ protected:
 	void RebuildAnchors();
 	USceneComponent* Resolve(const FComponentReference& Ref) const;
 
-
-	// 타일 관련
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* FieldRoot;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* BenchRoot;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Markers", meta=(AllowPrivateAccess = "true"))
-	USceneComponent* EnemyBenchRoot;
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName FieldPrefix = TEXT("Field_");
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName BenchPrefix = TEXT("Bench_");
-
-	UPROPERTY(EditAnywhere, Category = "Markers")
-	FName EnemyBenchPrefix = TEXT("Enemy_");
-
-	// HISM(필드/벤치)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* FieldHISM;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* BenchHISM;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HISM", meta=(AllowPrivateAccess = "true"))
-	UHierarchicalInstancedStaticMeshComponent* EnemyHISM;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UStaticMesh* HexTileMesh = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* HexTileMaterial = nullptr;
-
-	UPROPERTY(EditAnyWHere, Category = "HISM")
-	UMaterialInterface* HexTileOverlayMaterial = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UStaticMesh* BenchTileMesh = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* BenchTileMaterial = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "HISM")
-	UMaterialInterface* BenchTileOverlayMaterial = nullptr;
-
-	// 공개 API
-	UFUNCTION(BlueprintCallable)
-	void RebuildTilesFromMarkers();
-
-	// 비어있는 벤치 중 가장 왼쪽의 인덱스를 받아오는 함수
-	int32 GetFirstEmptyBenchIndex(int32 SeatIndex) const;
-
-protected:
-	// 마커 수집
-	void CollectTileMarkers();
-
-	// 인스터스 / 매핑 구축
-	void BuildHISM();
-
-private:
-
-	// 타일 월드 변환
-	UPROPERTY()
-	TArray<FTileInfo> FieldTiles;
-	UPROPERTY()
-	TArray<FTileInfo> BenchTiles;
-	UPROPERTY()
-	TArray<FTileInfo> EnemyTiles;
-
-	// HISM 인덱스 / 논리 좌표
-	UPROPERTY()
-	TArray<FIntPoint> Field_InstanceToXY;
-	UPROPERTY()
-	TArray<FIntPoint> Bench_InstanceToXY;
-	UPROPERTY()
-	TArray<FIntPoint> Enemy_InstanceToXY;
-
+	
 	// Tile Manager
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true), Category = "Tile")
 	UPCTileManager* TileManager;
 
 	// 보드에서 바로 타일 쿼리하고 싶을때 (래퍼)
@@ -218,13 +136,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetTileWorldLocation(int32 Y, int32 X) const;
-
-	UFUNCTION(BlueprintPure, Category = "Tile")
-	APCBaseUnitCharacter* GetBenchUnitAt(int32 BenchIndex) const;
-
-	UFUNCTION(BlueprintPure, Category = "Tile")
-	FVector GetBenchWorldLocation(int32 BenchIndex) const;
-
+	
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	bool IsInRange(int32 Y, int X) const;
 

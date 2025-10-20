@@ -89,7 +89,7 @@ void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
 }
 
 void UPCUnitStatusBarWidget::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
-{
+{	
 	// 값은 델리게이트 인자 대신, 항상 ASC에서 '지금 시점'의 값을 재조회
 	const float NowValue = ASC.IsValid()
 		? ASC->GetNumericAttribute(MaxHealthAttr)

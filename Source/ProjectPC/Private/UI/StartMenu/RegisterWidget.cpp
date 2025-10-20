@@ -15,6 +15,9 @@ void URegisterWidget::NativeConstruct()
 	
 	if (Btn_Submit)
 		Btn_Submit->OnClicked.AddDynamic(this, &URegisterWidget::OnClicked_Submit);
+
+	if (Btn_Cancel)
+		Btn_Cancel->OnClicked.AddDynamic(this, &URegisterWidget::OnClicked_Cancel);
 }
 
 void URegisterWidget::OnClicked_Submit()
@@ -44,4 +47,9 @@ void URegisterWidget::OnClicked_Submit()
 	OnRegistered.Broadcast();
 	SetVisibility(ESlateVisibility::Hidden);
 	
+}
+
+void URegisterWidget::OnClicked_Cancel()
+{
+	SetVisibility(ESlateVisibility::Hidden);
 }

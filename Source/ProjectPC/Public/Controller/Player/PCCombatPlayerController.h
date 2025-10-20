@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "BaseGameplayTags.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCPlayerInventoryWidget;
+class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
 class APCBaseUnitCharacter;
@@ -53,6 +56,12 @@ class PROJECTPC_API APCCombatPlayerController : public APlayerController
 
 public:
 	APCCombatPlayerController();
+
+	UFUNCTION(Client, Reliable)
+	void Client_RequestIdentity();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSubmitIdentity(const FString& InDisplayName);
 	
 protected:
 	virtual void SetupInputComponent() override;
@@ -76,13 +85,16 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void Server_StopMovement();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetRotation(const FVector& Destination);
 	
 	UFUNCTION(Server, Reliable)
 	void Server_MovetoLocation(const FVector& Destination);
 
 	UFUNCTION(Client, Reliable)
 	void Client_MovetoLocation(const FVector& Destination);
-
+	
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();
@@ -91,18 +103,23 @@ private:
 #pragma endregion Input
 
 #pragma region Shop
+
+private:
+	bool bIsShopLocked = false;
+	bool bIsShopRequestInProgress = false;
 	
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ShopWidget")
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
 	UPCShopWidget* ShopWidget;
 
+public:
 	FTimerHandle LoadShop;
 
-	UFUNCTION(BlueprintCallable)
 	void LoadShopWidget();
+	void LoadMainWidget();
 
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
 
@@ -110,6 +127,7 @@ public:
 	void ShopRequest_BuyXP();
 	void ShopRequest_SellUnit();
 	void ShopRequest_BuyUnit(int32 SlotIndex);
+	void ShopRequest_ShopLock(bool ShopLockState);
 
 	UFUNCTION(Server, Reliable)
 	void Server_ShopRefresh(float GoldCost);
@@ -119,10 +137,29 @@ public:
 	void Server_SellUnit(APCBaseUnitCharacter* Unit);
 	UFUNCTION(Server, Reliable)
 	void Server_BuyUnit(int32 SlotIndex);
+	UFUNCTION(Server, Reliable)
+	void Server_ShopLock(bool ShopLockState);
+	
 	UFUNCTION(Client, Reliable)
-	void SetSlotHidden(int32 SlotIndex);
+	void Client_SetSlotHidden(int32 SlotIndex);
+	UFUNCTION(Client, Reliable)
+	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
+
+#pragma region Inventory
+//
+// protected:
+// 	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
+// 	TSubclassOf<UUserWidget> InventoryWidgetClass;
+//
+// 	UPROPERTY()
+// 	UPCPlayerInventoryWidget* InventoryWidget;
+//
+// public:
+// 	void LoadInventoryWidget();
+	
+#pragma endregion Inventory
 
 #pragma region Camera
 	// 게임 카메라 세팅
@@ -205,12 +242,12 @@ public:
 	void Client_HideWidget();
 
 private:
-	
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;
 
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
+	
 #pragma endregion UI
 
 #pragma region Drag&Drop
@@ -248,9 +285,15 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_TileHoverUnit(APCBaseUnitCharacter* Unit);
 
+	UFUNCTION(Client, Reliable)
+	void Client_CheckHeroStatus(APCBaseUnitCharacter* Unit);
+
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedHoverUnit;
-	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() { return CachedHoverUnit; }
+	TWeakObjectPtr<APCBaseUnitCharacter> GetCachedHoverUnit() const { return CachedHoverUnit; }
+
+	UPROPERTY()
+	TWeakObjectPtr<APCBaseUnitCharacter> CachedCheckStatusUnit;
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
@@ -264,9 +307,11 @@ public:
 
 	UPCTileManager* GetTileManager() const ;
 
-	static bool IsAllowFieldY(int32 Y) { return Y <= 3;}
-	bool IsAllowBenchIdx(int32 Idx);
+	APCPlayerBoard* GetPlayerBoard() const;
 
+	APCPlayerBoard* GetLocalPlayerBoard() const;
+	
+	
 	// 외곽선 관련
 	TWeakObjectPtr<APCBaseUnitCharacter> LastHoverUnit;
 
@@ -286,7 +331,6 @@ public:
 		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
 	}
 
-	
 
 protected:
 	// 서버 상태
@@ -295,7 +339,6 @@ protected:
 
 	// === 서버 헬퍼 ===
 	bool CanControlUnit(const APCBaseUnitCharacter* Unit) const;
-	bool RemoveFromCurrentSlot(UPCTileManager* TM, APCBaseUnitCharacter* Unit) const;
 	
 	// 이동 연출(클라) - 서버에서 호출
 	UFUNCTION(NetMulticast, Unreliable)
@@ -309,4 +352,18 @@ protected:
 	float LerpDuration = 0.15f;
 
 #pragma endregion Drag&Drop
+
+#pragma region GameResult
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "GameResultWidget")
+	TSubclassOf<UUserWidget> GameResultWidgetClass;
+
+	UPROPERTY()
+	UPCGameResultWidget* GameResultWidget;
+
+	UFUNCTION(Client, Reliable)
+	void Client_LoadGameResultWidget(int32 Ranking);
+
+#pragma endregion GameResult
 };

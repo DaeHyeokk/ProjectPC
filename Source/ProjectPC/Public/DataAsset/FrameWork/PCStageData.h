@@ -3,12 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "PCStageData.generated.h"
 
 /**
  * 
  */
+
+struct FGameplayTag;
 
 UENUM()
 enum class EPCStageType : uint8
@@ -44,6 +47,12 @@ struct FRoundSpec
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
 	FName RoundName = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
+	FGameplayTag GameRoundTag;
+
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
+	// FGameplayTag PvESubTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
 	TArray<FRoundStep> Steps;
@@ -106,7 +115,8 @@ public:
 	float GetRoundDuration(const FRoundStep& RoundStep) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Schedule")
-	void BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32>& RoundIdx, TArray<int32>& StepIdxInRound) const;
+	void BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<int32>& StageIdx, TArray<int32>& RoundIdx, TArray<int32>& StepIdxInRound,
+		TArray<FGameplayTag>& OutRoundMajorFlat, TArray<FGameplayTag>& OutPvESubTagFlat) const;
 	
 	UFUNCTION(BlueprintPure, Category = "UI")
 	FString MakeStageRoundLabel(int32 FloatIndex, const TArray<int32>& StageIdx, const TArray<int32>& RoundIdx) const;

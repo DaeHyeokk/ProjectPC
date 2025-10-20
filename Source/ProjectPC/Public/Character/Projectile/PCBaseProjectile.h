@@ -24,10 +24,10 @@ protected:
 	TArray<UPCEffectSpec*> EffectSpecs;
 	
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
-	FGameplayTag ProjectileDataUnitTag;
+	FGameplayTag ProjectileDataCharacterTag;
 
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
-	FGameplayTag ProjectileDataTypeTag;
+	FGameplayTag ProjectileDataAttackTypeTag;
 	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
@@ -62,9 +62,11 @@ private:
 	UPROPERTY()
 	const AActor* Target;
 
+	bool bIsPlayerAttack = false;
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack = false);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetProjectileProperty();

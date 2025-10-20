@@ -20,6 +20,5 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
 	TMap<FGameplayTag, FPCProjectileData> ProjectileData;
 
-	UFUNCTION(BlueprintPure, Category = "ProjectileData")
-	const FPCProjectileData& GetProjectileData(FGameplayTag Tag) const;
+	const FPCProjectileData* GetProjectileData(FGameplayTag Tag) const;
 };

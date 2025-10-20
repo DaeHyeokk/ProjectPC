@@ -30,7 +30,7 @@ public:
 	void InitializeProjectilePoolData(const FPCProjectilePoolData& NewProjectilePoolData);
 
 	UFUNCTION(BlueprintCallable)
-	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag UnitTag, FGameplayTag TypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack = false);
 
 	UFUNCTION(BlueprintCallable)
 	void ReturnProjectile(APCBaseProjectile* ReturnedProjectile);

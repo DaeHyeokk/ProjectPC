@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
+class UAbilitySystemComponent;
 class APCUnitCombatTextActor;
 class UPCTileManager;
 class APCCombatBoard;
@@ -84,8 +85,65 @@ struct FStageRuntimeState
 	float ServerEndTime = 0.f;
 };
 
+/** 메인 위젯에 그대로 나열할 행(1등=Index 0, N등=Index N-1) */
+USTRUCT(BlueprintType)
+struct FPlayerStandingRow
+{
+	GENERATED_BODY()
+
+	/** 플레이어ID 식별자 */
+	UPROPERTY(BlueprintReadOnly)
+	FString LocalUserId;
+	
+	/** 최신 HP (실시간) */
+	UPROPERTY(BlueprintReadOnly)
+	float Hp = 0.f;
+
+	/** 사망 여부 */
+	UPROPERTY(BlueprintReadOnly)
+	bool bEliminated = false;
+
+	/** 실시간 생존자 랭크(1부터). 사망자는 0 */
+	UPROPERTY(BlueprintReadOnly)
+	int32 LiveRank = 0;
+
+	/** 확정 최종 등수(사망 순간 할당. 마지막 생존자는 1) */
+	UPROPERTY(BlueprintReadOnly)
+	int32 FinalRank = 0;
+
+	/** 리스트 안정화용: 최초 관측 순서(사망 섹션 정렬에는 사용 X, 필요 시 참고) */
+	UPROPERTY(BlueprintReadOnly)
+	int32 StableOrder = 0;
+
+	/** HP 동률 안정화를 위한 마지막 변경 시각(서버시간) */
+	UPROPERTY(BlueprintReadOnly)
+	float LastChangeTime = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag CharacterTag;
+};
+
+UENUM(BlueprintType)
+enum class ERoundResult : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Victory UMETA(DisplayName = "Victory"),
+	Defeat UMETA(DisplayName = "Defeat"),
+	Draw UMETA(DisplayName = "Draw")
+};
+
+// GameStateWidget 표시용 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnStageRuntimeChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameStateTagChanged, const FGameplayTag&);
+DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
+
+// Leaderboard 맵 델리게이트
+using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
+
+// Carousel 전용 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnCarouselGetScheduleChanged);
 /**
  * 
  */
@@ -95,10 +153,10 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase, public IGameplay
 	GENERATED_BODY()
 
 public:
-	
 	APCCombatGameState();
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -152,18 +210,86 @@ public:
 	UFUNCTION(BlueprintPure)
 	EPCStageType GetCurrentStageType() const;
 
+	// UI 헬퍼
+	UFUNCTION(BlueprintPure, Category = "Stage")
+	FORCEINLINE int32 GetStageIndex() const { return StageRuntimeState.StageIdx;}
+
+	UFUNCTION(BlueprintPure, Category = "Stage")
+	FORCEINLINE int32 GetRoundIndex() const { return StageRuntimeState.RoundIdx;}
+
+	// Round Layout
+	void SetRoundsPerStage(const TArray<int32>& InCounts);
+	void SetRoundMajorsFlat(const TArray<FGameplayTag>& InFlatMajors);
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 GetNumStages() const { return RoundsPerStage.Num();}
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 GetNumRoundsInStage(int32 StageIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	FGameplayTag GetMajorStageForRound(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	FGameplayTag GetPvETagForRound(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
+	int32 StagesStartFlatIndex(int32 StageIdx) const;
+
+	
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<FGameplayTag> RoundPvETagFlat;
+		
+	
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
-
+	FOnRoundsLayoutChanged OnRoundsLayoutChanged;
+	
 	UPROPERTY(ReplicatedUsing=OnRep_StageRunTime, BlueprintReadOnly, Category = "Stage")
 	FStageRuntimeState StageRuntimeState;
+
+	// 전투결과 반영
+	// 클라 로컬 캐시
+	UPROPERTY(ReplicatedUsing=OnRep_RoundResult)
+	TArray<ERoundResult> SeatRoundResult;
+
+	UFUNCTION()
+	void OnRep_RoundResult();
+
+	void ApplyRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx, ERoundResult Result);
+	
+	UFUNCTION(BlueprintPure)
+	int32 GetMySeatIndex() const;
+	
+	ERoundResult GetRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx) const;
+
+	// UI 헬퍼
+	UFUNCTION(BlueprintPure)
+	bool WasRoundVictory(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure)
+	bool WasRoundDefeat(int32 StageIdx, int32 RoundIdx) const;
+
+	UFUNCTION(BlueprintPure)
+	bool WasRoundDraw(int32 StageIdx, int32 RoundIdx) const;
+	
 	
 protected:
-
-	
 	
 	UFUNCTION()
 	void OnRep_StageRunTime();
+
+	// 라운드 개수
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<int32> RoundsPerStage;
+
+	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
+	TArray<FGameplayTag> RoundMajorFlat;
+
+	UFUNCTION()
+	void OnRep_RoundsLayout();
+
+	int32 TotalRoundsFloat() const;
 
 	
 #pragma endregion UI
@@ -185,7 +311,7 @@ public:
 	
 protected:
 	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
 	UDataTable* LevelMaxXPDataTable;
 
 private:
@@ -277,4 +403,106 @@ private:
 	}
 
 #pragma endregion TemplateFunc
+
+#pragma region Ranking
+
+public:
+
+	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
+	FOnLeaderBoardReadyNative OnLeaderBoardReady;
+	
+	// UI에 뿌릴 최종 배열
+	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
+	TArray<FPlayerStandingRow> Leaderboard;
+
+	// LocalUserId -> 확정 최종 등수
+	UPROPERTY(BlueprintReadOnly, Category = "Ranking")
+	TMap<FString, int32> FinalRanks;
+
+	bool IsLeaderboardReady() const { return bLeaderBoardReady;}
+
+	// 최초 도착 감지용
+	bool bLeaderBoardReady = false;
+
+	// 어트리뷰트 바인딩 함수
+	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")
+	void BindAllPlayerHP();
+
+	UFUNCTION(BlueprintCallable, Category = "Ranking||Bind")
+	void BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState);
+
+	// 자신의 최종 등수 반환 함수
+	UFUNCTION(BlueprintCallable, Category = "Ranking")
+	int32 AssignFinalRankOnDeathById(const FString& LocalUserId);
+
+	// 편의용 state 버전
+	UFUNCTION(BlueprintCallable, Category = "Ranking")
+	int32 AssignFinalRankOnDeathByPS(APCPlayerState* PCPlayerState);
+
+	UFUNCTION(BlueprintPure, Category = "Ranking")
+	int32 GetFinalRankFor(const FString& LocalUserId) const;
+
+	
+
+protected:
+
+	virtual void RemovePlayerState(APlayerState* PlayerState) override;
+
+	// ASC AttributeChangeDelegate
+	void OnHpChanged_Server(APCPlayerState* PCPlayerState, float NewHp);
+	void OnEliminated_Server(APCPlayerState* PCPlayerState);
+
+	// 리더보드 재구성, 마지막 1인 1등 처리
+	void RebuildAndReplicatedLeaderboard();
+	void TryFinalizeLastSurvivor();
+
+	// 위젯 갱신
+	UFUNCTION()
+	void OnRep_Leaderboard();
+
+	UAbilitySystemComponent* ResolveASC(APCPlayerState* PCPlayerState) const;
+
+	void BroadCastLeaderboardMap() const;
+
+
+private:
+
+	/** 서버 캐시들 (키 = LocalUserId) */
+	TMap<FString, float> HpCache;             // 최신 HP
+	TMap<FString, float> LastChangeTimeCache; // 마지막 HP 변경시간(서버)
+	TMap<FString, int32> StableOrderCache;    // 최초 관측 순서
+	TSet<FString>        EliminatedSet;       // 사망자 집합
+	
+	int32 AliveCount = 0;
+	int32 StableOrderCounter = 0;
+
+	/** ASC 바인딩 핸들 관리 */
+	TMap<TWeakObjectPtr<UAbilitySystemComponent>, FDelegateHandle> HpDelegateHandles;
+
+
+public:
+	// ==== Debug ====
+	UFUNCTION(BlueprintCallable, Exec, Category="Rank|Debug")
+	void DebugPrintLeaderboard(bool bToScreen = true, float ScreenSeconds = 5.f);
+
+	UFUNCTION(Server, Reliable)
+	void Server_DebugPrintLeaderboard(bool bToScreen, float ScreenSeconds);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_DebugPrintToScreen(const TArray<FString>& Lines, float ScreenSeconds);
+	
+#pragma endregion Ranking
+
+#pragma region Item
+
+protected:
+	// 아이템 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
+	UDataTable* ItemDataTable;
+
+	// 아이템 조합 데이터가 저장된 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
+	UDataTable* ItemCombineDataTable;
+	
+#pragma endregion Item
 };

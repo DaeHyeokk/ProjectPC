@@ -3,16 +3,25 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
+#include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Component/PCSynergyComponent.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
+#include "GameFramework/HelpActor/PCPlayerBoard.h"
+#include "Controller/Player/PCCombatPlayerController.h"
+#include "Engine/ActorChannel.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Item/PCPlayerInventory.h"
+#include "Shop/PCShopManager.h"
 
 
 APCPlayerState::APCPlayerState()
 {
+	// ASC 세팅
 	bReplicates = true;
 	PlayerAbilitySystemComponent = CreateDefaultSubobject<UPCPlayerAbilitySystemComponent>("PlayerAbilitySystemComponent");
 	PlayerAbilitySystemComponent->AddAttributeSetSubobject(CreateDefaultSubobject<UPCPlayerAttributeSet>(TEXT("PlayerAttributeSet")));
@@ -28,7 +37,36 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
 
+	// Inventory 세팅
+	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
 	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
+}
+
+void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
+{
+	if (HasAuthority())
+	{
+		PlayerBoard = InBoard;
+		if (PlayerBoard)
+		{
+			PlayerBoard->OwnerPlayerState = this;
+		}
+	}
+}
+
+void APCPlayerState::ResolvePlayerBoardOnClient()
+{
+	if (PlayerBoard) return;
+	UWorld* World = GetWorld();
+	for (TActorIterator<APCPlayerBoard> It(World); It; ++It)
+	{
+		if (It->PlayerIndex == SeatIndex)
+		{
+			PlayerBoard = *It;
+			break;
+		}
+	}
+	
 }
 
 void APCPlayerState::BeginPlay()
@@ -37,15 +75,10 @@ void APCPlayerState::BeginPlay()
 
 	if (HasAuthority())
 	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
 		PlayerAbilitySystemComponent->ApplyInitializedEffects();
 		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
 		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
-	}
-	else
-	{
-		PlayerAbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
 }
 
@@ -74,11 +107,16 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 			PlayerAbilitySystemComponent->AddLooseGameplayTag(NewStateTag);
 			CurrentStateTag = NewStateTag;
 
-			if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
+			if (auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
 			{
-				if (const auto PlayerCharacter = Cast<APCPlayerCharacter>(GetPawn()))
+				if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
 				{
 					PlayerCharacter->PlayerDie();
+					ReturnAllUnitToShop();
+				}
+				else
+				{
+					PlayerCharacter->SetOverHeadWidgetPosition(CurrentStateTag);
 				}
 			}
 		}
@@ -90,6 +128,21 @@ void APCPlayerState::AddValueToPlayerStat(FGameplayTag PlayerStatTag, float Valu
 	if (PlayerAbilitySystemComponent && HasAuthority())
 	{
 		PlayerAbilitySystemComponent->ApplyPlayerEffects(PlayerStatTag, Value);
+	}
+}
+
+void APCPlayerState::ApplyRoundReward()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerAbilitySystemComponent)
+	{
+		PlayerAbilitySystemComponent->ApplyPlayerRoundRewardEffect();
+	}
+	
+	if (auto PC = Cast<APCCombatPlayerController>(GetPlayerController()))
+	{
+		PC->Server_ShopRefresh(0);
 	}
 }
 
@@ -119,6 +172,114 @@ const TArray<FPCShopUnitData>& APCPlayerState::GetShopSlots()
 	return ShopSlots;
 }
 
+void APCPlayerState::ReturnAllUnitToShop()
+{
+	if (!HasAuthority()) return;
+	
+	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		auto ShopManager = GS->GetShopManager();
+		ShopManager->ReturnUnitsToShopBySlotUpdate(ShopSlots, PurchasedSlots);
+
+		if (PlayerBoard)
+		{
+			for (auto Field : PlayerBoard->PlayerField)
+			{
+				if (!Field.IsEmpty())
+				{
+					ShopManager->SellUnit(Field.Unit->GetUnitTag(), Field.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Field.Unit);
+					Field.Unit->Destroy();
+				}
+			}
+
+			for (auto Bench : PlayerBoard->PlayerBench)
+			{
+				if (!Bench.IsEmpty())
+				{
+					ShopManager->SellUnit(Bench.Unit->GetUnitTag(), Bench.Unit->GetUnitLevel());
+					PlayerBoard->RemoveFromBoard(Bench.Unit);
+					Bench.Unit->Destroy();
+				}
+			}
+		}
+	}
+}
+
+void APCPlayerState::OnRep_PlayerWinningStreak()
+{
+	OnWinningStreakUpdated.Broadcast();
+}
+
+void APCPlayerState::PlayerWin()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerWinningStreak <= 0)
+	{
+		PlayerWinningStreak = 1;
+	}
+	else
+	{
+		PlayerWinningStreak++;
+	}
+
+	// 승리 보상 1원 지급
+	if (PlayerAbilitySystemComponent && GE_PlayerGoldChange)
+	{
+		FGameplayEffectContextHandle EffectContext = PlayerAbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle GoldSpecHandle = PlayerAbilitySystemComponent->MakeOutgoingSpec(GE_PlayerGoldChange, 1.f, EffectContext);
+
+		if (GoldSpecHandle.IsValid())
+		{
+			GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
+			PlayerAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+		}
+	}
+}
+
+void APCPlayerState::PlayerLose()
+{
+	if (!HasAuthority()) return;
+	
+	if (PlayerWinningStreak >= 0)
+	{
+		PlayerWinningStreak = -1;
+	}
+	else
+	{
+		PlayerWinningStreak--;
+	}
+}
+
+void APCPlayerState::PlayerResult(int32 Ranking)
+{
+	if (!HasAuthority()) return;
+	
+	auto PC = Cast<APCCombatPlayerController>(GetPlayerController());
+	if (!PC) return;
+	
+	PC->Client_LoadGameResultWidget(Ranking);
+}
+
+int32 APCPlayerState::GetPlayerWinningStreak() const
+{
+	return PlayerWinningStreak;
+}
+
+bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
+	FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (PlayerInventory)
+	{
+		bWroteSomething |= Channel->ReplicateSubobject(PlayerInventory, *Bunch, *RepFlags);
+	}
+
+	return bWroteSomething;
+}
+
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -130,4 +291,25 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, bIdentified);
 	DOREPLIFETIME(APCPlayerState, ShopSlots);
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
+	DOREPLIFETIME(APCPlayerState, PlayerBoard);
+	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
+}
+
+void APCPlayerState::SetDisplayName_Server(const FString& InName)
+{
+	if (HasAuthority())
+	{
+		FString Clean = InName;
+		Clean.TrimStartAndEndInline();
+		Clean = Clean.Left(24);
+		LocalUserId = Clean;
+
+		SetPlayerName(Clean);
+		
+	}
+}
+
+void APCPlayerState::OnRep_SeatIndex()
+{
+	ResolvePlayerBoardOnClient();
 }

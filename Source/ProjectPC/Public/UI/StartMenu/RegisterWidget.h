@@ -30,6 +30,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UButton* Btn_Submit;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* Btn_Cancel;
+
 	UPROPERTY(BlueprintAssignable)
 	FOnRegisterCompleted OnRegistered;
 
@@ -41,6 +44,9 @@ public:
 	
 	UFUNCTION()
 	void OnClicked_Submit();
+
+	UFUNCTION()
+	void OnClicked_Cancel();
 	
 	
 };

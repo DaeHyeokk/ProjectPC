@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
-class UPathFollowingComponent;
+class UWidgetComponent;
 
 UCLASS()
 class PROJECTPC_API APCPlayerCharacter : public ACharacter
@@ -16,12 +17,32 @@ class PROJECTPC_API APCPlayerCharacter : public ACharacter
 public:
 	APCPlayerCharacter();
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer CharacterTags;
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")
+	UWidgetComponent* OverHeadWidgetComp;
+	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+	
+#pragma region PlayerDead
 	
 	UPROPERTY(Replicated)
 	bool bIsDead;
@@ -30,8 +51,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE bool IsDead() const { return bIsDead; }
 
-	UFUNCTION(BlueprintCallable)
 	void PlayerDie();
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	UFUNCTION(Client, Reliable)
+	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnPlayerDeathAnimFinished();
+
+#pragma endregion PlayerDead
 };

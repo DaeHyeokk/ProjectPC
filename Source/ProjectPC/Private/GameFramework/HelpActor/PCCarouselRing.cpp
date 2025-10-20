@@ -20,6 +20,7 @@
 APCCarouselRing::APCCarouselRing()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
@@ -81,14 +82,7 @@ void APCCarouselRing::OnConstruction(const FTransform& transform)
 
 	DrawDebugCircle(GetWorld(), COuter, PlayerRingRadius, 64, DebugColorOuter, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
 	DrawDebugCircle(GetWorld(), CInner, UnitRingRadius, 64, DebugColorInner, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
-
-	// 게이트 박스 미리 보기
-	for (UBoxComponent* B : GateBoxes)
-	{
-		if (!B) continue;
-		const FTransform T = B->GetComponentTransform();
-		DrawDebugBox(GetWorld(), T.GetLocation(), B->GetUnscaledBoxExtent(), T.GetRotation(), DebugColorGate, false, 0.f, 0, 1.5f);
-	}
+	
 }
 #endif
 
@@ -152,7 +146,7 @@ void APCCarouselRing::ClearPickups()
 	SpawnedPickups.Reset();
 }
 
-void APCCarouselRing::SpawnPickups()
+void APCCarouselRing::SpawnPickups(int32 Stage)
 {
 	ClearPickups();
 
@@ -161,7 +155,7 @@ void APCCarouselRing::SpawnPickups()
 	if ( APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		auto ShopManager = PCGameState->GetShopManager();
-		SpawnTag = ShopManager->GetCarouselUnitTags(1);
+		SpawnTag = ShopManager->GetCarouselUnitTags(Stage);
 	}
 
 	// 부모(부착 대상) 스케일이 0이면 자식 월드스케일도 0 됩니다.
@@ -224,77 +218,75 @@ void APCCarouselRing::SetRotationOnActive(bool bOn)
 
 void APCCarouselRing::BuildGates()
 {
-	for (UBoxComponent* GateBox : GateBoxes)
+	for (UStaticMeshComponent* GateMesh : GateMeshes)
 	{
-		if (GateBox)
+		if (GateMesh)
 		{
-			GateBox->DestroyComponent();
+			GateMesh->DestroyComponent();
 		}
 	}
-	GateBoxes.Reset();
+	GateMeshes.Reset();
 
 	if (PlayerNumSlots <= 0 )
 		return;
 
+	if (PlayerNumSlots <= 0 || !GateRoot || !GateStaticMesh)
+		return;
+
+	const FVector CenterWorld = GetRingCenterWorld(PlayerRingRoot);
+
 	for (int32 i = 0; i < PlayerNumSlots; ++i)
 	{
-		// 각 Seat의 전면을 막는 박스
-		const float CenterAngle = GetPlayerSeatAngelDeg(i);
-		const float HalfArc = GateArcDeg * 0.5f;
+		const float CenterAngleDeg = GetPlayerSeatAngelDeg(i);
+		const FVector Dir = FRotator(0.f, CenterAngleDeg, 0.f).Vector();
+		const FVector Pos = CenterWorld + Dir * PlayerRingRadius + FVector(0,0, GateHeight);
 
-		// 박스의 중심 각도
-		const FVector CenterWorld = GetRingCenterWorld(PlayerRingRoot);
-		const FVector Dir = FRotator(0.f, CenterAngle, 0.f).Vector();
+		UStaticMeshComponent* Gate = NewObject<UStaticMeshComponent>(this);
+		Gate->SetMobility(EComponentMobility::Movable);
+		Gate->SetStaticMesh(GateStaticMesh);
+		Gate->SetCollisionProfileName(GateCollisionProfile);
+		Gate->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-		// 박스를 플레이어보다 약간 앞 으로 두어 이동 차단
-		const float Radial = PlayerRingRadius - GateThickness * 0.5f;
-		const FVector Pos = CenterWorld + Dir * Radial + FVector(0,0,PlayerRingHeight + GateHeight*0.5f);
+		Gate->RegisterComponent();
+		Gate->AttachToComponent(GateRoot, FAttachmentTransformRules::KeepWorldTransform);
+		Gate->SetWorldLocation(Pos);
 
-		// 상자 크기
-		const float ArcLen = 2.f * Radial * FMath::Sin(FMath::DegreesToRadians(HalfArc));
-		const FVector BoxExtent(ArcLen, GateThickness * 0.5f, GateHeight*0.5);
-
-		UBoxComponent* Box = NewObject<UBoxComponent>(this);
-		Box->RegisterComponent();
-		Box->AttachToComponent(GateRoot, FAttachmentTransformRules::KeepWorldTransform);
-		Box->SetBoxExtent(BoxExtent, true);
-		Box->SetCollisionProfileName(GateCollisionProfile);
-		Box->SetHiddenInGame(true);
-
-		FRotator Rotator(0.f, CenterAngle, 0.f);
-		Box->SetWorldLocationAndRotation(Pos,Rotator);
-
-		GateBoxes.Add(Box);
+		GateMeshes.Add(Gate);
 	}
 }
 
 void APCCarouselRing::OpenGateForSeat(int32 SeatIndex, bool bOpen)
 {
-	if (!GateBoxes.IsValidIndex(SeatIndex))
-		return;
-	UBoxComponent* Box = GateBoxes[SeatIndex];
-	if (!Box)
-		return;
-	if (bOpen)
-	{
-		Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	else
-	{
-		Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	}
+	if (!GateMeshes.IsValidIndex(SeatIndex)) return;
+
+	UStaticMeshComponent* Gate = GateMeshes[SeatIndex];
+
+	if (!Gate) return;
+
+	Gate->SetCollisionEnabled(bOpen ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryAndPhysics);
+	Gate->SetHiddenInGame(bOpen);
 }
 
 void APCCarouselRing::OpenAllGates(bool bOpen)
 {
-	for (int32 i = 0; i < GateBoxes.Num(); ++i)
+	for (int32 i = 0; i < GateMeshes.Num(); ++i)
 	{
 		OpenGateForSeat(i, bOpen);
 	}
 }
 
+void APCCarouselRing::Multicast_OpenAllGates_Implementation(bool bOpen)
+{
+	OpenAllGates(bOpen);
+}
+
+void APCCarouselRing::Multicast_SetGateOpen_Implementation(int32 SeatIndex, bool bOpen)
+{
+	OpenGateForSeat(SeatIndex, bOpen);
+}
+
 void APCCarouselRing::ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime,
-	float ExtraYawDeg)
+                                              float ExtraYawDeg)
 {
 	if (!PC || !SpringArm) return;
 

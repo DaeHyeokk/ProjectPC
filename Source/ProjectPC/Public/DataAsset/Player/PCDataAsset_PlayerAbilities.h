@@ -19,14 +19,17 @@ class PROJECTPC_API UPCDataAsset_PlayerAbilities : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	UPROPERTY(EditDefaultsOnly, Category = "GE|Initial")
 	TSubclassOf<UGameplayEffect> InitializedEffect;
 
-	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	UPROPERTY(EditDefaultsOnly, Category = "GE|Initial")
 	TMap<FGameplayTag, float> InitializedEffectCallerValues;
 
-	UPROPERTY(EditDefaultsOnly, Category = "GE")
+	UPROPERTY(EditDefaultsOnly, Category = "GE|Player")
 	TMap<FGameplayTag, TSubclassOf<UGameplayEffect>> PlayerEffects;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GE|Player")
+	TSubclassOf<UGameplayEffect> PlayerRoundRewardEffect;
 
 	UPROPERTY(EditDefaultsOnly, Category = "GA")
 	TArray<TSubclassOf<UGameplayAbility>> InitializedAbilities;

@@ -27,7 +27,7 @@ public:
 	int32 PlayerNumSlots = 8;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
-	float PlayerRingRadius = 900.f;
+	float PlayerRingRadius = 1000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerRing")
 	float PlayerRingHeight = 30.f;
@@ -68,6 +68,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
 	FVector PickupLocalOffset = FVector(0,0,30);
 
+	// 게이트에 사용할 스태틱 매쉬
+	UPROPERTY(EditDefaultsOnly, Category = "Carousel|Gate")
+	UStaticMesh* GateStaticMesh = nullptr;
+
 	// 게이트 충돌 프리셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate")
 	FName GateCollisionProfile = TEXT("BlockAll");
@@ -79,7 +83,7 @@ public:
 	float GateThickness = 100.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gate")
-	float GateHeight = 300.f;
+	float GateHeight = 20.f;
 
 	UFUNCTION(BlueprintCallable, Category = "Gate")
 	void BuildGates();
@@ -89,6 +93,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Gate")
 	void OpenAllGates(bool bOpen);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetGateOpen(int32 SeatIndex, bool bOpen);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OpenAllGates(bool bOpen);
 
 	// 카메라
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
@@ -134,7 +144,7 @@ public:
 
 	// 픽업 제어
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
-	void SpawnPickups();
+	void SpawnPickups(int32 Stage);
 
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void ClearPickups();
@@ -164,6 +174,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Comp")
 	USceneComponent* GateRoot;
+
+	UPROPERTY(Transient)
+	TArray<UStaticMeshComponent*> GateMeshes;
 	
 	// 카메라 구성요소
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -179,9 +192,6 @@ protected:
 	// 스폰한 픽업 게이트 핸들
 	UPROPERTY(Transient)
 	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> SpawnedPickups;
-
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<UBoxComponent>> GateBoxes;
 
 	// 내부 헬퍼
 	FVector GetRingCenterWorld(const USceneComponent* Root) const;

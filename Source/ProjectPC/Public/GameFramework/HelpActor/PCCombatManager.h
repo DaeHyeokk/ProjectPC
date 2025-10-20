@@ -3,10 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PCPlayerBoard.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "GameFramework/Actor.h"
 #include "PCCombatManager.generated.h"
 
+struct FPlayerBoardSnapshot;
+enum class ETileFacing : uint8;
+class APCPlayerBoard;
 class APCPlayerCharacter;
 class APCCombatPlayerController;
 class APCBaseUnitCharacter;
@@ -29,51 +33,21 @@ struct FCombatManager_FieldSlot
 	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 };
 
-USTRUCT()
-struct FCombatManager_BenchSlot
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	int32 Index = 0;
-	UPROPERTY()
-	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
-};
 
-USTRUCT()
-struct FCombatManager_BoardSnapShot
-{
-	GENERATED_BODY()
-	UPROPERTY()
-	TWeakObjectPtr<APCCombatBoard> CombatBoard;
-	UPROPERTY()
-	TWeakObjectPtr<UPCTileManager> Tile;
-	UPROPERTY()
-	TArray<FCombatManager_FieldSlot> Field;
-	UPROPERTY()
-	TArray<FCombatManager_BenchSlot> Bench;
-
-	void Reset()
-	{
-		CombatBoard = nullptr;
-		Tile = nullptr;
-		Field.Reset();
-		Bench.Reset();
-	}
-};
-
-USTRUCT()
-struct FCombatManager_FieldOnlySnapshot
+USTRUCT(BlueprintType)
+struct FBoardFieldSnapShot
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	int32 SeatIndex = INDEX_NONE;           // ★ 복구용 키
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
+	TWeakObjectPtr<APCPlayerBoard> PlayerBoard;
+	
+	UPROPERTY(EditAnywhere)
 	TArray<FCombatManager_FieldSlot> Field; // (Col, Row, Unit)만 저장
 
 	void Reset()
 	{
-		SeatIndex = INDEX_NONE;
+		PlayerBoard = nullptr;
 		Field.Reset();
 	}
 };
@@ -88,24 +62,27 @@ struct FCombatManager_Pair
 	TWeakObjectPtr<APCCombatBoard> Guest;
 
 	UPROPERTY()
-	FCombatManager_BoardSnapShot HostSnapShot;
+	FBoardFieldSnapShot HostSnapShot;
 	UPROPERTY()
-	FCombatManager_BoardSnapShot GuestSnapShot;
+	FBoardFieldSnapShot GuestSnapShot;
 	UPROPERTY()
-	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> MovedUnits;
+	FPlayerBoardSnapshot PvESnapShot;
 
-	// 전투 중 새로 생성된 유닛(구매/합성 등) 기록 : Seat -> Units
-	TMap<int32, TArray<TWeakObjectPtr<APCBaseUnitCharacter>>> NewUnitDuringBattle;
+	UPROPERTY()
+	bool bIsClone = false;
 
+	UPROPERTY()
+	int32 CloneSourceSeat = INDEX_NONE;
+
+	UPROPERTY()
+	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> CloneUnits;
+	
 	// PVE 지원
 	UPROPERTY()
 	bool bIsPvE = false;
 	UPROPERTY()
 	TSet<TWeakObjectPtr<APCBaseUnitCharacter>> PvECreeps;
-
-	UPROPERTY()
-	FCombatManager_FieldOnlySnapshot HostFieldSnapshot; // PvE 전용: 필드만
-
+	
 	// 전투상태
 	UPROPERTY()
 	int32 HostAlive = 0;
@@ -122,8 +99,6 @@ struct FCombatManager_Pair
 
 	void ResetRuntime()
 	{
-		MovedUnits.Reset();
-		NewUnitDuringBattle.Reset();
 		PvECreeps.Reset();
 		DeadUnits.Reset();
 		HostAlive = 0;
@@ -167,9 +142,6 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
 	TArray<FCombatManager_Pair> Pairs;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat|State")
-	TArray<FCombatManager_Pair> PvEPairs;
-
 	// 결과 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "Combat|State")
 	FOnCombatPairResult OnCombatPairResult;
@@ -184,6 +156,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void FinishAllBattle();
 
+	
 	// 플레이어 전체 이동
 
 	UPROPERTY(BlueprintReadOnly, Category = "Combat|Travel")
@@ -217,19 +190,21 @@ public:
 	
 private:
 	bool IsAuthority() const { return GetLocalRole() == ROLE_Authority; }
-
-	// 전투 스냅샷
-	static void TakeSnapshot(APCCombatBoard* Board, FCombatManager_BoardSnapShot& BoardSnapShot);
-	static void RestoreSnapshot(const FCombatManager_BoardSnapShot& Snap);
+	
+	UFUNCTION()
+	void TakeFieldSnapShot(APCPlayerBoard* PlayerBoard, FBoardFieldSnapShot& Out);
+	
+	UFUNCTION()
+	void RestoreFieldSnapShot(const FBoardFieldSnapShot& Snap);
+	
 	static bool RemoveUnitFromAny(UPCTileManager* TileManager, APCBaseUnitCharacter* Unit);
-
-	// PvE 전투 스냅샷
-	void TakeSnapShotPvE(APCCombatBoard* Board, FCombatManager_FieldOnlySnapshot& OutSnap);
-	void RestoreSnapShotPvE(FCombatManager_FieldOnlySnapshot& Snap);
-
+	
 	// 좌석 기반 조회 함수
 	UFUNCTION(BlueprintCallable)
 	APCCombatBoard* FindBoardBySeatIndex(UWorld* World, int32 SeatIndex);
+
+	UFUNCTION(BlueprintCallable)
+	APCPlayerBoard* FindPlayerBoardBySeat(int32 SeatIndex) const;
 	
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIndex) const;
 	APCCombatPlayerController* FindPlayerController(int32 SeatIndex) const;
@@ -249,18 +224,25 @@ private:
 	
 	UFUNCTION()
 	void OnAnyUnitDied(APCBaseUnitCharacter* Unit);
-	void CheckPairVictory(int32 PairIndex);
+	
+	void CheckPairVictory(int32 PairIndex);	
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
+	// Clone PvP
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void BuildCloneForHost(int32 PairIndex, int32 DonorSeat);
 
-	// 전투중 구매
-	UFUNCTION()
-	void OnUnitSpawnedDuringBattle(APCBaseUnitCharacter* Unit, int32 SeatIndex);
-	
+	// Clone 파괴 헬퍼
+	void DestroyCloneForPair(int32 PairIndex, bool bRemoveFromTM = true);
+
+	// 전투시 전투 필드로 이동
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTileManager* TM, bool MirrorRows, bool MirrorCols, ETileFacing Facing);
+
+
 public:
 	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;
-	int32 FindFirstFreeBenchIndex(UPCTileManager* TM, bool bEnemySide) const;
 
 	// 데미지 관련
 public:
@@ -284,7 +266,7 @@ protected:
 	bool GetCurrentStageRoundOne(int32& OutStageOne, int32& OutRoundOne) const;
 
 	// ===== PvE 유틸 =====
-	static constexpr int32 CREEP_TEAM_BASE = 1000;
+	static constexpr int32 CREEP_TEAM_BASE = 50;
 	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board) { return Board ? (Board->BoardSeatIndex + CREEP_TEAM_BASE) : CREEP_TEAM_BASE; }
 
 	// Stage/Round 기반 크립 태그/레벨 (필요 시 프로젝트 태그로 수정)

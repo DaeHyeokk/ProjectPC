@@ -4,7 +4,7 @@
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
 
 
-const FPCProjectileData& UPCDataAsset_ProjectileData::GetProjectileData(FGameplayTag Tag) const
+const FPCProjectileData* UPCDataAsset_ProjectileData::GetProjectileData(FGameplayTag Tag) const
 {
-	return ProjectileData.FindChecked(Tag);
+	return ProjectileData.Find(Tag);
 }

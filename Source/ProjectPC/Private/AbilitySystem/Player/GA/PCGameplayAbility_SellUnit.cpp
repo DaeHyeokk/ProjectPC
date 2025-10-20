@@ -9,7 +9,6 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Shop/PCShopManager.h"
 
@@ -54,21 +53,21 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 
 	if (!TriggerEventData)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	auto* Unit = const_cast<APCHeroUnitCharacter*>(Cast<APCHeroUnitCharacter>(TriggerEventData->OptionalObject));
 	if (!Unit)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
@@ -81,9 +80,9 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	{
 		if (auto PC = Cast<APCCombatPlayerController>(PS->GetPlayerController()))
 		{
-			if (auto TileManager = PC->GetTileManager())
+			if (auto PlayerBoard = PC->GetPlayerBoard())
 			{
-				if (!TileManager->RemoveFromBoard(Unit))
+				if (!PlayerBoard->RemoveFromBoard(Unit))
 				{
 					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 					return;

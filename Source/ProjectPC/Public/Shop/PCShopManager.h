@@ -35,9 +35,12 @@ private:
 	FPCShopUnitData DummyData;
 
 public:
+	// 매 라운드 레벨업 체크
+	void OnGameStateChanged(const FGameplayTag& NewTag);
+	
 	// 상점 업데이트
 	void UpdateShopSlots(APCPlayerState* TargetPlayer);
-
+	
 	// 유닛 구매
 	void BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag);
 	TMap<int32, int32> GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const;
@@ -67,15 +70,15 @@ public:
 
 protected:
 	// 유닛 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
 	UDataTable* ShopUnitDataTable;
 
 	// 유닛 확률 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
 	UDataTable* ShopUnitProbabilityDataTable;
 
 	// 유닛 판매 가격 데이터가 저장된 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable")
+	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
 	UDataTable* ShopUnitSellingPriceDataTable;
 
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열

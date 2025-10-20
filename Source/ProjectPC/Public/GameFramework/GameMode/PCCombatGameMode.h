@@ -7,18 +7,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "PCCombatGameMode.generated.h"
 
+enum class EPCStageType : uint8;
 
+struct FGameplayTag;
+struct FRoundStep;
 
-/**
- * 
- */
-
+class APCPlayerBoard;
 class APCBaseUnitCharacter;
 class UPCTileManager;
-struct FGameplayTag;
 class APCCombatManager;
-enum class EPCStageType : uint8;
-struct FRoundStep;
 class UPCDataAsset_UnitGEDictionary;
 class APCCombatGameState;
 class APCCombatBoard;
@@ -26,6 +23,9 @@ class APCCarouselRing;
 class UPCStageData;
 class APCPlayerState;
 
+/**
+ * 
+ */
 UCLASS()
 class PROJECTPC_API APCCombatGameMode : public AGameModeBase
 {
@@ -63,6 +63,13 @@ protected:
 	// 좌석배정 유틸함수
 	int32 GetTotalSeatSlots() const;
 
+	// playerAttribute Delegate register
+	UFUNCTION()
+	void BindPlayerAttribute();
+
+	UFUNCTION()
+	void BindPlayerMainHuD();
+
 private:
 	// 데이터 평탄화
 	TArray<FRoundStep> FlatRoundSteps;
@@ -76,7 +83,6 @@ private:
 	FTimerHandle CameraSetupTimer;
 	FTimerHandle WaitAllPlayerController;
 	
-private:
 	// 내부 빌드 / 흐름
 	void BuildHelperActor();
 	void BuildStageData();
@@ -85,12 +91,11 @@ private:
 	void BeginCurrentStep();
 	void EndCurrentStep();
 	
-
-	// 개별 Step 처리
-	void Step_Start();
-
 	// Start 헬퍼 함수
 	void PlayerStartUnitSpawn();
+	
+	// 개별 Step 처리
+	void Step_Start();
 	void Step_Setup();
 	void Step_Travel();
 	void Step_Return();
@@ -113,27 +118,34 @@ private:
 	
 	// CombatManager / GameState 핸들러
 	UPROPERTY(VisibleInstanceOnly, Category = "Ref")
-	TWeakObjectPtr<APCCombatManager> CombatManager;
+	APCCombatManager* CombatManager;
 	APCCombatManager* GetCombatManager();
 	APCPlayerState* FindPlayerStateBySeat(int32 SeatIdx);
 	APCCombatGameState* GetCombatGameState() const;
 	float NowServer() const { return GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f; }
 
-	// 크립 스폰 관련 로직
+// PCPlayerBoard 관련
+	// 수집한 보드 목록 / 맵
+	UPROPERTY()
+	TArray<APCPlayerBoard*> AllPlayerBoards;
 
-	// 크립 스폰 헬퍼
-	static int32 GetCreepTeamIndexForBoard(const APCCombatBoard* Board);
-	static FGameplayTag GetCreepTagForStageRound(int32 Stage, int32 Round);
-	static int32 GetCreepLevelForStageRound(int32 Stage, int32 Round);
-	bool PlaceOrNearest(UPCTileManager* TM, int32 Y, int32 X, APCBaseUnitCharacter* Creep) const;
+	UPROPERTY()
+	TMap<int32, APCPlayerBoard*> SeatToPlayerBoard;
 
+	// 보드 수집 & 맵 구성
+	void CollectPlayerBoards();
+
+	// 보드 PlayerState에 세팅
+	void BindPlayerBoardsToPlayerStates();
+
+	// 좌석인덱스로 -> PlayerBoard 찾기
+	APCPlayerBoard* FindPlayerBoardBySeat(int32 SeatIndex) const;
+	
 // ==== Unit 관련 =====
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Data")
 	TObjectPtr<UPCDataAsset_UnitGEDictionary> UnitGEDictionary;
-
-
-
+	
 	// 데이터 로딩
 
 private:
@@ -148,7 +160,24 @@ private:
 	bool bTriggeredAfterTravel = false;
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	void OnOnePlayerArrived();
-	
+
+	// ── Carousel wave open schedule ──────────────────────────────
+protected:
+	// 웨이브 시트(두 명씩 / 마지막 웨이브 8초)
+	TArray<TArray<int32>> CarouselWaves; // 각 웨이브에 열 SeatIndex 모음
+
+	FTimerHandle ThCarouselWave;         // 5초마다(마지막 8초) 다음 웨이브
+	FTimerHandle ThCarouselWaveStageUI;  // UI 카운트다운(서브 웨이브 타이머 표시용)
+	int32 CurrentWaveIdx = -1;
+
+	// 내부 헬퍼
+	void BuildCarouselWavesByHP(TArray<TArray<int32>>& OutWaves);
+	void StartCarouselWaves();
+	void OpenCarouselWave(int32 WaveIdx);
+	void FinishCarouselRound();
+
+	// 서브 웨이브 타이머를 UI에 1초 단위로 보여주고 싶으면 이걸로 GameState StageRuntime 갱신
+	void StartSubWaveTimerUI(float DurationSeconds);
 };
 
 
