@@ -6,6 +6,7 @@
 #include "AbilitySystem/Unit/GA/PCUnitPassiveGameplayAbility.h"
 #include "PCUnitPeriodPulseGameplayAbility.generated.h"
 
+class UGameplayTask_WaitDelay;
 /**
  * 
  */
@@ -34,9 +35,12 @@ protected:
 	float PeriodSeconds = 3.f;
 
 	virtual void ApplyConfiguredEffects();
+	UFUNCTION()
+	virtual void OnPulseTick();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGameplayTask_WaitDelay> WaitDelayTask = nullptr;
 	
 private:
 	FTimerHandle PulseTimer;
-
-	void OnPulseTick();
 };

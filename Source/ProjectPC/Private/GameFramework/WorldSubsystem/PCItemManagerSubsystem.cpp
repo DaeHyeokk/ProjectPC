@@ -4,6 +4,7 @@
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
 #include "BaseGameplayTags.h"
+#include "DataAsset/Item/PCDataAsset_ItemEffectData.h"
 
 
 void UPCItemManagerSubsystem::InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable)
@@ -69,6 +70,19 @@ TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGamepla
 	}
 
 	return ItemRecipes;
+}
+
+const FPCEffectSpecList* UPCItemManagerSubsystem::GetItemEffectSpecList(FGameplayTag ItemTag) const
+{
+	if (const FPCItemData* ItemData = GetItemData(ItemTag))
+	{
+		if (const UPCDataAsset_ItemEffectData* ItemEffectData = ItemData->ItemEffectData)
+		{
+			return &ItemEffectData->EffectSpecList;
+		}
+	}
+	
+	return nullptr;
 }
 
 FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const

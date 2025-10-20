@@ -530,7 +530,7 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 					{
 						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1);
+							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1, PCPlayerState);
 							PCPlayerBoard->PlaceUnitOnBench(0,Unit);
 							++SpawnIndex;
 						}

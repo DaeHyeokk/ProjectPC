@@ -45,6 +45,7 @@ void UPCDataAsset_BaseUnitData::FillStartupAbilities(TArray<TSubclassOf<UGamepla
 	OutAbilities.Add(BasicAttackAbility);
 	AppendValidUnique(MovementAbilities);
 	AppendValidUnique(EventAbilities);
+	AppendValidUnique(PassiveAbilities);
 }
 
 UPCDataAsset_UnitAnimSet* UPCDataAsset_BaseUnitData::GetAnimSetData() const

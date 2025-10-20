@@ -43,7 +43,7 @@ void UPCUnitAbilitySystemComponent::ApplyInitBaseStat(const APCBaseUnitCharacter
 	{
 		SetNumericAttributeBase(KV.Key, KV.Value);
 	}
-	//SetNumericAttributeBase(UPCHeroUnitAttributeSet::GetLifeStealAttribute(), 80.f);
+	SetNumericAttributeBase(UPCHeroUnitAttributeSet::GetManaRegenAttribute(), 5.f);
 	bInitBaseStatsApplied = true;
 }
 

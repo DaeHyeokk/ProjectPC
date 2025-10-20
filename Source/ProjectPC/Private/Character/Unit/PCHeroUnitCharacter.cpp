@@ -232,12 +232,24 @@ void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 		OnRep_HeroLevel();
 }
 
-void APCHeroUnitCharacter::Combine(APCHeroUnitCharacter* LevelUpHero)
+void APCHeroUnitCharacter::Combine(const APCHeroUnitCharacter* LevelUpHero)
 {
 	if (LevelUpHero)
 	{
-		UPCUnitEquipmentComponent* TargetEquipmentComp = LevelUpHero->EquipmentComp;
-		TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
+		if (UPCUnitEquipmentComponent* TargetEquipmentComp = LevelUpHero->EquipmentComp)
+		{
+			TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
+		}
+	}
+
+	Destroy();
+}
+
+void APCHeroUnitCharacter::SellHero()
+{
+	if (EquipmentComp)
+	{
+		EquipmentComp->ReturnAllItemToPlayerInventory(true);
 	}
 
 	Destroy();

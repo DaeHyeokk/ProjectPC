@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 

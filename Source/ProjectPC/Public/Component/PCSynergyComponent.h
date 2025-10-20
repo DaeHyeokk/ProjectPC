@@ -37,6 +37,8 @@ public:
 	void UnRegisterHero(APCHeroUnitCharacter* Hero);
 	
 	const TArray<FSynergyCountEntry>& GetSynergyCountArray() const { return SynergyCountArray.Entries; };
+	TArray<int32> GetSynergyThresholds(const FGameplayTag& SynergyTag) const;
+	int32 GetSynergyTierIndexFromCount(const FGameplayTag& SynergyTag, int32 Count) const;
 	
 protected:
 	virtual void BeginPlay() override;

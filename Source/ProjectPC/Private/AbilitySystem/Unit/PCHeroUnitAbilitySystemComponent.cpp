@@ -4,9 +4,11 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 
 #include "BaseGameplayTags.h"
+#include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
+#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 void UPCHeroUnitAbilitySystemComponent::UpdateGAS()
 {

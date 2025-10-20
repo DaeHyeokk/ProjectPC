@@ -23,7 +23,7 @@ public:
 	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UPCDataAsset_ItemEffectData> EffectSpecList;
+	TObjectPtr<UPCDataAsset_ItemEffectData> ItemEffectData;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag ItemTag;

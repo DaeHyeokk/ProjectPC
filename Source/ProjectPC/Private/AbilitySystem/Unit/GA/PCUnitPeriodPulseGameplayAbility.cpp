@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Tasks/GameplayTask_WaitDelay.h"
 
 
 UPCUnitPeriodPulseGameplayAbility::UPCUnitPeriodPulseGameplayAbility()
@@ -21,7 +22,7 @@ void UPCUnitPeriodPulseGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 
 	if (!HasAuthority(&ActivationInfo) || !ActorInfo)
 		return;
-
+	
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(
