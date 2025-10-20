@@ -3,6 +3,8 @@
 
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
+#include "BaseGameplayTags.h"
+
 
 void UPCItemManagerSubsystem::InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable)
 {
@@ -36,6 +38,79 @@ FGameplayTag UPCItemManagerSubsystem::CombineItem(FGameplayTag ItemTag1, FGamepl
 		if (const auto AdvancedItemTag = ItemCombineDataMap.Find(FBaseItemPair(ItemTag1, ItemTag2)))
 		{
 			return *AdvancedItemTag;
+		}
+	}
+	
+	return FGameplayTag();
+}
+
+TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGameplayTag BaseItemTag) const
+{
+	TMap<FGameplayTag, FGameplayTag> ItemRecipes;
+	
+	FGameplayTag ParentItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
+	if (!BaseItemTag.MatchesTag(ParentItemTag))
+		return ItemRecipes;
+	
+	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
+	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
+
+	for (const FGameplayTag& ItemTag : AllBaseItemTags)
+	{
+		FGameplayTag AdvancedItemTag = CombineItem(BaseItemTag, ItemTag);
+
+		if (const auto NewItem = GetItemData(AdvancedItemTag))
+		{
+			if (NewItem->IsValid())
+			{
+				ItemRecipes.Add(ItemTag, AdvancedItemTag);
+			}
+		}
+	}
+
+	return ItemRecipes;
+}
+
+FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
+{
+	FGameplayTag ParentItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
+	
+	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
+	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
+
+	if (AllBaseItemTags.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, AllBaseItemTags.Num() - 1);
+
+		if (const auto NewItem = GetItemData(AllBaseItemTags.GetByIndex(RandomIndex)))
+		{
+			if (NewItem->IsValid())
+			{
+				return NewItem->ItemTag;
+			}
+		}
+	}
+	
+	return FGameplayTag();
+}
+
+FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
+{
+	FGameplayTag ParentItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Advanced"));
+	
+	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
+	FGameplayTagContainer AllAdvancedItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
+
+	if (AllAdvancedItemTags.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, AllAdvancedItemTags.Num() - 1);
+
+		if (const auto NewItem = GetItemData(AllAdvancedItemTags.GetByIndex(RandomIndex)))
+		{
+			if (NewItem->IsValid())
+			{
+				return NewItem->ItemTag;
+			}
 		}
 	}
 	

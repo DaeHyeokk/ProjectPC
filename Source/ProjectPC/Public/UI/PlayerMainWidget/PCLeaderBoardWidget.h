@@ -35,7 +35,7 @@ protected:
 	UVerticalBox* PlayerBox;
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "PlayerRowWidgetClass")
+	UPROPERTY(EditDefaultsOnly, Category = "PlayerRowWidgetClass")
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
 	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap);

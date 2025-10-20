@@ -29,7 +29,7 @@ public:
 	void Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex);
 
 protected:
-	int32 SlotIndex;
+	int32 SlotIndex = -1;
 	int32 UnitCost;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))

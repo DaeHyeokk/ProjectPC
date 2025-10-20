@@ -47,6 +47,11 @@ public:
 
 	const FPCItemData* GetItemData(FGameplayTag ItemTag) const;
 	FGameplayTag CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
+	TMap<FGameplayTag, FGameplayTag> GetItemRecipe(FGameplayTag BaseItemTag) const;
+
+	// Carousel
+	FGameplayTag GetRandomBaseItem() const;
+	FGameplayTag GetRandomAdvancedItem() const;
 
 #pragma region TemplateFunc
 
