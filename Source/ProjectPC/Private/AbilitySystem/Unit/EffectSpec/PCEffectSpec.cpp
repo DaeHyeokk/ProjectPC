@@ -32,7 +32,7 @@ bool UPCEffectSpec::IsTargetEligibleByGroup(const AActor* Source, const AActor* 
 
 void UPCEffectSpec::ApplyDurationOptions(FGameplayEffectSpec& Spec) const
 {
-	if (bUseDurationSetByCaller && DurationCallerTag.IsValid())
+	if (bUseDurationSetByCaller && DurationCallerTag.IsValid() && Spec.Def->DurationPolicy == EGameplayEffectDurationType::HasDuration)
 	{
 		Spec.SetSetByCallerMagnitude(DurationCallerTag, DurationByCallerSeconds);
 	}

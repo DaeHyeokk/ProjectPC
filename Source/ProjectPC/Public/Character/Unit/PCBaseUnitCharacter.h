@@ -12,6 +12,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "PCBaseUnitCharacter.generated.h"
 
+class UPCUnitEquipmentComponent;
 class UPCDataAsset_UnitAbilityConfig;
 class UPCUnitStatusBarWidget;
 class UWidgetComponent;
@@ -56,6 +57,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
 
+	FORCEINLINE UPCUnitEquipmentComponent* GetEquipmentComponent() const { return EquipmentComp; }
 	FORCEINLINE const UWidgetComponent* GetStatusBarComponent() const { return StatusBarComp; }
 	FORCEINLINE FName GetStatusBarSocketName() const { return StatusBarSocketName; }
 	
@@ -68,6 +70,9 @@ protected:
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
 	void ReAttachStatusBarToSocket() const;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UPCUnitEquipmentComponent> EquipmentComp;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> StatusBarComp;

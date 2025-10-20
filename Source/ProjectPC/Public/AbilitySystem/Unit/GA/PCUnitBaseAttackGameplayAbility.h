@@ -22,9 +22,9 @@ public:
 	UPCUnitBaseAttackGameplayAbility();
 	
 protected:
-	virtual void OnAvatarSet(
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilitySpec& Spec) override;
+	// virtual void OnAvatarSet(
+	// 	const FGameplayAbilityActorInfo* ActorInfo,
+	// 	const FGameplayAbilitySpec& Spec) override;
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,

@@ -9,6 +9,7 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
+#include "Component/PCUnitEquipmentComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -219,15 +220,27 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 {
-	// 레벨 데이터 직접적인 수정은 서버권한
+	// 레벨 데이터 수정은 서버권한
 	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
 	
 	HeroLevel = FMath::Clamp(Level, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
+	
 	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
 		OnRep_HeroLevel();
+}
+
+void APCHeroUnitCharacter::Combine(APCHeroUnitCharacter* LevelUpHero)
+{
+	if (LevelUpHero)
+	{
+		UPCUnitEquipmentComponent* TargetEquipmentComp = LevelUpHero->EquipmentComp;
+		TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
+	}
+
+	Destroy();
 }
 
 void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)

@@ -22,14 +22,14 @@ UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
 }
 
-void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilitySpec& Spec)
-{
-	Super::OnAvatarSet(ActorInfo, Spec);
-	
-	if (Unit)
-		SetMontageConfig();
-}
+// void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
+// 	const FGameplayAbilitySpec& Spec)
+// {
+// 	Super::OnAvatarSet(ActorInfo, Spec);
+// 	
+// 	if (Unit)
+// 		SetMontageConfig();
+// }
 
 void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                                        const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,

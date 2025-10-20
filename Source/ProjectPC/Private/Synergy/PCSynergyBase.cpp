@@ -229,7 +229,7 @@ void UPCSynergyBase::RevokeHeroGrantGEs(const APCHeroUnitCharacter* Hero)
 }
 
 
-void UPCSynergyBase::GrantAbility(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 TierIndex)
+void UPCSynergyBase::GrantAbility(const FSynergyApplyParams& Params, const FSynergyTier* Tier, int32 Level)
 {
 	if (!Tier)
 		return;
@@ -253,8 +253,7 @@ void UPCSynergyBase::GrantAbility(const FSynergyApplyParams& Params, const FSyne
 			for (const FSynergyGrantGA& GrantGA : SynergyData->GetGrantGAs())
 			{
 				if (!GrantGA.IsValid()) continue;
-
-				const int32 Level = TierIndex + 1;
+				
 				UObject* SourceObject = SynergyData->GetUnitAbilityConfig();
 
 				FGameplayAbilitySpec Spec(GrantGA.AbilityClass, Level, INDEX_NONE, SourceObject);

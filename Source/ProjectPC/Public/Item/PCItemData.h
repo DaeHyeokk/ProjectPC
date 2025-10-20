@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "Engine/DataTable.h"
 #include "PCItemData.generated.h"
+
+class UPCDataAsset_ItemEffectData;
 
 /**
  * 
@@ -20,16 +23,13 @@ public:
 	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UPCDataAsset_ItemEffectData> EffectSpecList;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag ItemTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, float> ItemEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> ItemTexture;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FGameplayTag> ItemEffectClassTags;
 
 	bool IsValid() const
 	{

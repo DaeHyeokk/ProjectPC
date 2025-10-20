@@ -6,12 +6,12 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 
-FActiveGameplayEffectHandle  UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target,
+FActiveGameplayEffectHandle UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target,
                                                                             int32 EffectLevel)
 {
 	FActiveGameplayEffectHandle OutHandle;
 	
-	if (!SourceASC || !Target || !Target->HasAuthority())
+	if (!SourceASC || !Target || !Target->HasAuthority() || !EffectMagnitude.IsValid())
 		return OutHandle;
 	
 	if (!IsTargetEligibleByGroup(SourceASC->GetAvatarActor(), Target))

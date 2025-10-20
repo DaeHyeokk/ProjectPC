@@ -9,6 +9,7 @@
 
 UPCEffectSpec_Damage::UPCEffectSpec_Damage()
 {
+	EffectClassTag = GameplayEffectTags::GE_Class_Unit_Damage;
 	EffectCallerTag = GameplayEffectTags::GE_Caller_Damage;
 	TargetGroup = EEffectTargetGroup::Hostile;
 }

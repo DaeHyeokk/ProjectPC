@@ -1305,7 +1305,6 @@ void APCCombatPlayerController::PollHover()
 		ClearHoverHighLight();
 		return;
 	}
-	
 
 	if (CachedHoverUnit == nullptr)
 	{
@@ -1335,7 +1334,6 @@ void APCCombatPlayerController::PollHover()
 
 	Client_CheckHeroStatus(nullptr);
 }
-
 
 void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const FVector& World)
 {
@@ -1371,7 +1369,6 @@ void APCCombatPlayerController::Server_QueryHoverFromWorld_Implementation(const 
 
 	APCBaseUnitCharacter* Unit = bField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIdx);
 	Client_TileHoverUnit(Unit);
-	
 }
 
 void APCCombatPlayerController::Server_QueryTileUnit_Implementation(bool bIsField, int32 Y, int32 X, int32 BenchIdx)

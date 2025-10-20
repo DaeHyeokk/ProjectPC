@@ -49,6 +49,11 @@ struct FMagnitudeParam
 			return 0.f;
 		}
 	}
+
+	bool IsValid() const
+	{
+		return Evaluate() > 0.f;
+	}
 };
 
 UCLASS()
@@ -61,4 +66,5 @@ protected:
 	FMagnitudeParam EffectMagnitude;
 	
 	virtual FActiveGameplayEffectHandle ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) override;
+	
 };
