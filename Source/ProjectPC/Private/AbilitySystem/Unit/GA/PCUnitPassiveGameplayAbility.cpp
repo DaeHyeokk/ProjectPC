@@ -38,14 +38,14 @@ bool UPCUnitPassiveGameplayAbility::RollChance() const
 
 float UPCUnitPassiveGameplayAbility::GetChancePercentForLevel(int32 Level) const
 {
-	const int32 Idx = FMath::Max(1, Level) - 1;
+	const int32 MaxIdx = FMath::Max(1, Level) - 1;
 
 	float ChancePercent = 100.f;
 	
 	for (int i=0; i<ChancePercentByLevel.Num(); ++i)
 	{
-		if (i <= Idx)
-			ChancePercent = ChancePercentByLevel[Idx];
+		if (i <= MaxIdx)
+			ChancePercent = ChancePercentByLevel[i];
 	}
 
 	return ChancePercent;

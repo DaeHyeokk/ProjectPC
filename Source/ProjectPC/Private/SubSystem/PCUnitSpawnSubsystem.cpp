@@ -69,7 +69,6 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
-	
 	ApplyDefinitionData(Unit, Definition);
 	
 	if (Unit->HasLevelSystem())

@@ -10,6 +10,7 @@
 UPCEffectSpec_BasicAttackManaGain::UPCEffectSpec_BasicAttackManaGain()
 {
 	TargetGroup = EEffectTargetGroup::Self;
+	EffectClassTag = GameplayEffectTags::GE_Class_Unit_ManaChange;
 	EffectCallerTag = GameplayEffectTags::GE_Caller_Stat_CurrentMana;
 }
 

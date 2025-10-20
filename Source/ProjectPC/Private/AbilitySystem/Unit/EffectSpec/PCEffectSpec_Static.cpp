@@ -12,14 +12,14 @@ FActiveGameplayEffectHandle UPCEffectSpec_Static::ApplyEffectImpl(UAbilitySystem
 {
 	FActiveGameplayEffectHandle Result;
 
-	if (!SourceASC || !Target || !Target->HasAuthority())
+	if (!SourceASC || !Target || !Target->HasAuthority() || !GEClass)
 		return Result;
 
 	if (!IsTargetEligibleByGroup(SourceASC->GetAvatarActor(), Target))
 		return Result;
 
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-	if (!TargetASC || !GEClass)
+	if (!TargetASC)
 		return Result;
 
 	const int32 Level = (EffectLevel > 0) ? EffectLevel : DefaultLevel;

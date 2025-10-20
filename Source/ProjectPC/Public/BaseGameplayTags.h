@@ -73,7 +73,6 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_HitSucceed)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Guardian)
@@ -161,8 +160,11 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_FlatDamageBlock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_EvasionChance)
 	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_GrantTag_Infinite)
+	
 	// ==== Duration GE ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_GrantTag_Duration)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Damage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Heal)

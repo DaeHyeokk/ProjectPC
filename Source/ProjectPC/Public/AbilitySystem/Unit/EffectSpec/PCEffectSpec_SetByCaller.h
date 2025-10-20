@@ -20,7 +20,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Effect", meta=(Categories="GE.Caller"))
 	FGameplayTag EffectCallerTag;
-	
+
 protected:
 	UPROPERTY(Transient)
 	TSubclassOf<UGameplayEffect> CachedGEClass;

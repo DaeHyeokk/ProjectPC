@@ -7,6 +7,7 @@
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
 #include "Animation/Unit/PCUnitAnimInstance.h"
+#include "Component/PCUnitEquipmentComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
@@ -50,6 +51,9 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
 	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
+
+	EquipmentComp = CreateDefaultSubobject<UPCUnitEquipmentComponent>(TEXT("EquipmentComponent"));
+	EquipmentComp->SetIsReplicated(true);
 }
 
 UAbilitySystemComponent* APCBaseUnitCharacter::GetAbilitySystemComponent() const

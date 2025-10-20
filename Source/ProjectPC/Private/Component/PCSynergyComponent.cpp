@@ -242,7 +242,7 @@ void UPCSynergyComponent::OnGameStateTagChanged(const FGameplayTag& NewTag)
 {
 	if (GetOwner()->HasAuthority())
 	{
-		if (NewTag.MatchesTagExact(GameStateTags::Game_State_Combat_Active))
+		if (NewTag.MatchesTag(GameStateTags::Game_State_Combat_Active))
 		{
 			OnCombatActiveAction();
 		}

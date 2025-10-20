@@ -71,7 +71,6 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack, "Unit.Ability.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Basic, "Unit.Ability.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Ultimate, "Unit.Ability.Attack.Ultimate")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_HitSucceed, "Unit.Ability.HitSucceed")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_PeriodPulse, "Unit.Ability.PeriodPulse")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Cyborg, "Unit.Ability.Synergy.Cyborg")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Guardian, "Unit.Ability.Synergy.Guardian")
@@ -159,9 +158,12 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_LifeSteal,						"GE.Class.Unit.AttributeChange.Add.Infinite.LifeSteal")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_FlatDamageBlock,					"GE.Class.Unit.AttributeChange.Add.Infinite.FlatDamageBlock")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_EvasionChance,					"GE.Class.Unit.AttributeChange.Add.Infinite.EvasionChance")
+
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_GrantTag_Infinite, "GE.Class.Unit.GrantTag.Infinite")
 	
 	// ==== Duration GE ====
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_GrantTag_Duration, "GE.Class.Unit.GrantTag.Duration")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Damage, "GE.Caller.Damage")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Heal, "GE.Caller.Heal")
