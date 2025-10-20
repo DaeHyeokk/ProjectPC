@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
+#include "DataAsset/Unit/PCDataAsset_UnitStatIcon.h"
 #include "PCItemStatWidget.generated.h"
 
 class UTextBlock;
@@ -19,11 +20,11 @@ class PROJECTPC_API UPCItemStatWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void Setup(FGameplayTag ItemStatTag);
+	void Setup(FGameplayTag StatTag, float StatValue, bool bIsMultiplier);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "StatIcon")
-	TMap<FGameplayTag, TSoftObjectPtr<UTexture2D>> StatIcon;
+	UPCDataAsset_UnitStatIcon* DA_StatIcons;
 	
 	UPROPERTY(EditDefaultsOnly, meta = (BindWidget))
 	UImage* Img_Stat;

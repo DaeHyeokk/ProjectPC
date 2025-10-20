@@ -16,12 +16,12 @@ struct PROJECTPC_API FPCItemCombineData : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Item.Type.Base"))
 	FGameplayTag ItemTag1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Item.Type.Base"))
 	FGameplayTag ItemTag2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Item.Type.Advanced,Item.Type.Symbol"))
 	FGameplayTag ResultItemTag;
 };

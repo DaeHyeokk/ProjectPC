@@ -61,10 +61,11 @@ class PROJECTPC_API UPCEffectSpec_AttributeChange : public UPCEffectSpec_SetByCa
 {
 	GENERATED_BODY()
 
-protected:
+public:
 	UPROPERTY(EditDefaultsOnly, Category="Effect")
 	FMagnitudeParam EffectMagnitude;
-	
+
+protected:
 	virtual FActiveGameplayEffectHandle ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) override;
 	
 };

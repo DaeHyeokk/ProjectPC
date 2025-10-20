@@ -4,6 +4,7 @@
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
 #include "BaseGameplayTags.h"
+#include "DataAsset/Item/PCDataAsset_ItemEffect.h"
 
 
 void UPCItemManagerSubsystem::InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable)
@@ -71,12 +72,26 @@ TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGamepla
 	return ItemRecipes;
 }
 
+const FPCEffectSpecList* UPCItemManagerSubsystem::GetItemEffectSpecList(FGameplayTag ItemTag) const
+{
+	if (const FPCItemData* ItemData = GetItemData(ItemTag))
+	{
+		if (const UPCDataAsset_ItemEffect* ItemEffectData = ItemData->ItemEffectSpec)
+		{
+			return &ItemEffectData->EffectSpecList;
+		}
+	}
+
+	return nullptr;
+}
+
 FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
 {
 	FGameplayTag ParentItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
 	
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
+	AllBaseItemTags.RemoveTag(ParentItemTag);
 
 	if (AllBaseItemTags.Num() > 0)
 	{
@@ -100,7 +115,8 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 	
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllAdvancedItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
-
+	AllAdvancedItemTags.RemoveTag(ParentItemTag);
+	
 	if (AllAdvancedItemTags.Num() > 0)
 	{
 		int32 RandomIndex = FMath::RandRange(0, AllAdvancedItemTags.Num() - 1);

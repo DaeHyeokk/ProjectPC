@@ -32,6 +32,9 @@ void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 {
 	if (!Img_Item) return;
 
+	const FGameplayTag BaseTag = FGameplayTag::RequestGameplayTag(TEXT("Item.Type.Base"));
+	bIsBaseItem = NewItemTag.MatchesTag(BaseTag);
+
 	if (const auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 	{
 		if (const auto NewItem = ItemManagerSubsystem->GetItemData(NewItemTag))
@@ -56,8 +59,15 @@ void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 					}
 				});
 				
-				if (!ItemRecipeWidget) return;
-				ItemRecipeWidget->Setup(NewItemTag);
+				if (ItemInfoWidget)
+				{
+					ItemInfoWidget->Setup(NewItemTag);
+				}
+				
+				if (ItemRecipeWidget && bIsBaseItem)
+				{
+					ItemRecipeWidget->Setup(NewItemTag);
+				}
 			}
 		}
 	}
@@ -70,6 +80,7 @@ void UPCItemSlotWidget::RemoveItem()
 	Img_Item->SetBrushFromTexture(nullptr);
 	Img_Item->SetColorAndOpacity(FLinearColor::Black);
 	bIsItemSet = false;
+	bIsBaseItem = false;
 }
 
 UTexture2D* UPCItemSlotWidget::GetThumbnail() const
@@ -86,19 +97,67 @@ void UPCItemSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FP
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-	if (!bIsItemSet || !ItemRecipeWidget) return;
+	if (!bIsItemSet || !ItemRecipeWidget || !ItemInfoWidget) return;
+
+	ItemInfoWidget->AddToViewport(9999);
+	ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	// ItemInfoWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
 	
-	ItemRecipeWidget->AddToViewport(9999);
-	ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-	ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
-	ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, -50.0f));
+	float YOffset = -50.0f - (SlotIndex * 20.0f);
+	ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+}
+
+FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (!bIsItemSet | !ItemRecipeWidget || !ItemInfoWidget)
+	{
+		return FReply::Unhandled();
+	}
+
+	const float WheelDelta = InMouseEvent.GetWheelDelta();
+	if (WheelDelta > 0.f)
+	{
+		if (ItemRecipeWidget->IsInViewport())
+		{
+			ItemRecipeWidget->RemoveFromParent();
+
+			ItemInfoWidget->AddToViewport(9999);
+			ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+			// ItemInfoWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
+
+			float YOffset = -50.0f - (SlotIndex * 20.0f);
+			ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+		}
+	}
+	else
+	{
+		if (ItemInfoWidget->IsInViewport() && bIsBaseItem)
+		{
+			ItemInfoWidget->RemoveFromParent();
+
+			ItemRecipeWidget->AddToViewport(9999);
+			ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+			ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(400.0f, 520.0f));
+
+			float YOffset = -50.0f - (SlotIndex * 30.0f);
+			ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+		}
+	}
+
+	return FReply::Handled();
 }
 
 void UPCItemSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseLeave(InMouseEvent);
 
-	if (!ItemRecipeWidget) return;
-	
-	ItemRecipeWidget->RemoveFromParent();
+	if (ItemRecipeWidget)
+	{
+		ItemRecipeWidget->RemoveFromParent();
+	}
+
+	if (ItemInfoWidget)
+	{
+		ItemInfoWidget->RemoveFromParent();
+	}
 }

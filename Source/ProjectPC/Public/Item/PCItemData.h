@@ -8,7 +8,7 @@
 #include "Engine/DataTable.h"
 #include "PCItemData.generated.h"
 
-class UPCDataAsset_ItemEffectData;
+class UPCDataAsset_ItemEffect;
 
 /**
  * 
@@ -23,13 +23,16 @@ public:
 	FName ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UPCDataAsset_ItemEffectData> EffectSpecList;
+	TObjectPtr<UPCDataAsset_ItemEffect> ItemEffectSpec;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Item.Type"))
 	FGameplayTag ItemTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> ItemTexture;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true))
+	FText ItemUniqueEffect;
 
 	bool IsValid() const
 	{

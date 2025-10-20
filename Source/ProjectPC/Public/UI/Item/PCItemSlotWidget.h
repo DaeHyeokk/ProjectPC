@@ -38,6 +38,7 @@ protected:
 private:
 	int32 SlotIndex = -1;
 	bool bIsItemSet = false;
+	bool bIsBaseItem = false;
 
 	UPROPERTY()
 	UTexture2D* CachedThumbnail;
@@ -52,5 +53,6 @@ public:
 
 protected:
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 };

@@ -37,9 +37,6 @@ private:
 	TWeakObjectPtr<APCCombatPlayerController> CachedController;
 	
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "UnitSlotWidgetClass")
-	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
-
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
 
 	void InitWithPC(APCCombatPlayerController* InPC);
@@ -49,6 +46,9 @@ protected:
 	int32 PlayerMaxXP;
 	int32 PlayerXP;
 	int32 PlayerGold;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UnitSlotWidgetClass")
+	TSubclassOf<UUserWidget> UnitSlotWidgetClass;
 	
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
