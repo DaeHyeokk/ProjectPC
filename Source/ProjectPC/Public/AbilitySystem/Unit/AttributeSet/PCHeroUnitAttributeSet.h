@@ -22,6 +22,7 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, CurrentMana);
 	ATTRIBUTE_ACCESSORS(ThisClass, CombatStartMana);
+	ATTRIBUTE_ACCESSORS(ThisClass, ManaRegen);
 	ATTRIBUTE_ACCESSORS(ThisClass, UltimateDamage);
 	ATTRIBUTE_ACCESSORS(ThisClass, UltimateCost);
 	ATTRIBUTE_ACCESSORS(ThisClass, PhysicalDamageMultiplier);
@@ -38,6 +39,8 @@ protected:
 	FGameplayAttributeData CurrentMana;
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_CombatStartMana)
 	FGameplayAttributeData CombatStartMana;
+	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_ManaRegen)
+	FGameplayAttributeData ManaRegen;
 
 	UPROPERTY(BlueprintReadOnly, Category="Unit Attributes",  ReplicatedUsing=OnRep_UltimateDamage)
 	FGameplayAttributeData UltimateDamage;
@@ -69,6 +72,8 @@ protected:
 	void OnRep_CurrentMana(const FGameplayAttributeData& OldCurrentMana);
 	UFUNCTION()
 	void OnRep_CombatStartMana(const FGameplayAttributeData& OldCombatStartMana);
+	UFUNCTION()
+	void OnRep_ManaRegen(const FGameplayAttributeData& OldManaRegen);
 
 	UFUNCTION()
 	void OnRep_UltimateDamage(const FGameplayAttributeData& OldUltimateDamage);

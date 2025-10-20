@@ -49,9 +49,10 @@ void UPCSynergyComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void UPCSynergyComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	InitializeSynergyHandlersFromDefinitionSet();
+	
 	if (GetOwner()->HasAuthority())
 	{
-		InitializeSynergyHandlersFromDefinitionSet();
 		BindGameStateDelegates();
 	}
 }
@@ -181,6 +182,37 @@ void UPCSynergyComponent::UnRegisterHero(APCHeroUnitCharacter* Hero)
 			ApplySynergyEffects(SynergyTag);
 		}
 	}
+}
+
+TArray<int32> UPCSynergyComponent::GetSynergyThresholds(const FGameplayTag& SynergyTag) const
+{
+	TArray<int32> Result;
+
+	if (const UPCSynergyBase* Synergy = SynergyToTagMap.FindRef(SynergyTag))
+	{
+		const UPCDataAsset_SynergyData* SynergyData = Synergy->GetSynergyData();
+		for (const FSynergyTier& SynergyTier : SynergyData->GetAllTiers())
+		{
+			Result.Add(SynergyTier.Threshold);
+		}
+	}
+
+	return Result;
+}
+
+int32 UPCSynergyComponent::GetSynergyTierIndexFromCount(const FGameplayTag& SynergyTag, int32 Count) const
+{
+	int32 Result = -1;
+	
+	if (const UPCSynergyBase* Synergy = SynergyToTagMap.FindRef(SynergyTag))
+	{
+		if (const UPCDataAsset_SynergyData* SynergyData = Synergy->GetSynergyData())
+		{
+			Result = SynergyData->ComputeActiveTierIndex(Count);
+		}
+	}
+
+	return Result;
 }
 
 void UPCSynergyComponent::UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero)

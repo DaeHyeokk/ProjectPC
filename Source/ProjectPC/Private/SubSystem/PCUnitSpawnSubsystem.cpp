@@ -42,7 +42,7 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 }
 
 APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const int32 TeamIndex,
-	const int32 UnitLevel, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
+	const int32 UnitLevel, APCPlayerState* InOwnerPS, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
 {
 	// 유닛 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)
@@ -67,6 +67,7 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	if (!Unit)
 		return nullptr;
 	
+	Unit->SetOwnerPlayerState(InOwnerPS);
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
 	ApplyDefinitionData(Unit, Definition);

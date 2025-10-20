@@ -57,6 +57,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
 
+	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
+	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
+	
 	FORCEINLINE UPCUnitEquipmentComponent* GetEquipmentComponent() const { return EquipmentComp; }
 	FORCEINLINE const UWidgetComponent* GetStatusBarComponent() const { return StatusBarComp; }
 	FORCEINLINE FName GetStatusBarSocketName() const { return StatusBarSocketName; }
@@ -92,6 +95,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Replicated, Category="Data")
 	int32 TeamIndex = -1;
+
+	UPROPERTY(Transient)
+	TObjectPtr<APCPlayerState> OwnerPS;
 	
 	UFUNCTION()
 	void OnRep_UnitTag();

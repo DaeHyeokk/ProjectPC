@@ -89,6 +89,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> EventAbilities;
 
+	// 패시브 능력
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Startup|Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> PassiveAbilities;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability Datas")
 	TObjectPtr<UPCDataAsset_UnitAbilityConfig> AbilityConfigData;
 	

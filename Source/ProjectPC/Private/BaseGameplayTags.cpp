@@ -72,6 +72,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Basic, "Unit.Ability.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Ultimate, "Unit.Ability.Attack.Ultimate")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_PeriodPulse, "Unit.Ability.PeriodPulse")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_ManaRegen, "Unit.Ability.ManaRegen")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Cyborg, "Unit.Ability.Synergy.Cyborg")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Guardian, "Unit.Ability.Synergy.Guardian")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Undead, "Unit.Ability.Synergy.Undead")
@@ -144,6 +145,7 @@ namespace GameplayEffectTags
 	// ==== Infinite GE ====
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_MaxHealth,						"GE.Class.Unit.AttributeChange.Add.Infinite.MaxHealth")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_CombatStartMana,					"GE.Class.Unit.AttributeChange.Add.Infinite.CombatStartMana")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_ManaRegen,						"GE.Class.Unit.AttributeChange.Add.Infinite.ManaRegen")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_BaseDamage,						"GE.Class.Unit.AttributeChange.Add.Infinite.BaseDamage")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_PhysicalDamageMultiplier,			"GE.Class.Unit.AttributeChange.Add.Infinite.PhysicalDamageMultiplier")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Infinite_MagicDamageMultiplier,			"GE.Class.Unit.AttributeChange.Add.Infinite.MagicDamageMultiplier")
@@ -173,6 +175,7 @@ namespace GameplayEffectTags
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MaxMana, "GE.Caller.Stat.MaxMana")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CurrentMana, "GE.Caller.Stat.CurrentMana")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_CombatStartMana, "GE.Caller.Stat.CombatStartMana")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_ManaRegen, "GE.Caller.Stat.ManaRegen")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_BaseDamage, "GE.Caller.Stat.BaseDamage")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_PhysicalDamageMultiplier, "GE.Caller.Stat.PhysicalDamageMultiplier")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Stat_MagicDamageMultiplier, "GE.Caller.Stat.MagicDamageMultiplier")
@@ -248,6 +251,7 @@ namespace GameRoundTags
 namespace ItemTags
 {
 	// ==== Base Item Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base, "Item.Type.Base")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_BFSword, "Item.Type.Base.BFSword")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_ChainVest, "Item.Type.Base.ChainVest")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_GiantsBelt, "Item.Type.Base.GiantsBelt")
@@ -257,6 +261,7 @@ namespace ItemTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_SparringGloves, "Item.Type.Base.SparringGloves")
 
 	// ==== Advanced Item Tags ====
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced, "Item.Type.Advanced")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_BloodThirster, "Item.Type.Advanced.BloodThirster")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_BrambleVest, "Item.Type.Advanced.BrambleVest")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_CrownGuard, "Item.Type.Advanced.CrownGuard")

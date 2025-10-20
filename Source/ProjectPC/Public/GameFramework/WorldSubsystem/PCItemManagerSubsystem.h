@@ -49,6 +49,8 @@ public:
 	FGameplayTag CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
 	TMap<FGameplayTag, FGameplayTag> GetItemRecipe(FGameplayTag BaseItemTag) const;
 
+	const FPCEffectSpecList* GetItemEffectSpecList(FGameplayTag ItemTag) const;
+	
 	// Carousel
 	FGameplayTag GetRandomBaseItem() const;
 	FGameplayTag GetRandomAdvancedItem() const;

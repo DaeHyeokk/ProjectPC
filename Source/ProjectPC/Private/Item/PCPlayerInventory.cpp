@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Component/PCUnitEquipmentComponent.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
@@ -129,8 +130,13 @@ void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 Dragged
 					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
 					{
 						// 여기에 유닛 아이템 장착 추가
-						
-						RemoveItemFromInventory(DraggedInventoryIndex);
+						if (UPCUnitEquipmentComponent* EquipmentComp = Unit->GetEquipmentComponent())
+						{
+							if (EquipmentComp->TryEquipItem(Inventory[DraggedInventoryIndex]))
+							{
+								RemoveItemFromInventory(DraggedInventoryIndex);
+							}
+						}
 					}
 				}
 			}

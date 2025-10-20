@@ -35,7 +35,8 @@ public:
 	virtual bool HasLevelSystem() const override { return true; }
 	virtual int32 GetUnitLevel() const override { return HeroLevel; };
 	virtual void SetUnitLevel(const int32 Level) override;
-	void Combine(APCHeroUnitCharacter* LevelUpHero);
+	void Combine(const APCHeroUnitCharacter* LevelUpHero);
+	void SellHero();
 	void LevelUp();
 	
 	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }

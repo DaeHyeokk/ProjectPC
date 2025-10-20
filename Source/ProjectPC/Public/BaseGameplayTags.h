@@ -74,6 +74,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Guardian)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Undead)
@@ -145,6 +146,7 @@ namespace GameplayEffectTags
 	// ==== Infinite GE ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_MaxHealth)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_CombatStartMana)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_BaseDamage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_PhysicalDamageMultiplier)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Infinite_MagicDamageMultiplier)
@@ -174,6 +176,7 @@ namespace GameplayEffectTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_CurrentMana)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_MaxMana)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_CombatStartMana)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_BaseDamage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_PhysicalDamageMultiplier)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Stat_MagicDamageMultiplier)
@@ -248,6 +251,7 @@ namespace GameRoundTags
 namespace ItemTags
 {
 	// ==== Base Item Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_BFSword)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_ChainVest)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_GiantsBelt)
@@ -257,6 +261,7 @@ namespace ItemTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_SparringGloves)
 
 	// ==== Advanced Item Tags ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_BloodThirster)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_BrambleVest)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_CrownGuard)
