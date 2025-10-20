@@ -350,6 +350,7 @@ void APCCombatGameMode::Step_Travel()
 		{
 			if (CarouselRing)
 			{
+				CarouselRing->StartCarousel();
 				CarouselRing->SpawnPickups(Stage);
 			}
 			
@@ -411,11 +412,7 @@ void APCCombatGameMode::Step_Return()
 				PCCombatPlayerController->Client_ShowWidget();
 			}
 		}
-
-		if (CarouselRing)
-		{
-			CarouselRing->Multicast_OpenAllGates(false);
-		}
+		PlaceAllPlayersPickUpUnit();
 	}
 	else if (Prev->StageType == EPCStageType::Start)
 	{
@@ -526,16 +523,8 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 			{
 				if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 				{
-					if (APCPlayerBoard* PCPlayerBoard = PCPlayerState->GetPlayerBoard())
-					{
-						if (UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
-						{
-							APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(SpawnTag[SpawnIndex], PCPlayerState->SeatIndex, 1);
-							PCPlayerBoard->PlaceUnitOnBench(0,Unit);
-							++SpawnIndex;
-						}
-					}
-					
+					PCPlayerState->UnitSpawn(SpawnTag[SpawnIndex]);
+					++SpawnIndex;
 				}
 			}
 		}
@@ -611,6 +600,30 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 		}
 	}
 	SetCarouselCameraForAllPlayers();
+}
+
+void APCCombatGameMode::PlaceAllPlayersPickUpUnit()
+{
+	if (!CarouselRing)
+		return;
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PlayerController = It->Get();
+		if (!PlayerController) continue;
+
+		APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>();
+		if (!PCPlayerState) continue;
+		
+		if (APCPlayerCharacter* PlayerPawn = PlayerController->GetPawn<APCPlayerCharacter>())
+		{
+			PlayerPawn->CarouselUnitToSpawn();
+			
+		}
+	}
+
+	CarouselRing->FinishCarousel();
+	CarouselRing->Multicast_OpenAllGates(false);
 }
 
 void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()

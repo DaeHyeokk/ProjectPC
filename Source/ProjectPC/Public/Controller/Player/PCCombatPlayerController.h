@@ -241,6 +241,8 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_HideWidget();
 
+	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
+
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;

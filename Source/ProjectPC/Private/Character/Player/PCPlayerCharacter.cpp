@@ -15,6 +15,7 @@
 
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Item/PCPlayerInventory.h"
 #include "UI/PlayerMainWidget/PCPlayerOverheadWidget.h"
 
 
@@ -53,6 +54,12 @@ APCPlayerCharacter::APCPlayerCharacter()
 	OverHeadWidgetComp->SetupAttachment(RootComponent);
 	OverHeadWidgetComp->SetWidgetSpace(EWidgetSpace::Screen);
 	OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 1.0f));
+
+	// 캐러샐 유닛 캐리 슬롯
+	CarrySlot = CreateDefaultSubobject<USceneComponent>(TEXT("CarrySlot"));
+	CarrySlot->SetupAttachment(GetRootComponent());
+	CarrySlot->SetRelativeLocation(FVector( -120.f, 0.f, 20.f));
+	CarrySlot->SetRelativeRotation(FRotator(0.f,0.f,0.f));
 }
 
 void APCPlayerCharacter::BeginPlay()
@@ -98,6 +105,19 @@ void APCPlayerCharacter::OnRep_PlayerState()
 			}
 		}
 	}
+}
+
+void APCPlayerCharacter::CarouselUnitToSpawn()
+{
+	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	UPCPlayerInventory* PlayerInventory = PS->GetPlayerInventory();
+	if (!PS || !PlayerInventory) return;
+
+	const FGameplayTag UnitTag = CarouselUnitData.UnitTag;
+	const FGameplayTag ItemTag = CarouselUnitData.ItemTag;
+
+	PS->UnitSpawn(UnitTag);
+	PlayerInventory->AddItemToInventory(ItemTag);
 }
 
 void APCPlayerCharacter::PlayerDie()

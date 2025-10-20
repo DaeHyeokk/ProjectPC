@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PCCarouselRing.generated.h"
 
+class APCCarouselHeroCharacter;
 class APCPlayerState;
 class UBoxComponent;
 class APCBaseUnitCharacter;
@@ -40,6 +41,18 @@ public:
 	bool bPlayerRingFaceCenter = true;
 
 	// 안쪽 유닛 회전 링
+
+	FTimerHandle CarouselFacingTimer;
+
+	UPROPERTY(EditAnywhere, Category = "UnitRing")
+	float TangentYawOffsetDeg = 0.f;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartCarouselRotation(bool bStart);
+
+	// 접선방향으로 돌려주는 함수
+	void TickFaceAlongOrbit();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
 	int32 UnitRingNumSlots = 9;
 
@@ -57,7 +70,7 @@ public:
 	bool bUnitRingRotate = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Rotate")
-	float UnitRingRotationRateYawDeg = 35.f;
+	float UnitRingRotationRateYawDeg = 15.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
 	TSubclassOf<APCBaseUnitCharacter> PickupUnit;
@@ -66,7 +79,7 @@ public:
 	int32 NumPickupsToSpawn = 9;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing|Pickup")
-	FVector PickupLocalOffset = FVector(0,0,30);
+	FVector PickupLocalOffset = FVector(0,0,10);
 
 	// 게이트에 사용할 스태틱 매쉬
 	UPROPERTY(EditDefaultsOnly, Category = "Carousel|Gate")
@@ -146,8 +159,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void SpawnPickups(int32 Stage);
 
+	UFUNCTION()
+	void NotifyPicked(APCCarouselHeroCharacter* Unit, int32 Seat);
+	
+	UPROPERTY()
+	TMap<int32, TWeakObjectPtr<APCCarouselHeroCharacter>> SeatToUnit;
+	
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void ClearPickups();
+
+	UFUNCTION()
+	void StartCarousel();
+
+	UFUNCTION()
+	void FinishCarousel();
 
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void SetRotationOnActive(bool bOn);
@@ -191,7 +216,7 @@ protected:
 
 	// 스폰한 픽업 게이트 핸들
 	UPROPERTY(Transient)
-	TArray<TWeakObjectPtr<APCBaseUnitCharacter>> SpawnedPickups;
+	TArray<TWeakObjectPtr<APCCarouselHeroCharacter>> SpawnedPickups;
 
 	// 내부 헬퍼
 	FVector GetRingCenterWorld(const USceneComponent* Root) const;

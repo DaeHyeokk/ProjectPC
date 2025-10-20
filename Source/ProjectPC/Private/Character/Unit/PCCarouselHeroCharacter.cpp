@@ -6,10 +6,14 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "Animation/Unit/PCCarouselHeroAnimInstance.h"
+#include "Character/Player/PCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/HelpActor/PCCarouselRing.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/Unit/PCCarouselUnitWidget.h"
 
 
 // Sets default values
@@ -36,7 +40,7 @@ APCCarouselHeroCharacter::APCCarouselHeroCharacter()
 	StatusBarComp->SetWidgetSpace(EWidgetSpace::Screen);
 	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
-	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
+	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,40.f));
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
 	GetMesh()->SetIsReplicated(true);
@@ -55,6 +59,7 @@ void APCCarouselHeroCharacter::BeginPlay()
 	
 	InitCarouselAnimInstance();
 	AttachStatusBarToSocket();
+	InitStatusBar();
 }
 
 void APCCarouselHeroCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -63,6 +68,20 @@ void APCCarouselHeroCharacter::GetLifetimeReplicatedProps(TArray<class FLifetime
 
 	DOREPLIFETIME(APCCarouselHeroCharacter, UnitTag);
 	DOREPLIFETIME(APCCarouselHeroCharacter, ItemTag);
+	DOREPLIFETIME(APCCarouselHeroCharacter, bPicked);
+	DOREPLIFETIME(APCCarouselHeroCharacter, PickedBySeat);
+}
+
+void APCCarouselHeroCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (!HasAuthority() || Carrier.IsValid())
+		return;
+	if (auto* Picker = Cast<APCPlayerCharacter>(OtherActor))
+	{
+		Server_StartFollowing(Picker);
+	}
 }
 
 void APCCarouselHeroCharacter::AttachStatusBarToSocket() const
@@ -75,7 +94,7 @@ void APCCarouselHeroCharacter::AttachStatusBarToSocket() const
 				SkComp,
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 				StatusBarSocketName);
-			StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
+			StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,45.f));
 		}
 	}
 }
@@ -154,6 +173,60 @@ void APCCarouselHeroCharacter::SetItemTag(const FGameplayTag& InItemTag)
 	}
 }
 
+void APCCarouselHeroCharacter::Server_StartFollowing_Implementation(APCPlayerCharacter* Picker)
+{
+	if (!Picker || Carrier.IsValid())
+		return;
+
+	if (APCPlayerState* PS = Picker->GetPlayerState<APCPlayerState>())
+	{
+		if (bPicked) return;
+
+		bPicked = true;
+		PickedBySeat = PS->SeatIndex;
+
+		if (OwnerRing.IsValid())
+		{
+			OwnerRing->NotifyPicked(this, PickedBySeat);
+		}
+	}
+
+	Carrier = Picker;
+
+	if (bDisableCollisionWhenCarried)
+	{
+		if (UCapsuleComponent* Cap = GetCapsuleComponent())
+		{
+			Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+
+	SetOwner(Picker->GetController());
+	bNetUseOwnerRelevancy = true;
+
+	Multicast_AttachToCarrier(Picker);
+}
+
+void APCCarouselHeroCharacter::Multicast_AttachToCarrier_Implementation(APCPlayerCharacter* Picker)
+{
+	if (!Picker) return;
+
+	USceneComponent* AttachComp = Picker->CarrySlot ? Picker->CarrySlot : Picker->GetRootComponent();
+
+	if (Picker->CachedCarouselUnit == nullptr)
+	{
+		AttachToComponent(AttachComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+		SetActorScale3D(FVector(0.8f,0.8f,0.8f));
+
+		SetActorRelativeRotation(FRotator(0.f,0.f,0.f));
+
+		Picker->CachedCarouselUnit = this;
+		Picker->CarouselUnitData.ItemTag = GetHasItemTag();
+		Picker->CarouselUnitData.UnitTag = GetUnitTag();
+	}	
+}
+
 void APCCarouselHeroCharacter::OnRep_ItemTag()
 {
 	InitStatusBar();
@@ -181,6 +254,10 @@ void APCCarouselHeroCharacter::InitStatusBar()
 
 	if (UUserWidget* Widget = StatusBarComp->GetUserWidgetObject())
 	{
-		// 여기에서 캐러셀 유닛 상태 UI 초기화
+		if (UPCCarouselUnitWidget* ItemWidget = Cast<UPCCarouselUnitWidget>(Widget))
+		{
+			ItemWidget->SetItemImg(ItemTag);
+			ItemWidget->SetUnit(this);
+		}
 	}
 }

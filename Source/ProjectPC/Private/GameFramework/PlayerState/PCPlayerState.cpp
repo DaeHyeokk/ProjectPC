@@ -15,6 +15,7 @@
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "Engine/ActorChannel.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Item/PCPlayerInventory.h"
 #include "Shop/PCShopManager.h"
 
@@ -40,6 +41,18 @@ APCPlayerState::APCPlayerState()
 	// Inventory 세팅
 	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
 	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
+}
+
+void APCPlayerState::UnitSpawn(FGameplayTag UnitTag)
+{
+	if (!HasAuthority()) return;
+	
+	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
+	if (!PlayerBoard || !SpawnSubsystem) return;
+
+	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1);
+	int32 LowBenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
+	PlayerBoard->PlaceUnitOnBench(LowBenchIndex,Unit);
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)

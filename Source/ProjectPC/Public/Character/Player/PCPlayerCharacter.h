@@ -7,7 +7,21 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
+class APCCarouselHeroCharacter;
 class UWidgetComponent;
+
+USTRUCT(BlueprintType)
+struct FCarouselUnitData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameplayTag UnitTag;
+
+	UPROPERTY()
+	FGameplayTag ItemTag;
+	
+};
 
 UCLASS()
 class PROJECTPC_API APCPlayerCharacter : public ACharacter
@@ -41,6 +55,25 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+#pragma region CarouselSlot
+
+public:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Carousel")
+	USceneComponent* CarrySlot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Carousel")
+	TWeakObjectPtr<APCCarouselHeroCharacter> CachedCarouselUnit;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Carousel")
+	FCarouselUnitData CarouselUnitData;
+
+	UFUNCTION(BlueprintCallable, Category = "Carousel")
+	void CarouselUnitToSpawn();
+
+	
+#pragma endregion  CrouselSlot
 	
 #pragma region PlayerDead
 	

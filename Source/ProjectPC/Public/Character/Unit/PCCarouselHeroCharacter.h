@@ -10,6 +10,8 @@
 #include "GameFramework/Character.h"
 #include "PCCarouselHeroCharacter.generated.h"
 
+class APCCarouselRing;
+class APCPlayerCharacter;
 class UPCHeroUnitAttributeSet;
 class UWidgetComponent;
 class UPCDataAsset_UnitDefinition;
@@ -36,11 +38,39 @@ public:
 
 	FGameplayTag GetHasItemTag() const { return ItemTag; }
 	void SetItemTag(const FGameplayTag& InItemTag);
+
+	// 캐러샐 유닛 부착
+
+	UPROPERTY(Replicated)
+	bool bPicked = false;
+
+	UPROPERTY(Replicated)
+	int32 PickedBySeat = INDEX_NONE;
+
+	UPROPERTY()
+	TWeakObjectPtr<APCCarouselRing> OwnerRing;
+
+	bool IsPicked() const { return bPicked; }
+	
+	UFUNCTION(Server, Reliable)
+	void Server_StartFollowing(APCPlayerCharacter* Picker);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_AttachToCarrier(APCPlayerCharacter* Picker);
+
+	UPROPERTY(Replicated)
+	TWeakObjectPtr<APCPlayerCharacter> Carrier;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bDisableCollisionWhenCarried = true;
 	
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// 캐러셀 유닛 픽업 이벤트
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
 	TObjectPtr<UWidgetComponent> StatusBarComp;
 	

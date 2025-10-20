@@ -13,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
+#include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Shop/PCShopManager.h"
@@ -56,17 +57,62 @@ APCCarouselRing::APCCarouselRing()
 	RotatingMovement->bAutoActivate = false;
 }
 
+void APCCarouselRing::TickFaceAlongOrbit()
+{
+	const FVector Center = GetRingCenterWorld(UnitRingRoot);
+
+	for (auto& WeakUnit : SpawnedPickups)
+	{
+		APCCarouselHeroCharacter* Unit = WeakUnit.Get();
+		if (!IsValid(Unit) || Unit->IsPicked()) continue;
+
+		const FVector Loc = Unit->GetActorLocation();
+
+		FVector Radial = (Loc - Center);
+		Radial.Z = 0.f;
+		if (!Radial.Normalize()) continue;
+
+		FVector TangentCW(-Radial.Y, Radial.X, 0.f);
+
+		FRotator FaceYaw = TangentCW.Rotation();
+		FaceYaw.Yaw = FMath::UnwindDegrees(FaceYaw.Yaw + TangentYawOffsetDeg);
+		FaceYaw.Pitch = 0.f;
+		FaceYaw.Roll = 0.f;
+
+		Unit->SetActorRotation(FaceYaw);
+	}
+}
+
+void APCCarouselRing::Multicast_StartCarouselRotation_Implementation(bool bStart)
+{
+	SetRotationOnActive(bStart);
+
+	if (bStart)
+	{
+		if (!GetWorldTimerManager().IsTimerActive(CarouselFacingTimer))
+		{
+			GetWorldTimerManager().SetTimer(CarouselFacingTimer, this, &APCCarouselRing::TickFaceAlongOrbit, 0.033f, true);
+		}
+		else
+		{
+			GetWorldTimerManager().ClearTimer(CarouselFacingTimer);
+		}
+	}
+}
+
 void APCCarouselRing::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	if (CarouselCamera)
 		CarouselCamera->Activate();
-	
+
 	if (bUnitRingRotate)
 	{
 		SetRotationOnActive(true);
+		GetWorldTimerManager().SetTimer(CarouselFacingTimer, this, &APCCarouselRing::TickFaceAlongOrbit, 0.033f, true);
 	}
-
+	
 	BuildGates();
 }
 
@@ -139,12 +185,45 @@ void APCCarouselRing::ClearPickups()
 {
 	for (auto& W : SpawnedPickups)
 	{
-		if (APCBaseUnitCharacter* Unit = W.Get())
+		if (APCCarouselHeroCharacter* Unit = W.Get())
 		{
 			Unit->Destroy();
 		}
 	}
 	SpawnedPickups.Reset();
+}
+
+void APCCarouselRing::StartCarousel()
+{
+	
+}
+
+void APCCarouselRing::FinishCarousel()
+{
+	if (!HasAuthority()) return;
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (auto* Shop = GS->GetShopManager())
+		{
+			for (auto& WeakUnit : SpawnedPickups)
+			{
+				APCCarouselHeroCharacter* Unit = WeakUnit.Get();
+				if (!Unit) continue;
+
+				if (!Unit->IsPicked())
+				{
+					Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
+					Unit->Destroy();
+				}
+				Unit->Destroy();
+			}
+		}
+	}
+	SpawnedPickups.Reset();
+	SeatToUnit.Reset();
+	SetRotationOnActive(false);
+	GetWorldTimerManager().ClearTimer(CarouselFacingTimer);
 }
 
 void APCCarouselRing::SpawnPickups(int32 Stage)
@@ -163,19 +242,28 @@ void APCCarouselRing::SpawnPickups(int32 Stage)
 	UnitRingRoot->SetWorldScale3D(FVector(1.f));
 	UnitRingRoot->SetRelativeScale3D(FVector(1.f));
 
-	const int32 Count = FMath::Max(0, NumPickupsToSpawn);
 	for (int32 i = 0; i < SpawnTag.Num(); ++i)
 	{
 		FTransform Slot = GetUnitSlotTransformWorld(i);
 		FTransform T = Slot;
 		T.AddToTranslation(PickupLocalOffset);
+		TArray<FGameplayTag> ItemTags;
+		ItemTags.SetNum(SpawnTag.Num());
+		
+		if (UPCItemManagerSubsystem* ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
+		{
+			ItemTags[i] = ItemManager->GetRandomBaseItem();
+		}
 		
 		if (UPCUnitSpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 		{
-			if (APCCarouselHeroCharacter* Unit = SpawnSystem->SpawnCarouselHeroByTag(SpawnTag[i], ItemTags::Item_Type_Advanced_BloodThirster))
+			if (APCCarouselHeroCharacter* Unit = SpawnSystem->SpawnCarouselHeroByTag(SpawnTag[i], ItemTags[i]))
 				{
 					if (Unit)
 					{
+						Unit->OwnerRing = this;
+						SpawnedPickups.AddUnique(Unit);
+						
 						// FinishSpawning 내부에서 완료됨(Subsystem 코드)
 						Unit->SetActorHiddenInGame(false);
 
@@ -196,6 +284,8 @@ void APCCarouselRing::SpawnPickups(int32 Stage)
 						// 부착
 						Unit->AttachToComponent(UnitRingRoot, FAttachmentTransformRules::KeepWorldTransform);
 
+						TickFaceAlongOrbit();
+						
 						// 최종 로그
 						UE_LOG(LogTemp, Warning, TEXT("RingRoot=%s  Unit=%s  Mesh=%s"),
 							*UnitRingRoot->GetComponentTransform().GetScale3D().ToString(),
@@ -205,6 +295,17 @@ void APCCarouselRing::SpawnPickups(int32 Stage)
 				}
 		}
 	}
+}
+
+void APCCarouselRing::NotifyPicked(APCCarouselHeroCharacter* Unit, int32 Seat)
+{
+	if (!HasAuthority() || !Unit) return;
+
+	if (SeatToUnit.Contains(Seat)) return;
+
+	if (!SpawnedPickups.Contains(Unit)) return;
+
+	SeatToUnit.Add(Seat, Unit);
 }
 
 

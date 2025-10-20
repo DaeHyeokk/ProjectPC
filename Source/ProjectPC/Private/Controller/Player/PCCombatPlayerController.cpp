@@ -157,7 +157,7 @@ void APCCombatPlayerController::BeginPlayingState()
 
 	if (PlayerMainWidget)
 	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
 		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
 		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();

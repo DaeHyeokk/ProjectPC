@@ -57,6 +57,8 @@ private:
 	
 	UPROPERTY(ReplicatedUsing=OnRep_SynergyCountArray)
 	FSynergyCountArray SynergyCountArray;
+
+	
 	UFUNCTION()
 	void OnRep_SynergyCountArray();
 	

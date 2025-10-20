@@ -443,17 +443,6 @@ void APCCombatManager::PlacePlayerBoardToTM(APCPlayerBoard* PlayerBoard, UPCTile
 			{
 				Unit->SetTeamIndex(PlayerBoard->PlayerIndex);
 			}
-
-			UE_LOG(LogTemp, Warning,
-				TEXT("[PlacePB->TM] Place success dst=(Y=%d,X=%d) Unit=%s, UnitTeamIndex = %d"),
-				dstY, dstX, *GetNameSafe(E.Unit.Get()), E.Unit.Get()->GetTeamIndex());
-				
-			if (!ok)
-			{
-				UE_LOG(LogTemp, Warning,
-					TEXT("[PlacePB->TM] Place failed dst=(Y=%d,X=%d) Unit=%s"),
-					dstY, dstX, *GetNameSafe(E.Unit.Get()));
-			}
 		}		
 	}	
 }
