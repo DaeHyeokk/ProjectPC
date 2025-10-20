@@ -6,6 +6,7 @@
 #include "BaseGameplayTags.h"
 #include "Camera/CameraComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/RotatingMovementComponent.h"
@@ -171,7 +172,7 @@ void APCCarouselRing::SpawnPickups(int32 Stage)
 		
 		if (UPCUnitSpawnSubsystem* SpawnSystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
 		{
-			if (APCBaseUnitCharacter* Unit = SpawnSystem->SpawnUnitByTag(SpawnTag[i]))
+			if (APCCarouselHeroCharacter* Unit = SpawnSystem->SpawnCarouselHeroByTag(SpawnTag[i], ItemTags::Item_Type_Advanced_BloodThirster))
 				{
 					if (Unit)
 					{
