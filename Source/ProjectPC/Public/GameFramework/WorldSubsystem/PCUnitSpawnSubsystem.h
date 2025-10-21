@@ -69,6 +69,7 @@ public:
 		const FGameplayTag UnitTag,
 		const int32 TeamIndex = 255,
 		const int32 UnitLevel = 1,
+		APCPlayerState* InOwnerPS = nullptr,
 		AActor* InOwner = nullptr,
 		APawn* InInstigator = nullptr,
 		ESpawnActorCollisionHandlingMethod HandlingMethod =

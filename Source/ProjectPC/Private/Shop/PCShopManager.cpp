@@ -139,7 +139,7 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 	
 	auto PlayerBoard = TargetPlayer->GetPlayerBoard();
 	
-	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex);
+	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex, 1, TargetPlayer);
 
 	auto BenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
 
@@ -294,7 +294,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 		for (int32 i = 1; i <= RemoveCount; ++i)
 		{
 			PlayerBoard->RemoveFromBoard(HeroUnitList[i]);
-			HeroUnitList[i]->Destroy();
+			HeroUnitList[i]->Combine(LevelUpUnit);
 		}
 	}
 }

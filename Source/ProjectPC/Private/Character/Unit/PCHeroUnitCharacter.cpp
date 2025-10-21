@@ -12,7 +12,6 @@
 #include "Component/PCUnitEquipmentComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
-#include "GameFramework/GameState/PCCombatGameState.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 
@@ -132,7 +131,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
 			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),
 			EGameplayModOp::Override,
-			HeroUnitDataAsset->GetCombatStartMana());
+			HeroUnitAttributeSet->GetCombatStartMana());
 
 		// 이전 전투에서 사망했을 경우 사망 태그 제거
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
@@ -232,12 +231,24 @@ void APCHeroUnitCharacter::SetUnitLevel(const int32 Level)
 		OnRep_HeroLevel();
 }
 
-void APCHeroUnitCharacter::Combine(APCHeroUnitCharacter* LevelUpHero)
+void APCHeroUnitCharacter::Combine(const APCHeroUnitCharacter* LevelUpHero)
 {
 	if (LevelUpHero)
 	{
-		UPCUnitEquipmentComponent* TargetEquipmentComp = LevelUpHero->EquipmentComp;
-		TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
+		if (UPCUnitEquipmentComponent* TargetEquipmentComp = LevelUpHero->EquipmentComp)
+		{
+			TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
+		}
+	}
+
+	Destroy();
+}
+
+void APCHeroUnitCharacter::SellHero()
+{
+	if (EquipmentComp)
+	{
+		EquipmentComp->ReturnAllItemToPlayerInventory(true);
 	}
 
 	Destroy();
@@ -256,7 +267,7 @@ void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 
 	if (UPCHeroStatusBarWidget* StatusBar = Cast<UPCHeroStatusBarWidget>(StatusBarWidget))
 	{
-		StatusBar->InitWithASC(GetUnitAbilitySystemComponent(),
+		StatusBar->InitWithASC(this,GetAbilitySystemComponent(),
 			UPCHeroUnitAttributeSet::GetCurrentHealthAttribute(),
 			UPCHeroUnitAttributeSet::GetMaxHealthAttribute(),
 			UPCHeroUnitAttributeSet::GetCurrentManaAttribute(),

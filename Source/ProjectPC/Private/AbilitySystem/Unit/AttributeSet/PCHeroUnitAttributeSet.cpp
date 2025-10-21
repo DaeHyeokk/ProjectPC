@@ -11,6 +11,7 @@ UPCHeroUnitAttributeSet::UPCHeroUnitAttributeSet()
 {
 	InitCritChance(25.f);
 	InitCritMultiplier(30.f);
+	InitManaRegen(20.f);
 }
 
 void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -20,6 +21,7 @@ void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeP
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,MaxMana, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CurrentMana, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,CombatStartMana, COND_None, REPNOTIFY_OnChanged);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,ManaRegen, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,UltimateDamage, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,UltimateCost, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME_CONDITION_NOTIFY(UPCHeroUnitAttributeSet,PhysicalDamageMultiplier, COND_None, REPNOTIFY_OnChanged);
@@ -53,6 +55,11 @@ void UPCHeroUnitAttributeSet::OnRep_CurrentMana(const FGameplayAttributeData& Ol
 void UPCHeroUnitAttributeSet::OnRep_CombatStartMana(const FGameplayAttributeData& OldCombatStartMana)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, CombatStartMana, OldCombatStartMana);
+}
+
+void UPCHeroUnitAttributeSet::OnRep_ManaRegen(const FGameplayAttributeData& OldManaRegen)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCHeroUnitAttributeSet, ManaRegen, OldManaRegen);
 }
 
 void UPCHeroUnitAttributeSet::OnRep_UltimateDamage(const FGameplayAttributeData& OldUltimateDamage)

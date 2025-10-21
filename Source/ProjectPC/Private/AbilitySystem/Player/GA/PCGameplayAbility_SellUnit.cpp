@@ -89,7 +89,7 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 				}
 			
 				GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
-				Unit->Destroy();
+				Unit->SellHero();
 			}
 		}
 		

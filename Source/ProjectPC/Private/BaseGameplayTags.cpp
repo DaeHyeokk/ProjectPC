@@ -72,6 +72,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Basic, "Unit.Ability.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Ultimate, "Unit.Ability.Attack.Ultimate")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_PeriodPulse, "Unit.Ability.PeriodPulse")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_ManaRegen, "Unit.Ability.ManaRegen")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Cyborg, "Unit.Ability.Synergy.Cyborg")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Guardian, "Unit.Ability.Synergy.Guardian")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Synergy_Undead, "Unit.Ability.Synergy.Undead")
@@ -249,6 +250,7 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Item, "Item")
 	// ==== Base Item Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base, "Item.Type.Base")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_BFSword, "Item.Type.Base.BFSword")

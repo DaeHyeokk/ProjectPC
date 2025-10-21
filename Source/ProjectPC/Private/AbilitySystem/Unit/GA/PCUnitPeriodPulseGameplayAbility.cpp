@@ -21,7 +21,7 @@ void UPCUnitPeriodPulseGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 
 	if (!HasAuthority(&ActivationInfo) || !ActorInfo)
 		return;
-
+	
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().SetTimer(

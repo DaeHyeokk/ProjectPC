@@ -24,7 +24,7 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 	if (CooldownGameplayEffectClass && ASC)
 	{
 		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
-		const float AttackSpeed = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;
+		const float AttackSpeed = UnitAttrSet->GetEffectiveAttackSpeed();
 		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
 		
 		FGameplayEffectSpecHandle CooldownSpec = MakeOutgoingGameplayEffectSpec(CooldownGameplayEffectClass, GetAbilityLevel());

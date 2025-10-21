@@ -74,6 +74,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Guardian)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Undead)
@@ -249,6 +250,8 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item)
+	
 	// ==== Base Item Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_BFSword)

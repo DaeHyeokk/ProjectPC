@@ -3,13 +3,15 @@
 
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "AbilitySystemComponent.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/WidgetSwitcher.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 
-void UPCHeroStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC,
+void UPCHeroStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilitySystemComponent* InASC,
 	FGameplayAttribute InHealthAttr, FGameplayAttribute InMaxHealthAttr,
 	FGameplayAttribute InManaAttr, FGameplayAttribute InMaxManaAttr, int32 InLevel)
 {
+	Unit = InUnit;
 	ASC = InASC;
 	HealthAttr = InHealthAttr;
 	MaxHealthAttr = InMaxHealthAttr;
@@ -24,6 +26,11 @@ void UPCHeroStatusBarWidget::SetVariantByLevel(int32 Level)
 	if (!StatusSwitcher)
 		return;
 
+	if (UPCUnitStatusBarWidget* UnitStatusBar = Cast<UPCUnitStatusBarWidget>(StatusSwitcher->GetActiveWidget()))
+	{
+		UnitStatusBar->ClearDelegate();
+	}
+	
 	int32 Index = FMath::Clamp(Level-1, 0, StatusSwitcher->GetChildrenCount() - 1);
 	StatusSwitcher->SetActiveWidgetIndex(Index);
 	EnsureActiveVariantInitialized();
@@ -40,13 +47,13 @@ void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBar
 	if (UPCUnitStatusBarWidget* ActiveStatusBar = Cast<UPCUnitStatusBarWidget>(StatusSwitcher->GetActiveWidget()))
 	{
 		const UAbilitySystemComponent* SrcASC = SourceStatusBar->ASC.Get();
-
+		
 		const float HP = SrcASC->GetNumericAttribute(SourceStatusBar->HealthAttr);
 		const float MaxHP = SrcASC->GetNumericAttribute(SourceStatusBar->MaxHealthAttr);
 		const float Mana = SrcASC->GetNumericAttribute(SourceStatusBar->ManaAttr);
 		const float MaxMana = SrcASC->GetNumericAttribute(SourceStatusBar->MaxManaAttr);
 
-		ActiveStatusBar->SetInstant(HP, MaxHP, Mana, MaxMana);
+		ActiveStatusBar->SetInstant(SourceStatusBar->Unit.Get(),HP, MaxHP, Mana, MaxMana);
 	}
 }
 
@@ -61,7 +68,7 @@ void UPCHeroStatusBarWidget::EnsureActiveVariantInitialized()
 		{
 			if (!InitializedStatusBarSet.Contains(Child))
 			{
-				Child->InitWithASC(ASC.Get(),
+				Child->InitWithASC(Unit.Get(),ASC.Get(),
 					HealthAttr, MaxHealthAttr,
 					ManaAttr, MaxManaAttr);
 

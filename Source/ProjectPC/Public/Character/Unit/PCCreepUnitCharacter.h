@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
-#include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "PCCreepUnitCharacter.generated.h"
 
 /**
