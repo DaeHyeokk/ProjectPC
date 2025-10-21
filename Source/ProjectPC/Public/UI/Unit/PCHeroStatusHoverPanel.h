@@ -25,6 +25,20 @@ enum class EHeroHoverStat : uint8
 	PMul, MMul, CritChance, LifeSteal, DamageMul
 };
 
+USTRUCT(BlueprintType)
+struct FWidgetTextureData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSoftObjectPtr<UTexture2D>> UnitPositionTexture;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSoftObjectPtr<UTexture2D>> UnitLevelTexture;
+};
+
+
 /**
  * 
  */

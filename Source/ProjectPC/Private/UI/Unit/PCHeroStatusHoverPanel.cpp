@@ -323,18 +323,18 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 	if (!CurHero.IsValid() || !ASC.IsValid())
 		return;
 
-	// if (UnitSlotWidget)
-	// {
-	// 	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-	// 	{
-	// 		auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag()
-	//
-	// 		if (UnitData.UnitName != "Dummy")
-	// 		{
-	// 			UnitSlotWidget->Setup(UnitData, false);
-	// 		}
-	// 	}
-	// }
+	if (UnitSlotWidget)
+	{
+		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag(CurHero->GetUnitTag());
+	
+			if (UnitData.UnitName != "Dummy")
+			{
+				UnitSlotWidget->Setup(UnitData, false);
+			}
+		}
+	}
 
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
 	const auto CurHPAttr = UPCHeroUnitAttributeSet::GetCurrentHealthAttribute();
