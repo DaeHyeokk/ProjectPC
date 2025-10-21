@@ -101,6 +101,7 @@ void APCCarouselHeroCharacter::SetHeroUnitDataAsset(UPCDataAsset_HeroUnitData* I
 	if (InHeroData)
 	{
 		HeroData = InHeroData;
+		SetUnitRecommendedPosition(InHeroData->GetRecommentPosition());
 		
 		if (HasAuthority())
 		{

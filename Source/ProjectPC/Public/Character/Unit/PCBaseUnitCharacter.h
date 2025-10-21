@@ -46,11 +46,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetOutlineEnabled(bool bEnable) const;
 	
-	virtual bool HasLevelSystem() const { return false; }
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	virtual int32 GetUnitLevel() const { return 1; }
-	virtual void SetUnitLevel(const int32 Level) { }
-	
 	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
 	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
 
