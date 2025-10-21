@@ -167,7 +167,22 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 	
 	if (GetMesh())
 	{
-		GetMesh()->SetVisibility(!IsStart, true);
+		if (IsStart)
+		{
+			GetMesh()->SetVisibility(false, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(0.f);
+			}
+		}
+		else
+		{
+			GetMesh()->SetVisibility(true, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(1.f);
+			}
+		}
 	}
 }
 
