@@ -87,10 +87,10 @@ void UPCUnitStatusBarWidget::UpdateUI() const
 	ApplyToUI();
 }
 
-void UPCUnitStatusBarWidget::NativeConstruct()
+void UPCUnitStatusBarWidget::NativeOnInitialized()
 {
-	Super::NativeConstruct();
-
+	Super::NativeOnInitialized();
+	
 	if (ItemImage_0 && ItemImage_1 && ItemImage_2)
 	{
 		EquipItemImages.Add(ItemImage_0);

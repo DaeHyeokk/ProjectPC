@@ -43,7 +43,7 @@ public:
 	FORCEINLINE void SetOwnerUnit(APCBaseUnitCharacter* InUnit) { Unit = InUnit; }
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 
 private:

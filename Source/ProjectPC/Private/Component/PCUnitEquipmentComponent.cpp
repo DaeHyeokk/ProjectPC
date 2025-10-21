@@ -30,7 +30,6 @@ void UPCUnitEquipmentComponent::BeginPlay()
 	if (GetOwner())
 	{
 		OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-
 		
 		if (APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(GetOwner()))
 		{
