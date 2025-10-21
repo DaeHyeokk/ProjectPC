@@ -101,7 +101,7 @@ public:
 	TArray<float> GetCostProbabilities(int32 PlayerLevel);
 	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	int32 GetUnitCostByTag(FGameplayTag UnitTag);
-	int32 GetSellingPrice(const TPair<int32, int32>& UnitLevelCostData);
+	int32 GetSellingPrice(int32 UnitCost, int32 UnitLevel);
 	
 #pragma endregion Data
 	

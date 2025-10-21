@@ -92,7 +92,7 @@ void UPCShopWidget::SetupShopSlots()
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
 		if (!UnitSlotWidget) continue;
 		
-		UnitSlotWidget->Setup(UnitData, Index);
+		UnitSlotWidget->Setup(UnitData, Index, true);
 		ShopBox->AddChild(UnitSlotWidget);
 
 		++Index;
@@ -162,23 +162,18 @@ void UPCShopWidget::OnClickedReroll()
 void UPCShopWidget::OnClickedShopLock()
 {
 	if (!Img_ShopLock || !ShopLock || !ShopUnlock || !CachedController.IsValid()) return;
-
-	// auto PC = Cast<APCCombatPlayerController>(GetOwningPlayer());
-	// if (!PC) return;
-
+	
 	const auto& CurrentBrush = Img_ShopLock->GetBrush();
 	auto CurrentResource = CurrentBrush.GetResourceObject();
 
 	if (CurrentResource && CurrentResource == ShopLock)
 	{
 		Img_ShopLock->SetBrushFromTexture(ShopUnlock);
-		//PC->ShopRequest_ShopLock(false);
 		CachedController->ShopRequest_ShopLock(false);
 	}
 	else
 	{
 		Img_ShopLock->SetBrushFromTexture(ShopLock);
-		//PC->ShopRequest_ShopLock(true);
 		CachedController->ShopRequest_ShopLock(true);
 	}
 }
