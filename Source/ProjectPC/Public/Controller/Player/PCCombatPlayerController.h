@@ -241,6 +241,8 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_HideWidget();
 
+	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
+
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;
@@ -294,6 +296,9 @@ public:
 
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedCheckStatusUnit;
+
+	UPROPERTY()
+	TWeakObjectPtr<APCHeroUnitCharacter> CachedPreviewUnit;
 
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)

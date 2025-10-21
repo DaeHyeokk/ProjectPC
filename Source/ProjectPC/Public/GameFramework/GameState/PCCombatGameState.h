@@ -510,4 +510,6 @@ protected:
 	TSubclassOf<APCItemCapsule> ItemCapsuleClass;
 	
 #pragma endregion Item
+
+
 };

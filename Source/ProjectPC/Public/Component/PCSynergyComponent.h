@@ -13,6 +13,22 @@ class UPCSynergyBase;
 class UPCDataAsset_SynergyDefinitionSet;
 class APCHeroUnitCharacter;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSynergyCountsChanged, const TArray<FSynergyData>&);
+
+USTRUCT()
+struct FSynergyData
+{
+	GENERATED_BODY()
+	
+	FGameplayTag SynergyTag;
+	
+	int32 Count;
+	
+	TArray<int32> Thresholds;
+	
+	int32 TierIndex;
+};
+
 USTRUCT()
 struct FHeroSynergyTally
 {
@@ -39,6 +55,10 @@ public:
 	const TArray<FSynergyCountEntry>& GetSynergyCountArray() const { return SynergyCountArray.Entries; };
 	TArray<int32> GetSynergyThresholds(const FGameplayTag& SynergyTag) const;
 	int32 GetSynergyTierIndexFromCount(const FGameplayTag& SynergyTag, int32 Count) const;
+
+	// UI 표시용 델리게이트
+	FOnSynergyCountsChanged OnSynergyCountsChanged;
+	const TArray<FSynergyData>& GetSynergySnapShot() const { return SynergyData; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -59,6 +79,10 @@ private:
 	
 	UPROPERTY(ReplicatedUsing=OnRep_SynergyCountArray)
 	FSynergyCountArray SynergyCountArray;
+
+	UPROPERTY(Replicated)
+	TArray<FSynergyData> SynergyData;
+		
 	UFUNCTION()
 	void OnRep_SynergyCountArray();
 	

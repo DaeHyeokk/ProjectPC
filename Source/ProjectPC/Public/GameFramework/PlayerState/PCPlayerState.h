@@ -9,6 +9,7 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
+class UPCSynergyComponent;
 class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
@@ -35,6 +36,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerBoard")
 	FORCEINLINE APCPlayerBoard* GetPlayerBoard() { return PlayerBoard; }
+
+	UFUNCTION(BlueprintCallable, Category = "UnitSpawn")
+	void UnitSpawn(FGameplayTag UnitTag);
 
 	// 서버 전용 세터
 	void SetPlayerBoard(APCPlayerBoard* InBoard);

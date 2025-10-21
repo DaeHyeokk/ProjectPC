@@ -108,6 +108,7 @@ private:
 	void InitializeHomeBoardsForPlayers();
 	void TryPlacePlayersAfterTravel();
 	void PlaceAllPlayersOnCarousel();
+	void PlaceAllPlayersPickUpUnit();
 	void MovePlayersToBoardsAndCameraSet();
 	void SetCarouselCameraForAllPlayers();
 	int32 ResolveBoardIndex(const APCPlayerState* PlayerState) const;

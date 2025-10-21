@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Component/PCSynergyComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
@@ -389,7 +390,16 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 
 bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
-	if (!Unit || !IsInRange(Y,X)) return false;
+	APCPlayerState* PCPlayerState = ResolvePlayerState();
+	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
+	
+	
+	if (!PCPlayerState || !SynergyComp || !Unit || !IsInRange(Y,X)) return false;
+
+	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
+	{
+		SynergyComp->RegisterHero(HeroUnit);
+	}
 
 	if (HasAuthority())
 	{
@@ -418,7 +428,17 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 
 bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit)
 {
-	if (!Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
+	APCPlayerState* PCPlayerState = ResolvePlayerState();
+	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
+	
+	
+	if (!PCPlayerState || !SynergyComp || !Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
+
+	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
+	{
+		SynergyComp->UnRegisterHero(HeroUnit);
+	}
+	
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
 	
@@ -867,7 +887,7 @@ void APCPlayerBoard::OnGameStateChangedForAutoFill(const FGameplayTag& GameState
 	if (!HasAuthority())
 		return;
 
-	if (GameState == GameStateTags::Game_State_Combat_Preparation || GameState == GameStateTags::Game_State_Combat_Preparation_Creep)
+	if (GameState == GameStateTags::Game_State_Combat_Preparation)
 	{
 		TryAutoFillFromBench_Server();
 	}

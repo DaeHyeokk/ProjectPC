@@ -30,6 +30,7 @@
 #include "UI/Item/PCPlayerInventoryWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
+#include "UI/Synerge/PCSynergyPanelWidget.h"
 #include "UI/Unit/PCHeroStatusHoverPanel.h"
 
 
@@ -157,12 +158,17 @@ void APCCombatPlayerController::BeginPlayingState()
 
 	if (PlayerMainWidget)
 	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
+
+		if (!PCPlayerState) return;
+		
 		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
 		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
-		
-		if (!PCPlayerState) return;
+		UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
+		UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
+
+		if (!SynergyComp) return;
 		
 		if (!ShopWidgetRef) return;
 		
@@ -171,6 +177,9 @@ void APCCombatPlayerController::BeginPlayingState()
 		
 		if (!InventoryWidget) return;
 		InventoryWidget->BindToPlayerState(PCPlayerState);
+
+		if (!SynergyWidget) return;
+		SynergyWidget->SynergyComponentBinding(SynergyComp);
 	}
 }
 
@@ -795,21 +804,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 			PlayerMainWidget->InitAndBind(PCCombatGameState);
 			ShopWidget = PlayerMainWidget->GetShopWidget();
 		}
-		
-		
-		// UMG Construct 타이밍 대비 다음 프레임 보정 (옵션)
-		FTimerHandle Th;
-		GetWorld()->GetTimerManager().SetTimer(Th, [this]()
-		{
-			if (IsValid(PlayerMainWidget))
-			{
-				if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
-				{
-					PlayerMainWidget->InitAndBind(PCCombatGameState);
-					ShopWidget = PlayerMainWidget->GetShopWidget();
-				}
-			}
-		}, 0.f, false);
 	}
 	else
 	{
@@ -917,7 +911,7 @@ void APCCombatPlayerController::OnMouse_Released()
 	{
 		if (DragComponent)
 			DragComponent->OnMouse_Released(this);
-
+		
 		CachedHoverUnit = nullptr;
 		ClearHoverHighLight();
 
@@ -1157,10 +1151,16 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		return;
 	
 	const bool bInBattle = IsBattleTag(GS->GetGameStateTag());
-	
+
+	if (DragComponent)
+	{
+		DragComponent->OnServerDragConfirm(bOk, DragId, StartSnap, PreviewHero);
+	}
 	
 	if (bOk && PreviewHero)
 	{
+		PreviewHero->ActionDrag(bOk);
+		
 		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
 			PlayerBoard->OnHISM(true,bInBattle);
@@ -1169,12 +1169,14 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 		{
 			ShopWidget->ShowSellBox();
 		}
+
+		if (!CachedPreviewUnit.IsValid())
+		{
+			CachedPreviewUnit = PreviewHero;
+		}
 	}
 	
-	if (DragComponent)
-	{
-		DragComponent->OnServerDragConfirm(bOk, DragId, StartSnap, PreviewHero);
-	}
+	
 }
 
 void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit)
@@ -1209,6 +1211,16 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	{
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
+
+	if (PreviewUnit)
+	{
+		PreviewUnit->ActionDrag(false);
+	}
+
+	if (!CachedPreviewUnit.IsValid()) return;
+	
+	CachedPreviewUnit->ActionDrag(false);
+	CachedPreviewUnit = nullptr;
 }
 
 bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit) const
