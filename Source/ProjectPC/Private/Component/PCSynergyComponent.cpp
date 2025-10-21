@@ -44,6 +44,7 @@ void UPCSynergyComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UPCSynergyComponent, SynergyCountArray);
+	DOREPLIFETIME(UPCSynergyComponent, SynergyData);
 }
 
 void UPCSynergyComponent::BeginPlay()
@@ -95,6 +96,24 @@ void UPCSynergyComponent::InitializeSynergyHandlersFromDefinitionSet()
 void UPCSynergyComponent::OnRep_SynergyCountArray()
 {
 	DebugPrintSynergyCounts(true);
+	
+	SynergyData.Reset(SynergyCountArray.Entries.Num());
+
+	for (const FSynergyCountEntry& Entry : SynergyCountArray.Entries)
+	{
+		if (!Entry.Tag.IsValid())
+			continue;
+
+		FSynergyData Data;
+		Data.SynergyTag = Entry.Tag;
+		Data.Count = Entry.Count;
+		Data.Thresholds = GetSynergyThresholds(Entry.Tag);
+		Data.TierIndex = GetSynergyTierIndexFromCount(Entry.Tag, Data.Count);
+
+		SynergyData.Add(MoveTemp(Data));
+	}
+
+	OnSynergyCountsChanged.Broadcast(SynergyData);
 }
 
 void UPCSynergyComponent::RegisterHero(APCHeroUnitCharacter* Hero)
@@ -190,8 +209,8 @@ TArray<int32> UPCSynergyComponent::GetSynergyThresholds(const FGameplayTag& Syne
 
 	if (const UPCSynergyBase* Synergy = SynergyToTagMap.FindRef(SynergyTag))
 	{
-		const UPCDataAsset_SynergyData* SynergyData = Synergy->GetSynergyData();
-		for (const FSynergyTier& SynergyTier : SynergyData->GetAllTiers())
+		const UPCDataAsset_SynergyData* InSynergyData = Synergy->GetSynergyData();
+		for (const FSynergyTier& SynergyTier : InSynergyData->GetAllTiers())
 		{
 			Result.Add(SynergyTier.Threshold);
 		}
@@ -206,9 +225,9 @@ int32 UPCSynergyComponent::GetSynergyTierIndexFromCount(const FGameplayTag& Syne
 	
 	if (const UPCSynergyBase* Synergy = SynergyToTagMap.FindRef(SynergyTag))
 	{
-		if (const UPCDataAsset_SynergyData* SynergyData = Synergy->GetSynergyData())
+		if (const UPCDataAsset_SynergyData* InSynergyData = Synergy->GetSynergyData())
 		{
-			Result = SynergyData->ComputeActiveTierIndex(Count);
+			Result = InSynergyData->ComputeActiveTierIndex(Count);
 		}
 	}
 
