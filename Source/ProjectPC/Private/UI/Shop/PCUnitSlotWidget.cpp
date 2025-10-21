@@ -26,7 +26,7 @@ bool UPCUnitSlotWidget::Initialize()
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex, bool bIsShopSlot)
+void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, bool bIsShopSlot, int32 NewSlotIndex)
 {
 	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
 	

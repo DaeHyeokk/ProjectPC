@@ -489,6 +489,7 @@ TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataListByCost(int32 UnitCos
 
 int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 {
+	// ShopUnitDataList는 현재 기물 수 상황과 별개
 	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
 	{
 		if (UnitData.UnitTag == UnitTag)
@@ -508,4 +509,18 @@ int32 UPCShopManager::GetSellingPrice(int32 UnitCost, int32 UnitLevel)
 	}
 
 	return 0;
+}
+
+const FPCShopUnitData& UPCShopManager::GetShopUnitDataByTag(FGameplayTag UnitTag)
+{
+	// ShopUnitDataList는 현재 기물 수 상황과 별개
+	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
+	{
+		if (UnitData.UnitTag == UnitTag)
+		{
+			return UnitData;
+		}
+	}
+
+	return DummyData;
 }

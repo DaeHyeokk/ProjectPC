@@ -11,7 +11,10 @@
 #include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Shop/PCShopManager.h"
 #include "UI/Item/PCItemSlotWidget.h"
+#include "UI/Shop/PCUnitSlotWidget.h"
 
 void UPCHeroStatusHoverPanel::InitFromHero(APCCommonUnitCharacter* InHero)
 {
@@ -319,6 +322,19 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 {
 	if (!CurHero.IsValid() || !ASC.IsValid())
 		return;
+
+	// if (UnitSlotWidget)
+	// {
+	// 	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	// 	{
+	// 		auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag()
+	//
+	// 		if (UnitData.UnitName != "Dummy")
+	// 		{
+	// 			UnitSlotWidget->Setup(UnitData, false);
+	// 		}
+	// 	}
+	// }
 
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
 	const auto CurHPAttr = UPCHeroUnitAttributeSet::GetCurrentHealthAttribute();

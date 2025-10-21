@@ -7,6 +7,7 @@
 #include "GameplayEffectTypes.h"
 #include "PCHeroStatusHoverPanel.generated.h"
 
+class UPCUnitSlotWidget;
 class UPCUnitEquipmentComponent;
 class APCCommonUnitCharacter;
 class UHorizontalBox;
@@ -53,6 +54,9 @@ protected:
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 
 	TMap<FGameplayAttribute, EHeroHoverStat> AttrRoute;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UPCUnitSlotWidget> UnitSlotWidget;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UProgressBar> HealthBar = nullptr;

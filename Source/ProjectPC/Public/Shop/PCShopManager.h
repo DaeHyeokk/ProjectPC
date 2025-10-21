@@ -86,7 +86,7 @@ protected:
 	TArray<FPCShopUnitProbabilityData> ShopUnitProbabilityDataList;
 	TMap<TPair<int32, int32>, int32> ShopUnitSellingPriceDataMap;
 
-	// 유닛 코스트별 기물 현황
+	// 유닛 코스트별 기물 현황, 실제로 재고 증/차감이 이루어지는 배열
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost1;
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost2;
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost3;
@@ -102,6 +102,7 @@ public:
 	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	int32 GetUnitCostByTag(FGameplayTag UnitTag);
 	int32 GetSellingPrice(int32 UnitCost, int32 UnitLevel);
+	const FPCShopUnitData& GetShopUnitDataByTag(FGameplayTag UnitTag);
 	
 #pragma endregion Data
 	
