@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "Blueprint/UserWidget.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "PCUnitStatusBarWidget.generated.h"
 
 
 class UImage;
 class UPCItemSlotWidget;
 class UHorizontalBox;
-class APCBaseUnitCharacter;
 class UTextBlock;
 class UProgressBar;
 class UPCUnitHealthProgressBar;

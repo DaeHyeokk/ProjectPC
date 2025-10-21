@@ -16,4 +16,17 @@ class PROJECTPC_API APCCommonUnitCharacter : public ACharacter, public IAbilityS
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return nullptr; }
 	virtual TArray<FGameplayTag> GetEquipItemTags() const PURE_VIRTUAL(APCCommonUnitCharacter::GetEquipItemList, return TArray<FGameplayTag>(););
+
+
+	void SetUnitTag(const FGameplayTag& InUnitTag) { if (HasAuthority()) { UnitTag = InUnitTag; }}
+	const FGameplayTag& GetUnitTag() const { return UnitTag; }
+
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UPROPERTY(EditDefaultsOnly, ReplicatedUsing=OnRep_UnitTag, Category="Data")
+	FGameplayTag UnitTag;
+
+	UFUNCTION()
+	virtual void OnRep_UnitTag() PURE_VIRTUAL(APCCommonUnitCharacter::OnRep_UnitTag);
 };
