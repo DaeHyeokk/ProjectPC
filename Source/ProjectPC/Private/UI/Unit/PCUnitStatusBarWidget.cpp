@@ -4,13 +4,18 @@
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 
 #include "AbilitySystemComponent.h"
-#include "Components/TextBlock.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Component/PCUnitEquipmentComponent.h"
+#include "Components/HorizontalBox.h"
+#include "Components/Image.h"
+#include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "UI/Unit/PCUnitHealthProgressBar.h"
 
 
-void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGameplayAttribute InHealthAttr,
+void UPCUnitStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilitySystemComponent* InASC, FGameplayAttribute InHealthAttr,
                                          FGameplayAttribute InMaxHealthAttr, FGameplayAttribute InManaAttr, FGameplayAttribute InMaxManaAttr)
 {
+	Unit = InUnit;
 	ASC = InASC;
 	HealthAttr = InHealthAttr;
 	MaxHealthAttr = InMaxHealthAttr;
@@ -19,7 +24,7 @@ void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGamepl
 
 	bHasMana = InManaAttr.IsValid() && InMaxManaAttr.IsValid();
 
-	if (!ASC.IsValid())
+	if (!Unit.IsValid() || !ASC.IsValid())
 	{
 		ApplyToUI();
 		return;
@@ -48,10 +53,21 @@ void UPCUnitStatusBarWidget::InitWithASC(UAbilitySystemComponent* InASC, FGamepl
 		MaxManaHandle = ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr)
 			.AddUObject(this, &ThisClass::OnMaxManaChanged);
 	}
+
+	if (Unit.IsValid())
+	{
+		if (UPCUnitEquipmentComponent* EquipmentComponent = Unit->GetEquipmentComponent())
+		{
+			EquipItemChangedHandle = EquipmentComponent->OnEquipItemChanged
+				.AddUObject(this, &UPCUnitStatusBarWidget::OnEquipItemChanged);
+		}
+	}
 }
 
-void UPCUnitStatusBarWidget::SetInstant(float CurrentHP, float MaxHP, float CurrentMP, float MaxMP)
+void UPCUnitStatusBarWidget::SetInstant(APCBaseUnitCharacter* InUnit, float CurrentHP, float MaxHP, float CurrentMP, float MaxMP)
 {
+	Unit = InUnit;
+	
 	CachedHP = CurrentHP;
 	CachedMaxHP = MaxHP;
 
@@ -62,12 +78,25 @@ void UPCUnitStatusBarWidget::SetInstant(float CurrentHP, float MaxHP, float Curr
 		CachedMP = CurrentMP;
 		CachedMaxMP = MaxMP;
 	}
+
 	ApplyToUI();
 }
 
 void UPCUnitStatusBarWidget::UpdateUI() const
 {
 	ApplyToUI();
+}
+
+void UPCUnitStatusBarWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (ItemImage_0 && ItemImage_1 && ItemImage_2)
+	{
+		EquipItemImages.Add(ItemImage_0);
+		EquipItemImages.Add(ItemImage_1);
+		EquipItemImages.Add(ItemImage_2);
+	}
 }
 
 void UPCUnitStatusBarWidget::NativeDestruct()
@@ -85,7 +114,7 @@ void UPCUnitStatusBarWidget::OnHealthChanged(const FOnAttributeChangeData& Data)
 		: Data.NewValue;
 	
 	CachedHP = NowValue;
-	ApplyToUI();
+	UpdateHealthBar();
 }
 
 void UPCUnitStatusBarWidget::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
@@ -96,7 +125,7 @@ void UPCUnitStatusBarWidget::OnMaxHealthChanged(const FOnAttributeChangeData& Da
 		: Data.NewValue;
 	
 	CachedMaxHP = FMath::Max(1.f, NowValue);
-	ApplyToUI();
+	UpdateHealthBar();
 } 
 
 void UPCUnitStatusBarWidget::OnManaChanged(const FOnAttributeChangeData& Data)
@@ -107,7 +136,7 @@ void UPCUnitStatusBarWidget::OnManaChanged(const FOnAttributeChangeData& Data)
 		: Data.NewValue;
 	
 	CachedMP = NowValue;
-	ApplyToUI();
+	UpdateManaBar();
 }
 
 void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data)
@@ -118,15 +147,30 @@ void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data
 		: Data.NewValue;
 	
 	CachedMaxMP = FMath::Max(1.f, NowValue);
-	ApplyToUI();
+	UpdateManaBar();
+}
+
+void UPCUnitStatusBarWidget::OnEquipItemChanged() const
+{
+	UpdateEquipItemImages();
 }
 
 void UPCUnitStatusBarWidget::ApplyToUI() const
 {
+	UpdateHealthBar();
+	UpdateManaBar();
+	UpdateEquipItemImages();
+}
+
+void UPCUnitStatusBarWidget::UpdateHealthBar() const
+{
 	// CachedMaxHP, MP는 항상 0보다 크다는 것이 보장돼있기 때문에 나누기 연산에서 안전함 (따로 체크 안해도됨)
 	if (HealthBar)
 		HealthBar->SetValues(CachedHP, CachedMaxHP);
-	
+}
+
+void UPCUnitStatusBarWidget::UpdateManaBar() const
+{
 	if (ManaBar && bHasMana)
 		ManaBar->SetPercent(CachedMP / CachedMaxMP);
 	else
@@ -135,21 +179,70 @@ void UPCUnitStatusBarWidget::ApplyToUI() const
 	}
 }
 
-void UPCUnitStatusBarWidget::ClearDelegate() const
+void UPCUnitStatusBarWidget::UpdateEquipItemImages() const
+{
+	if (!Unit.IsValid())
+		return;
+	
+	TArray<FGameplayTag> ItemTags = Unit->GetEquipItemTags();
+	UPCItemManagerSubsystem* ItemManagerSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCItemManagerSubsystem>() : nullptr;
+	if (!ItemManagerSubsystem)
+		return;
+	
+	for (int32 i=0; i<EquipItemImages.Num(); ++i)
+	{
+		if (ItemTags.IsValidIndex(i))
+		{
+			const FGameplayTag& ItemTag = ItemTags[i];
+			if (ItemTag.IsValid())
+			{
+				if (UTexture2D* ItemTexture = ItemManagerSubsystem->GetItemTexture(ItemTag))
+				{
+					EquipItemImages[i]->SetBrushFromTexture(ItemTexture, true);
+					EquipItemImages[i]->SetVisibility(ESlateVisibility::Visible);
+					continue;
+				}
+			}
+		}
+
+		EquipItemImages[i]->SetBrushFromTexture(nullptr);
+		EquipItemImages[i]->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UPCUnitStatusBarWidget::ClearDelegate()
 {
 	if (ASC.IsValid())
 	{
 		if (HealthHandle.IsValid())
+		{
 			ASC->GetGameplayAttributeValueChangeDelegate(HealthAttr).Remove(HealthHandle);
-		
+			HealthHandle.Reset();
+		}
 		if (MaxHealthHandle.IsValid())
+		{
 			ASC->GetGameplayAttributeValueChangeDelegate(MaxHealthAttr).Remove(MaxHealthHandle);
-		
+			MaxHealthHandle.Reset();
+		}
 		if (ManaHandle.IsValid())
+		{
 			ASC->GetGameplayAttributeValueChangeDelegate(ManaAttr).Remove(ManaHandle);
-		
+			ManaHandle.Reset();
+		}
 		if (MaxManaHandle.IsValid())
+		{
 			ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr).Remove(MaxManaHandle);
+			MaxManaHandle.Reset();
+		}
+	}
+
+	if (Unit.IsValid() && EquipItemChangedHandle.IsValid())
+	{
+		if (UPCUnitEquipmentComponent* EquipmentComponent = Unit->GetEquipmentComponent())
+		{
+			EquipmentComponent->OnEquipItemChanged.Remove(EquipItemChangedHandle);
+			EquipItemChangedHandle.Reset();
+		}
 	}
 }
 

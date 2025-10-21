@@ -51,7 +51,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="TextStyle")
 	FLinearColor HealColor = FLinearColor::Green;
-	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="TextStyle")
+	TObjectPtr<UTexture2D> CriticalTexture;
+
 	UPROPERTY(Transient, meta=(BindWidgetAnimOptional))
 	TObjectPtr<UWidgetAnimation> DamageAnim;
 

@@ -41,7 +41,7 @@ class PROJECTPC_API UPCItemManagerSubsystem : public UWorldSubsystem
 protected:
 	TMap<FGameplayTag, FPCItemData> ItemDataMap;
 	TMap<FBaseItemPair, FGameplayTag> ItemCombineDataMap;
-	
+
 public:
 	void InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable);
 
@@ -85,4 +85,11 @@ private:
 	}
 	
 #pragma endregion TemplateFunc
+
+protected:
+	UPROPERTY()
+	TMap<FGameplayTag, TObjectPtr<UTexture2D>> ItemTextureMap;
+
+public:
+	UTexture2D* GetItemTexture(const FGameplayTag& ItemTag);
 };

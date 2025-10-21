@@ -250,6 +250,8 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item)
+	
 	// ==== Base Item Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_BFSword)

@@ -121,8 +121,9 @@ void UPCUnitEquipmentComponent::UnionEquipmentComponent(UPCUnitEquipmentComponen
 	}
 }
 
-void UPCUnitEquipmentComponent::OnRep_SlotItemTags()
+void UPCUnitEquipmentComponent::OnRep_SlotItemTags() const
 {
+	OnEquipItemChanged.Broadcast();
 }
 
 void UPCUnitEquipmentComponent::SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex)

@@ -5,23 +5,25 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayEffectTypes.h"
-#include "Serialization/ArchiveReplaceObjectRef.h"
 #include "PCHeroStatusHoverPanel.generated.h"
+
+class UPCUnitEquipmentComponent;
+class APCCommonUnitCharacter;
+class UHorizontalBox;
+class UPCItemSlotWidget;
+class UPCHeroUnitAbilitySystemComponent;
+class UTextBlock;
+class UProgressBar;
+class UPCUnitAttributeSet;
 
 UENUM()
 enum class EHeroHoverStat : uint8
 {
-	MaxHP, CurHP, MaxMP, CurMP,
+	MaxHP, CurHP, MaxMP, CurMP, ManaRegen,
 	AD, Range, AS, ASInc, ASDec, PDef, MDef,
 	PMul, MMul, CritChance, LifeSteal, DamageMul
 };
 
-class FProperty;
-class UPCHeroUnitAbilitySystemComponent;
-class APCHeroUnitCharacter;
-class UTextBlock;
-class UProgressBar;
-class UPCUnitAttributeSet;
 /**
  * 
  */
@@ -32,11 +34,10 @@ class PROJECTPC_API UPCHeroStatusHoverPanel : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitFromHero(AActor* InHero);
-
-	// 유닛이 호버 될 때 UI를 띄우면서 UI 갱신
+	void InitFromHero(APCCommonUnitCharacter* InHero);
+	
 	UFUNCTION(BlueprintCallable)
-	void ShowPanelForHero(AActor* InHero);
+	void ShowPanelForHero(APCCommonUnitCharacter* InHero);
 
 	UFUNCTION(BlueprintCallable)
 	void HidePanel();
@@ -46,16 +47,12 @@ protected:
 	virtual void NativeDestruct() override;
 	
 	UPROPERTY(Transient)
-	TWeakObjectPtr<APCHeroUnitCharacter> Hero;
-	
-	UPROPERTY(Transient)
-	TWeakObjectPtr<AActor> CurHero;
+	TWeakObjectPtr<APCCommonUnitCharacter> CurHero;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 
 	TMap<FGameplayAttribute, EHeroHoverStat> AttrRoute;
-	TMap<FGameplayAttribute, FDelegateHandle> HandleMap;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UProgressBar> HealthBar = nullptr;
@@ -67,7 +64,11 @@ protected:
 	TObjectPtr<UTextBlock> ManaText = nullptr;
 
 	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> ManaRegenText = nullptr;
+	
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> AttackRangeText = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> BaseDamageText = nullptr;
 	UPROPERTY(meta=(BindWidget))
@@ -87,6 +88,15 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> DamageMultiplierText = nullptr;
 
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UHorizontalBox> ItemSlotPanel = nullptr;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UPCItemSlotWidget>> ItemSlotWidgets;
+
+	TMap<FGameplayAttribute, FDelegateHandle> AttrChangedHandleMap;
+	FDelegateHandle EquipItemChangedHandle;
+	
 	void BuildRoutes();
 
 	void BindAll();
@@ -96,15 +106,19 @@ protected:
 	void ApplyAll() const;
 
 	void OnAttrChanged(const FOnAttributeChangeData& Data);
-
+	void OnEquipItemChanged() const;
+	
 	void UpdateHP() const;
 	void UpdateMP() const;
 
+	void UpdateEquipItemSlots() const;
+	
 	void UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_F2(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_Pct01(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const; // 0~1 -> %
 	void UpdateText_PctValue(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const; // 0~100 -> 0~100%
-
+	void UpdateText_RegenValue(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
+	
 	static FText AsInt(const float Value)
 	{
 		return FText::AsNumber(FMath::RoundToInt(Value));
@@ -127,5 +141,10 @@ protected:
 	{
 		const int32 Pct = FMath::RoundToInt(PctValue);
 		return FText::FromString(FString::Printf(TEXT("%d%%"), Pct));
+	}
+
+	static FText AsRegenPerSec(const float Value)
+	{
+		return FText::FromString(FString::Printf(TEXT("%d/초"), FMath::RoundToInt(Value)));
 	}
 };

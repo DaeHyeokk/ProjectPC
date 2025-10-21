@@ -130,3 +130,24 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 	
 	return FGameplayTag();
 }
+
+UTexture2D* UPCItemManagerSubsystem::GetItemTexture(const FGameplayTag& ItemTag)
+{
+	if (!ItemTag.IsValid() || !ItemTag.MatchesTag(ItemTags::Item))
+		return nullptr;
+	
+	UTexture2D* ItemTexture = ItemTextureMap.FindRef(ItemTag);
+	if (!ItemTexture)
+	{
+		if (const FPCItemData* ItemData = ItemDataMap.Find(ItemTag))
+		{
+			ItemTexture = ItemData->ItemTexture.LoadSynchronous();
+			if (ItemTexture)
+			{
+				ItemTextureMap.Add(ItemTag, ItemTexture);
+			}
+		}
+	}
+
+	return ItemTexture;
+}

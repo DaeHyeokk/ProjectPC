@@ -7,6 +7,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCHeroStatusBarWidget.generated.h"
 
+class APCBaseUnitCharacter;
 class UPCUnitStatusBarWidget;
 class UWidgetSwitcher;
 /**
@@ -20,7 +21,7 @@ class PROJECTPC_API UPCHeroStatusBarWidget : public UUserWidget
 public:
 	// ASC와 4개 속성 초기화, Mana 속성은 Hero만 있고 Creep은 없으므로 매개변수 기본값 적용
 	UFUNCTION()
-	void InitWithASC(UAbilitySystemComponent* InASC,
+	void InitWithASC(APCBaseUnitCharacter* InUnit, UAbilitySystemComponent* InASC,
 		FGameplayAttribute InHealthAttr,
 		FGameplayAttribute InMaxHealthAttr,
 		FGameplayAttribute InManaAttr = FGameplayAttribute(),
@@ -41,6 +42,7 @@ protected:
 private:
 	void EnsureActiveVariantInitialized();
 
+	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 	FGameplayAttribute HealthAttr;
 	FGameplayAttribute MaxHealthAttr;

@@ -36,7 +36,6 @@ public:
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 	const FGameplayTag& GetJobSynergyTag() const;
 	const FGameplayTag& GetSpeciesSynergyTag() const;
-	float GetCombatStartMana() const;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Scalable")

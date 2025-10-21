@@ -5,10 +5,15 @@
 
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "Character/Unit/PCCommonUnitCharacter.h"
+#include "Character/Unit/PCHeroUnitCharacter.h"
+#include "Component/PCUnitEquipmentComponent.h"
+#include "Components/HorizontalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "UI/Item/PCItemSlotWidget.h"
 
-void UPCHeroStatusHoverPanel::InitFromHero(AActor* InHero)
+void UPCHeroStatusHoverPanel::InitFromHero(APCCommonUnitCharacter* InHero)
 {
 	if (!InHero)
 	{
@@ -24,6 +29,7 @@ void UPCHeroStatusHoverPanel::InitFromHero(AActor* InHero)
 
 	CurHero = InHero;
 	ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(InHero);
+	
 	if (ASC.IsValid())
 	{
 		BindAll();
@@ -35,7 +41,7 @@ void UPCHeroStatusHoverPanel::InitFromHero(AActor* InHero)
 	}
 }
 
-void UPCHeroStatusHoverPanel::ShowPanelForHero(AActor* InHero)
+void UPCHeroStatusHoverPanel::ShowPanelForHero(APCCommonUnitCharacter* InHero)
 {
 	InitFromHero(InHero);
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
@@ -51,6 +57,16 @@ void UPCHeroStatusHoverPanel::NativeConstruct()
 {
 	Super::NativeConstruct();
 	BuildRoutes();
+
+	if (ItemSlotPanel)
+	{
+		TArray<UWidget*> ItemSlots = ItemSlotPanel->GetAllChildren();
+		for (UWidget* Widget : ItemSlots)
+		{
+			if (UPCItemSlotWidget* ItemSlot = Cast<UPCItemSlotWidget>(Widget))
+				ItemSlotWidgets.Add(ItemSlot);
+		}
+	}
 }
 
 void UPCHeroStatusHoverPanel::NativeDestruct()
@@ -67,6 +83,7 @@ void UPCHeroStatusHoverPanel::BuildRoutes()
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetCurrentHealthAttribute(), EHeroHoverStat::CurHP);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetMaxManaAttribute(), EHeroHoverStat::MaxMP);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetCurrentManaAttribute(), EHeroHoverStat::CurMP);
+	AttrRoute.Add(UPCHeroUnitAttributeSet::GetManaRegenAttribute(), EHeroHoverStat::ManaRegen);
 	
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetBaseDamageAttribute(), EHeroHoverStat::AD);
 	AttrRoute.Add(UPCHeroUnitAttributeSet::GetAttackRangeAttribute(), EHeroHoverStat::Range);
@@ -85,15 +102,24 @@ void UPCHeroStatusHoverPanel::BuildRoutes()
 
 void UPCHeroStatusHoverPanel::BindAll()
 {
-	if (!ASC.IsValid())
+	if (!CurHero.IsValid() || !ASC.IsValid())
 		return;
 
-	HandleMap.Reset();
+	AttrChangedHandleMap.Reset();
 	for (const auto& KV : AttrRoute)
 	{
-		HandleMap.Add(KV.Key,
+		AttrChangedHandleMap.Add(KV.Key,
 			ASC->GetGameplayAttributeValueChangeDelegate(KV.Key)
 				.AddUObject(this, &ThisClass::OnAttrChanged));
+	}
+
+	if (APCHeroUnitCharacter* Hero = Cast<APCHeroUnitCharacter>(CurHero.Get()))
+	{
+		if (UPCUnitEquipmentComponent* EquipmentComp = Hero->GetEquipmentComponent())
+		{
+			EquipItemChangedHandle = EquipmentComp->OnEquipItemChanged
+				.AddUObject(this, &ThisClass::OnEquipItemChanged);
+		}
 	}
 }
 
@@ -102,15 +128,27 @@ void UPCHeroStatusHoverPanel::UnbindAll()
 	if (ASC.IsValid())
 	{
 		auto* A = ASC.Get();
-		for (const auto& KV : HandleMap)
+		for (const auto& KV : AttrChangedHandleMap)
 		{
 			A->GetGameplayAttributeValueChangeDelegate(KV.Key).Remove(KV.Value);
 		}
 	}
-
-	HandleMap.Reset();
+	
+	if (CurHero.IsValid() && EquipItemChangedHandle.IsValid())
+	{
+		if (APCHeroUnitCharacter* Hero = Cast<APCHeroUnitCharacter>(CurHero.Get()))
+		{
+			if (UPCUnitEquipmentComponent* EquipmentComp = Hero->GetEquipmentComponent())
+			{
+				EquipmentComp->OnEquipItemChanged.Remove(EquipItemChangedHandle);
+			}
+		}
+		EquipItemChangedHandle.Reset();
+	}
+	
+	AttrChangedHandleMap.Reset();
 	ASC = nullptr;
-	Hero = nullptr;
+	CurHero = nullptr;
 }
 
 void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
@@ -132,6 +170,11 @@ void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 			UpdateMP();
 			break;
 
+		case EHeroHoverStat::ManaRegen:
+			if (ManaRegenText)
+				UpdateText_RegenValue(ManaRegenText, UPCHeroUnitAttributeSet::GetManaRegenAttribute());
+			break;
+			
 		case EHeroHoverStat::AD:
 			if (BaseDamageText)
 				UpdateText_Int(BaseDamageText, UPCHeroUnitAttributeSet::GetBaseDamageAttribute());
@@ -183,11 +226,16 @@ void UPCHeroStatusHoverPanel::OnAttrChanged(const FOnAttributeChangeData& Data)
 			if (DamageMultiplierText)
 				UpdateText_PctValue(DamageMultiplierText, UPCHeroUnitAttributeSet::GetDamageMultiplierAttribute());
 			break;
-
+			
 		default:
 			break;
 		}
 	}
+}
+
+void UPCHeroStatusHoverPanel::OnEquipItemChanged() const
+{
+	UpdateEquipItemSlots();
 }
 
 void UPCHeroStatusHoverPanel::UpdateHP() const
@@ -206,6 +254,25 @@ void UPCHeroStatusHoverPanel::UpdateMP() const
 	const float CurMP = ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	if (ManaBar) ManaBar->SetPercent(MaxMP > 0.f ? CurMP / MaxMP : 0.f);
 	if (ManaText) ManaText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurMP, MaxMP)));
+}
+
+void UPCHeroStatusHoverPanel::UpdateEquipItemSlots() const
+{
+	TArray<FGameplayTag> ItemTags = CurHero->GetEquipItemTags();
+	for (int32 i=0; i<ItemSlotWidgets.Num(); ++i)
+	{
+		if (ItemTags.IsValidIndex(i))
+		{
+			FGameplayTag ItemTag = ItemTags[i];
+			if (ItemTag.IsValid())
+			{
+				ItemSlotWidgets[i]->SetItem(ItemTag);
+				continue;
+			}
+		}
+
+		ItemSlotWidgets[i]->RemoveItem();
+	}
 }
 
 void UPCHeroStatusHoverPanel::UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
@@ -242,9 +309,15 @@ void UPCHeroStatusHoverPanel::UpdateText_PctValue(UTextBlock* TextBlock, const F
 	TextBlock->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(Attr)));
 }
 
+void UPCHeroStatusHoverPanel::UpdateText_RegenValue(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const
+{
+	if (!TextBlock || !ASC.IsValid()) return;
+	TextBlock->SetText(AsRegenPerSec(ASC->GetNumericAttribute(Attr)));
+}
+
 void UPCHeroStatusHoverPanel::ApplyAll() const
 {
-	if (!ASC.IsValid())
+	if (!CurHero.IsValid() || !ASC.IsValid())
 		return;
 
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
@@ -266,7 +339,12 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 	if (ManaText)
 		ManaText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurMP, MaxMP)));
 
+	// Item List
+	UpdateEquipItemSlots();
+	
 	// 스탯들
+	if (ManaRegenText)
+		ManaRegenText->SetText(AsRegenPerSec(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetManaRegenAttribute())));
 	if (AttackRangeText)
 		AttackRangeText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetAttackRangeAttribute())));
 	if (BaseDamageText)

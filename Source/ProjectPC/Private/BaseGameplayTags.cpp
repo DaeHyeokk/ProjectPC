@@ -250,6 +250,7 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Item, "Item")
 	// ==== Base Item Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base, "Item.Type.Base")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_BFSword, "Item.Type.Base.BFSword")
