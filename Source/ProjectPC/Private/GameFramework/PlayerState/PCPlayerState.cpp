@@ -37,7 +37,6 @@ APCPlayerState::APCPlayerState()
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
 	AllStateTags.AddTag(PlayerGameplayTags::Player_State_Dead);
 
-	// Inventory 세팅
 	PlayerInventory = CreateDefaultSubobject<UPCPlayerInventory>(TEXT("PlayerInventory"));
 	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
 }
@@ -225,17 +224,19 @@ void APCPlayerState::PlayerWin()
 	}
 
 	// 승리 보상 1원 지급
-	if (PlayerAbilitySystemComponent && GE_PlayerGoldChange)
-	{
-		FGameplayEffectContextHandle EffectContext = PlayerAbilitySystemComponent->MakeEffectContext();
-		FGameplayEffectSpecHandle GoldSpecHandle = PlayerAbilitySystemComponent->MakeOutgoingSpec(GE_PlayerGoldChange, 1.f, EffectContext);
 
-		if (GoldSpecHandle.IsValid())
-		{
-			GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
-			PlayerAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
-		}
-	}
+	AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
+	// if (PlayerAbilitySystemComponent && GE_PlayerGoldChange)
+	// {
+	// 	FGameplayEffectContextHandle EffectContext = PlayerAbilitySystemComponent->MakeEffectContext();
+	// 	FGameplayEffectSpecHandle GoldSpecHandle = PlayerAbilitySystemComponent->MakeOutgoingSpec(GE_PlayerGoldChange, 1.f, EffectContext);
+	//
+	// 	if (GoldSpecHandle.IsValid())
+	// 	{
+	// 		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
+	// 		PlayerAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+	// 	}
+	// }
 }
 
 void APCPlayerState::PlayerLose()

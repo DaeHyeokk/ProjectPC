@@ -31,8 +31,9 @@ private:
 
 public:
 	const TArray<FGameplayTag>& GetInventory() const { return Inventory; }
+	int32 GetInventorySize() const { return Inventory.Num(); }
 
-	void AddItemToInventory(FGameplayTag AddedItemTag);
+	bool AddItemToInventory(FGameplayTag AddedItemTag);
 	void RemoveItemFromInventory(int32 ItemIndex);
 
 	void CombineItem(int32 ItemIndex1, int32 ItemIndex2);

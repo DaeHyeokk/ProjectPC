@@ -138,8 +138,8 @@ public:
 #pragma region Combat
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GE")
-	TSubclassOf<UGameplayEffect> GE_PlayerGoldChange;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GE")
+	// TSubclassOf<UGameplayEffect> GE_PlayerGoldChange;
 	
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)

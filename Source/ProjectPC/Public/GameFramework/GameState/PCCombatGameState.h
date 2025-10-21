@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
+class APCItemCapsule;
 class UAbilitySystemComponent;
 class APCUnitCombatTextActor;
 class UPCTileManager;
@@ -503,6 +504,10 @@ protected:
 	// 아이템 조합 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
 	UDataTable* ItemCombineDataTable;
+
+	// 아이템 캡슐 블루프린트 클래스
+	UPROPERTY(EditAnywhere, Category = "ItemCapsuleClass")
+	TSubclassOf<APCItemCapsule> ItemCapsuleClass;
 	
 #pragma endregion Item
 };

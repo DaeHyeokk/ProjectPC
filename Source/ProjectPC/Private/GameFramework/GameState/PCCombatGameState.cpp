@@ -4,15 +4,18 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 
 #include "EngineUtils.h"
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
+#include "GameFramework/WorldSubsystem/PCItemSpawnSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitCombatTextSpawnSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
-#include "Net/UnrealNetwork.h"
+#include "Item/PCItemCapsule.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -48,6 +51,14 @@ void APCCombatGameState::BeginPlay()
 		if (ItemDataTable && ItemCombineDataTable)
 		{
 			ItemManagerSubsystem->InitializeItemManager(ItemDataTable, ItemCombineDataTable);
+		}
+	}
+
+	if (auto* ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
+	{
+		if (ItemCapsuleClass)
+		{
+			ItemSpawnSubsystem->InitializeItemCapsuleClass(ItemCapsuleClass);
 		}
 	}
 

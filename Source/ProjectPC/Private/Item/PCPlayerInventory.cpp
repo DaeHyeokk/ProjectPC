@@ -19,21 +19,24 @@ void UPCPlayerInventory::OnRep_Inventory()
 	OnInventoryUpdated.Broadcast();
 }
 
-void UPCPlayerInventory::AddItemToInventory(FGameplayTag AddedItemTag)
+bool UPCPlayerInventory::AddItemToInventory(FGameplayTag AddedItemTag)
 {
-	if (Inventory.Num() >= MaxInventorySlots)
-		return;
-
-	if (const auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
+	if (Inventory.Num() < MaxInventorySlots)
 	{
-		if (const auto NewItem = ItemManagerSubsystem->GetItemData(AddedItemTag))
+		if (const auto ItemManagerSubsystem = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 		{
-			if (NewItem->IsValid())
+			if (const auto NewItem = ItemManagerSubsystem->GetItemData(AddedItemTag))
 			{
-				Inventory.Add(AddedItemTag);
+				if (NewItem->IsValid())
+				{
+					Inventory.Add(AddedItemTag);
+					return true;
+				}
 			}
 		}
 	}
+
+	return false;
 }
 
 void UPCPlayerInventory::RemoveItemFromInventory(int32 ItemIndex)
