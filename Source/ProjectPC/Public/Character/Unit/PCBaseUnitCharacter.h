@@ -50,13 +50,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Unit Data")
 	virtual int32 GetUnitLevel() const { return 1; }
 	virtual void SetUnitLevel(const int32 Level) { }
-
-	// Unit Tag 설정은 서버에서만 실행
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	void SetUnitTag(const FGameplayTag& InUnitTag) { if (HasAuthority()) UnitTag = InUnitTag; }
-	UFUNCTION(BlueprintCallable, Category="Unit Data")
-	FORCEINLINE FGameplayTag GetUnitTag() const { return UnitTag; }
-
+	
 	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
 	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
 
@@ -92,8 +86,6 @@ protected:
 	TObjectPtr<UMaterialInstanceDynamic> OutlineMID = nullptr;
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, ReplicatedUsing=OnRep_UnitTag, Category="Data")
-	FGameplayTag UnitTag;
 
 	UPROPERTY(EditDefaultsOnly, Replicated, Category="Data")
 	int32 TeamIndex = -1;
@@ -101,8 +93,7 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<APCPlayerState> OwnerPS;
 	
-	UFUNCTION()
-	void OnRep_UnitTag();
+	virtual void OnRep_UnitTag() override;
 
 	void PushTeamIndexToController() const;
 	

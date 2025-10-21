@@ -60,8 +60,7 @@ void APCCarouselHeroCharacter::BeginPlay()
 void APCCarouselHeroCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(APCCarouselHeroCharacter, UnitTag);
+	
 	DOREPLIFETIME(APCCarouselHeroCharacter, ItemTag);
 }
 
@@ -107,17 +106,6 @@ void APCCarouselHeroCharacter::SetHeroUnitDataAsset(UPCDataAsset_HeroUnitData* I
 		{
 			InitAttributeSet();
 		}
-	}
-}
-
-void APCCarouselHeroCharacter::SetUnitTag(const FGameplayTag& InTag)
-{
-	if (HasAuthority())
-	{
-		UnitTag = InTag;
-
-		if (GetNetMode() == NM_ListenServer)
-			OnRep_UnitTag();
 	}
 }
 
