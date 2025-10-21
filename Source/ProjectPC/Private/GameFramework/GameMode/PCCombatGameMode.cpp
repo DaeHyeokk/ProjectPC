@@ -350,7 +350,7 @@ void APCCombatGameMode::Step_Travel()
 		{
 			if (CarouselRing)
 			{
-				CarouselRing->StartCarousel();
+				CarouselRing->Server_StartCarousel(0.f,15.f);
 				CarouselRing->SpawnPickups(Stage);
 			}
 			
@@ -622,7 +622,7 @@ void APCCombatGameMode::PlaceAllPlayersPickUpUnit()
 		}
 	}
 
-	CarouselRing->FinishCarousel();
+	CarouselRing->Server_FinishCarousel();
 	CarouselRing->Multicast_OpenAllGates(false);
 }
 

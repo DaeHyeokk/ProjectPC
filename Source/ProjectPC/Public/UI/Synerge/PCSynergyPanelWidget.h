@@ -22,7 +22,7 @@ public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
-	void SetSynergyComponent(UPCSynergyComponent* Component);
+	void SynergyComponentBinding(UPCSynergyComponent* Component);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

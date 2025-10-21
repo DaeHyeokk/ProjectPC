@@ -2,7 +2,7 @@
 
 
 #include "UI/Unit/PCCarouselUnitWidget.h"
-
+#include "Character/Unit/PCCommonUnitCharacter.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Controller/Player/PCCombatPlayerController.h"
@@ -41,7 +41,7 @@ void UPCCarouselUnitWidget::SetItemImg(FGameplayTag ItemTag)
 	}
 }
 
-void UPCCarouselUnitWidget::SetUnit(AActor* Unit)
+void UPCCarouselUnitWidget::SetUnit(APCCommonUnitCharacter* Unit)
 {
 	if (!Unit) return;
 

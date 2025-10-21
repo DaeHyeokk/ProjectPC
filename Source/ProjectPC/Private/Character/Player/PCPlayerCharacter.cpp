@@ -4,6 +4,7 @@
 #include "Character/Player/PCPlayerCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "EngineUtils.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
@@ -14,6 +15,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Item/PCPlayerInventory.h"
 #include "UI/PlayerMainWidget/PCPlayerOverheadWidget.h"
@@ -107,6 +109,15 @@ void APCPlayerCharacter::OnRep_PlayerState()
 	}
 }
 
+void APCPlayerCharacter::Server_RequestCarouselPick_Implementation()
+{
+	for (TActorIterator<APCCarouselRing> It(GetWorld()); It; ++It)
+	{
+		CarouselRing = *It;
+	}
+	CarouselRing->Server_TryPickForPlayer(this);
+}
+
 void APCPlayerCharacter::CarouselUnitToSpawn()
 {
 	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
@@ -115,6 +126,8 @@ void APCPlayerCharacter::CarouselUnitToSpawn()
 
 	const FGameplayTag UnitTag = CarouselUnitData.UnitTag;
 	const FGameplayTag ItemTag = CarouselUnitData.ItemTag;
+
+	//IsValidIndex(0) ? CarouselUnitData.ItemTag[0] : FGameplayTag();
 
 	PS->UnitSpawn(UnitTag);
 	PlayerInventory->AddItemToInventory(ItemTag);

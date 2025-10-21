@@ -60,8 +60,8 @@ private:
     TWeakObjectPtr<APCPreviewHeroActor> Preview;
     
     void EnsureGhostAt(const FVector& World, APCHeroUnitCharacter* PreviewHero);
-    void ShowGhost(const FVector& World, APCHeroUnitCharacter* PreviewHero);
-    void HideGhost(APCHeroUnitCharacter* PreviewHero);
+    void ShowGhost(const FVector& World);
+    void HideGhost();
 
     // 커서 히트
     bool CursorHitWorld(APCCombatPlayerController* PC, FVector& OutWorld) const;

@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
+class APCCarouselRing;
 class APCCarouselHeroCharacter;
 class UWidgetComponent;
 
@@ -59,6 +60,12 @@ private:
 #pragma region CarouselSlot
 
 public:
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestCarouselPick();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Carousel")
+	TWeakObjectPtr<APCCarouselRing> CarouselRing;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Carousel")
 	USceneComponent* CarrySlot;

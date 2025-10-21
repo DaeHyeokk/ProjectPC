@@ -4,11 +4,13 @@
 #include "Character/Unit/PCCarouselHeroCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "EngineUtils.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "Animation/Unit/PCCarouselHeroAnimInstance.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
@@ -22,7 +24,7 @@ APCCarouselHeroCharacter::APCCarouselHeroCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	SetReplicates(true);
-
+	
 	AbilitySystemComp = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
 	if (AbilitySystemComp)
@@ -47,6 +49,17 @@ APCCarouselHeroCharacter::APCCarouselHeroCharacter()
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.f), FRotator(0.f,-90.f,0.f));
 }
 
+
+void APCCarouselHeroCharacter::MarkPicked()
+{
+	if (bPicked) return;
+	bPicked = true;
+
+	if (UCapsuleComponent* Cap = GetCapsuleComponent())
+	{
+		Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
 
 void APCCarouselHeroCharacter::BeginPlay()
 {
@@ -231,7 +244,7 @@ void APCCarouselHeroCharacter::Multicast_AttachToCarrier_Implementation(APCPlaye
 		SetActorRelativeRotation(FRotator(0.f,0.f,0.f));
 
 		Picker->CachedCarouselUnit = this;
-		Picker->CarouselUnitData.ItemTag = GetHasItemTag();
+		Picker->CarouselUnitData.ItemTag = GetEquipItemTag();
 		Picker->CarouselUnitData.UnitTag = GetUnitTag();
 	}	
 }

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PCCarouselRing.generated.h"
 
+class APCPlayerCharacter;
 class APCCarouselHeroCharacter;
 class APCPlayerState;
 class UBoxComponent;
@@ -13,6 +14,18 @@ class APCBaseUnitCharacter;
 class UCameraComponent;
 class USpringArmComponent;
 class URotatingMovementComponent;
+
+USTRUCT()
+struct FSeatPick
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 Seat = INDEX_NONE;
+
+	UPROPERTY()
+	TWeakObjectPtr<APCCarouselHeroCharacter> Unit;
+};
 
 UCLASS()
 class PROJECTPC_API APCCarouselRing : public AActor
@@ -48,13 +61,25 @@ public:
 	float TangentYawOffsetDeg = 0.f;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_StartCarouselRotation(bool bStart);
+	void Multicast_StartCarouselRotation(bool bStart, float InStartAngleDeg, float InAngularSpeedDegPerSec);
+
+	// 시작 및 종료
+	UFUNCTION(Server, Reliable)
+	void Server_StartCarousel(float InStartAngleDeg, float InAngularSpeedDegPerSec);
+
+	UFUNCTION(Server, Reliable)
+	void Server_FinishCarousel();
+
+	UFUNCTION(Server, Reliable)
+	void Server_TryPickForPlayer(APCPlayerCharacter* Picker);
+
+	// 플레이어가 어느 좌석인지 필요
+	int32 GetSeatOfPlayer(const APCPlayerCharacter* Player) const;
+
+	void RegisterUnitAtIndex(int32 SlotIndex, APCCarouselHeroCharacter* CarouselUnit);
 
 	// 접선방향으로 돌려주는 함수
 	void TickFaceAlongOrbit();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
-	int32 UnitRingNumSlots = 9;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnitRing")
 	float UnitRingRadius = 400.f;
@@ -118,29 +143,20 @@ public:
 	bool bCameraInheritActorRotation = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float CameraArmLength = 4000.f;
+	float CameraArmLength = 2200.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	FVector CameraArmLocalLocation = FVector(0,0,0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	FRotator CameraArmLocalRotation = FRotator(-70,0,0);
+	FRotator CameraArmLocalRotation = FRotator(-45,0,0);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	float CameraFov = 50.f;
+	float CameraFov = 55.f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	FVector CameraPivotOffset = FVector(0.f,0.f,0.f);
-
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CameraPitchDeg = -60.f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CamYawBiasDeg = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float FramingPushUpZ = 200.f;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void ApplyCentralViewForSeat(APlayerController* PC, int32 SeatIndex, float BlendTime = 0.0f, float ExtraYawDeg = 0.f );
 
@@ -162,18 +178,9 @@ public:
 	UFUNCTION()
 	void NotifyPicked(APCCarouselHeroCharacter* Unit, int32 Seat);
 	
-	UPROPERTY()
-	TMap<int32, TWeakObjectPtr<APCCarouselHeroCharacter>> SeatToUnit;
-	
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void ClearPickups();
-
-	UFUNCTION()
-	void StartCarousel();
-
-	UFUNCTION()
-	void FinishCarousel();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "UnitRing|PickUp")
 	void SetRotationOnActive(bool bOn);
 
@@ -181,6 +188,7 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& transform) override;
@@ -221,6 +229,39 @@ protected:
 	// 내부 헬퍼
 	FVector GetRingCenterWorld(const USceneComponent* Root) const;
 	FRotator MakeFacingRotToCenter(const FVector& Pos, float ExtraYaw = 0.f) const;
+
+	// ================== 공유 파라미터(락스텝) ==================
+	// 링 시작 시각(서버 기준). 클라와 서버가 같은 식을 쓰기 위한 기준점
+	UPROPERTY(Replicated) float StartServerTime = 0.f;
+
+	// 시작 각도(도수). 0도 = +X축
+	UPROPERTY(Replicated) float StartAngleDeg = 0.f;
+
+	// 각속도(도/초). +면 시계방향(네 수학에 맞춰 바꿔도 됨)
+	UPROPERTY(Replicated) float AngularSpeedDegPerSec = 90.f;
+
+	// 슬롯 개수
+	UPROPERTY(EditAnywhere, Replicated) int32 UnitRingNumSlots = 9;
+
+	// 슬롯 인덱스 → 스폰된 유닛
+	UPROPERTY()
+	TArray<TWeakObjectPtr<APCCarouselHeroCharacter>> IndexToUnit;
+
+	// 이미 뽑은 좌석 → 유닛(중복 방지)
+	UPROPERTY()
+	TMap<int32, TWeakObjectPtr<APCCarouselHeroCharacter>> SeatToUnit;
+
+	// 내부 유틸
+	float NowServer() const;
+	float CurrentOrbitAngleDeg() const; // (StartAngle + w*(now-start))
+	int32 ClampSlotIndex(int32 I) const;
+	int32 ChooseIdealFreeSlotNear(int32 PrefIdx) const;
+	int32 ComputeSlotIndexForAngle(float PlayerAngleDeg) const;
+	APCCarouselHeroCharacter* ResolveUnitBySlot(int32 SlotIdx) const;
+
+	// 선택 확정(권위)
+	void CommitPick(APCPlayerCharacter* Picker, int32 Seat, APCCarouselHeroCharacter* Target);
+
 
 	/** 디버그 */
 	UPROPERTY(EditAnywhere, Category="Debug")

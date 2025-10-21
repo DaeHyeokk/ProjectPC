@@ -26,6 +26,11 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 		if (bHasUI)
 		{
 			SynergyIcon->SetBrush(UIInfo.Icon);
+
+			if (InData.TierIndex >= 0)
+			{
+				SynergyIcon->SetColorAndOpacity(FLinearColor::Black);
+			}
 		}
 	}
 
@@ -50,6 +55,8 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 			SetNumOrEmpty(TierThresholds2, InData.Thresholds.IsValidIndex(0) ? InData.Thresholds[0] : -1);
 			TierThresholds3->SetText(FText::GetEmpty());
 			TierThresholds4->SetText(FText::GetEmpty());
+			TierSlash1->SetText(FText::GetEmpty());
+			TierSlash2->SetText(FText::GetEmpty());
 		}
 		else
 		{
@@ -61,11 +68,11 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 
 			if (InData.Thresholds.IsValidIndex(2) && InData.Thresholds.IsValidIndex(3))
 			{
-				TierSlash->SetText(FText::FromString("/"));
+				TierSlash2->SetText(FText::FromString("/"));
 			}
 			else
 			{
-				TierSlash->SetText(FText::GetEmpty());
+				TierSlash2->SetText(FText::GetEmpty());
 			}
 			
 		}
@@ -75,8 +82,8 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 	{
 		if (bHasUI && UIInfo.TierSet.TierBorders.Num() > 0)
 		{
-			const int32 TierIdx = FMath::Clamp(InData.TierIndex, 0 , UIInfo.TierSet.TierBorders.Num() - 1);
-			const FSlateBrush& Brush = UIInfo.TierSet.TierBorders.IsValidIndex(TierIdx) ? UIInfo.TierSet.TierBorders[TierIdx] : UIInfo.TierSet.TierBorders.Last();
+			const int32 TierIdx = InData.TierIndex;
+			const FSlateBrush& Brush = UIInfo.TierSet.TierBorders.IsValidIndex(TierIdx) ? UIInfo.TierSet.TierBorders[TierIdx+1] : UIInfo.TierSet.TierBorders[0];
 
 			TierIcon->SetBrush(Brush);
 		}

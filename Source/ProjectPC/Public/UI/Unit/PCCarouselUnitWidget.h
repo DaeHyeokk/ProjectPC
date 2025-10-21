@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCCarouselUnitWidget.generated.h"
 
+class APCCommonUnitCharacter;
 class APCCarouselHeroCharacter;
 struct FGameplayTag;
 class UButton;
@@ -21,7 +22,7 @@ class PROJECTPC_API UPCCarouselUnitWidget : public UUserWidget
 public:
 
 	UPROPERTY()
-	TWeakObjectPtr<AActor> CachedHero;
+	TWeakObjectPtr<APCCommonUnitCharacter> CachedHero;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* ItemImg;
@@ -33,7 +34,7 @@ public:
 	void SetItemImg(FGameplayTag ItemTag);
 
 	UFUNCTION()
-	void SetUnit(AActor* Unit);
+	void SetUnit(APCCommonUnitCharacter* Unit);
 	
 	UFUNCTION()
 	void CreateUnitInfoWidget();

@@ -25,7 +25,7 @@ bool UPCDragComponent::OnMouse_Pressed(APCCombatPlayerController* PC)
     ActiveDragId = ++LocalDragId;
 
     EnsureGhostAt(World, nullptr);
-    ShowGhost(World, nullptr);
+    ShowGhost(World);
     
     SetComponentTickEnabled(true);
 
@@ -49,6 +49,8 @@ void UPCDragComponent::OnMouse_Released(APCCombatPlayerController* PC)
     // 로컬 상태는 일단 종료 처리(서버가 최종 피드백 제공)
     State = EDragState::Idle;
     SetComponentTickEnabled(false);
+
+    HideGhost();
 }
 
 void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -73,7 +75,7 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
         if (PlayerBoard->WorldAnyTile(World, true, bField, Y, X, BenchIdx, Snap))
         {
             EnsureGhostAt(Snap,nullptr);
-            ShowGhost(Snap, nullptr);
+            ShowGhost(Snap);
             
             const bool bTileChanged = (bField != LastQuestion_bIsField) || (Y != LastQuestion_Y) || (X != LastQuestion_X) ||  (BenchIdx != LastQuestion_Bench);
             if (bTileChanged)
@@ -88,7 +90,7 @@ void UPCDragComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
         }
     }
     
-    ShowGhost(Snap, nullptr);
+    ShowGhost(Snap);
     LastSnep = World;
 }
 
@@ -102,14 +104,9 @@ void UPCDragComponent::OnServerDragConfirm(bool bOk, int32 DragId, const FVector
         SetComponentTickEnabled(false);
         return;
     }
- 
-    if (PreviewHero)
-    {
-        PreviewHero->ActionDrag(true);
-    }
-    
+        
     EnsureGhostAt(StartSnap, PreviewHero);
-    ShowGhost(StartSnap, PreviewHero);
+    ShowGhost(StartSnap);
     
     State = EDragState::Dragging;
     LastSnep = StartSnap;
@@ -122,15 +119,10 @@ void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& Final
     if (bSuccess)
     {
         EnsureGhostAt(FinalSnap, nullptr);
-        ShowGhost(FinalSnap, nullptr);
+        ShowGhost(FinalSnap);
     }
     
-    if (PreviewHero)
-    {
-        PreviewHero->ActionDrag(false);
-    }
-
-    HideGhost(nullptr);
+    HideGhost();
     
     State = EDragState::Idle;
     SetComponentTickEnabled(false);
@@ -187,7 +179,7 @@ void UPCDragComponent::EnsureGhostAt(const FVector& World, APCHeroUnitCharacter*
     
 }
 
-void UPCDragComponent::ShowGhost(const FVector& World, APCHeroUnitCharacter* PreviewHero)
+void UPCDragComponent::ShowGhost(const FVector& World)
 {
     if (Preview.IsValid())
     {
@@ -195,7 +187,7 @@ void UPCDragComponent::ShowGhost(const FVector& World, APCHeroUnitCharacter* Pre
     }  
 }
 
-void UPCDragComponent::HideGhost(APCHeroUnitCharacter* PreviewHero)
+void UPCDragComponent::HideGhost()
 {
   if (Preview.IsValid())
   {

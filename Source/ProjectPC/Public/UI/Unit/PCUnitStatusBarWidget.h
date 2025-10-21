@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "Blueprint/UserWidget.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
 #include "PCUnitStatusBarWidget.generated.h"
 
 

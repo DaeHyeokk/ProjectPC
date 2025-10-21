@@ -11,11 +11,7 @@
 void UPCSynergyPanelWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	if (!SynergyComponent.IsValid()) return;
-
-	OnChangedHandle = SynergyComponent->OnSynergyCountsChanged.AddUObject(this, &UPCSynergyPanelWidget::HandlesSynergyChanged);
-	HandlesSynergyChanged((SynergyComponent->GetSynergySnapShot()));
+	
 }
 
 void UPCSynergyPanelWidget::NativeDestruct()
@@ -27,10 +23,14 @@ void UPCSynergyPanelWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UPCSynergyPanelWidget::SetSynergyComponent(UPCSynergyComponent* Component)
+void UPCSynergyPanelWidget::SynergyComponentBinding(UPCSynergyComponent* Component)
 {
-	SynergyComponent = Component;
+	if (!Component) return;
+
+	OnChangedHandle = Component->OnSynergyCountsChanged.AddUObject(this, &UPCSynergyPanelWidget::HandlesSynergyChanged);
+	HandlesSynergyChanged((Component->GetSynergySnapShot()));
 }
+
 
 void UPCSynergyPanelWidget::HandlesSynergyChanged(const TArray<FSynergyData>& Data)
 {

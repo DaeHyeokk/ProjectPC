@@ -9,6 +9,7 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
+class UPCSynergyComponent;
 class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);

@@ -40,6 +40,8 @@ public:
 	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
 	void SetItemTag(const FGameplayTag& InItemTag);
 
+	FGameplayTag GetEquipItemTag() const { return ItemTag;}
+
 	// 캐러샐 유닛 부착
 
 	UPROPERTY(Replicated)
@@ -52,6 +54,7 @@ public:
 	TWeakObjectPtr<APCCarouselRing> OwnerRing;
 
 	bool IsPicked() const { return bPicked; }
+	void MarkPicked();
 	
 	UFUNCTION(Server, Reliable)
 	void Server_StartFollowing(APCPlayerCharacter* Picker);
@@ -71,6 +74,9 @@ protected:
 
 	// 캐러셀 유닛 픽업 이벤트
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ring")
+	TWeakObjectPtr<APCCarouselRing> CarouselRing;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
 	TObjectPtr<UWidgetComponent> StatusBarComp;

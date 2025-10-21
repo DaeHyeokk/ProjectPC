@@ -505,4 +505,6 @@ protected:
 	UDataTable* ItemCombineDataTable;
 	
 #pragma endregion Item
+
+
 };

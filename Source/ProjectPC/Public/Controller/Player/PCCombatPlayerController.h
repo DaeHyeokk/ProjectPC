@@ -297,6 +297,9 @@ public:
 	UPROPERTY()
 	TWeakObjectPtr<APCBaseUnitCharacter> CachedCheckStatusUnit;
 
+	UPROPERTY()
+	TWeakObjectPtr<APCHeroUnitCharacter> CachedPreviewUnit;
+
 	// === 서버→클라(소유자): 피드백 ===
 	UFUNCTION(Client, Unreliable)
 	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewUnit = nullptr);

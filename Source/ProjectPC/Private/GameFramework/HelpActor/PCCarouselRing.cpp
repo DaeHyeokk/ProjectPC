@@ -5,6 +5,7 @@
 
 #include "BaseGameplayTags.h"
 #include "Camera/CameraComponent.h"
+#include "Character/Player/PCPlayerCharacter.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Components/BoxComponent.h"
@@ -16,6 +17,7 @@
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -23,7 +25,7 @@ APCCarouselRing::APCCarouselRing()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-
+	
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
@@ -41,11 +43,6 @@ APCCarouselRing::APCCarouselRing()
 	SpringArm->SetRelativeLocation(CameraArmLocalLocation);
 	SpringArm->SetRelativeRotation(CameraArmLocalRotation);
 	SpringArm->TargetArmLength = CameraArmLength;
-	
-	SpringArm->bUsePawnControlRotation = false;
-	SpringArm->bInheritPitch = false;
-	SpringArm->bInheritRoll = false;
-	SpringArm->bInheritYaw = false;
 
 	CarouselCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("CarouselCamera"));
 	CarouselCamera->SetupAttachment(SpringArm);
@@ -55,6 +52,169 @@ APCCarouselRing::APCCarouselRing()
 	RotatingMovement->SetUpdatedComponent(UnitRingRoot);
 	RotatingMovement->RotationRate = FRotator(0.f, UnitRingRotationRateYawDeg,0.f);
 	RotatingMovement->bAutoActivate = false;
+}
+
+void APCCarouselRing::Server_TryPickForPlayer_Implementation(APCPlayerCharacter* Picker)
+{
+	if (!HasAuthority() || !Picker) return;
+
+	const int32 Seat = GetSeatOfPlayer(Picker);
+	if (Seat == INDEX_NONE || SeatToUnit.Contains(Seat)) return;
+
+	// 각도 → 슬롯
+	const FVector CenterWS = GetActorLocation();
+	const FVector ToP = (Picker->GetActorLocation() - CenterWS);
+	float PlayerAngle = FMath::RadiansToDegrees(FMath::Atan2(ToP.Y, ToP.X));
+	PlayerAngle = FMath::UnwindDegrees(PlayerAngle);
+
+	const int32 prefIdx = ComputeSlotIndexForAngle(PlayerAngle);
+	const int32 slotIdx = ChooseIdealFreeSlotNear(prefIdx);
+	if (slotIdx == INDEX_NONE) return;
+
+	if (APCCarouselHeroCharacter* Target = ResolveUnitBySlot(slotIdx))
+	{
+		if (!Target->IsPicked())
+		{
+			// 한 곳에서만 확정
+			SeatToUnit.Add(Seat, Target);
+			Target->MarkPicked();
+			Target->Server_StartFollowing(Picker);
+		}
+	}
+}
+
+void APCCarouselRing::Server_StartCarousel_Implementation(float InStartAngleDeg, float InAngularSpeedDegPerSec)
+{
+	StartServerTime        = NowServer();
+	StartAngleDeg          = InStartAngleDeg;
+	AngularSpeedDegPerSec  = InAngularSpeedDegPerSec;
+	SeatToUnit.Reset();
+
+	// 시각 회전도 동일 파라미터로 구동
+	if (RotatingMovement)
+	{
+		RotatingMovement->RotationRate = FRotator(0.f, AngularSpeedDegPerSec, 0.f);
+		RotatingMovement->SetActive(true);
+	}
+	UnitRingRoot->SetRelativeRotation(FRotator(0.f, StartAngleDeg, 0.f));
+
+	// 클라에 동기화
+	Multicast_StartCarouselRotation(true, StartAngleDeg, AngularSpeedDegPerSec);
+
+	// 얼굴방향 보정 타이머(60Hz)
+	if (!GetWorldTimerManager().IsTimerActive(CarouselFacingTimer))
+	{
+		GetWorldTimerManager().SetTimer(CarouselFacingTimer, this, &APCCarouselRing::TickFaceAlongOrbit, 0.016f, true);
+	}
+}
+
+void APCCarouselRing::Server_FinishCarousel_Implementation()
+{
+	if (!HasAuthority()) return;
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (auto* Shop = GS->GetShopManager())
+		{
+			for (auto& WeakUnit : SpawnedPickups)
+			{
+				APCCarouselHeroCharacter* Unit = WeakUnit.Get();
+				if (!Unit) continue;
+
+				if (!Unit->IsPicked())
+				{
+					Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
+					Unit->Destroy();
+					continue;
+				}
+				Unit->Destroy();
+			}
+		}
+	}
+	SpawnedPickups.Reset();
+	SeatToUnit.Reset();
+
+	Multicast_StartCarouselRotation(false, StartAngleDeg, AngularSpeedDegPerSec);
+}
+
+int32 APCCarouselRing::GetSeatOfPlayer(const APCPlayerCharacter* Player) const
+{
+	if (APCPlayerState* PCPS = Player->GetPlayerState<APCPlayerState>())
+	{
+		return PCPS->SeatIndex;
+	}
+
+	return -1;
+}
+
+void APCCarouselRing::RegisterUnitAtIndex(int32 SlotIndex, APCCarouselHeroCharacter* CarouselUnit)
+{
+	if (!CarouselUnit) return;
+	if (IndexToUnit.Num() != UnitRingNumSlots) IndexToUnit.SetNum(UnitRingNumSlots);
+	IndexToUnit[ClampSlotIndex(SlotIndex)] = CarouselUnit;
+	CarouselUnit->OwnerRing = this;
+}
+
+float APCCarouselRing::NowServer() const
+{
+	if (const AGameStateBase* GS = GetWorld()->GetGameState())
+		return GS->GetServerWorldTimeSeconds();
+	return GetWorld()->TimeSeconds; 
+}
+
+float APCCarouselRing::CurrentOrbitAngleDeg() const
+{
+	const float t = NowServer() - StartServerTime;
+	return FMath::UnwindDegrees(StartAngleDeg + AngularSpeedDegPerSec * t);
+}
+
+int32 APCCarouselRing::ClampSlotIndex(int32 I) const
+{
+	if (UnitRingNumSlots <= 0) return 0;
+	I %= UnitRingNumSlots;
+	if (I < 0) I += UnitRingNumSlots;
+	return I;
+}
+
+int32 APCCarouselRing::ChooseIdealFreeSlotNear(int32 PrefIdx) const
+{
+	// 선호 슬롯이 비었으면 반환, 아니면 양옆 탐색
+	if (APCCarouselHeroCharacter* U = ResolveUnitBySlot(PrefIdx))
+		if (!U->IsPicked()) return PrefIdx;
+
+	const int32 R = UnitRingNumSlots / 2;
+	for (int d=1; d<=R; ++d)
+	{
+		const int32 r = ClampSlotIndex(PrefIdx + d);
+		if (APCCarouselHeroCharacter* Ur = ResolveUnitBySlot(r))
+			if (!Ur->IsPicked()) return r;
+
+		const int32 l = ClampSlotIndex(PrefIdx - d);
+		if (APCCarouselHeroCharacter* Ul = ResolveUnitBySlot(l))
+			if (!Ul->IsPicked()) return l;
+	}
+	return INDEX_NONE;
+}
+
+int32 APCCarouselRing::ComputeSlotIndexForAngle(float PlayerAngleDeg) const
+{
+	const float orbit = CurrentOrbitAngleDeg();
+	const float step  = 360.f / FMath::Max(1, UnitRingNumSlots);
+	const float rel   = FMath::UnwindDegrees(PlayerAngleDeg - orbit);
+	return ClampSlotIndex(FMath::FloorToInt(rel / step + 0.5f)); // 반올림 버전
+}
+
+APCCarouselHeroCharacter* APCCarouselRing::ResolveUnitBySlot(int32 SlotIdx) const
+{
+	if (!IndexToUnit.IsValidIndex(SlotIdx)) return nullptr;
+	return IndexToUnit[SlotIdx].Get();
+}
+
+void APCCarouselRing::CommitPick(APCPlayerCharacter* Picker, int32 Seat, APCCarouselHeroCharacter* Target)
+{
+	SeatToUnit.Add(Seat, Target);
+	Target->MarkPicked();                  
+	Target->Server_StartFollowing(Picker); 
 }
 
 void APCCarouselRing::TickFaceAlongOrbit()
@@ -83,26 +243,36 @@ void APCCarouselRing::TickFaceAlongOrbit()
 	}
 }
 
-void APCCarouselRing::Multicast_StartCarouselRotation_Implementation(bool bStart)
+void APCCarouselRing::Multicast_StartCarouselRotation_Implementation(bool bStart, float InStartAngleDeg, float InAngularSpeedDegPerSec)
 {
-	SetRotationOnActive(bStart);
-
 	if (bStart)
 	{
+		StartAngleDeg         = InStartAngleDeg;
+		AngularSpeedDegPerSec = InAngularSpeedDegPerSec;
+
+		UnitRingRoot->SetRelativeRotation(FRotator(0.f, StartAngleDeg, 0.f));
+		if (RotatingMovement)
+		{
+			RotatingMovement->RotationRate = FRotator(0.f, AngularSpeedDegPerSec, 0.f);
+			RotatingMovement->SetActive(true);
+		}
 		if (!GetWorldTimerManager().IsTimerActive(CarouselFacingTimer))
 		{
-			GetWorldTimerManager().SetTimer(CarouselFacingTimer, this, &APCCarouselRing::TickFaceAlongOrbit, 0.033f, true);
+			GetWorldTimerManager().SetTimer(CarouselFacingTimer, this, &APCCarouselRing::TickFaceAlongOrbit, 0.016f, true);
 		}
-		else
-		{
-			GetWorldTimerManager().ClearTimer(CarouselFacingTimer);
-		}
+	}
+	else
+	{
+		if (RotatingMovement) RotatingMovement->SetActive(false);
+		GetWorldTimerManager().ClearTimer(CarouselFacingTimer);
 	}
 }
 
 void APCCarouselRing::BeginPlay()
 {
 	Super::BeginPlay();
+
+	IndexToUnit.SetNum(UnitRingNumSlots);
 	
 	if (CarouselCamera)
 		CarouselCamera->Activate();
@@ -114,6 +284,15 @@ void APCCarouselRing::BeginPlay()
 	}
 	
 	BuildGates();
+}
+
+void APCCarouselRing::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APCCarouselRing, StartServerTime);
+	DOREPLIFETIME(APCCarouselRing, StartAngleDeg);
+	DOREPLIFETIME(APCCarouselRing, AngularSpeedDegPerSec);
+	DOREPLIFETIME(APCCarouselRing, UnitRingNumSlots);
 }
 
 #if WITH_EDITOR
@@ -193,39 +372,6 @@ void APCCarouselRing::ClearPickups()
 	SpawnedPickups.Reset();
 }
 
-void APCCarouselRing::StartCarousel()
-{
-	
-}
-
-void APCCarouselRing::FinishCarousel()
-{
-	if (!HasAuthority()) return;
-
-	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
-	{
-		if (auto* Shop = GS->GetShopManager())
-		{
-			for (auto& WeakUnit : SpawnedPickups)
-			{
-				APCCarouselHeroCharacter* Unit = WeakUnit.Get();
-				if (!Unit) continue;
-
-				if (!Unit->IsPicked())
-				{
-					Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
-					Unit->Destroy();
-				}
-				Unit->Destroy();
-			}
-		}
-	}
-	SpawnedPickups.Reset();
-	SeatToUnit.Reset();
-	SetRotationOnActive(false);
-	GetWorldTimerManager().ClearTimer(CarouselFacingTimer);
-}
-
 void APCCarouselRing::SpawnPickups(int32 Stage)
 {
 	ClearPickups();
@@ -263,6 +409,7 @@ void APCCarouselRing::SpawnPickups(int32 Stage)
 					{
 						Unit->OwnerRing = this;
 						SpawnedPickups.AddUnique(Unit);
+						RegisterUnitAtIndex(i,Unit);
 						
 						// FinishSpawning 내부에서 완료됨(Subsystem 코드)
 						Unit->SetActorHiddenInGame(false);

@@ -51,7 +51,10 @@ protected:
 	UTextBlock* TierThresholds4;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* TierSlash;
+	UTextBlock* TierSlash1;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* TierSlash2;
 
 	UPROPERTY(EditAnywhere, Category = "Synergy|UI")
 	TObjectPtr<UPCSynergyInfoData> SynergyUIData;
