@@ -140,6 +140,15 @@ void APCCarouselHeroCharacter::SetUnitTag(const FGameplayTag& InTag)
 	}
 }
 
+TArray<FGameplayTag> APCCarouselHeroCharacter::GetEquipItemTags() const
+{
+	TArray<FGameplayTag> Result;
+	if (ItemTag.IsValid())
+		Result.Add(ItemTag);
+
+	return Result;
+}
+
 void APCCarouselHeroCharacter::OnRep_UnitTag()
 {
 	if (UWorld* World = GetWorld())

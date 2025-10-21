@@ -26,7 +26,7 @@ bool UPCUnitSlotWidget::Initialize()
 	return true;
 }
 
-void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex)
+void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex, bool bIsShopSlot)
 {
 	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
 	
@@ -81,7 +81,17 @@ void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, int32 NewSlotInde
 		Img_CostBorder->SetBrushFromTexture(BorderTexture);
 	}
 
-	SetupButton();
+	if (bIsShopSlot)
+	{
+		SetupButton();
+	}
+	else
+	{
+		if (Btn_UnitSlot)
+		{
+			Btn_UnitSlot->SetIsEnabled(false);
+		}
+	}
 }
 
 void UPCUnitSlotWidget::SetupButton()

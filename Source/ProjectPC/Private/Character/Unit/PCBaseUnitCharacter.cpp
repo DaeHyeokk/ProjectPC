@@ -121,6 +121,23 @@ FGenericTeamId APCBaseUnitCharacter::GetGenericTeamId() const
 	return FGenericTeamId(Clamped);
 }
 
+TArray<FGameplayTag> APCBaseUnitCharacter::GetEquipItemTags() const
+{
+	TArray<FGameplayTag> Result;
+	if (!EquipmentComp)
+		return Result;
+
+	for (const FGameplayTag& ItemTag : EquipmentComp->GetSlotItemTags())
+	{
+		if (!ItemTag.IsValid())
+			break;
+		
+		Result.Add(ItemTag);
+	}
+
+	return Result;
+}
+
 void APCBaseUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();

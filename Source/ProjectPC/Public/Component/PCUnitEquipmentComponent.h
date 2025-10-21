@@ -10,9 +10,12 @@
 #include "PCUnitEquipmentComponent.generated.h"
 
 
+class UPCUnitEquipmentComponent;
 class UPCPlayerInventory;
 class UPCItemManagerSubsystem;
 class UAbilitySystemComponent;
+
+DECLARE_MULTICAST_DELEGATE(FOnEquipItemChanged);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCUnitEquipmentComponent : public UActorComponent
@@ -33,6 +36,8 @@ public:
 	void ReturnAllItemToPlayerInventory(const bool bIsDestroyedHero = false);
 	
 	FORCEINLINE const TArray<FGameplayTag>& GetSlotItemTags() const { return SlotItemTags; }
+
+	FOnEquipItemChanged OnEquipItemChanged;
 	
 private:
 	UPROPERTY(Transient)
@@ -52,7 +57,7 @@ private:
 	TArray<FGameplayTag> SlotItemTags;
 	
 	UFUNCTION()
-	void OnRep_SlotItemTags();
+	void OnRep_SlotItemTags() const;
 
 	void SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex);
 	void RemoveItemSlot(const int32 SlotIndex);

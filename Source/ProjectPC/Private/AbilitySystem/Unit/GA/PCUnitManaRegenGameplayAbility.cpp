@@ -27,8 +27,17 @@ void UPCUnitManaRegenGameplayAbility::OnGiveAbility(const FGameplayAbilityActorI
 
 void UPCUnitManaRegenGameplayAbility::OnPulseTick()
 {
-	if (!Unit->IsOnField() || !CachedCombatGameState.IsValid()
-		|| CachedCombatGameState->GetGameStateTag().MatchesTag(GameStateTags::Game_State_Combat_Active))
+	if (!Unit->IsOnField())
+		return;
+	
+	if (!CachedCombatGameState.IsValid())
+	{
+		if (UWorld* World = GetWorld())
+			if (APCCombatGameState* CombatGS = World->GetGameState<APCCombatGameState>())
+				CachedCombatGameState = CombatGS;
+	}
+
+	if (!CachedCombatGameState.IsValid() || !CachedCombatGameState->GetGameStateTag().MatchesTag(GameStateTags::Game_State_Combat_Active))
 		return;
 	
 	Super::OnPulseTick();

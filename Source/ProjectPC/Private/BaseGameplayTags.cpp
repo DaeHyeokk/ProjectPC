@@ -250,6 +250,7 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DEFINE_GAMEPLAY_TAG(Item, "Item")
 	// ==== Base Item Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base, "Item.Type.Base")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_BFSword, "Item.Type.Base.BFSword")
@@ -259,6 +260,9 @@ namespace ItemTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_NegatronCloak, "Item.Type.Base.NegatronCloak")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_RecurveBow, "Item.Type.Base.RecurveBow")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_SparringGloves, "Item.Type.Base.SparringGloves")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_TearofGoddess, "Item.Type.Base.TearofGoddess")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_Spatula, "Item.Type.Base.Spatula")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Base_FryingPan, "Item.Type.Base.FryingPan")
 
 	// ==== Advanced Item Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced, "Item.Type.Advanced")
@@ -274,7 +278,7 @@ namespace ItemTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_GiantSlayer, "Item.Type.Advanced.GiantSlayer")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_GuinsoosRageblade, "Item.Type.Advanced.GuinsoosRageblade")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_HextechGunblade, "Item.Type.Advanced.HextechGunblade")
-	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_InfintiyEdge, "Item.Type.Advanced.InfintiyEdge")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_InfinityEdge, "Item.Type.Advanced.InfinityEdge")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_IonicSpark, "Item.Type.Advanced.IonicSpark")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_JeweledGauntlet, "Item.Type.Advanced.JeweledGauntlet")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_KrakensFury, "Item.Type.Advanced.KrakensFury")
@@ -290,4 +294,34 @@ namespace ItemTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_ThiefsGloves, "Item.Type.Advanced.ThiefsGloves")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_TitansResolve, "Item.Type.Advanced.TitansResolve")
 	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_WarmogsArmor, "Item.Type.Advanced.WarmogsArmor")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_SpearofShojin, "Item.Type.Advanced.SpearofShojin")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_ProtectorsVow, "Item.Type.Advanced.ProtectorsVow")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_SpiritVisage, "Item.Type.Advanced.SpiritVisage")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_ArchangelsStaff, "Item.Type.Advanced.ArchangelsStaff")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_AdaptiveHelm, "Item.Type.Advanced.AdaptiveHelm")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_VoidStaff, "Item.Type.Advanced.VoidStaff")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_HandofJustice, "Item.Type.Advanced.HandofJustice")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_BlueBuff, "Item.Type.Advanced.BlueBuff")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_TacticiansCrown, "Item.Type.Advanced.TacticiansCrown")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_TacticiansCape, "Item.Type.Advanced.TacticiansCape")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Advanced_TacticiansShield, "Item.Type.Advanced.TacticiansShield")
+
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol, "Item.Type.Symbol")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_BladeMaster, "Item.Type.Symbol.BladeMaster")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Guardian, "Item.Type.Symbol.Guardian")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Bruiser, "Item.Type.Symbol.Bruiser")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Mage, "Item.Type.Symbol.Mage")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Knight, "Item.Type.Symbol.Knight")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Marksman, "Item.Type.Symbol.Marksman")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Assassin, "Item.Type.Symbol.Assassin")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Mechanic, "Item.Type.Symbol.Mechanic")
+	
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Undead, "Item.Type.Symbol.Undead")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Imperial, "Item.Type.Symbol.Imperial")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Cyborg, "Item.Type.Symbol.Cyborg")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Darkness, "Item.Type.Symbol.Darkness")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Human, "Item.Type.Symbol.Human")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Beast, "Item.Type.Symbol.Beast")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Robot, "Item.Type.Symbol.Robot")
+	UE_DEFINE_GAMEPLAY_TAG(Item_Type_Symbol_Demon, "Item.Type.Symbol.Demon")
 }

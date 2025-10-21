@@ -41,8 +41,7 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, FlatDamageBlock);
 	ATTRIBUTE_ACCESSORS(ThisClass, EvasionChance);
 	//ATTRIBUTE_ACCESSORS(ThisClass, Shield);
-
-	UFUNCTION(BlueprintPure, Category="Unit|Attributes")
+	
 	float GetEffectiveAttackSpeed() const;
 	
 protected:

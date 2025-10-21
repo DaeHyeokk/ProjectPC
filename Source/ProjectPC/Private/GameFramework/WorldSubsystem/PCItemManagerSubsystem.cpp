@@ -4,7 +4,7 @@
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
 #include "BaseGameplayTags.h"
-#include "DataAsset/Item/PCDataAsset_ItemEffectData.h"
+#include "DataAsset/Item/PCDataAsset_ItemEffect.h"
 
 
 void UPCItemManagerSubsystem::InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable)
@@ -76,12 +76,12 @@ const FPCEffectSpecList* UPCItemManagerSubsystem::GetItemEffectSpecList(FGamepla
 {
 	if (const FPCItemData* ItemData = GetItemData(ItemTag))
 	{
-		if (const UPCDataAsset_ItemEffectData* ItemEffectData = ItemData->ItemEffectData)
+		if (const UPCDataAsset_ItemEffect* ItemEffectData = ItemData->ItemEffectSpec)
 		{
 			return &ItemEffectData->EffectSpecList;
 		}
 	}
-	
+
 	return nullptr;
 }
 
@@ -91,6 +91,7 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
 	
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
+	AllBaseItemTags.RemoveTag(ParentItemTag);
 
 	if (AllBaseItemTags.Num() > 0)
 	{
@@ -114,7 +115,8 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 	
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllAdvancedItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
-
+	AllAdvancedItemTags.RemoveTag(ParentItemTag);
+	
 	if (AllAdvancedItemTags.Num() > 0)
 	{
 		int32 RandomIndex = FMath::RandRange(0, AllAdvancedItemTags.Num() - 1);
@@ -129,4 +131,25 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 	}
 	
 	return FGameplayTag();
+}
+
+UTexture2D* UPCItemManagerSubsystem::GetItemTexture(const FGameplayTag& ItemTag)
+{
+	if (!ItemTag.IsValid() || !ItemTag.MatchesTag(ItemTags::Item))
+		return nullptr;
+	
+	UTexture2D* ItemTexture = ItemTextureMap.FindRef(ItemTag);
+	if (!ItemTexture)
+	{
+		if (const FPCItemData* ItemData = ItemDataMap.Find(ItemTag))
+		{
+			ItemTexture = ItemData->ItemTexture.LoadSynchronous();
+			if (ItemTexture)
+			{
+				ItemTextureMap.Add(ItemTag, ItemTexture);
+			}
+		}
+	}
+
+	return ItemTexture;
 }

@@ -26,7 +26,7 @@ protected:
 	virtual bool Initialize() override;
 	
 public:
-	void Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex);
+	void Setup(const FPCShopUnitData& UnitData, int32 NewSlotIndex, bool bIsShopSlot);
 
 protected:
 	int32 SlotIndex = -1;

@@ -24,6 +24,7 @@ float UPCUnitAttributeSet::GetEffectiveAttackSpeed() const
 	const float Effective = Base * IncFactor * DecFactor;
 	return FMath::Max(0.f, Effective);
 }
+
 void UPCUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -80,8 +81,8 @@ void UPCUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 }
 
 void UPCUnitAttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeData& AffectedAttribute,
- 	const FGameplayAttributeData& MaxAttribute, float NewMaxValue,
- 	const FGameplayAttribute& AffectedAttributeProperty) const
+                                                      const FGameplayAttributeData& MaxAttribute, float NewMaxValue,
+                                                      const FGameplayAttribute& AffectedAttributeProperty) const
  {
 	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
 	const float CurrentMaxValue = MaxAttribute.GetCurrentValue();

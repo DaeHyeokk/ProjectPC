@@ -250,6 +250,8 @@ namespace GameRoundTags
 
 namespace ItemTags
 {
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item)
+	
 	// ==== Base Item Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_BFSword)
@@ -259,6 +261,9 @@ namespace ItemTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_NegatronCloak)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_RecurveBow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_SparringGloves)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_TearofGoddess)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_Spatula)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Base_FryingPan)
 
 	// ==== Advanced Item Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced)
@@ -274,7 +279,7 @@ namespace ItemTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_GiantSlayer)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_GuinsoosRageblade)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_HextechGunblade)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_InfintiyEdge)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_InfinityEdge)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_IonicSpark)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_JeweledGauntlet)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_KrakensFury)
@@ -290,4 +295,33 @@ namespace ItemTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_ThiefsGloves)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_TitansResolve)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_WarmogsArmor)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_SpearofShojin)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_ProtectorsVow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_SpiritVisage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_ArchangelsStaff)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_AdaptiveHelm)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_VoidStaff)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_HandofJustice)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_BlueBuff)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_TacticiansCrown)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_TacticiansCape)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Advanced_TacticiansShield)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_BladeMaster)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Guardian)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Bruiser)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Mage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Knight)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Marksman)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Assassin)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Mechanic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Undead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Imperial)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Cyborg)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Darkness)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Human)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Beast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Robot)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Type_Symbol_Demon)
 }

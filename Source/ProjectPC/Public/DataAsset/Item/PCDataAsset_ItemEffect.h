@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "Engine/DataAsset.h"
-#include "PCDataAsset_ItemEffectData.generated.h"
+#include "PCDataAsset_ItemEffect.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UPCDataAsset_ItemEffectData : public UDataAsset
+class PROJECTPC_API UPCDataAsset_ItemEffect : public UDataAsset
 {
 	GENERATED_BODY()
 	

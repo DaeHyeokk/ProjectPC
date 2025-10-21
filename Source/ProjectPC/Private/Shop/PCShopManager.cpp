@@ -500,9 +500,9 @@ int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 	return 0;
 }
 
-int32 UPCShopManager::GetSellingPrice(const TPair<int32, int32>& UnitLevelCostData)
+int32 UPCShopManager::GetSellingPrice(int32 UnitCost, int32 UnitLevel)
 {
-	if (const int32* Price = ShopUnitSellingPriceDataMap.Find(UnitLevelCostData))
+	if (const int32* Price = ShopUnitSellingPriceDataMap.Find({UnitCost, UnitLevel}))
 	{
 		return *Price;
 	}

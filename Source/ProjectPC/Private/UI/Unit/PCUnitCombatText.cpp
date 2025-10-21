@@ -33,8 +33,28 @@ void UPCUnitCombatText::InitializeDamageText(const float DamageValue, const bool
 	}
 
 	if (CriticalImage)
+	{
+		if (bIsCritical && CriticalTexture)
+		{
+			CriticalImage->SetBrushFromTexture(CriticalTexture, true);
+		
+			if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_DamageType_Physical))
+			{
+				CriticalImage->SetColorAndOpacity(PhysicalDamageColor);
+			}
+			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_DamageType_Magic))
+			{
+				CriticalImage->SetColorAndOpacity(MagicDamageColor);
+			}
+			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_DamageType_TrueDamage))
+			{
+				CriticalImage->SetColorAndOpacity(TrueDamageColor);
+			}
+		}
+		
 		CriticalImage->SetVisibility(bIsCritical ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-
+	}
+	
 	if (DamageAnim)
 		PlayAnimation(DamageAnim);
 }

@@ -3,8 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "PCItemInfoWidget.generated.h"
+
+class UPCItemStatWidget;
+class UHorizontalBox;
+class UTextBlock;
+class UImage;
 
 /**
  * 
@@ -13,8 +19,28 @@ UCLASS()
 class PROJECTPC_API UPCItemInfoWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	void Setup(FGameplayTag ItemTag);
 	
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ItemStatWidgetClass")
+	TSubclassOf<UUserWidget> ItemStatWidgetClass;
 	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_ItemThumbnail;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_ItemName;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* Text_ItemUniqueEffect;
 	
-	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UHorizontalBox* ItemStatBox;
+
+private:
+	FGameplayTag CachedItemTag;
+
+	void SetItemInfo();
 };

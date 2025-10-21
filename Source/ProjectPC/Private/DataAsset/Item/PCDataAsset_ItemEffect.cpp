@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "DataAsset/Item/PCDataAsset_ItemEffectData.h"
+#include "DataAsset/Item/PCDataAsset_ItemEffect.h"
 
 
 

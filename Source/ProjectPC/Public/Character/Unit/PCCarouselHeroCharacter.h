@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
+#include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "DataAsset/Unit/PCDataAsset_UnitDefinition.h"
 #include "GameFramework/Character.h"
@@ -19,7 +20,7 @@ class UPCDataAsset_HeroUnitData;
 class UPCDataAsset_UnitAnimSet;
 
 UCLASS()
-class PROJECTPC_API APCCarouselHeroCharacter : public ACharacter, public IAbilitySystemInterface
+class PROJECTPC_API APCCarouselHeroCharacter : public APCCommonUnitCharacter
 {
 	GENERATED_BODY()
 
@@ -36,7 +37,7 @@ public:
 	FGameplayTag GetUnitTag() const { return UnitTag; }
 	void SetUnitTag(const FGameplayTag& InTag);
 
-	FGameplayTag GetHasItemTag() const { return ItemTag; }
+	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
 	void SetItemTag(const FGameplayTag& InItemTag);
 
 	// 캐러샐 유닛 부착

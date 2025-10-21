@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayTagAssetInterface.h"
 #include "GenericTeamAgentInterface.h"
+#include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -23,8 +24,7 @@ class UPCUnitAbilitySystemComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDied, APCBaseUnitCharacter*, Unit);
 
 UCLASS()
-class PROJECTPC_API APCBaseUnitCharacter : public ACharacter, public IAbilitySystemInterface,
-										public IGenericTeamAgentInterface
+class PROJECTPC_API APCBaseUnitCharacter : public APCCommonUnitCharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -59,6 +59,8 @@ public:
 
 	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
 	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
+
+	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
 	
 	FORCEINLINE UPCUnitEquipmentComponent* GetEquipmentComponent() const { return EquipmentComp; }
 	FORCEINLINE const UWidgetComponent* GetStatusBarComponent() const { return StatusBarComp; }

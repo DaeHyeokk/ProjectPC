@@ -6,8 +6,10 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/PCUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCUnitAttributeSet.h"
+#include "Blueprint/UserWidget.h"
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/Unit/PCUnitStatusBarWidget.h"
 
 
 APCCreepUnitCharacter::APCCreepUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -44,11 +46,10 @@ void APCCreepUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 
 	if (UPCUnitStatusBarWidget* StatusBar = Cast<UPCUnitStatusBarWidget>(StatusBarWidget))
 	{
-		StatusBar->InitWithASC(GetUnitAbilitySystemComponent(),
+		StatusBar->InitWithASC(this, GetAbilitySystemComponent(),
 			UPCUnitAttributeSet::GetCurrentHealthAttribute(),
 			UPCUnitAttributeSet::GetMaxHealthAttribute()
 			);
-		
 	}
 }
 
