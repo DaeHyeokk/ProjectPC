@@ -257,6 +257,11 @@ void APCHeroUnitCharacter::SellHero()
 void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)
 {
 	HeroUnitDataAsset = Cast<UPCDataAsset_HeroUnitData>(InUnitDataAsset);
+
+	if (HeroUnitDataAsset)
+	{
+		SetUnitRecommendedPosition(HeroUnitDataAsset->GetRecommentPosition());
+	}
 }
 
 void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)

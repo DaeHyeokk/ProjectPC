@@ -91,6 +91,7 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UHorizontalBox> ItemSlotPanel = nullptr;
 
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UPCItemSlotWidget>> ItemSlotWidgets;
 
