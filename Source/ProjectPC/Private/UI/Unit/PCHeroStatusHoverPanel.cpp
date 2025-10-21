@@ -53,9 +53,10 @@ void UPCHeroStatusHoverPanel::HidePanel()
 	SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UPCHeroStatusHoverPanel::NativeConstruct()
+void UPCHeroStatusHoverPanel::NativeOnInitialized()
 {
-	Super::NativeConstruct();
+	Super::NativeOnInitialized();
+
 	BuildRoutes();
 
 	if (ItemSlotPanel)

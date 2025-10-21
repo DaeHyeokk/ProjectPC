@@ -25,6 +25,8 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Phase)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kitty)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
