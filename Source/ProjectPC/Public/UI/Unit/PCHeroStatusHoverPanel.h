@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayEffectTypes.h"
+#include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "PCHeroStatusHoverPanel.generated.h"
 
+class UImage;
 class UPCUnitSlotWidget;
 class UPCUnitEquipmentComponent;
 class APCCommonUnitCharacter;
@@ -32,10 +34,10 @@ struct FWidgetTextureData
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSoftObjectPtr<UTexture2D>> UnitPositionTexture;
+	TMap<EUnitRecommendedPosition, TObjectPtr<UTexture2D>> UnitPositionTexture;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSoftObjectPtr<UTexture2D>> UnitLevelTexture;
+	TArray<TObjectPtr<UTexture2D>> UnitLevelTexture;
 };
 
 
@@ -69,6 +71,14 @@ protected:
 
 	TMap<FGameplayAttribute, EHeroHoverStat> AttrRoute;
 
+	UPROPERTY(EditDefaultsOnly, Category = "TextureData")
+	FWidgetTextureData TextureData;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> Img_Position;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> Img_Level;
+	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UPCUnitSlotWidget> UnitSlotWidget;
 	
@@ -83,6 +93,9 @@ protected:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> ManaRegenText = nullptr;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> PositionText = nullptr;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> AttackRangeText = nullptr;
@@ -115,6 +128,7 @@ protected:
 
 	TMap<FGameplayAttribute, FDelegateHandle> AttrChangedHandleMap;
 	FDelegateHandle EquipItemChangedHandle;
+	FDelegateHandle HeroLevelChangedHandle;
 	
 	void BuildRoutes();
 
@@ -126,11 +140,14 @@ protected:
 
 	void OnAttrChanged(const FOnAttributeChangeData& Data);
 	void OnEquipItemChanged() const;
+	void OnHeroLevelChanged() const;
 	
 	void UpdateHP() const;
 	void UpdateMP() const;
 
 	void UpdateEquipItemSlots() const;
+	void UpdatePosition() const;
+	void UpdateLevel() const;
 	
 	void UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_F2(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
