@@ -12,7 +12,6 @@
 class UImage;
 class UPCItemSlotWidget;
 class UHorizontalBox;
-class APCBaseUnitCharacter;
 class UTextBlock;
 class UProgressBar;
 class UPCUnitHealthProgressBar;

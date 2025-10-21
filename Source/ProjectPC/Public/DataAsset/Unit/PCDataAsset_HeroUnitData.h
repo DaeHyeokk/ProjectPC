@@ -22,6 +22,14 @@ struct FHeroScalableStatConfig
 	FScalableFloat StatValue;
 };
 
+UENUM(BlueprintType)
+enum class EUnitRecommendedPosition : uint8
+{
+	FrontLine,
+	MidLine,
+	BackLine,
+};
+
 /**
  * 
  */
@@ -36,8 +44,12 @@ public:
 	void FillStartupUltimateAbilities(TArray<TSubclassOf<UGameplayAbility>>& OutAbilities) const;
 	const FGameplayTag& GetJobSynergyTag() const;
 	const FGameplayTag& GetSpeciesSynergyTag() const;
+	const EUnitRecommendedPosition& GetRecommentPosition() const { return HeroRecommendedPosition; }
 	
 protected:
+	UPROPERTY(EditDefaultsOnly, Category="Info|Placement")
+	EUnitRecommendedPosition HeroRecommendedPosition;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Stats|Scalable")
 	TArray<FHeroScalableStatConfig> HeroScalableStatConfigs;
 	

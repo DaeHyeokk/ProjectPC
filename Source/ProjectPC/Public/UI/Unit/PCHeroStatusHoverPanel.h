@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayEffectTypes.h"
+#include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "PCHeroStatusHoverPanel.generated.h"
 
+class UImage;
+class UPCUnitSlotWidget;
 class UPCUnitEquipmentComponent;
 class APCCommonUnitCharacter;
 class UHorizontalBox;
@@ -23,6 +26,20 @@ enum class EHeroHoverStat : uint8
 	AD, Range, AS, ASInc, ASDec, PDef, MDef,
 	PMul, MMul, CritChance, LifeSteal, DamageMul
 };
+
+USTRUCT(BlueprintType)
+struct FWidgetTextureData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<EUnitRecommendedPosition, TObjectPtr<UTexture2D>> UnitPositionTexture;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UTexture2D>> UnitLevelTexture;
+};
+
 
 /**
  * 
@@ -53,6 +70,17 @@ protected:
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 
 	TMap<FGameplayAttribute, EHeroHoverStat> AttrRoute;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TextureData")
+	FWidgetTextureData TextureData;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> Img_Position;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UImage> Img_Level;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UPCUnitSlotWidget> UnitSlotWidget;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UProgressBar> HealthBar = nullptr;
@@ -65,6 +93,9 @@ protected:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> ManaRegenText = nullptr;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> PositionText = nullptr;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> AttackRangeText = nullptr;
@@ -91,11 +122,13 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UHorizontalBox> ItemSlotPanel = nullptr;
 
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UPCItemSlotWidget>> ItemSlotWidgets;
 
 	TMap<FGameplayAttribute, FDelegateHandle> AttrChangedHandleMap;
 	FDelegateHandle EquipItemChangedHandle;
+	FDelegateHandle HeroLevelChangedHandle;
 	
 	void BuildRoutes();
 
@@ -107,11 +140,14 @@ protected:
 
 	void OnAttrChanged(const FOnAttributeChangeData& Data);
 	void OnEquipItemChanged() const;
+	void OnHeroLevelChanged() const;
 	
 	void UpdateHP() const;
 	void UpdateMP() const;
 
 	void UpdateEquipItemSlots() const;
+	void UpdatePosition() const;
+	void UpdateLevel() const;
 	
 	void UpdateText_Int(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;
 	void UpdateText_F2(UTextBlock* TextBlock, const FGameplayAttribute& Attr) const;

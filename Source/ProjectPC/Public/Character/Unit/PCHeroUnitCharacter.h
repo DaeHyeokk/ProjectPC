@@ -16,6 +16,7 @@ DECLARE_MULTICAST_DELEGATE_ThreeParams(
 	const APCHeroUnitCharacter*,
 	const FGameplayTag&,
 	bool);
+DECLARE_MULTICAST_DELEGATE(FOnHeroLevelUp);
 
 /**
  * 
@@ -84,6 +85,7 @@ public:
 	FOnHeroDestroyed OnHeroDestroyed;
 	FOnHeroSynergyTagChanged OnHeroSynergyTagChanged;
 	FDelegateHandle SynergyTagChangedHandle;
+	FOnHeroLevelUp OnHeroLevelUp;
 	
 private:
 	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const;

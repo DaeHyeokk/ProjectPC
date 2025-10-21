@@ -92,7 +92,7 @@ void UPCShopWidget::SetupShopSlots()
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
 		if (!UnitSlotWidget) continue;
 		
-		UnitSlotWidget->Setup(UnitData, Index, true);
+		UnitSlotWidget->Setup(UnitData, true, Index);
 		ShopBox->AddChild(UnitSlotWidget);
 
 		++Index;

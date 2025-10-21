@@ -9,9 +9,14 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Engine/AssetManager.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
+#include "Shop/PCShopManager.h"
 #include "UI/Item/PCItemSlotWidget.h"
+#include "UI/Shop/PCUnitSlotWidget.h"
 
 void UPCHeroStatusHoverPanel::InitFromHero(APCCommonUnitCharacter* InHero)
 {
@@ -120,6 +125,8 @@ void UPCHeroStatusHoverPanel::BindAll()
 			EquipItemChangedHandle = EquipmentComp->OnEquipItemChanged
 				.AddUObject(this, &ThisClass::OnEquipItemChanged);
 		}
+
+		HeroLevelChangedHandle = Hero->OnHeroLevelUp.AddUObject(this, &ThisClass::OnHeroLevelChanged);
 	}
 }
 
@@ -141,6 +148,12 @@ void UPCHeroStatusHoverPanel::UnbindAll()
 			if (UPCUnitEquipmentComponent* EquipmentComp = Hero->GetEquipmentComponent())
 			{
 				EquipmentComp->OnEquipItemChanged.Remove(EquipItemChangedHandle);
+			}
+
+			if (HeroLevelChangedHandle.IsValid())
+			{
+				Hero->OnHeroLevelUp.Remove(HeroLevelChangedHandle);
+				HeroLevelChangedHandle.Reset();
 			}
 		}
 		EquipItemChangedHandle.Reset();
@@ -238,6 +251,11 @@ void UPCHeroStatusHoverPanel::OnEquipItemChanged() const
 	UpdateEquipItemSlots();
 }
 
+void UPCHeroStatusHoverPanel::OnHeroLevelChanged() const
+{
+	UpdateLevel();
+}
+
 void UPCHeroStatusHoverPanel::UpdateHP() const
 {
 	if (!ASC.IsValid()) return;
@@ -272,6 +290,45 @@ void UPCHeroStatusHoverPanel::UpdateEquipItemSlots() const
 		}
 
 		ItemSlotWidgets[i]->RemoveItem();
+	}
+}
+
+void UPCHeroStatusHoverPanel::UpdatePosition() const
+{
+	if (!Img_Position || !PositionText) return;
+
+	if (auto Texture = TextureData.UnitPositionTexture.FindRef(CurHero->GetUnitRecommendedPosition()))
+	{
+		Img_Position->SetBrushFromTexture(Texture);
+	}
+
+	FText Text;
+	switch (CurHero->GetUnitRecommendedPosition())
+	{
+	case EUnitRecommendedPosition::FrontLine:
+		Text = FText::FromString(TEXT("전방"));
+		break;
+	case EUnitRecommendedPosition::BackLine:
+		Text = FText::FromString(TEXT("후방"));
+		break;
+	default:
+		Text = FText::FromString(TEXT("중앙"));
+		break;
+	}
+	
+	PositionText->SetText(Text);
+}
+
+void UPCHeroStatusHoverPanel::UpdateLevel() const
+{
+	if (!Img_Level) return;
+
+	if (TextureData.UnitLevelTexture.IsValidIndex(CurHero->GetUnitLevel() - 1))
+	{
+		if (auto Texture = TextureData.UnitLevelTexture[CurHero->GetUnitLevel() - 1])
+		{
+			Img_Level->SetBrushFromTexture(Texture);
+		}
 	}
 }
 
@@ -319,6 +376,22 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 {
 	if (!CurHero.IsValid() || !ASC.IsValid())
 		return;
+
+	if (UnitSlotWidget)
+	{
+		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag(CurHero->GetUnitTag());
+	
+			if (UnitData.UnitName != "Dummy")
+			{
+				UnitSlotWidget->Setup(UnitData, false);
+			}
+		}
+	}
+	
+	UpdatePosition();
+	UpdateLevel();
 
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
 	const auto CurHPAttr = UPCHeroUnitAttributeSet::GetCurrentHealthAttribute();

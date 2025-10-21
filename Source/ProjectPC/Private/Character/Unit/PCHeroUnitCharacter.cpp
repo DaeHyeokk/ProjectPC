@@ -194,6 +194,7 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
+	OnHeroLevelUp.Broadcast();
 }
 
 void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
@@ -257,6 +258,11 @@ void APCHeroUnitCharacter::SellHero()
 void APCHeroUnitCharacter::SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset)
 {
 	HeroUnitDataAsset = Cast<UPCDataAsset_HeroUnitData>(InUnitDataAsset);
+
+	if (HeroUnitDataAsset)
+	{
+		SetUnitRecommendedPosition(HeroUnitDataAsset->GetRecommentPosition());
+	}
 }
 
 void APCHeroUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)

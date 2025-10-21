@@ -33,9 +33,6 @@ public:
 	
 	const UPCDataAsset_HeroUnitData* GetHeroUnitDataAsset() const { return HeroData; }
 	void SetHeroUnitDataAsset(UPCDataAsset_HeroUnitData* InHeroData);
-	
-	FGameplayTag GetUnitTag() const { return UnitTag; }
-	void SetUnitTag(const FGameplayTag& InTag);
 
 	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
 	void SetItemTag(const FGameplayTag& InItemTag);
@@ -96,12 +93,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category="Data")
 	TObjectPtr<const UPCDataAsset_HeroUnitData> HeroData = nullptr;
-
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_UnitTag, Category="Data")
-	FGameplayTag UnitTag;
 	
-	UFUNCTION()
-	void OnRep_UnitTag();
+	virtual void OnRep_UnitTag() override;
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_ItemTag, Category="Data")
 	FGameplayTag ItemTag;
