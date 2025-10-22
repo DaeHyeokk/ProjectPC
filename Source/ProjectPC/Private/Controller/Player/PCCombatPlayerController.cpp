@@ -253,6 +253,8 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
 	{
+		StopMovement();
+		Server_StopMovement();
 		Server_MovetoLocation(CachedDestination);
 	}
 	
