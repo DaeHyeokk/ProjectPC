@@ -590,6 +590,8 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 
 		APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PCPlayerState) continue;
+		
+		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
 
 		const int32 Seat = FMath::Max(0, PCPlayerState->SeatIndex);
 		const FTransform Transform = CarouselRing->GetPlayerSlotTransformWorld(Seat);
@@ -637,6 +639,8 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 
 		APCPlayerState* PlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PlayerState) continue;
+
+		PlayerState->ChangeState(PlayerGameplayTags::Player_State_Normal);
 
 		const int32 BoardIdx = ResolveBoardIndex(PlayerState);
 		APCCombatBoard* Board = CombatBoard.IsValidIndex(BoardIdx) ? CombatBoard[BoardIdx] : nullptr;

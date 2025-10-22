@@ -689,6 +689,7 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 			if (!EliminatedSet.Contains(Id))
 			{
 				FinalRanks.Add(Id,1);
+				PCPlayerState->PlayerResult();
 				break;
 			}
 		}
