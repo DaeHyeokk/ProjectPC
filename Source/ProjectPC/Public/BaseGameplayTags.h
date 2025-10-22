@@ -7,6 +7,7 @@
 namespace GameStateTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_NonCombat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation)

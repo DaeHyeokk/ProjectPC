@@ -38,7 +38,9 @@ public:
     void OnServerDragEndResult(bool bSuccess, const FVector& FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewHero);
 
     UFUNCTION()
-    bool IsDraggingOrPending(); 
+    bool IsDraggingOrPending();
+
+    void HideGhost();
     
 private:
     // 상태
@@ -61,7 +63,7 @@ private:
     
     void EnsureGhostAt(const FVector& World, APCHeroUnitCharacter* PreviewHero);
     void ShowGhost(const FVector& World);
-    void HideGhost();
+    
 
     // 커서 히트
     bool CursorHitWorld(APCCombatPlayerController* PC, FVector& OutWorld) const;

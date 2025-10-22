@@ -61,7 +61,7 @@ public:
 	void Client_RequestIdentity();
 
 	UFUNCTION(Server, Reliable)
-	void ServerSubmitIdentity(const FString& InDisplayName);
+	void ServerSubmitIdentity(const FString& InDisplayName, const FGuid& InSessionID);
 	
 protected:
 	virtual void SetupInputComponent() override;
@@ -119,6 +119,7 @@ public:
 	FTimerHandle LoadShop;
 
 	void LoadShopWidget();
+	
 	void LoadMainWidget();
 
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
@@ -228,6 +229,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
+	
+	void TryInitHUDWithPlayerState();
+	
+	void OnRep_PlayerState() override;
 
 	UFUNCTION(BlueprintCallable)
 	void ShowWidget();
@@ -305,6 +310,8 @@ public:
 	void Client_DragConfirm(bool bOk, int32 DragId, FVector StartSnap, APCHeroUnitCharacter* PreviewUnit = nullptr);
 	UFUNCTION(Client, Unreliable)
 	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit = nullptr);
+
+	void CancelDrag(const FGameplayTag& GameStateTag);
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();

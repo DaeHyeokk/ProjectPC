@@ -443,6 +443,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ranking")
 	int32 GetFinalRankFor(const FString& LocalUserId) const;
 
+	TMap<FString, FPlayerStandingRow> GetLeaderBoardMap() const { return CachedLeaderboardMap;}
+
 	
 
 protected:
@@ -461,9 +463,15 @@ protected:
 	UFUNCTION()
 	void OnRep_Leaderboard();
 
+	
+	FLeaderBoardMap CachedLeaderBoardMap;
+
+	UPROPERTY()
+	TMap<FString, FPlayerStandingRow> CachedLeaderboardMap;
+
 	UAbilitySystemComponent* ResolveASC(APCPlayerState* PCPlayerState) const;
 
-	void BroadCastLeaderboardMap() const;
+	void BroadCastLeaderboardMap();
 
 
 private:

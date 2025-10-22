@@ -10,8 +10,6 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
-#include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -20,7 +18,6 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
-#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -474,6 +471,11 @@ void APCCombatGameMode::Step_CreepSpawn()
 
 void APCCombatGameMode::Step_Carousel()
 {
+	APCCombatGameState* PCGameState = GetCombatGameState();
+	if (!PCGameState) return;
+
+	PCGameState->SetGameStateTag(GameStateTags::Game_State_Carousel);
+	
 	if (!CarouselRing) return;
 
 	BuildCarouselWavesByHP(CarouselWaves);
@@ -591,6 +593,8 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 		APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PCPlayerState) continue;
 		
+		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
+
 		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
 
 		const int32 Seat = FMath::Max(0, PCPlayerState->SeatIndex);

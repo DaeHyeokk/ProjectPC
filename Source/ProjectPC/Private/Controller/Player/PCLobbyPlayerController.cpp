@@ -31,8 +31,6 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 			}
 		}
 		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); return; }
-
-		PS->SetDisplayName_Server(DisplayName);
 	}
 }
 
@@ -101,7 +99,7 @@ void APCLobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void APCLobbyPlayerController::RequestConnectToServer(const FString& Address)
+void APCLobbyPlayerController::RequestConnectToServer()
 {
 	HideStartWidget();
 	bPendingLobbyUI = true;

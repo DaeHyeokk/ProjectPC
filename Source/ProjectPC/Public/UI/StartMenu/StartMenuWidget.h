@@ -34,7 +34,7 @@ protected:
 	void RefreshButtons();
 	
 	void OpenRegister(bool bFocusName = true);
-	void ConnectToServer(const FString& Address);
+	void ConnectToServer();
 	
 	UPROPERTY(Meta = (BindWidget))
 	UEditableTextBox* EB_DisplayName;

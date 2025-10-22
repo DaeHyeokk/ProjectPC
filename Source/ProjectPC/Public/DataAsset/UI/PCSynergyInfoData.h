@@ -61,16 +61,20 @@ public:
 				Cached.Add(R.SynergyTag, R);
 		}
 	}
+
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& E) override
 	{
-#if WITH_EDITOR
+
 		Super::PostEditChangeProperty(E);
 		Cached.Empty();
 		for (const auto& R : Rows)
 			if (R.SynergyTag.IsValid()) Cached.Add(R.SynergyTag, R);
-#endif
-	}
 
+	}
+#endif
+
+	
 	bool Resolve(const FGameplayTag& Tag, FPCSynergyUIRow& Out) const
 	{
 		if (const FPCSynergyUIRow* Found = Cached.Find(Tag))

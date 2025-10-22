@@ -27,6 +27,8 @@ void UPCSynergyPanelWidget::SynergyComponentBinding(UPCSynergyComponent* Compone
 {
 	if (!Component) return;
 
+	SynergyComponent = Component;
+
 	OnChangedHandle = Component->OnSynergyCountsChanged.AddUObject(this, &UPCSynergyPanelWidget::HandlesSynergyChanged);
 	HandlesSynergyChanged((Component->GetSynergySnapShot()));
 }
@@ -39,16 +41,26 @@ void UPCSynergyPanelWidget::HandlesSynergyChanged(const TArray<FSynergyData>& Da
 
 void UPCSynergyPanelWidget::Rebuild(const TArray<FSynergyData>& Data)
 {
-	if (!Synergy_List) return;
+	if (!Synergy_List || !SlotClass) return;
 
 	Synergy_List->ClearChildren();
 
-	if (!SlotClass) return;
+	// 1) 정렬: 티어 인덱스 내림차순 -> 카운트 내림차순 -> 태그명 오름차순
+	TArray<FSynergyData> Sorted = Data;
+	Sorted.StableSort([](const FSynergyData& A, const FSynergyData& B)
+	{
+		if (A.TierIndex != B.TierIndex)
+			return A.TierIndex > B.TierIndex;         // 높은 티어 먼저
+		if (A.Count != B.Count)
+			return A.Count > B.Count;                 // 카운트 큰 것 먼저
+		return A.SynergyTag.ToString() < B.SynergyTag.ToString(); // 이름순
+	});
 
-	for (const FSynergyData& D : Data)
+	// 2) 슬롯 생성
+	for (const FSynergyData& D : Sorted)
 	{
 		UPCSynergySlotWidget* InSlot = CreateWidget<UPCSynergySlotWidget>(this, SlotClass);
-		if (!Slot) continue;
+		if (!InSlot) continue;
 
 		InSlot->SetData(D);
 		Synergy_List->AddChild(InSlot);

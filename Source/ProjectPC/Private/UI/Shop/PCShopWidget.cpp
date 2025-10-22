@@ -78,22 +78,60 @@ void UPCShopWidget::CloseMenu()
 
 void UPCShopWidget::SetupShopSlots()
 {
-	if (!ShopBox) return;
-	if (!CachedPlayerState) return;
+	// if (!ShopBox) return;
+	// if (!CachedPlayerState) return;
+	//
+	// ShopBox->ClearChildren();
+	//
+	// const auto& ShopSlots = CachedPlayerState->GetShopSlots();
+	//
+	// // GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
+	// int32 Index = 0;
+	// for (const FPCShopUnitData& UnitData : ShopSlots)
+	// {
+	// 	auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
+	// 	if (!UnitSlotWidget) continue;
+	// 	
+	// 	UnitSlotWidget->Setup(UnitData, true, Index);
+	// 	ShopBox->AddChild(UnitSlotWidget);
+	//
+	// 	++Index;
+	// }
+
+	if (!ShopBox)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] ShopBox is NULL"));
+		return;
+	}
+
+	if (!CachedPlayerState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] CachedPlayerState is NULL"));
+		return;
+	}
 
 	ShopBox->ClearChildren();
-	
+	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Cleared children."));
+
 	const auto& ShopSlots = CachedPlayerState->GetShopSlots();
+	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] ShopSlots count = %d"), ShopSlots.Num());
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
 	int32 Index = 0;
 	for (const FPCShopUnitData& UnitData : ShopSlots)
 	{
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-		if (!UnitSlotWidget) continue;
-		
+		if (!UnitSlotWidget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] Failed to create UnitSlotWidget at Index=%d"), Index);
+			continue;
+		}
+
 		UnitSlotWidget->Setup(UnitData, true, Index);
 		ShopBox->AddChild(UnitSlotWidget);
+
+		UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Added UnitSlotWidget Index=%d, UnitTag=%s"), 
+			Index, *UnitData.UnitTag.ToString());
 
 		++Index;
 	}

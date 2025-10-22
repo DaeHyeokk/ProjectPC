@@ -7,6 +7,7 @@
 #include "Components/EditableTextBox.h"
 #include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 
 
 void URegisterWidget::NativeConstruct()
@@ -29,7 +30,17 @@ void URegisterWidget::OnClicked_Submit()
 	
 	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
 	{
-		Profile->SetDisplayName(Name);
+		Profile->SetUserID(Name);
+		if (APlayerController* PC = GetOwningPlayer())
+		{
+			if (APCLobbyPlayerController* LobbyPC = Cast<APCLobbyPlayerController>(PC))
+			{
+				if (APCPlayerState* PS = LobbyPC->GetPlayerState<APCPlayerState>())
+				{
+					PS->LocalUserId = Profile->GetUserID();
+				}
+			}
+		}
 	}
 	
 	if(bSubmitToServerOnClose)
@@ -44,7 +55,7 @@ void URegisterWidget::OnClicked_Submit()
 		}
 	}
 	
-	OnRegistered.Broadcast();
+	//OnRegistered.Broadcast();
 	SetVisibility(ESlateVisibility::Hidden);
 	
 }

@@ -19,8 +19,8 @@ void UStartMenuWidget::NativeConstruct()
 	if (Btn_JoinLobby)
 		Btn_JoinLobby->OnClicked.AddDynamic(this, &UStartMenuWidget::OnClicked_JoinLobby);
 	
-	GetWorld()->GetTimerManager().SetTimer(UIRefreshTimer, this, &UStartMenuWidget::RefreshButtons, 0.3f, true, 0.0f);
-	RefreshButtons();
+	// GetWorld()->GetTimerManager().SetTimer(UIRefreshTimer, this, &UStartMenuWidget::RefreshButtons, 0.3f, true, 0.0f);
+	// RefreshButtons();
 	
 }
 
@@ -43,7 +43,7 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>();
 	if (!Profile) return;
 
-	if (!Profile->HasDisPlayName())
+	if (!Profile->HasDisplayName())
 	{
 		if (Tb_Status) Tb_Status->SetText(FText::FromString(TEXT("Please enter your ID or register first.")));
 		OpenRegister(true);
@@ -56,7 +56,7 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 
 	if (CandidateID.IsEmpty())
 	{
-		CandidateID = Profile->GetDisplayName().TrimStartAndEnd();
+		CandidateID = Profile->GetUserID().TrimStartAndEnd();
 	}
 	if (CandidateID.IsEmpty())
 	{
@@ -77,44 +77,27 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 		return;
 	}
 
-	if (!Profile->HasDisPlayName() || Profile->GetDisplayName() != CandidateID)
+	if (!Profile->HasDisplayName() || Profile->GetUserID() != CandidateID)
 	{
-		Profile->SetDisplayName(CandidateID);
+		Profile->SetUserID(CandidateID);
 	}
-
-	const FString Addr = Profile->GetLobbyAddr();
-	if (Addr.IsEmpty())
-	{
-		if (Tb_Status)
-			Tb_Status->SetText(FText::FromString(TEXT("No Lobby Address Configured.")));
-		return;
-	}
-
+	
 	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
 		const ENetMode NetMode = LobbyPlayerController->GetNetMode();
 		if (NetMode == NM_Client || NetMode == NM_ListenServer)
 		{
 			LobbyPlayerController->ServerSubmitIdentity(CandidateID);
-			ConnectToServer(Addr);
-			if (Tb_Status)
-				Tb_Status->SetText(FText::FromString(TEXT("Signing in....")));
 		}
-		else
-		{
-			if (Tb_Status)
-				Tb_Status->SetText(FText::FromString(TEXT("Not Connected to Server.")));
-			return;
-		}
+		LobbyPlayerController->RequestConnectToServer();
 	}
-	
 }
 
 void UStartMenuWidget::RefreshButtons()
 {
 	bool bHasName = false;
 	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
-		bHasName = Profile->HasDisPlayName();
+		bHasName = Profile->HasDisplayName();
 
 	if (Btn_JoinLobby)
 		Btn_JoinLobby->SetIsEnabled(bHasName);
@@ -162,13 +145,13 @@ void UStartMenuWidget::OpenRegister(bool bFocusName)
 }
 
 
-void UStartMenuWidget::ConnectToServer(const FString& Address)
+void UStartMenuWidget::ConnectToServer()
 {
 	if (APlayerController* PlayerController = GetOwningPlayer())
 	{
 		if (APCLobbyPlayerController* LobbyPlayerController = Cast<APCLobbyPlayerController>(PlayerController))
 		{
-			LobbyPlayerController->RequestConnectToServer(Address);
+			LobbyPlayerController->RequestConnectToServer();
 		}
 		SetVisibility(ESlateVisibility::Hidden);
 	}
