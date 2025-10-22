@@ -43,5 +43,9 @@ public:
 	// Drag&Drop
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_LeftMouse;
+
+	// Result Menu Toggle
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_ResultMenuToggle;
 	
 };

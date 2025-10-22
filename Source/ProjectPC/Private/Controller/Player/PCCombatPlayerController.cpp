@@ -98,6 +98,9 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Started, this, &APCCombatPlayerController::OnMouse_Pressed);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnMouse_Released);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnMouse_Released);
+
+		// Result Menu Toggle
+		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
 	}
 }
 
@@ -428,12 +431,12 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost
 	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
 	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
 	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
@@ -1500,4 +1503,18 @@ void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32
 
 	GameResultWidget->SetRanking(Ranking);
 	GameResultWidget->OpenMenu();
+}
+
+void APCCombatPlayerController::OnResultMenuToggled()
+{
+	if (!GameResultWidget) return;
+
+	if (GameResultWidget->IsInViewport())
+	{
+		GameResultWidget->CloseMenu();
+	}
+	else
+	{
+		GameResultWidget->OpenMenu();
+	}
 }

@@ -15,6 +15,8 @@
 void UPCUnitStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilitySystemComponent* InASC, FGameplayAttribute InHealthAttr,
                                          FGameplayAttribute InMaxHealthAttr, FGameplayAttribute InManaAttr, FGameplayAttribute InMaxManaAttr)
 {
+	InitEquipItemImages();
+	
 	Unit = InUnit;
 	ASC = InASC;
 	HealthAttr = InHealthAttr;
@@ -64,9 +66,10 @@ void UPCUnitStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilityS
 	}
 }
 
-void UPCUnitStatusBarWidget::SetInstant(APCBaseUnitCharacter* InUnit, float CurrentHP, float MaxHP, float CurrentMP, float MaxMP)
+void UPCUnitStatusBarWidget::InitConstantValue(float CurrentHP, float MaxHP,
+	float CurrentMP, float MaxMP, const TArray<FGameplayTag>& ItemTags)
 {
-	Unit = InUnit;
+	InitEquipItemImages();
 	
 	CachedHP = CurrentHP;
 	CachedMaxHP = MaxHP;
@@ -79,17 +82,15 @@ void UPCUnitStatusBarWidget::SetInstant(APCBaseUnitCharacter* InUnit, float Curr
 		CachedMaxMP = MaxMP;
 	}
 
-	ApplyToUI();
+	UpdateHealthBar();
+	UpdateManaBar();
+	UpdateEquipItemImages(ItemTags);
 }
 
-void UPCUnitStatusBarWidget::UpdateUI() const
+void UPCUnitStatusBarWidget::InitEquipItemImages()
 {
-	ApplyToUI();
-}
-
-void UPCUnitStatusBarWidget::NativeOnInitialized()
-{
-	Super::NativeOnInitialized();
+	if (!EquipItemImages.IsEmpty())
+		EquipItemImages.Reset();
 	
 	if (ItemImage_0 && ItemImage_1 && ItemImage_2)
 	{
@@ -152,14 +153,23 @@ void UPCUnitStatusBarWidget::OnMaxManaChanged(const FOnAttributeChangeData& Data
 
 void UPCUnitStatusBarWidget::OnEquipItemChanged() const
 {
-	UpdateEquipItemImages();
+	if (!Unit.IsValid())
+		return;
+	
+	TArray<FGameplayTag> ItemTags = Unit->GetEquipItemTags();
+	UpdateEquipItemImages(ItemTags);
 }
 
 void UPCUnitStatusBarWidget::ApplyToUI() const
 {
 	UpdateHealthBar();
 	UpdateManaBar();
-	UpdateEquipItemImages();
+
+	if (!Unit.IsValid())
+		return;
+	
+	TArray<FGameplayTag> ItemTags = Unit->GetEquipItemTags();
+	UpdateEquipItemImages(ItemTags);
 }
 
 void UPCUnitStatusBarWidget::UpdateHealthBar() const
@@ -185,6 +195,11 @@ void UPCUnitStatusBarWidget::UpdateEquipItemImages() const
 		return;
 	
 	TArray<FGameplayTag> ItemTags = Unit->GetEquipItemTags();
+	UpdateEquipItemImages(ItemTags);
+}
+
+void UPCUnitStatusBarWidget::UpdateEquipItemImages(const TArray<FGameplayTag>& ItemTags) const
+{
 	UPCItemManagerSubsystem* ItemManagerSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCItemManagerSubsystem>() : nullptr;
 	if (!ItemManagerSubsystem)
 		return;

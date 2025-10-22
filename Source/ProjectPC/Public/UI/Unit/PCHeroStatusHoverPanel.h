@@ -58,9 +58,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void HidePanel();
+
+	void Init();
 	
 protected:
-	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	
 	UPROPERTY(Transient)

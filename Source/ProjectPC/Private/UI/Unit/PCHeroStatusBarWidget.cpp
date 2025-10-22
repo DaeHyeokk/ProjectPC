@@ -53,7 +53,11 @@ void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBar
 		const float Mana = SrcASC->GetNumericAttribute(SourceStatusBar->ManaAttr);
 		const float MaxMana = SrcASC->GetNumericAttribute(SourceStatusBar->MaxManaAttr);
 
-		ActiveStatusBar->SetInstant(SourceStatusBar->Unit.Get(),HP, MaxHP, Mana, MaxMana);
+		if (SourceStatusBar->Unit.IsValid())
+		{
+			TArray<FGameplayTag> ItemTags = SourceStatusBar->Unit->GetEquipItemTags();
+			ActiveStatusBar->InitConstantValue(HP, MaxHP, Mana, MaxMana, ItemTags);
+		}
 	}
 }
 

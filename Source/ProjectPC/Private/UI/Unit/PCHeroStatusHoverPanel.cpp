@@ -12,7 +12,6 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "Engine/AssetManager.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Shop/PCShopManager.h"
 #include "UI/Item/PCItemSlotWidget.h"
@@ -58,9 +57,24 @@ void UPCHeroStatusHoverPanel::HidePanel()
 	SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UPCHeroStatusHoverPanel::NativeOnInitialized()
+void UPCHeroStatusHoverPanel::Init()
 {
-	Super::NativeOnInitialized();
+	BuildRoutes();
+
+	if (ItemSlotPanel)
+	{
+		TArray<UWidget*> ItemSlots = ItemSlotPanel->GetAllChildren();
+		for (UWidget* Widget : ItemSlots)
+		{
+			if (UPCItemSlotWidget* ItemSlot = Cast<UPCItemSlotWidget>(Widget))
+				ItemSlotWidgets.Add(ItemSlot);
+		}
+	}
+}
+
+void UPCHeroStatusHoverPanel::NativeConstruct()
+{
+	Super::NativeConstruct();
 
 	BuildRoutes();
 

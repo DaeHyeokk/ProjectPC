@@ -43,6 +43,8 @@ int32 PCSUnitHealthProgressBar::OnPaint(const FPaintArgs& Args, const FGeometry&
 	const int32 NumLines = FMath::FloorToInt((MaxV * Pct) / SegV);	// 1000, 2000, MaxV 미만
 	//const int32 NumFilled = FMath::FloorToInt((MaxV * Pct) / SegV);	// 현재 체력 이하까지만
 
+	const FLinearColor ParentTint = InWidgetStyle.GetColorAndOpacityTint();
+	
 	for (int32 i=1; i<=NumLines; ++i)
 	{
 		const float Alpha = (i * SegV) / MaxV;
@@ -51,6 +53,8 @@ int32 PCSUnitHealthProgressBar::OnPaint(const FPaintArgs& Args, const FGeometry&
 		const bool bMajor = (TickStyle.MajorEvery > 0) && (i % TickStyle.MajorEvery == 0);
 		const float Th = bMajor ? TickStyle.MajorThickness : TickStyle.MinorThickness;
 		const FLinearColor LinearColor = bMajor ? TickStyle.MajorColor : TickStyle.MinorColor;
+
+		const FLinearColor DrawColor = LinearColor * ParentTint;
 		
 		X = FMath::RoundToFloat(X);
 		
@@ -58,7 +62,7 @@ int32 PCSUnitHealthProgressBar::OnPaint(const FPaintArgs& Args, const FGeometry&
 			OutDrawElements, AfterBar + 1,
 			BarGeo,
 			{ FVector2f(X, 0.f), FVector2f(X, (float)Inner.Y) },
-			ESlateDrawEffect::None, LinearColor,false, Th
+			ESlateDrawEffect::None, DrawColor,false, Th
 			);
 	}
 	

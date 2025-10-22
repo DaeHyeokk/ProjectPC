@@ -587,6 +587,8 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 
 		APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PCPlayerState) continue;
+		
+		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
 
 		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
 

@@ -140,10 +140,6 @@ public:
 #pragma endregion Shop
 
 #pragma region Combat
-
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GE")
-	TSubclassOf<UGameplayEffect> GE_PlayerGoldChange;
 	
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)
@@ -158,7 +154,7 @@ public:
 	UFUNCTION()
 	void PlayerLose();
 	UFUNCTION()
-	void PlayerResult(int32 Ranking);
+	void PlayerResult();
 
 	FOnWinningStreakUpdated OnWinningStreakUpdated;
 	

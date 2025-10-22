@@ -34,16 +34,16 @@ public:
 		FGameplayAttribute InManaAttr = FGameplayAttribute(),
 		FGameplayAttribute InMaxManaAttr = FGameplayAttribute());
 
-	// ASC 없이 수동 갱신하고 싶을 때
-	void SetInstant(APCBaseUnitCharacter* InUnit,
-		float CurrentHP, float MaxHP, float CurrentMP = 0.f, float MaxMP = 0.f);
-	void UpdateUI() const;
+	// ASC 없이 고정값으로 갱신
+	void InitConstantValue(float CurrentHP, float MaxHP, float CurrentMP = 0.f, float MaxMP = 0.f,
+		const TArray<FGameplayTag>& ItemTags = TArray<FGameplayTag>());
+	
 	void ClearDelegate();
-
+	void InitEquipItemImages();
+	
 	FORCEINLINE void SetOwnerUnit(APCBaseUnitCharacter* InUnit) { Unit = InUnit; }
-
+	
 protected:
-	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 
 private:
@@ -64,6 +64,7 @@ private:
 	
 	TWeakObjectPtr<APCBaseUnitCharacter> Unit;
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
+	
 	FGameplayAttribute HealthAttr;
 	FGameplayAttribute MaxHealthAttr;
 	FGameplayAttribute ManaAttr;
@@ -96,4 +97,5 @@ private:
 	void UpdateHealthBar() const;
 	void UpdateManaBar() const;
 	void UpdateEquipItemImages() const;
+	void UpdateEquipItemImages(const TArray<FGameplayTag>& ItemTags) const;
 };

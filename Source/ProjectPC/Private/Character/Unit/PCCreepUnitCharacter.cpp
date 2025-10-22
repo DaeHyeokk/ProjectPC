@@ -9,6 +9,7 @@
 #include "Blueprint/UserWidget.h"
 #include "DataAsset/Unit/PCDataAsset_CreepUnitData.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "GameFramework/WorldSubsystem/PCItemSpawnSubsystem.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 
 
@@ -74,9 +75,9 @@ void APCCreepUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 void APCCreepUnitCharacter::Die()
 {
-	if (OnCombatBoard)
+	if (auto ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
 	{
-		
+		ItemSpawnSubsystem->SpawnItemCapsule(GetActorTransform(), GetTeamIndex() - 50);
 	}
 	
 	Super::Die();

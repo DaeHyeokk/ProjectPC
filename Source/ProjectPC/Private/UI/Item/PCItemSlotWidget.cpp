@@ -101,10 +101,21 @@ void UPCItemSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FP
 
 	ItemInfoWidget->AddToViewport(9999);
 	ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-	// ItemInfoWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
-	
-	float YOffset = -50.0f - (SlotIndex * 20.0f);
-	ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		int32 ViewportX, ViewportY;
+		PC->GetViewportSize(ViewportX, ViewportY);
+
+		FVector2D MousePos;
+		PC->GetMousePosition(MousePos.X, MousePos.Y);
+
+		bool bIsRightHalf = MousePos.X > ViewportX * 0.5f;
+		float XOffset = bIsRightHalf ? -370.0f : 70.0f;
+		float YOffset = -50.0f - (SlotIndex * 20.0f);
+
+		ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, YOffset));
+	}
 }
 
 FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -114,33 +125,45 @@ FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const 
 		return FReply::Unhandled();
 	}
 
-	const float WheelDelta = InMouseEvent.GetWheelDelta();
-	if (WheelDelta > 0.f)
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		if (ItemRecipeWidget->IsInViewport())
+		int32 ViewportX, ViewportY;
+		PC->GetViewportSize(ViewportX, ViewportY);
+
+		FVector2D MousePos;
+		PC->GetMousePosition(MousePos.X, MousePos.Y);
+
+		bool bIsRightHalf = MousePos.X > ViewportX * 0.5f;
+		float XOffset = bIsRightHalf ? -370.0f : 70.0f;
+		float YOffset = -50.0f - (SlotIndex * 25.0f);
+
+		const float WheelDelta = InMouseEvent.GetWheelDelta();
+
+		if (WheelDelta > 0.f)
 		{
-			ItemRecipeWidget->RemoveFromParent();
+			if (ItemRecipeWidget->IsInViewport())
+			{
+				ItemRecipeWidget->RemoveFromParent();
 
-			ItemInfoWidget->AddToViewport(9999);
-			ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-			// ItemInfoWidget->SetDesiredSizeInViewport(FVector2D(300.0f, 370.0f));
+				ItemInfoWidget->AddToViewport(9999);
+				ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 
-			float YOffset = -50.0f - (SlotIndex * 20.0f);
-			ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+				ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, YOffset));
+			}
 		}
-	}
-	else
-	{
-		if (ItemInfoWidget->IsInViewport() && bIsBaseItem)
+		else
 		{
-			ItemInfoWidget->RemoveFromParent();
+			if (ItemInfoWidget->IsInViewport() && bIsBaseItem)
+			{
+				ItemInfoWidget->RemoveFromParent();
 
-			ItemRecipeWidget->AddToViewport(9999);
-			ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-			ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(400.0f, 520.0f));
+				ItemRecipeWidget->AddToViewport(9999);
+				ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+				ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(400.0f, 520.0f));
 
-			float YOffset = -50.0f - (SlotIndex * 30.0f);
-			ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(70.0f, YOffset));
+				float RecipeYOffset = -50.0f - (SlotIndex * 30.0f);
+				ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, RecipeYOffset));
+			}
 		}
 	}
 

@@ -22,6 +22,7 @@ void UPCPlayerMainWidget::InitAndBind(APCCombatGameState* PCCombatGameState)
 
 	if (!W_HeroStatus)
 		return;
+	W_HeroStatus->Init();
 	W_HeroStatus->SetVisibility(ESlateVisibility::Hidden);
 
 	if (!W_ShopWidget) return;
