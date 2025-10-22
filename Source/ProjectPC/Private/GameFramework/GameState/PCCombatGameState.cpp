@@ -717,7 +717,7 @@ UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayer
 	return PCPlayerState->GetAbilitySystemComponent();
 }
 
-void APCCombatGameState::BroadCastLeaderboardMap() const
+void APCCombatGameState::BroadCastLeaderboardMap()
 {
 	FLeaderBoardMap Map;
 	Map.Reserve(Leaderboard.Num());
@@ -728,6 +728,7 @@ void APCCombatGameState::BroadCastLeaderboardMap() const
 			Map.Add(Row.LocalUserId, Row);
 		}
 	}
+	CachedLeaderboardMap = Map;
 	OnLeaderboardMapUpdated.Broadcast(Map);
 }
 

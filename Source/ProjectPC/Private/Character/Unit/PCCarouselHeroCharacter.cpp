@@ -82,6 +82,7 @@ void APCCarouselHeroCharacter::GetLifetimeReplicatedProps(TArray<class FLifetime
 	DOREPLIFETIME(APCCarouselHeroCharacter, ItemTag);
 	DOREPLIFETIME(APCCarouselHeroCharacter, bPicked);
 	DOREPLIFETIME(APCCarouselHeroCharacter, PickedBySeat);
+	DOREPLIFETIME(APCCarouselHeroCharacter, Carrier);
 }
 
 void APCCarouselHeroCharacter::NotifyActorBeginOverlap(AActor* OtherActor)

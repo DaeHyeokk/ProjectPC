@@ -32,7 +32,7 @@ public:
 	FName StartLobbyMapName;
 
 	UFUNCTION(BlueprintCallable, Category = "Net")
-	void RequestConnectToServer(const FString& Address);
+	void RequestConnectToServer();
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void RefreshUIForMap();

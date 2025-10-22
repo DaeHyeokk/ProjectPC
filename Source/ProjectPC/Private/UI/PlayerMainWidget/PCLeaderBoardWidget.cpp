@@ -10,18 +10,54 @@
 
 void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
-	if (!NewGameState || !PlayerBox) return;
+	// if (!NewGameState || !PlayerBox) return;
+	//
+	// NewGameState->OnLeaderboardMapUpdated.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
+	//
+	// for (const auto& PlayerRow : NewGameState->Leaderboard)
+	// {
+	// 	auto PlayerRowWidget = CreateWidget<UPCPlayerRowWidget>(GetWorld(), PlayerRowWidgetClass);
+	// 	if (!PlayerRowWidget) continue;
+	//
+	// 	PlayerRowWidget->SetupPlayerInfo(PlayerRow.LocalUserId, PlayerRow.Hp, PlayerRow.CharacterTag);
+	// 	PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
+	// 	PlayerBox->AddChild(PlayerRowWidget);
+	// }
 
+	if (!NewGameState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[LeaderBoardWidget] NewGameState is NULL"));
+		return;
+	}
+
+	if (!PlayerBox)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[LeaderBoardWidget] PlayerBox is NULL"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[LeaderBoardWidget] Binding OnLeaderboardMapUpdated delegate"));
 	NewGameState->OnLeaderboardMapUpdated.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
-	
+
+	UE_LOG(LogTemp, Log, TEXT("[LeaderBoardWidget] Leaderboard entries count = %d"), NewGameState->Leaderboard.Num());
+
 	for (const auto& PlayerRow : NewGameState->Leaderboard)
 	{
 		auto PlayerRowWidget = CreateWidget<UPCPlayerRowWidget>(GetWorld(), PlayerRowWidgetClass);
-		if (!PlayerRowWidget) continue;
+		if (!PlayerRowWidget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[LeaderBoardWidget] Failed to create PlayerRowWidget for UserId=%s"),
+				*PlayerRow.LocalUserId);
+			continue;
+		}
 
 		PlayerRowWidget->SetupPlayerInfo(PlayerRow.LocalUserId, PlayerRow.Hp, PlayerRow.CharacterTag);
 		PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
 		PlayerBox->AddChild(PlayerRowWidget);
+
+		UE_LOG(LogTemp, Log, TEXT("[LeaderBoardWidget] Added row: UserId=%s, Hp=%f, Tag=%s"),
+			*PlayerRow.LocalUserId,	PlayerRow.Hp,
+			*PlayerRow.CharacterTag.ToString());
 	}
 }
 

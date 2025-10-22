@@ -61,7 +61,7 @@ public:
 	void Client_RequestIdentity();
 
 	UFUNCTION(Server, Reliable)
-	void ServerSubmitIdentity(const FString& InDisplayName);
+	void ServerSubmitIdentity(const FString& InDisplayName, const FGuid& InSessionID);
 	
 protected:
 	virtual void SetupInputComponent() override;
@@ -119,6 +119,7 @@ public:
 	FTimerHandle LoadShop;
 
 	void LoadShopWidget();
+	
 	void LoadMainWidget();
 
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
@@ -228,6 +229,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
+	
+	void TryInitHUDWithPlayerState();
+	
+	void OnRep_PlayerState() override;
 
 	UFUNCTION(BlueprintCallable)
 	void ShowWidget();

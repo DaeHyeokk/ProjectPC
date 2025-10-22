@@ -471,6 +471,11 @@ void APCCombatGameMode::Step_CreepSpawn()
 
 void APCCombatGameMode::Step_Carousel()
 {
+	APCCombatGameState* PCGameState = GetCombatGameState();
+	if (!PCGameState) return;
+
+	PCGameState->SetGameStateTag(GameStateTags::Game_State_Carousel);
+	
 	if (!CarouselRing) return;
 
 	BuildCarouselWavesByHP(CarouselWaves);
