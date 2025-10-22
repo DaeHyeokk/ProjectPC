@@ -22,9 +22,8 @@ public:
 	UPCUnitBaseAttackGameplayAbility();
 	
 protected:
-	// virtual void OnAvatarSet(
-	// 	const FGameplayAbilityActorInfo* ActorInfo,
-	// 	const FGameplayAbilitySpec& Spec) override;
+	virtual void OnAvatarSet(
+		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -41,16 +40,25 @@ protected:
 	const FGameplayTag AttackSucceedTag = UnitGameplayTags::Unit_Event_AttackSucceed;
 	
 protected:
-	void StartAttackSucceedWaitTask();
-	void StartProjectileSpawnSucceedWaitTask();
+	virtual void StartAttackSucceedWaitTask();
+	virtual void StartProjectileSpawnSucceedWaitTask();
 	
 	UFUNCTION()
 	virtual void AttackCommit();
 	
 	UFUNCTION()
-	void OnAttackSucceed(FGameplayEventData Payload);
+	virtual void OnAttackSucceed(FGameplayEventData Payload);
 
 	UFUNCTION()
-	void OnSpawnProjectileSucceed(FGameplayEventData Payload);
+	virtual void OnSpawnProjectileSucceed(FGameplayEventData Payload);
+
+	void SetAttackSucceedNotifyCount();
+	void SetSpawnProjectileSucceedNotifyCount();
+	
+	bool bUseMultiHit = false;
+	bool bCommittedOnce = false;
+	int32 NotifyCount = 0;
+	int32 ReceivedNotifyCount = 0;
+	
 };
 

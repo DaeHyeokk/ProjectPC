@@ -22,19 +22,26 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Raven, "Unit.Type.Hero.Raven")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_AlienInvader, "Unit.Type.Hero.AlienInvader")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Greystone, "Unit.Type.Hero.Greystone")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Yin, "Unit.Type.Hero.Yin")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Phase, "Unit.Type.Hero.Phase")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Kitty, "Unit.Type.Hero.Kitty")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Gideon, "Unit.Type.Hero.Gideon")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Tough, "Unit.Type.Hero.Tough")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Mephisto, "Unit.Type.Hero.Mephisto")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Undertow, "Unit.Type.Hero.Undertow")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Wukong, "Unit.Type.Hero.Wukong")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_FutureKing, "Unit.Type.Hero.FutureKing")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Infernal, "Unit.Type.Hero.Infernal")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Terra, "Unit.Type.Hero.Terra")
 	
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Shinbi, "Unit.Type.Hero.Shinbi")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
+	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_MinionLv1, "Unit.Type.Creep.MinionLv1")
 
 	// ==== Unit Damage Types

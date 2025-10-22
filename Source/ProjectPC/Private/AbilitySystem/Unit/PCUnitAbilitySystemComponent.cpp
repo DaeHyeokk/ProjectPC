@@ -41,6 +41,11 @@ void UPCUnitAbilitySystemComponent::ApplyInitBaseStat(const APCBaseUnitCharacter
 
 	for (const auto& KV : AttrMap)
 	{
+		if (KV.Key == UPCHeroUnitAttributeSet::GetCombatStartManaAttribute())
+		{
+			SetNumericAttributeBase(KV.Key, KV.Value);
+			SetNumericAttributeBase(UPCHeroUnitAttributeSet::GetCurrentManaAttribute(), KV.Value);
+		}
 		SetNumericAttributeBase(KV.Key, KV.Value);
 	}
 

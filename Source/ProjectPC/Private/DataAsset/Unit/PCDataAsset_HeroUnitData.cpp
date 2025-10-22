@@ -11,12 +11,13 @@
 
 UPCDataAsset_HeroUnitData::UPCDataAsset_HeroUnitData()
 {
+	HeroRecommendedPosition = EUnitRecommendedPosition::FrontLine;
+	
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetMaxHealthAttribute());
 	HeroScalableStatConfigs.Emplace(UPCUnitAttributeSet::GetBaseDamageAttribute());
 	HeroScalableStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetUltimateDamageAttribute());
 	
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetUltimateCostAttribute());
-	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCurrentManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetMaxManaAttribute());
 	HeroStaticStatConfigs.Emplace(UPCHeroUnitAttributeSet::GetCombatStartManaAttribute());
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseGameplayTags.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbilityTargetTypes.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
@@ -34,6 +35,9 @@ public:
 		USkeletalMeshComponent* MeshComp,
 		UAnimSequenceBase* Animation,
 		const FAnimNotifyEventReference& EventReference) override;
+
+	UPROPERTY(VisibleAnywhere, Category="Event")
+	FGameplayTag EventTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
 	
 	UPROPERTY(EditAnywhere, Category="Socket")
 	FName SocketName = TEXT("Muzzle");

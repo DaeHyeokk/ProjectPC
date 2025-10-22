@@ -52,7 +52,7 @@ void UPCAnimNotify_SpawnProjectile::Notify(USkeletalMeshComponent* MeshComp, UAn
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Owner))
 	{
 		FGameplayEventData Payload;
-		Payload.EventTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
+		Payload.EventTag = EventTag;
 		Payload.Instigator = Owner;
 
 		FGameplayAbilityTargetDataHandle Handle;
