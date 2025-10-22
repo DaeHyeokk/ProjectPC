@@ -98,6 +98,9 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Started, this, &APCCombatPlayerController::OnMouse_Pressed);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnMouse_Released);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnMouse_Released);
+
+		// Result Menu Toggle
+		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
 	}
 }
 
@@ -1465,4 +1468,18 @@ void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32
 
 	GameResultWidget->SetRanking(Ranking);
 	GameResultWidget->OpenMenu();
+}
+
+void APCCombatPlayerController::OnResultMenuToggled()
+{
+	if (!GameResultWidget) return;
+
+	if (GameResultWidget->IsInViewport())
+	{
+		GameResultWidget->CloseMenu();
+	}
+	else
+	{
+		GameResultWidget->OpenMenu();
+	}
 }

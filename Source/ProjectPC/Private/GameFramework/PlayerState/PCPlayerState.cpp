@@ -125,6 +125,7 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 				{
 					PlayerCharacter->PlayerDie();
 					ReturnAllUnitToShop();
+					PlayerResult();
 				}
 				else
 				{
@@ -239,17 +240,6 @@ void APCPlayerState::PlayerWin()
 	// 승리 보상 1원 지급
 
 	AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
-	// if (PlayerAbilitySystemComponent && GE_PlayerGoldChange)
-	// {
-	// 	FGameplayEffectContextHandle EffectContext = PlayerAbilitySystemComponent->MakeEffectContext();
-	// 	FGameplayEffectSpecHandle GoldSpecHandle = PlayerAbilitySystemComponent->MakeOutgoingSpec(GE_PlayerGoldChange, 1.f, EffectContext);
-	//
-	// 	if (GoldSpecHandle.IsValid())
-	// 	{
-	// 		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
-	// 		PlayerAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
-	// 	}
-	// }
 }
 
 void APCPlayerState::PlayerLose()
@@ -266,14 +256,17 @@ void APCPlayerState::PlayerLose()
 	}
 }
 
-void APCPlayerState::PlayerResult(int32 Ranking)
+void APCPlayerState::PlayerResult()
 {
 	if (!HasAuthority()) return;
+
+	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
+	if (!GS) return;
 	
 	auto PC = Cast<APCCombatPlayerController>(GetPlayerController());
 	if (!PC) return;
 	
-	PC->Client_LoadGameResultWidget(Ranking);
+	PC->Client_LoadGameResultWidget(GS->AssignFinalRankOnDeathById(LocalUserId));
 }
 
 int32 APCPlayerState::GetPlayerWinningStreak() const

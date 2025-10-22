@@ -145,9 +145,6 @@ void APCPlayerCharacter::PlayerDie()
 		bIsDead = true;
 
 		PC->Client_HideWidget();
-		// PC->Client_LoadGameResultWidget(Ranking);
-		
-		// 죽은 플레이어가 가지고 있던 유닛 상점 반환
 	}
 	
 	DisableInput(PC);

@@ -15,7 +15,7 @@ bool UPCGameResultWidget::Initialize()
 	if (!Btn_Exit) return false;
 	Btn_Exit->OnClicked.AddDynamic(this, &UPCGameResultWidget::OnClickedExit);
 	if (!Btn_Spectate) return false;
-	Btn_Spectate->OnClicked.AddDynamic(this, &UPCGameResultWidget::OnClickedSpectate);
+	Btn_Spectate->OnClicked.AddDynamic(this, &UPCGameResultWidget::CloseMenu);
 
 	return true;
 }
@@ -30,7 +30,12 @@ void UPCGameResultWidget::SetRanking(int32 NewRanking)
 
 void UPCGameResultWidget::OpenMenu()
 {
-	AddToViewport(200);
+	AddToViewport(99999);
+}
+
+void UPCGameResultWidget::CloseMenu()
+{
+	RemoveFromParent();
 }
 
 void UPCGameResultWidget::OnClickedExit()
@@ -42,9 +47,4 @@ void UPCGameResultWidget::OnClickedExit()
 			UKismetSystemLibrary::QuitGame(World, PC, EQuitPreference::Quit, true);
 		}
 	}
-}
-
-void UPCGameResultWidget::OnClickedSpectate()
-{
-	RemoveFromParent();
 }

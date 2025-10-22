@@ -34,10 +34,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
+	UFUNCTION(BlueprintCallable)
+	void CloseMenu();
 	
 private:
 	UFUNCTION()
 	void OnClickedExit();
-	UFUNCTION()
-	void OnClickedSpectate();
 };
