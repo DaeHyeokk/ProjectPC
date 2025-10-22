@@ -25,13 +25,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 UnitCount = 22;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Unit.Type.Hero"))
 	FGameplayTag UnitTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Synergy.Species"))
 	FGameplayTag UnitSpeciesTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Synergy.job"))
 	FGameplayTag UnitJobTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
