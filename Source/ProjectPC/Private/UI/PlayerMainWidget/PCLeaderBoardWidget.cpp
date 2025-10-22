@@ -27,30 +27,23 @@ void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 
 void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap)
 {
-	TArray<TPair<int32, UPCPlayerRowWidget*>> RankArray;
+	TArray<UPCPlayerRowWidget*> RankArray;
 	
 	for (const auto& PlayerRow : NewMap)
 	{
 		if (auto PlayerRowWidget = PlayerMap.FindRef(PlayerRow.Key))
 		{
 			PlayerRowWidget->UpdatePlayerHP(PlayerRow.Value.Hp);
-			RankArray.Add({PlayerRow.Value.LiveRank, PlayerRowWidget});
+			RankArray.Add(PlayerRowWidget);
 		}
 	}
-
-	RankArray.Sort([](const auto& A, const auto& B)
-	{
-		return A.Key < B.Key;
-	});
-
+	
 	PlayerBox->ClearChildren();
-	for (const auto& RankPair : RankArray)
+	for (const auto& Rank : RankArray)
 	{
-		if (RankPair.Value)
+		if (Rank)
 		{
-			PlayerBox->AddChild(RankPair.Value);
+			PlayerBox->AddChild(Rank);
 		}
 	}
 }
-
-
