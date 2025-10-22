@@ -11,7 +11,6 @@ UPCHeroUnitAttributeSet::UPCHeroUnitAttributeSet()
 {
 	InitCritChance(25.f);
 	InitCritMultiplier(30.f);
-	InitManaRegen(20.f);
 }
 
 void UPCHeroUnitAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

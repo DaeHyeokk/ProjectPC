@@ -44,10 +44,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Transform")
 	FRotator RotationOffset = FRotator::ZeroRotator;
 
-	UPROPERTY(EditAnywhere, Category="Tags")
+	UPROPERTY(EditAnywhere, Category="Tags", meta=(Categories="Unit.Type"))
 	FGameplayTag UnitTypeTag;
 
-	UPROPERTY(EditAnywhere, Category="Tags")
+	UPROPERTY(EditAnywhere, Category="Tags", meta=(Categories="Unit.Ability.Attack"))
 	FGameplayTag ProjectileTypeTag;
 
 	UPROPERTY(EditAnywhere, Category="Blackboard")

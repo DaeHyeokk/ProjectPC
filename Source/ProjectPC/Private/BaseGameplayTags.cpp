@@ -26,6 +26,9 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Yin, "Unit.Type.Hero.Yin")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Phase, "Unit.Type.Hero.Phase")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Kitty, "Unit.Type.Hero.Kitty")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Gideon, "Unit.Type.Hero.Gideon")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Tough, "Unit.Type.Hero.Tough")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Undertow, "Unit.Type.Hero.Undertow")
 	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")

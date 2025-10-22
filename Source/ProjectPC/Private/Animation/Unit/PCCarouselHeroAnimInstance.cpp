@@ -16,6 +16,6 @@ void UPCCarouselHeroAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* 
 {
 	if (UBlendSpace1D* MovementBS = AnimSet->LocomotionSet.MovementBS.LoadSynchronous())
 	{
-		MoveForwardSequence = MovementBS->GetBlendSample(1).Animation;
+		MoveForwardSequence = MovementBS->GetBlendSample(2).Animation;
 	}
 }
