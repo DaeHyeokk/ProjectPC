@@ -110,6 +110,7 @@ void APCCombatPlayerController::BeginPlay()
 	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
+		PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
 	}
 	else
 	{
@@ -132,7 +133,7 @@ void APCCombatPlayerController::BeginPlay()
 void APCCombatPlayerController::BeginPlayingState()
 {
 	Super::BeginPlayingState();
-
+	
 	// 1) 입력 모드 게임용으로 재설정
 	ApplyGameInputMode();
 	
@@ -824,6 +825,8 @@ void APCCombatPlayerController::ShowWidget()
 		return;
 
 	PlayerMainWidget->SetShopWidgetVisible(true);
+
+	if (!ShopWidget) return;
 	
 	if (ShopWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
@@ -894,6 +897,38 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 }
 
 
+void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
+{
+	if (!IsLocalController())
+		return;
+
+	if (!GameStateTag.MatchesTag(GameStateTags::Game_State_Combat))
+		return;
+
+	APCPlayerState* PC = GetPlayerState<APCPlayerState>();
+	if (!PC)
+		return;
+
+	if (APCPlayerBoard* PlayerBoard = PC->GetPlayerBoard())
+	{
+		PlayerBoard->OnHISM(false,false);
+	}
+
+	if (ShopWidget)
+	{			
+		ShopWidget->ShowPlayerShopBox();	
+	}
+		
+	if (DragComponent)
+	{
+		DragComponent->HideGhost();
+	}
+
+	if (!CachedPreviewUnit.IsValid()) return;
+	
+	CachedPreviewUnit->ActionDrag(false);
+	CachedPreviewUnit = nullptr;
+}
 
 void APCCombatPlayerController::OnMouse_Pressed()
 {

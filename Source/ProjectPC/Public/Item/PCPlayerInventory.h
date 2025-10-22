@@ -43,8 +43,13 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void DropItemAtInventory(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
-	UFUNCTION(Server, Reliable)
+
+	
 	void DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc);
+
+	// Test
+	UFUNCTION(Server,Reliable)
+	void DropItemAtOutsideInventoryWithActor(int32 DraggedInventoryIndex, AActor* HitActor, const FVector& DroppedWorldLoc);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

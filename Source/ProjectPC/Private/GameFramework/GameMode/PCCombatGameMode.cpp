@@ -10,8 +10,6 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "EntitySystem/MovieSceneEntitySystemRunner.h"
-#include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -20,7 +18,6 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
-#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -591,6 +588,8 @@ void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 		APCPlayerState* PCPlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PCPlayerState) continue;
 
+		PCPlayerState->ChangeState(PlayerGameplayTags::Player_State_Carousel);
+
 		const int32 Seat = FMath::Max(0, PCPlayerState->SeatIndex);
 		const FTransform Transform = CarouselRing->GetPlayerSlotTransformWorld(Seat);
 		
@@ -637,6 +636,8 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 
 		APCPlayerState* PlayerState = PlayerController->GetPlayerState<APCPlayerState>();
 		if (!PlayerState) continue;
+
+		PlayerState->ChangeState(PlayerGameplayTags::Player_State_Normal);
 
 		const int32 BoardIdx = ResolveBoardIndex(PlayerState);
 		APCCombatBoard* Board = CombatBoard.IsValidIndex(BoardIdx) ? CombatBoard[BoardIdx] : nullptr;
