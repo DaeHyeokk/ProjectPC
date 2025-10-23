@@ -4,14 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "GameFramework/Save/SaveGame_LocalPlayerProfile.h"
 #include "ProfileSubsystem.generated.h"
 
 /**
  * 
  */
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnProfileStringChanged, const FString&, NewValue);
 UCLASS()
 class PROJECTPC_API UProfileSubsystem : public UGameInstanceSubsystem
 {

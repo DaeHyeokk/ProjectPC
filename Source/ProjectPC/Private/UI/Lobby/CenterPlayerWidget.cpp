@@ -68,7 +68,6 @@ void UCenterPlayerWidget::SetPlayer(APCPlayerState* PS)
     PlayerPS = PS;
     if (!PS) return;
     
-    
     SetDisplayName(FText::FromString(PS->LocalUserId));
     SetLeader(PS->bIsLeader);
 

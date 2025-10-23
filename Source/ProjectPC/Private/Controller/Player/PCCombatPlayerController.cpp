@@ -16,6 +16,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Character/Player/PCPlayerCharacter.h"
 #include "Component/PCSynergyComponent.h"
 #include "DataAsset/Player/PCDataAsset_PlayerInput.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
@@ -59,8 +60,14 @@ void APCCombatPlayerController::Client_RequestIdentity_Implementation()
 	{
 		const FString Name = Profile->GetUserID();
 		const FGuid Uuid = Profile->GetSessionID();
+
+		UE_LOG(LogTemp, Warning, TEXT("[Profile] ProfileName : %s " ), *Name)
 		if (!Name.IsEmpty())
 		{
+			if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+			{
+				PCPlayerState->LocalUserId = Name;
+			}
 			ServerSubmitIdentity(Name, Uuid);
 		}
 	}
@@ -71,6 +78,7 @@ void APCCombatPlayerController::ServerSubmitIdentity_Implementation(const FStrin
 	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
 	{
 		PCPlayerState->SetDisplayName_Server(InDisplayName);
+		UE_LOG(LogTemp, Warning, TEXT("[Profile] ProfileName : %s " ), *InDisplayName)
 	}
 }
 
@@ -113,7 +121,7 @@ void APCCombatPlayerController::BeginPlay()
 
 	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
-		//PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
+		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
 		PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
 	}
 	else
@@ -131,6 +139,8 @@ void APCCombatPlayerController::BeginPlay()
 	// 마우스 호버 풀링함수
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
+
+	LoadMainWidget();
 	
 }
 
@@ -160,6 +170,12 @@ void APCCombatPlayerController::BeginPlayingState()
 			/*From*/1.f, /*To*/0.f, /*Duration*/0.001f,
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
+}
+
+
+void APCCombatPlayerController::AcknowledgePossession(APawn* P)
+{
+	Super::AcknowledgePossession(P);
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -229,8 +245,8 @@ void APCCombatPlayerController::OnSetDestinationReleased()
 {
 	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
 	{
-		StopMovement();
-		Server_StopMovement();
+		// StopMovement();
+		// Server_StopMovement();
 		Server_MovetoLocation(CachedDestination);
 	}
 	
@@ -756,86 +772,146 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
 		PlayerMainWidget->AddToViewport();
-
-		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
-		{
-			PlayerMainWidget->InitAndBind(PCCombatGameState);
-		}
+		ShopWidget = PlayerMainWidget->GetShopWidget();
+		
 	}
 	else
 	{
 		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
 		if (!PlayerMainWidget->IsInViewport())
 			PlayerMainWidget->AddToViewport();
-		if (APCCombatGameState* PCCombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
-		{
-			PlayerMainWidget->InitAndBind(PCCombatGameState);
-			ShopWidget = PlayerMainWidget->GetShopWidget();
-		}
+		ShopWidget = PlayerMainWidget->GetShopWidget();
 	}
 }
+
+// void APCCombatPlayerController::TryInitHUDWithPlayerState_Implementation()
+// {
+// 	if (PlayerMainWidget)
+// 	{
+// 		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+// 		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
+//
+// 		if (!PCPlayerState)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerState is NULL"));
+// 			return;
+// 		}
+// 		
+// 		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+// 		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
+// 		UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
+// 		UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
+//
+// 		if (!SynergyComp)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyComponent is NULL (PlayerState=%s)"), *PCPlayerState->GetName());
+// 			return;
+// 		}
+// 	
+// 		if (!ShopWidgetRef)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
+// 			return;
+// 		}
+// 		ShopWidgetRef->BindToPlayerState(PCPlayerState);
+// 		ShopWidgetRef->InitWithPC(this);
+// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
+//
+// 		if (!InventoryWidget)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
+// 			return;
+// 		}
+// 		InventoryWidget->BindToPlayerState(PCPlayerState);
+// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
+//
+// 		if (!SynergyWidget)
+// 		{
+// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyWidget is NULL"));
+// 			return;
+// 		}
+// 		SynergyWidget->SynergyComponentBinding(SynergyComp);
+// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
+// 	}
+// 	else
+// 	{
+// 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
+// 	}
+// }
 
 
 void APCCombatPlayerController::TryInitHUDWithPlayerState()
 {
-	if (PlayerMainWidget)
-	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
-
-		if (!PCPlayerState)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerState is NULL"));
-			return;
-		}
-		
-		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
-		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
-		UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
-		UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
-
-		if (!SynergyComp)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyComponent is NULL (PlayerState=%s)"), *PCPlayerState->GetName());
-			return;
-		}
-	
-		if (!ShopWidgetRef)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
-			return;
-		}
-		ShopWidgetRef->BindToPlayerState(PCPlayerState);
-		ShopWidgetRef->InitWithPC(this);
-		UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
-
-		if (!InventoryWidget)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
-			return;
-		}
-		InventoryWidget->BindToPlayerState(PCPlayerState);
-		UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
-
-		if (!SynergyWidget)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyWidget is NULL"));
-			return;
-		}
-		SynergyWidget->SynergyComponentBinding(SynergyComp);
-		UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
-	}
-	else
+	if (!IsLocalController() && PlayerMainWidget) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
+		return;
+	}
+	
+	PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
+
+	if (!PCPlayerState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerState is NULL"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[PlayerID] PlayerID is %s"), *PCPlayerState->LocalUserId)
+		
+	UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+	UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
+	UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
+	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
+
+	if (!SynergyComp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyComponent is NULL (PlayerState=%s)"), *PCPlayerState->GetName());
+		return;
+	}
+	
+	if (!ShopWidgetRef)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
+		return;
+	}
+	ShopWidgetRef->BindToPlayerState(PCPlayerState);
+	ShopWidgetRef->InitWithPC(this);
+	UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
+
+	if (!InventoryWidget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
+		return;
+	}
+	InventoryWidget->BindToPlayerState(PCPlayerState);
+	UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
+
+	if (!SynergyWidget)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyWidget is NULL"));
+		return;
+	}
+	SynergyWidget->SynergyComponentBinding(SynergyComp);
+	UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
+
+}
+
+void APCCombatPlayerController::TryInitWidgetWithGameState()
+{
+	if (!IsLocalController() && PlayerMainWidget) return;
+
+	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		PlayerMainWidget->InitAndBind(CombatGameState);
 	}
 }
 
 void APCCombatPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	LoadMainWidget();
 	TryInitHUDWithPlayerState();
+	Client_RequestIdentity();
 }
 
 void APCCombatPlayerController::ShowWidget()

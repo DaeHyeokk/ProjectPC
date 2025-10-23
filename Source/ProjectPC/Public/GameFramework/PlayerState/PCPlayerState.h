@@ -22,6 +22,9 @@ class UGameplayEffect;
 /**
  * 
  */
+
+
+
 UCLASS()
 class PROJECTPC_API APCPlayerState : public APlayerState, public IAbilitySystemInterface
 {
@@ -52,7 +55,7 @@ protected:
 	
 public:
 	// 로그인 ID (클라가 제출 → 서버가 확정/복제)
-	UPROPERTY(ReplicatedUsing=OnRep_LocalUserId, BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	FString LocalUserId;
 
 	UPROPERTY(ReplicatedUsing=OnRep_bIsLeader, BlueprintReadOnly)
@@ -73,12 +76,11 @@ public:
 	void SetDisplayName_Server(const FString& InName);
 	
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
+		
 	UFUNCTION()
-	void OnRep_LocalUserId() {}
+	void OnRep_bIsLeader() {}
 	UFUNCTION()
-	void OnRep_bIsLeader()   {}
-	UFUNCTION()
-	void OnRep_bIsReady()    {}
+	void OnRep_bIsReady() {}
 	UFUNCTION()
 	void OnRep_SeatIndex();
 

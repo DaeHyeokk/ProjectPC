@@ -17,20 +17,23 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{
 		PS->bIdentified = true;
+		PS->LocalUserId = DisplayName;
 		// (선택) 중복 닉 검사
 		bool bTaken = false;
 		if (const AGameStateBase* GS = GetWorld()->GetGameState())
 		{
 			for (APlayerState* Other : GS->PlayerArray)
 			{
-				if (Other && Other != PS &&
-					Other->GetPlayerName().Equals(DisplayName, ESearchCase::IgnoreCase))
+				if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(Other))
 				{
-					bTaken = true; break;
+					if (PCPlayerState && PCPlayerState != PS && PCPlayerState->LocalUserId.Equals(DisplayName, ESearchCase::IgnoreCase))
+					{
+						bTaken = true; break;
+					}
 				}
 			}
 		}
-		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); return; }
+		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); }
 	}
 }
 

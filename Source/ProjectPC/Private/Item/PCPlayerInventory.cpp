@@ -8,6 +8,8 @@
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"
+#include "GameFramework/GameMode/PCCombatGameMode.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
@@ -147,7 +149,6 @@ void UPCPlayerInventory::DropItemAtOutsideInventory(int32 DraggedInventoryIndex,
 				
 				if (PB->WorldAnyTile(DroppedWorldLoc, false, bIsOnField, Y, X, BenchIndex, Snap))
 				{
-					
 					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
 					{
 						// 여기에 유닛 아이템 장착 추가
@@ -191,8 +192,17 @@ void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int3
 		}
 	}
 
-	// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)
-	//DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
+	bool bIsBattle = false;
+
+	if (APCCombatGameState* PCCombatState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		bIsBattle = PCCombatState->bIsbattle();
+		if (!bIsBattle)
+		{
+			// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)
+			DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
+		}
+	}
 }
 
 void UPCPlayerInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

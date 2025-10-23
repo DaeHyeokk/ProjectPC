@@ -67,6 +67,7 @@ protected:
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
 	virtual void BeginPlayingState() override;
+	virtual void AcknowledgePossession(APawn* P) override;
 	
 private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
@@ -229,10 +230,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
-	
+
 	void TryInitHUDWithPlayerState();
+	void TryInitWidgetWithGameState();
 	
-	void OnRep_PlayerState() override;
+	virtual void OnRep_PlayerState() override;
 
 	UFUNCTION(BlueprintCallable)
 	void ShowWidget();
