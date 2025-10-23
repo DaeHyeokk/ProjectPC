@@ -73,6 +73,26 @@ void APCCombatPlayerController::Client_RequestIdentity_Implementation()
 	}
 }
 
+// void APCCombatPlayerController::Client_RequestIdentity()
+// {
+// 	// 플레이어 아이디 셋팅
+// 	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
+// 	{
+// 		const FString Name = Profile->GetUserID();
+// 		const FGuid Uuid = Profile->GetSessionID();
+//
+// 		UE_LOG(LogTemp, Warning, TEXT("[Profile] ProfileName : %s " ), *Name)
+// 		if (!Name.IsEmpty())
+// 		{
+// 			if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+// 			{
+// 				PCPlayerState->LocalUserId = Name;
+// 			}
+// 			ServerSubmitIdentity(Name, Uuid);
+// 		}
+// 	}
+// }
+
 void APCCombatPlayerController::ServerSubmitIdentity_Implementation(const FString& InDisplayName, const FGuid& InSessionID)
 {
 	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
@@ -911,7 +931,9 @@ void APCCombatPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 	TryInitHUDWithPlayerState();
-	Client_RequestIdentity();
+	//Client_RequestIdentity();
+
+	
 }
 
 void APCCombatPlayerController::ShowWidget()
