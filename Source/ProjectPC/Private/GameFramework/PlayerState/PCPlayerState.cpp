@@ -49,7 +49,7 @@ void APCPlayerState::UnitSpawn(FGameplayTag UnitTag)
 	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
 	if (!PlayerBoard || !SpawnSubsystem) return;
 
-	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1);
+	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1, this);
 	int32 LowBenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
 	PlayerBoard->PlaceUnitOnBench(LowBenchIndex,Unit);
 }

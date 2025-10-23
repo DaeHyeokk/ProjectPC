@@ -3,8 +3,6 @@
 
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
 
-#include "Kismet/GameplayStatics.h"
-
 
 void UProfileSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -26,4 +24,3 @@ void UProfileSubsystem::SetUserID(const FString& UserSummitID)
 	
 	CachedUserID = NewName;
 }
-

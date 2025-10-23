@@ -29,7 +29,7 @@ FActiveGameplayEffectHandle UPCEffectSpec_ManaRegen::ApplyEffectImpl(UAbilitySys
 	const float ManaRegenValue = SourceASC->GetNumericAttribute(ManaRegenAttr);
 	if (ManaRegenValue <= 0.f)
 		return OutHandle;
-
+	
 	const TSubclassOf<UGameplayEffect> GEClass = ResolveGEClass(SourceASC->GetWorld());
 	if (!GEClass)
 		return OutHandle;

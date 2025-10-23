@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Animation/BlendSpace1D.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "PCCarouselHeroAnimInstance.generated.h"
 
@@ -20,9 +19,21 @@ class PROJECTPC_API UPCCarouselHeroAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+public:
+	UPROPERTY(BlueprintReadOnly, Category="Picked")
+	bool bIsPicked = false;
+	
 private:
+	TWeakObjectPtr<APCCarouselHeroCharacter> CachedCarouselHero;
+	
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> MoveForwardSequence;
+
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> IdleSequence;
 	
 	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
 	

@@ -147,6 +147,7 @@ void UPCPlayerInventory::DropItemAtOutsideInventory(int32 DraggedInventoryIndex,
 				
 				if (PB->WorldAnyTile(DroppedWorldLoc, false, bIsOnField, Y, X, BenchIndex, Snap))
 				{
+					
 					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
 					{
 						// 여기에 유닛 아이템 장착 추가
@@ -191,7 +192,7 @@ void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int3
 	}
 
 	// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)
-	DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
+	//DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
 }
 
 void UPCPlayerInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

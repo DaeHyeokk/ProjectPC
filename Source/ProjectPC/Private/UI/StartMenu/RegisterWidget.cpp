@@ -31,6 +31,7 @@ void URegisterWidget::OnClicked_Submit()
 	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
 	{
 		Profile->SetUserID(Name);
+		
 		if (APlayerController* PC = GetOwningPlayer())
 		{
 			if (APCLobbyPlayerController* LobbyPC = Cast<APCLobbyPlayerController>(PC))

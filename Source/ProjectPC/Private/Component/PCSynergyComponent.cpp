@@ -95,8 +95,6 @@ void UPCSynergyComponent::InitializeSynergyHandlersFromDefinitionSet()
 
 void UPCSynergyComponent::OnRep_SynergyCountArray()
 {
-	DebugPrintSynergyCounts(true);
-	
 	SynergyData.Reset(SynergyCountArray.Entries.Num());
 
 	for (const FSynergyCountEntry& Entry : SynergyCountArray.Entries)
