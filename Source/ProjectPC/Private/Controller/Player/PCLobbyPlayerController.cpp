@@ -17,22 +17,23 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{
 		PS->bIdentified = true;
+		PS->LocalUserId = DisplayName;
 		// (선택) 중복 닉 검사
 		bool bTaken = false;
 		if (const AGameStateBase* GS = GetWorld()->GetGameState())
 		{
 			for (APlayerState* Other : GS->PlayerArray)
 			{
-				if (Other && Other != PS &&
-					Other->GetPlayerName().Equals(DisplayName, ESearchCase::IgnoreCase))
+				if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(Other))
 				{
-					bTaken = true; break;
+					if (PCPlayerState && PCPlayerState != PS && PCPlayerState->LocalUserId.Equals(DisplayName, ESearchCase::IgnoreCase))
+					{
+						bTaken = true; break;
+					}
 				}
 			}
 		}
-		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); return; }
-
-		PS->SetDisplayName_Server(DisplayName);
+		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); }
 	}
 }
 
@@ -101,7 +102,7 @@ void APCLobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 }
 
-void APCLobbyPlayerController::RequestConnectToServer(const FString& Address)
+void APCLobbyPlayerController::RequestConnectToServer()
 {
 	HideStartWidget();
 	bPendingLobbyUI = true;

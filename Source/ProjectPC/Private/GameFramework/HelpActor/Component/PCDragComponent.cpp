@@ -116,6 +116,7 @@ void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& Final
 {
     if (DragId != ActiveDragId)
         return;
+    
     if (bSuccess)
     {
         EnsureGhostAt(FinalSnap, nullptr);

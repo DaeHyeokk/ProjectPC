@@ -9,7 +9,8 @@
 
 UPCHeroUnitAttributeSet::UPCHeroUnitAttributeSet()
 {
-	InitCritChance(25.f);
+	//InitCritChance(25.f);
+	InitCritChance(100.f);
 	InitCritMultiplier(30.f);
 }
 

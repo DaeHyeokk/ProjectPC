@@ -7,6 +7,7 @@
 namespace GameStateTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_NonCombat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation)
@@ -23,6 +24,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Phase)
@@ -30,7 +32,6 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gideon)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Mephisto)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Undertow)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Wukong)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal)

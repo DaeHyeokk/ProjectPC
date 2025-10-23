@@ -52,4 +52,8 @@ public:
 private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerHPChanged(const FOnAttributeChangeData& Data);
+
+	FTimerHandle ThCheckUserId;
+
+	void CheckAndUpdateUserId();
 };

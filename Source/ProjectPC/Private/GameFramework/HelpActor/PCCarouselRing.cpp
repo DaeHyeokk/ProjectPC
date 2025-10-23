@@ -112,29 +112,68 @@ void APCCarouselRing::Server_FinishCarousel_Implementation()
 {
 	if (!HasAuthority()) return;
 
-	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
-	{
-		if (auto* Shop = GS->GetShopManager())
-		{
-			for (auto& WeakUnit : SpawnedPickups)
-			{
-				APCCarouselHeroCharacter* Unit = WeakUnit.Get();
-				if (!Unit) continue;
+    if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+    {
+        if (auto* Shop = GS->GetShopManager())
+        {
+            // 1. 모든 플레이어 확인
+            for (APlayerState* PS : GS->PlayerArray)
+            {
+                if (APCPlayerState* PCPS = Cast<APCPlayerState>(PS))
+                {
+                    const int32 Seat = PCPS->SeatIndex;
 
-				if (!Unit->IsPicked())
-				{
-					Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
-					Unit->Destroy();
-					continue;
-				}
-				Unit->Destroy();
-			}
-		}
-	}
-	SpawnedPickups.Reset();
-	SeatToUnit.Reset();
+                    // 아직 픽 안 한 플레이어
+                    if (!SeatToUnit.Contains(Seat))
+                    {
+                        APCPlayerCharacter* PC = Cast<APCPlayerCharacter>(PCPS->GetPawn());
+                        if (!PC) continue;
 
-	Multicast_StartCarouselRotation(false, StartAngleDeg, AngularSpeedDegPerSec);
+                        // 2. 남은 유닛 중 가장 가까운 거 찾기
+                        APCCarouselHeroCharacter* BestUnit = nullptr;
+                        float BestDistSq = FLT_MAX;
+
+                        for (auto& WeakUnit : SpawnedPickups)
+                        {
+                            APCCarouselHeroCharacter* Unit = WeakUnit.Get();
+                            if (!Unit || Unit->IsPicked()) continue;
+
+                            float DistSq = FVector::DistSquared(Unit->GetActorLocation(), PC->GetActorLocation());
+                            if (DistSq < BestDistSq)
+                            {
+                                BestDistSq = DistSq;
+                                BestUnit = Unit;
+                            }
+                        }
+
+                        // 3. 강제 픽
+                        if (BestUnit)
+                        {
+                            CommitPick(PC, Seat, BestUnit);
+                        }
+                    }
+                }
+            }
+
+            // 4. 이제 남은 유닛은 다 Shop으로 돌려보냄
+            for (auto& WeakUnit : SpawnedPickups)
+            {
+                APCCarouselHeroCharacter* Unit = WeakUnit.Get();
+                if (!Unit) continue;
+
+                if (!Unit->IsPicked())
+                {
+                    Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
+                    Unit->Destroy();
+                }
+            }
+        }
+    }
+
+    SpawnedPickups.Reset();
+    SeatToUnit.Reset();
+
+    Multicast_StartCarouselRotation(false, StartAngleDeg, AngularSpeedDegPerSec);
 }
 
 int32 APCCarouselRing::GetSeatOfPlayer(const APCPlayerCharacter* Player) const

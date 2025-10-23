@@ -27,6 +27,17 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 		}
 	}
 
+	if (NewPlayerState->LocalUserId.IsEmpty())
+	{
+		GetWorld()->GetTimerManager().SetTimer(
+			ThCheckUserId,
+			this,
+			&UPCPlayerOverheadWidget::CheckAndUpdateUserId,
+			0.1f,
+			true // 반복
+		);
+	}
+
 	SetupPlayerInfo();
 }
 
@@ -34,7 +45,7 @@ void UPCPlayerOverheadWidget::SetupPlayerInfo()
 {
 	if (!PlayerName || !PlayerLevel || !HPBar) return; 
 	if (!CachedPlayerState) return;
-
+	
 	// 플레이어 이름 세팅
 	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
 	PlayerName->SetText(FText::FromString(NameText));
@@ -90,5 +101,21 @@ void UPCPlayerOverheadWidget::OnPlayerHPChanged(const FOnAttributeChangeData& Da
 	else
 	{
 		HPBar->SetPercent(1.f);
+	}
+}
+
+void UPCPlayerOverheadWidget::CheckAndUpdateUserId()
+{
+	if (!CachedPlayerState)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
+		return;
+	}
+
+	if (!CachedPlayerState->LocalUserId.IsEmpty())
+	{
+		// UserId 받았으니 갱신하고 타이머 정지
+		SetupPlayerInfo();
+		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
 	}
 }

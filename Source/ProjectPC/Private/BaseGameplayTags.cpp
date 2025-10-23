@@ -7,7 +7,8 @@ namespace GameStateTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Game_State, "Game.State")	
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_NonCombat, "Game.State.NonCombat")	
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat, "Game.State.Combat")	
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat, "Game.State.Combat")
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Carousel, "Game.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation, "Game.State.Combat.Preparation")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation_Creep, "Game.State.Combat.Preparation.Creep")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active, "Game.State.Combat.Active")
@@ -22,6 +23,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Raven, "Unit.Type.Hero.Raven")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Drongo, "Unit.Type.Hero.Drongo")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_AlienInvader, "Unit.Type.Hero.AlienInvader")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Greystone, "Unit.Type.Hero.Greystone")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Yin, "Unit.Type.Hero.Yin")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Phase, "Unit.Type.Hero.Phase")
@@ -29,7 +31,6 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Gideon, "Unit.Type.Hero.Gideon")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Mephisto, "Unit.Type.Hero.Mephisto")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Undertow, "Unit.Type.Hero.Undertow")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_AlienInvader, "Unit.Type.Hero.AlienInvader")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Wukong, "Unit.Type.Hero.Wukong")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_FutureKing, "Unit.Type.Hero.FutureKing")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Infernal, "Unit.Type.Hero.Infernal")
@@ -41,6 +42,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
+	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_MinionLv1, "Unit.Type.Creep.MinionLv1")
 
 	// ==== Unit Damage Types

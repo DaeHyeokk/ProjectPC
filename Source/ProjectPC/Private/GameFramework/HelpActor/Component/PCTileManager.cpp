@@ -12,7 +12,6 @@ UPCTileManager::UPCTileManager()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
-	
 }
 
 APCCombatBoard* UPCTileManager::GetCombatBoard() const

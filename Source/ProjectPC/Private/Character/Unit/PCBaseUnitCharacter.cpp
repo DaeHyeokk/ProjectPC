@@ -43,6 +43,9 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
 	
+	GetCapsuleComponent()->SetCapsuleSize(76.f, 100.f, true);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	
 	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
 	StatusBarComp->SetIsReplicated(true);
 	StatusBarComp->SetupAttachment(GetMesh());

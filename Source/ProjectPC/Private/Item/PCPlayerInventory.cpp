@@ -3,12 +3,13 @@
 
 #include "Item/PCPlayerInventory.h"
 
-#include "BlendSpaceAnalysis.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"
+#include "GameFramework/GameMode/PCCombatGameMode.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
@@ -90,20 +91,38 @@ void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, int32 TargetIn
 
 void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, const FVector2D& DroppedScreenLoc)
 {
-	if (Inventory.IsValidIndex(DraggedInventoryIndex))
-	{
-		FHitResult Hit;
-		
-		if (auto PS = Cast<APlayerState>(GetOwner()))
-		{
-			if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
-			{
-				PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
-			}
-		}
+	// if (Inventory.IsValidIndex(DraggedInventoryIndex))
+	// {
+	// 	FHitResult Hit;
+	// 	
+	// 	if (auto PS = Cast<APlayerState>(GetOwner()))
+	// 	{
+	// 		if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
+	// 		{
+	// 			PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
+	// 		}
+	// 	}
+	//
+	// 	DropItemAtOutsideInventory(DraggedInventoryIndex, Hit.Location);
+	// }
 
-		DropItemAtOutsideInventory(DraggedInventoryIndex, Hit.Location);
+	if (!Inventory.IsValidIndex(DraggedInventoryIndex))
+		return;
+
+	FHitResult Hit;
+
+	if (auto PS = Cast<APlayerState>(GetOwner()))
+	{
+		if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
+		{
+			// 드롭 지점으로 화면 트레이스 (클라)
+			PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
+		}
 	}
+
+	// 맞은 액터와 월드 위치를 서버로 보냄 (액터는 nullptr 가능)
+	const FVector WorldLoc = Hit.bBlockingHit ? Hit.ImpactPoint : FVector::ZeroVector;
+	DropItemAtOutsideInventoryWithActor(DraggedInventoryIndex, Hit.GetActor(), WorldLoc);
 }
 
 void UPCPlayerInventory::DropItemAtInventory_Implementation(int32 DraggedInventoryIndex, int32 TargetInventoryIndex)
@@ -114,7 +133,7 @@ void UPCPlayerInventory::DropItemAtInventory_Implementation(int32 DraggedInvento
 	}
 }
 
-void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc)
+void UPCPlayerInventory::DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc)
 {
 	if (Inventory.IsValidIndex(DraggedInventoryIndex))
 	{
@@ -143,6 +162,45 @@ void UPCPlayerInventory::DropItemAtOutsideInventory_Implementation(int32 Dragged
 					}
 				}
 			}
+		}
+	}
+}
+
+void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int32 DraggedInventoryIndex,
+	AActor* HitActor, const FVector& DroppedWorldLoc)
+{
+	if (!Inventory.IsValidIndex(DraggedInventoryIndex))
+		return;
+
+	// 1) 액터 직접 히트 → 유닛이면 장착 시도
+	if (APCBaseUnitCharacter* HitUnit = Cast<APCBaseUnitCharacter>(HitActor))
+	{
+		if (auto PS = Cast<APCPlayerState>(GetOwner()))
+		{
+			// 내 유닛만 허용(적에게 장착 방지)
+			if (HitUnit->GetTeamIndex() == PS->SeatIndex)
+			{
+				if (auto Equip = HitUnit->GetEquipmentComponent())
+				{
+					if (Equip->TryEquipItem(Inventory[DraggedInventoryIndex]))
+					{
+						RemoveItemFromInventory(DraggedInventoryIndex);
+						return; // 성공
+					}
+				}
+			}
+		}
+	}
+
+	bool bIsBattle = false;
+
+	if (APCCombatGameState* PCCombatState = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		bIsBattle = PCCombatState->bIsbattle();
+		if (!bIsBattle)
+		{
+			// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)
+			DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
 		}
 	}
 }

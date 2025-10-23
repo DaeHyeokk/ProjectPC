@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Unit/GA/PCUnitMontagePlayGameplayAbility.h"
 
+#include "BaseGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 

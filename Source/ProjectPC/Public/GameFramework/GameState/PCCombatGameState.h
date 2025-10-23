@@ -443,7 +443,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ranking")
 	int32 GetFinalRankFor(const FString& LocalUserId) const;
 
-	
+	TMap<FString, FPlayerStandingRow> GetLeaderBoardMap() const { return CachedLeaderboardMap;}
+
+	void RebuildAndReplicatedLeaderboard();
 
 protected:
 
@@ -454,16 +456,22 @@ protected:
 	void OnEliminated_Server(APCPlayerState* PCPlayerState);
 
 	// 리더보드 재구성, 마지막 1인 1등 처리
-	void RebuildAndReplicatedLeaderboard();
+	
 	void TryFinalizeLastSurvivor();
 
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();
 
+	
+	FLeaderBoardMap CachedLeaderBoardMap;
+
+	UPROPERTY()
+	TMap<FString, FPlayerStandingRow> CachedLeaderboardMap;
+
 	UAbilitySystemComponent* ResolveASC(APCPlayerState* PCPlayerState) const;
 
-	void BroadCastLeaderboardMap() const;
+	void BroadCastLeaderboardMap();
 
 
 private:
