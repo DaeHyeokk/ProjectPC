@@ -316,6 +316,7 @@ void APCPlayerState::SetDisplayName_Server(const FString& InName)
 	}
 }
 
+
 void APCPlayerState::OnRep_SeatIndex()
 {
 	ResolvePlayerBoardOnClient();

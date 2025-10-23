@@ -445,7 +445,7 @@ public:
 
 	TMap<FString, FPlayerStandingRow> GetLeaderBoardMap() const { return CachedLeaderboardMap;}
 
-	
+	void RebuildAndReplicatedLeaderboard();
 
 protected:
 
@@ -456,7 +456,7 @@ protected:
 	void OnEliminated_Server(APCPlayerState* PCPlayerState);
 
 	// 리더보드 재구성, 마지막 1인 1등 처리
-	void RebuildAndReplicatedLeaderboard();
+	
 	void TryFinalizeLastSurvivor();
 
 	// 위젯 갱신

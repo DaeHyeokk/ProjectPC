@@ -67,7 +67,7 @@ APCPlayerCharacter::APCPlayerCharacter()
 void APCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	SetReplicateMovement(true);
 }
 
@@ -184,6 +184,34 @@ void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
 	else if (PlayerStateTag == PlayerGameplayTags::Player_State_Carousel)
 	{
 		OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 2.2f));
+	}
+}
+
+// void APCPlayerCharacter::SetOverHeadWidget_Implementation()
+// {
+// 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+// 	{	
+// 		if (OverHeadWidgetComp)
+// 		{
+// 			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+// 			{
+// 				OverheadWidget->BindToPlayerState(PS);
+// 			}
+// 		}
+// 	}
+// }
+
+void APCPlayerCharacter::SetOverHeadWidget()
+{
+	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+	{	
+		if (OverHeadWidgetComp)
+		{
+			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+			{
+				OverheadWidget->BindToPlayerState(PS);
+			}
+		}
 	}
 }
 

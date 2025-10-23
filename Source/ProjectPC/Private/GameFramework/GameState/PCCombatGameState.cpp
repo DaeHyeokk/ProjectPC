@@ -408,27 +408,27 @@ void APCCombatGameState::BindAllPlayerHP()
 void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 {
 	if (!HasAuthority() || !IsValid(PCPlayerState)) return;
-
+	
 	UAbilitySystemComponent* ASC = ResolveASC(PCPlayerState);
 	if (!ASC) return;
-
+	
 	// 중복방지
 	if (HpDelegateHandles.Contains(ASC)) return;
-
+	
 	const FString& Id = PCPlayerState->LocalUserId;
 	const float Now = GetServerWorldTimeSeconds();
-
+	
 	// 최초 관측 순서 기록
 	if (!StableOrderCache.Contains(Id))
 	{
 		StableOrderCache.Add(Id,++StableOrderCounter);
 	}
-
+	
 	// 초기 HP 캐시
 	const float CurHP = ASC->GetNumericAttribute(UPCPlayerAttributeSet::GetPlayerHPAttribute());
 	HpCache.FindOrAdd(Id) = CurHP;
 	LastChangeTimeCache.FindOrAdd(Id) = Now;
-
+	
 	if (CurHP <= 0.f)
 	{
 		EliminatedSet.Add(Id);
@@ -437,23 +437,27 @@ void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 	{
 		++AliveCount;
 	}
-
+	
 	// AttributeChanageDelegate
 	FDelegateHandle Handle = ASC->GetGameplayAttributeValueChangeDelegate(UPCPlayerAttributeSet::GetPlayerHPAttribute())
 	.AddLambda([this, PCPlayerState](const FOnAttributeChangeData& Data)
 	{
 		if (!this || !this->HasAuthority() || !IsValid(PCPlayerState)) return;
-
+	
 		const float NewHp = Data.NewValue;
 		OnHpChanged_Server(PCPlayerState, NewHp);
-
+	
 		if (NewHp <= 0.f)
 		{
 			OnEliminated_Server(PCPlayerState);
 		}
 	});
-
+	
 	HpDelegateHandles.Add(ASC,Handle);
+
+	
+
+	
 }
 
 int32 APCCombatGameState::AssignFinalRankOnDeathById(const FString& LocalUserId)
@@ -568,6 +572,8 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 		if (APCPlayerState* PCS = Cast<APCPlayerState>(PlayerState))
 		{
 			const FString& Id = PCS->LocalUserId;
+
+			UE_LOG(LogTemp, Warning, TEXT("[leaderboard] LocalUserId : %s"), *Id)
 
 			FPlayerStandingRow Row;
 			Row.LocalUserId = Id;
