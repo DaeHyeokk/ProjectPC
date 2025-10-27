@@ -18,7 +18,7 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 	{
 		PS->bIdentified = true;
 		PS->LocalUserId = DisplayName;
-		// (선택) 중복 닉 검사
+		// 중복 닉 검사
 		bool bTaken = false;
 		if (const AGameStateBase* GS = GetWorld()->GetGameState())
 		{
@@ -33,7 +33,11 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 				}
 			}
 		}
-		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); }
+		if (bTaken)
+		{
+			PS->LocalUserId = "";
+			ClientRejectIdentity(TEXT("ID already taken."));
+		}
 	}
 }
 

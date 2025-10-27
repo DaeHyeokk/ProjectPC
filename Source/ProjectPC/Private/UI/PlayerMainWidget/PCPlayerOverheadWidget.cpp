@@ -16,6 +16,8 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
+	OnLocalUserId = CachedPlayerState->OnLocalUserIDUpdated.AddUObject(this, &UPCPlayerOverheadWidget::SetupPlayerId);
+
 	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
 	{
 		if (auto AttributeSet = NewPlayerState->GetAttributeSet())
@@ -78,6 +80,31 @@ void UPCPlayerOverheadWidget::SetupPlayerInfo()
 	}
 }
 
+void UPCPlayerOverheadWidget::SetupPlayerId()
+{	
+	if (!PlayerName || !CachedPlayerState)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
+		return;
+	}
+
+	if (!CachedPlayerState->LocalUserId.IsEmpty())
+	{
+		// UserId 받았으니 갱신하고 타이머 정지
+		auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
+		PlayerName->SetText(FText::FromString(NameText));
+		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
+	}
+	
+}
+
+void UPCPlayerOverheadWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	OnLocalUserId.Reset();
+}
+
 void UPCPlayerOverheadWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 {
 	if (!PlayerLevel) return;
@@ -114,8 +141,8 @@ void UPCPlayerOverheadWidget::CheckAndUpdateUserId()
 
 	if (!CachedPlayerState->LocalUserId.IsEmpty())
 	{
-		// UserId 받았으니 갱신하고 타이머 정지
-		SetupPlayerInfo();
+		auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
+		PlayerName->SetText(FText::FromString(NameText));
 		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
 	}
 }

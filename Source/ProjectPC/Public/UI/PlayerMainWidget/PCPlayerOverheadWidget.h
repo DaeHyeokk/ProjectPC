@@ -48,8 +48,12 @@ protected:
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
 	void SetupPlayerInfo();
+	void SetupPlayerId();
+
+	FDelegateHandle OnLocalUserId;
 	
 private:
+	virtual void NativeDestruct() override;
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerHPChanged(const FOnAttributeChangeData& Data);
 

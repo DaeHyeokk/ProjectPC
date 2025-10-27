@@ -570,8 +570,10 @@ void APCCombatGameMode::TryPlacePlayersAfterTravel()
 
 	GetWorldTimerManager().ClearTimer(WaitAllPlayerController);
 
+	// 플레이어 자리 배정
 	AssignSeatDeterministicOnce();
 
+	// 월드에서 플레이어 보드 수집
 	CollectPlayerBoards();
 	
 	GetWorldTimerManager().SetTimer(ThWaitReady, this, &APCCombatGameMode::StartWhenReady,0.25f, true,0.0f);

@@ -39,6 +39,7 @@ void URegisterWidget::OnClicked_Submit()
 				if (APCPlayerState* PS = LobbyPC->GetPlayerState<APCPlayerState>())
 				{
 					PS->LocalUserId = Profile->GetUserID();
+					bSubmitToServerOnClose = true;
 				}
 			}
 		}

@@ -14,6 +14,7 @@ class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
+DECLARE_MULTICAST_DELEGATE(FOnLocalUserIDUpdated);
 
 class APCPlayerBoard;
 class APCHeroUnitCharacter;
@@ -55,7 +56,7 @@ protected:
 	
 public:
 	// 로그인 ID (클라가 제출 → 서버가 확정/복제)
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_LocalUserId, BlueprintReadOnly)
 	FString LocalUserId;
 
 	UPROPERTY(ReplicatedUsing=OnRep_bIsLeader, BlueprintReadOnly)
@@ -74,8 +75,13 @@ public:
 	int32 PlayerLevel = 30;
 
 	void SetDisplayName_Server(const FString& InName);
+
+	FOnLocalUserIDUpdated OnLocalUserIDUpdated;
 	
 	// OnRep 들은 위젯 갱신용(원하면 비워둬도 됨)
+
+	UFUNCTION()
+	void OnRep_LocalUserId();
 		
 	UFUNCTION()
 	void OnRep_bIsLeader() {}

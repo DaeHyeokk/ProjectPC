@@ -316,6 +316,11 @@ void APCPlayerState::SetDisplayName_Server(const FString& InName)
 	}
 }
 
+void APCPlayerState::OnRep_LocalUserId()
+{
+	OnLocalUserIDUpdated.Broadcast();
+}
+
 
 void APCPlayerState::OnRep_SeatIndex()
 {
