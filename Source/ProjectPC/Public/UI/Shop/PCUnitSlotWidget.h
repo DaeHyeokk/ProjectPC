@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "DataAsset/UI/PCSynergyInfoData.h"
 #include "Shop/PCShopUnitData.h"
 #include "PCUnitSlotWidget.generated.h"
 
@@ -31,6 +32,9 @@ public:
 protected:
 	int32 SlotIndex = -1;
 	int32 UnitCost;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SynergyData")
+	TObjectPtr<UPCSynergyInfoData> SynergyInfo;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* Btn_UnitSlot;
@@ -39,6 +43,10 @@ protected:
 	UImage* Img_CostBorder;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UImage* Img_UnitThumbnail;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_Species;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UImage* Img_Job;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* Text_Cost;

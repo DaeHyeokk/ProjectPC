@@ -6,9 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "PCShopWidget.generated.h"
 
-class APCCombatPlayerController;
 struct FOnAttributeChangeData;
 
+class APCCombatPlayerController;
 class APCPlayerState;
 class UImage;
 class UHorizontalBox;
