@@ -37,13 +37,13 @@ private:
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerName;
+	TObjectPtr<UTextBlock> PlayerName;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerLevel;
+	TObjectPtr<UTextBlock> PlayerLevel;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UProgressBar* HPBar;
+	TObjectPtr<UProgressBar> HPBar;
 
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);

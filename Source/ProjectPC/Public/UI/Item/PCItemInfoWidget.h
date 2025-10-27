@@ -28,16 +28,16 @@ protected:
 	TSubclassOf<UUserWidget> ItemStatWidgetClass;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_ItemThumbnail;
+	TObjectPtr<UImage> Img_ItemThumbnail;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_ItemName;
+	TObjectPtr<UTextBlock> Text_ItemName;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_ItemUniqueEffect;
+	TObjectPtr<UTextBlock> Text_ItemUniqueEffect;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UHorizontalBox* ItemStatBox;
+	TObjectPtr<UHorizontalBox> ItemStatBox;
 
 private:
 	FGameplayTag CachedItemTag;

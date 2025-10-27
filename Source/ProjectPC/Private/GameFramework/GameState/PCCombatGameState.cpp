@@ -577,6 +577,7 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 			FPlayerStandingRow Row;
 			Row.LocalUserId = Id;
+			Row.PlayerSeatIndex = PCS->SeatIndex;
 			Row.Hp = HpCache.FindRef(Id);
 			Row.bEliminated = EliminatedSet.Contains(Id);
 			Row.FinalRank = FinalRanks.FindRef(Id);

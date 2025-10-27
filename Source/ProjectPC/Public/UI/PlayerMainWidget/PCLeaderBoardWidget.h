@@ -25,18 +25,18 @@ private:
 	APCCombatGameState* CachedGameState;
 
 	UPROPERTY()
-	TMap<FString, UPCPlayerRowWidget*> PlayerMap;
+	TMap<FString, TObjectPtr<UPCPlayerRowWidget>> PlayerMap;
 
 public:
 	void BindToGameState(APCCombatGameState* NewGameState);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UVerticalBox* PlayerBox;
+	TObjectPtr<UVerticalBox> PlayerBox;
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "PlayerRowWidgetClass")
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
-	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap);
+	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
 };

@@ -62,6 +62,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 	CarrySlot->SetupAttachment(GetRootComponent());
 	CarrySlot->SetRelativeLocation(FVector( -120.f, 0.f, 20.f));
 	CarrySlot->SetRelativeRotation(FRotator(0.f,0.f,0.f));
+
+	NetUpdateFrequency = 60.f;
 }
 
 void APCPlayerCharacter::BeginPlay()

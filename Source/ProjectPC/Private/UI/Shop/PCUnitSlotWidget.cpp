@@ -146,16 +146,3 @@ void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
 		this->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
-
-FString UPCUnitSlotWidget::TagToString(FGameplayTag Tag)
-{
-	FString TagStr = Tag.GetTagName().ToString();
-	int32 DotIndex;
-	
-	if (TagStr.FindLastChar('.', DotIndex))
-	{
-		return TagStr.RightChop(DotIndex + 1);
-	}
-
-	return TagStr;
-}

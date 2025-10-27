@@ -21,12 +21,12 @@ protected:
 	virtual bool Initialize() override;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Ranking;
+	TObjectPtr<UTextBlock> Ranking;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_Exit;
+	TObjectPtr<UButton> Btn_Exit;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_Spectate;
+	TObjectPtr<UButton> Btn_Spectate;
 
 public:
 	UFUNCTION(BlueprintCallable)

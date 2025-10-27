@@ -10,6 +10,7 @@
 struct FOnAttributeChangeData;
 
 class APCPlayerState;
+class UButton;
 class UTextBlock;
 class UImage;
 
@@ -22,26 +23,35 @@ class PROJECTPC_API UPCPlayerRowWidget : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
+	virtual bool Initialize() override;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Portrait")
-	UPCDataAsset_PlayerPortrait* PlayerPortrait;
+	TObjectPtr<UPCDataAsset_PlayerPortrait> PlayerPortrait;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerName;
+	TObjectPtr<UTextBlock> PlayerName;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerHP;
+	TObjectPtr<UTextBlock> PlayerHP;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* CircularHPBar;
+	TObjectPtr<UImage> CircularHPBar;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_Portrait;
+	TObjectPtr<UImage> Img_Portrait;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UButton> Btn_CameraSwitch;
 
 public:
-	void SetupPlayerInfo(FString NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag);
+	void SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag);
 
 	void UpdatePlayerHP(float NewPlayerHP);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetHP(float HPPercent);
+
+private:
+	UFUNCTION()
+	void SwitchCamera();
 };

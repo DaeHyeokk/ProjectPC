@@ -40,33 +40,33 @@ protected:
 	UButton* Btn_UnitSlot;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_CostBorder;
+	TObjectPtr<UImage> Img_CostBorder;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_UnitThumbnail;
+	TObjectPtr<UImage> Img_UnitThumbnail;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_Species;
+	TObjectPtr<UImage> Img_Species;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_Job;
+	TObjectPtr<UImage> Img_Job;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_Cost;
+	TObjectPtr<UTextBlock> Text_Cost;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_UnitName;
+	TObjectPtr<UTextBlock> Text_UnitName;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_Species;
+	TObjectPtr<UTextBlock> Text_Species;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_Job;
+	TObjectPtr<UTextBlock> Text_Job;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Cost1Border;
+	TObjectPtr<UTexture2D> Cost1Border;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Cost2Border;
+	TObjectPtr<UTexture2D> Cost2Border;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Cost3Border;
+	TObjectPtr<UTexture2D> Cost3Border;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Cost4Border;
+	TObjectPtr<UTexture2D> Cost4Border;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Cost5Border;
+	TObjectPtr<UTexture2D> Cost5Border;
 	
 public:
 	UFUNCTION()
@@ -76,7 +76,4 @@ public:
 	void OnClickedUnitSlot();
 
 	void SetSlotHidden(bool IsHidden);
-
-private:
-	FString TagToString(FGameplayTag Tag);
 };

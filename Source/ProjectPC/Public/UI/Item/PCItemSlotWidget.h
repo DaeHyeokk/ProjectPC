@@ -28,12 +28,12 @@ protected:
 	TSubclassOf<UUserWidget> ItemInfoWidgetClass;
 	
 	UPROPERTY()
-	UPCItemRecipeWidget* ItemRecipeWidget;
+	TObjectPtr<UPCItemRecipeWidget> ItemRecipeWidget;
 	UPROPERTY()
-	UPCItemInfoWidget* ItemInfoWidget;
+	TObjectPtr<UPCItemInfoWidget> ItemInfoWidget;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_Item;
+	TObjectPtr<UImage> Img_Item;
 	
 private:
 	int32 SlotIndex = -1;

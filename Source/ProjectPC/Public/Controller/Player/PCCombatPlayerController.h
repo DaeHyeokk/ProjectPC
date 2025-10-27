@@ -72,7 +72,7 @@ protected:
 private:
 	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
-	UPCDataAsset_PlayerInput* PlayerInputData;
+	TObjectPtr<UPCDataAsset_PlayerInput> PlayerInputData;
 	
 	FVector CachedDestination;
 	float FollowTime;
@@ -114,7 +114,7 @@ protected:
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
-	UPCShopWidget* ShopWidget;
+	TObjectPtr<UPCShopWidget> ShopWidget;
 
 public:
 	FTimerHandle LoadShop;
@@ -374,7 +374,7 @@ public:
 	TSubclassOf<UUserWidget> GameResultWidgetClass;
 
 	UPROPERTY()
-	UPCGameResultWidget* GameResultWidget;
+	TObjectPtr<UPCGameResultWidget> GameResultWidget;
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);
