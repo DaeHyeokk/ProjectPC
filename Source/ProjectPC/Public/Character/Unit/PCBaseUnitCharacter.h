@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GameplayTagAssetInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"

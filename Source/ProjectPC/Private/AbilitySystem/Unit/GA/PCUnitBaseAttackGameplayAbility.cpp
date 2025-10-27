@@ -49,8 +49,11 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 {
 	if (!HasAuthority(&ActivationInfo))
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
-		return;
+		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+			return;
+		}
 	}
 		
 	if (UAnimMontage* Montage = MontageConfig.Montage)
@@ -208,7 +211,7 @@ void UPCUnitBaseAttackGameplayAbility::AttackCommit()
 			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 			return;
 		}
-	
+		
 		// 공격 완료 즉시 적용하는 GE Apply
 		if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
 		{

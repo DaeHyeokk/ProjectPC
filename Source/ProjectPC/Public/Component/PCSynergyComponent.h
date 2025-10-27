@@ -37,7 +37,11 @@ struct FHeroSynergyTally
 	TMap<FGameplayTag, int32> SynergyCountMap;
 
 	void IncreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsUnique);
+	void IncreaseSynergyTags(const FGameplayTagContainer& SynergyTags, FGameplayTagContainer& OutNewSynergyTags);
 	void DecreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsRemoved);
+	FGameplayTagContainer GetActiveSynergyTags();
+	
+	void Reset() { SynergyCountMap.Reset(); }
 	bool IsEmpty() const { return SynergyCountMap.IsEmpty(); }
 };
 
@@ -73,7 +77,6 @@ private:
 	
 	TMap<FGameplayTag, int32> SynergyCountMap;
 	
-	TMap<FGameplayTag, int32> HeroTagCountMap;
 	TMap<FGameplayTag, FHeroSynergyTally> HeroSynergyMap;
 	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> RegisterHeroSet;
 	
@@ -89,7 +92,7 @@ private:
 	void InitializeSynergyHandlersFromDefinitionSet();
 
 	void UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero);
-	void UpdateSynergyCountMap();
+	void RecountSynergyCountMapForUnitTag(const FGameplayTag& UnitTag);
 	void ApplySynergyEffects(const FGameplayTag& SynergyTag);
 	
 	void GetHeroSynergyTags(const APCHeroUnitCharacter* Hero, FGameplayTagContainer& OutSynergyTags) const;
@@ -104,7 +107,8 @@ private:
 	void OnCombatEndAction();
 	
 	void OnHeroDestroyed(APCHeroUnitCharacter* DestroyedHero);
-	void OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero, const FGameplayTag& SynergyTag, bool bIsAdded);
+	
+	void OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero);
 	
 	// 디버그용
 public:

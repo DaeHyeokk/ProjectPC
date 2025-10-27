@@ -10,6 +10,7 @@
 #include "Character/Unit/PCAppearanceFixedHeroCharacter.h"
 #include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Character/Unit/PCPreviewHeroActor.h"
+#include "Component/PCUnitEquipmentComponent.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
 #include "Controller/Unit/PCUnitAIController.h"
@@ -85,6 +86,40 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	OnUnitSpawned.Broadcast(Unit, TeamIndex);
 	
 	return Unit;
+}
+
+APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnCloneUnitBySourceUnit(const APCBaseUnitCharacter* SourceUnit)
+{
+	if (!SourceUnit)
+		return nullptr;
+	
+	const FGameplayTag& UnitTag = SourceUnit->GetUnitTag();
+	const int32 TeamIndex = SourceUnit->GetTeamIndex();
+	const int32 UnitLevel = SourceUnit->GetUnitLevel();
+	APCPlayerState* OwnerPS = SourceUnit->GetOwnerPlayerState();
+	AActor* Owner = SourceUnit->GetOwner();
+	APawn* Instigator = SourceUnit->GetInstigator();
+	
+	APCBaseUnitCharacter* CloneUnit = SpawnUnitByTag(UnitTag, TeamIndex, UnitLevel, OwnerPS, Owner, Instigator);
+	if (!CloneUnit)
+		return nullptr;
+	
+	UPCUnitEquipmentComponent* SourceEquipmentComp = SourceUnit->GetEquipmentComponent();
+	UPCUnitEquipmentComponent* CloneEquipmentComp = CloneUnit->GetEquipmentComponent();
+	if (SourceEquipmentComp && CloneEquipmentComp)
+	{
+		const TArray<FGameplayTag>& EquipItemTags = SourceEquipmentComp->GetSlotItemTags();
+
+		for (const FGameplayTag& ItemTag : EquipItemTags)
+		{
+			if (ItemTag.IsValid())
+			{
+				CloneEquipmentComp->TryEquipItem(ItemTag);
+			}
+		}
+	}
+
+	return CloneUnit;
 }
 
 const UPCDataAsset_UnitDefinition* UPCUnitSpawnSubsystem::ResolveDefinition(const FGameplayTag& UnitTag) const

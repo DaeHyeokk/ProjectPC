@@ -90,11 +90,16 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (auto* ASC = GetAbilitySystemComponent())
+
+	if (HasAuthority())
 	{
-		SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy)
-		.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+		if (auto* ASC = GetAbilitySystemComponent())
+		{
+			SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy, EGameplayTagEventType::AnyCountChange)
+			.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+			// SynergyTagChangedHandle = ASC->RegisterGenericGameplayTagEvent()
+			// .AddUObject(this, &ThisClass::OnSynergyTagChanged);
+		}
 	}
 }
 
@@ -186,7 +191,7 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 	}
 }
 
-void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const
+void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	// 벤치에 있는 경우 해당 이벤트 무시
 	if (!bIsOnField)
@@ -194,14 +199,7 @@ void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 New
 	
 	if (Tag.MatchesTag(SynergyGameplayTags::Synergy))
 	{
-		if (NewCount >= 1)
-		{
-			OnHeroSynergyTagChanged.Broadcast(this, Tag, true);
-		}
-		else
-		{
-			OnHeroSynergyTagChanged.Broadcast(this, Tag, false);
-		}
+		OnHeroSynergyTagChanged.Broadcast(this);
 	}
 }
 
@@ -210,11 +208,6 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
 	OnHeroLevelUp.Broadcast();
-}
-
-void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
-{
-	Super::ChangedOnTile(IsOnField);
 }
 
 void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
