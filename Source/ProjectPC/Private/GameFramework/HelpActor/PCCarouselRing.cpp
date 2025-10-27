@@ -163,9 +163,10 @@ void APCCarouselRing::Server_FinishCarousel_Implementation()
 
                 if (!Unit->IsPicked())
                 {
-                    Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
-                    Unit->Destroy();
+	                Shop->ReturnUnitToShopByTag(Unit->GetUnitTag());
                 }
+            	
+            	Unit->Destroy();
             }
         }
     }

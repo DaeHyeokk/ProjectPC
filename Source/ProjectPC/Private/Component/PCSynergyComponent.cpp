@@ -17,7 +17,7 @@ void FHeroSynergyTally::IncreaseSynergyTag(const FGameplayTag& SynergyTag, bool&
 	int32& Count = SynergyCountMap.FindOrAdd(SynergyTag);
 	Count++;
 
-	if (Count == 1)
+	if (Count >= 1)
 		OutIsUnique = true;
 }
 
