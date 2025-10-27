@@ -68,3 +68,6 @@ desktop.ini
 # SkyTown 폴더 무시
 /Content/SkyTown/
 
+# Test File 폴더 무시
+/Content/TestFiles
+

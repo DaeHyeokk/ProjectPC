@@ -80,7 +80,7 @@ private:
 	UPROPERTY(ReplicatedUsing=OnRep_SynergyCountArray)
 	FSynergyCountArray SynergyCountArray;
 
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TArray<FSynergyData> SynergyData;
 		
 	UFUNCTION()
@@ -89,6 +89,7 @@ private:
 	void InitializeSynergyHandlersFromDefinitionSet();
 
 	void UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero);
+	void UpdateSynergyCountMap();
 	void ApplySynergyEffects(const FGameplayTag& SynergyTag);
 	
 	void GetHeroSynergyTags(const APCHeroUnitCharacter* Hero, FGameplayTagContainer& OutSynergyTags) const;
