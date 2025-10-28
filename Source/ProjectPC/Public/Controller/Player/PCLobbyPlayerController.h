@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "PCLobbyPlayerController.generated.h"
 
+class UPCNoticeWidget;
 class UStartMenuWidget;
 class ULobbyMenuWidget;
 /**
@@ -43,8 +44,22 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitIdentity(const FString& DisplayName);
 
+	// 결과 통지용
+	UFUNCTION(Client,Reliable)
+	void ClientAcceptedIdentity();
+
 	UFUNCTION(Client, Reliable)
 	void ClientRejectIdentity(const FString& Reason);
+
+	// Notice 위젯
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPCNoticeWidget> NoticeWidgetClass;
+
+	UPROPERTY()
+	UPCNoticeWidget* NoticeWidget = nullptr;
+
+	void ShowNotice(const FText& Message);
+	void HideNotice();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetReady(bool bNewReady);

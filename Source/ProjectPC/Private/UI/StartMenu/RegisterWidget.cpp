@@ -43,6 +43,7 @@ void URegisterWidget::OnClicked_Submit()
 			}
 		}
 	}
+	bSubmitToServerOnClose = true;
 	
 	if(bSubmitToServerOnClose)
 	{
@@ -54,11 +55,7 @@ void URegisterWidget::OnClicked_Submit()
 				LobbyPlayerController->ServerSubmitIdentity(Name);
 			}
 		}
-	}
-	
-	//OnRegistered.Broadcast();
-	SetVisibility(ESlateVisibility::Hidden);
-	
+	}	
 }
 
 void URegisterWidget::OnClicked_Cancel()

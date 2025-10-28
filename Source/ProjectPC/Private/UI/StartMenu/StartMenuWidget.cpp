@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
+#include "UI/StartMenu/PCNoticeWidget.h"
 #include "UI/StartMenu/RegisterWidget.h"
 
 
@@ -45,7 +46,8 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 
 	if (!Profile->HasDisplayName())
 	{
-		if (Tb_Status) Tb_Status->SetText(FText::FromString(TEXT("Please enter your ID or register first.")));
+		if (NoticeWidget)
+			NoticeWidget->SetMessage(FText::FromString(TEXT("Please enter your ID or register first.")));
 		OpenRegister(true);
 		return;
 	}
@@ -60,8 +62,8 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	}
 	if (CandidateID.IsEmpty())
 	{
-		if (Tb_Status)
-			Tb_Status->SetText(FText::FromString(TEXT("Please enter your ID or Register first")));
+		if (NoticeWidget)
+			NoticeWidget->SetMessage(FText::FromString(TEXT("Please enter your ID or Register first")));
 		if (EB_DisplayName)
 			EB_DisplayName->SetKeyboardFocus();
 		return;
@@ -70,8 +72,8 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	FString Err;
 	if (!ValidateID(CandidateID, Err))
 	{
-		if (Tb_Status)
-			Tb_Status->SetText(FText::FromString(Err));
+		if (NoticeWidget)
+			NoticeWidget->SetMessage(FText::FromString(Err));
 		if (EB_DisplayName)
 			EB_DisplayName->SetKeyboardFocus();
 		return;
@@ -84,11 +86,6 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	
 	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
-		const ENetMode NetMode = LobbyPlayerController->GetNetMode();
-		if (NetMode == NM_Client || NetMode == NM_ListenServer)
-		{
-			LobbyPlayerController->ServerSubmitIdentity(CandidateID);
-		}
 		LobbyPlayerController->RequestConnectToServer();
 	}
 }
@@ -154,6 +151,31 @@ void UStartMenuWidget::ConnectToServer()
 			LobbyPlayerController->RequestConnectToServer();
 		}
 		SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void UStartMenuWidget::ShowNotice(const FText& Message)
+{
+	if (APlayerController* PlayerController = GetOwningPlayer())
+	{
+		if (!NoticeWidget && NoticeWidgetClass)
+		{
+			NoticeWidget = CreateWidget<UPCNoticeWidget>(PlayerController, NoticeWidgetClass);
+			if (NoticeWidget)
+			{
+				NoticeWidget->AddToViewport(200);
+				NoticeWidget->SetVisibility(ESlateVisibility::Visible);
+				NoticeWidget->SetMessage(Message);
+			}
+		}
+	}
+}
+
+void UStartMenuWidget::HideNotice()
+{
+	if (NoticeWidget)
+	{
+		NoticeWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

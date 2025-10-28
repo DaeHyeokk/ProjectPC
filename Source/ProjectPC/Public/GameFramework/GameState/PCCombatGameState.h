@@ -145,6 +145,7 @@ DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardFindPlayerState, const TArray<APCPlayerState*>);
 DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 
 // Carousel 전용 델리게이트
@@ -460,13 +461,25 @@ protected:
 	void OnEliminated_Server(APCPlayerState* PCPlayerState);
 
 	// 리더보드 재구성, 마지막 1인 1등 처리
-	
 	void TryFinalizeLastSurvivor();
+
+	// 로컬 UserID로 플레이어스테이트 찾기
+	UFUNCTION()
+	APCPlayerState* FindPlayerStateByUserId(const FString& LocalUserId) const;
+
+	// 순위대로 PS 뽑기
+	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
+	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
+
+
+	UPROPERTY()
+	TArray<APCPlayerState*> FindPlayerStates;
+	
+	FOnLeaderboardFindPlayerState FindPlayerState;
 
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();
-
 	
 	FLeaderBoardMap CachedLeaderBoardMap;
 
