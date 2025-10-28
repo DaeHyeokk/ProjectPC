@@ -98,7 +98,7 @@ struct FPlayerStandingRow
 
 	// 카메라 전환용 SeatIndex
 	UPROPERTY(BlueprintReadOnly)
-	int32 PlayerSeatIndex;
+	int32 PlayerSeatIndex = -1;
 	
 	/** 최신 HP (실시간) */
 	UPROPERTY(BlueprintReadOnly)
