@@ -16,19 +16,12 @@ class PROJECTPC_API APCBaseProjectile : public AActor
 {
 	GENERATED_BODY()
 
+public:	
+	APCBaseProjectile();
+
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
-	TMap<FGameplayTag, TObjectPtr<UPCDataAsset_ProjectileData>> ProjectileData;
+	virtual void BeginPlay() override;
 
-	UPROPERTY()
-	TArray<UPCEffectSpec*> EffectSpecs;
-	
-	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
-	FGameplayTag ProjectileDataCharacterTag;
-
-	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
-	FGameplayTag ProjectileDataAttackTypeTag;
-	
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
 
@@ -47,37 +40,45 @@ protected:
 	UPROPERTY()
 	UParticleSystem* HitEffect;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "ProjectileData")
+	TMap<FGameplayTag, TObjectPtr<UPCDataAsset_ProjectileData>> ProjectileData;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataCharacterTag;
+
+	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
+	FGameplayTag ProjectileDataAttackTypeTag;
+	
+	UPROPERTY()
+	TArray<UPCEffectSpec*> EffectSpecs;
+
+	float PlayerDamage = 0.f;
+	
 	bool bIsHomingProjectile = true;
 	bool bIsPenetrating = false;
+	bool bIsPlayerAttack = false;
 
 	FTimerHandle LifeTimer;
-	
-public:	
-	APCBaseProjectile();
-
-protected:
-	virtual void BeginPlay() override;
 	
 private:
 	UPROPERTY()
 	const AActor* Target;
 
-	bool bIsPlayerAttack = false;
-
 public:
-	UFUNCTION(BlueprintCallable)
-	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack = false);
-	
-	UFUNCTION(BlueprintCallable)
-	void SetProjectileProperty();
-	
-	UFUNCTION(BlueprintCallable)
-	void SetTarget(const AActor* TargetActor);
+	// 유닛 to 유닛
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor);
 
-	UFUNCTION()
-	void SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs);
+	// 유닛 to 플레이어
+	void ActiveProjectile(const FTransform& SpawnTransform, const AActor* SpawnActor, const AActor* TargetActor);
+
+	// 플레이어 to 플레이어
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, const AActor* SpawnActor, const AActor* TargetActor);
 	
-	UFUNCTION(BlueprintCallable)
+	void SetProjectileProperty();
+	void SetTarget(const AActor* TargetActor);
+	void SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs);
+	void SetDamage(float InDamage);
+	
 	void ReturnToPool();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

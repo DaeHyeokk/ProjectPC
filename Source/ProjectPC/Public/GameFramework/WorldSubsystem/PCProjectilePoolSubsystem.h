@@ -29,8 +29,14 @@ public:
 	UFUNCTION()
 	void InitializeProjectilePoolData(const FPCProjectilePoolData& NewProjectilePoolData);
 
-	UFUNCTION(BlueprintCallable)
-	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack = false);
+	// 유닛 to 유닛
+	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+
+	// 유닛 to 플레이어
+	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, const AActor* SpawnActor, const AActor* TargetActor);
+
+	// 플레이어 to 플레이어
+	APCBaseProjectile* SpawnProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, const AActor* SpawnActor, const AActor* TargetActor);
 
 	UFUNCTION(BlueprintCallable)
 	void ReturnProjectile(APCBaseProjectile* ReturnedProjectile);

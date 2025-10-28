@@ -19,6 +19,7 @@ namespace GameStateTags
 namespace UnitGameplayTags
 {
 	// ==== Unit Types ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit, "Unit")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero, "Unit.Type.Hero")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Sparrow, "Unit.Type.Hero.Sparrow")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Raven, "Unit.Type.Hero.Raven")

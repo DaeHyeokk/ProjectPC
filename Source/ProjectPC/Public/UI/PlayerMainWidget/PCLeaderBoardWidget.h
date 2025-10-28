@@ -34,9 +34,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UVerticalBox> PlayerBox;
 
-public:
 	UPROPERTY(EditDefaultsOnly, Category = "PlayerRowWidgetClass")
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
+public:
 	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
 };
