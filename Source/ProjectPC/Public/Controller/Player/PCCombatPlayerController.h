@@ -313,6 +313,7 @@ public:
 	UFUNCTION(Client, Unreliable)
 	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit = nullptr);
 
+	bool bIsCancel = false;
 	void CancelDrag(const FGameplayTag& GameStateTag);
 
 	// 기존 바인딩 래퍼 (입력에서 호출)

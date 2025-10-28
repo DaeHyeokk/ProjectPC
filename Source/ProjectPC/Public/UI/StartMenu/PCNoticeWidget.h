@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* Btn_OK;
 
+	UFUNCTION()
+	void ButtonClick();
+
 	virtual void NativeConstruct() override;
 	
 	

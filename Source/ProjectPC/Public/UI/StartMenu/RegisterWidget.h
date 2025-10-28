@@ -12,7 +12,6 @@ class UEditableTextBox;
  * 
  */
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRegisterCompleted);
 
 UCLASS()
 class PROJECTPC_API URegisterWidget : public UUserWidget
@@ -23,6 +22,8 @@ public:
 
 	virtual void NativeConstruct() override;
 
+
+protected:
 	
 	UPROPERTY(meta = (BindWidget))
 	UEditableTextBox* EB_DisplayName = nullptr;
@@ -32,21 +33,16 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* Btn_Cancel;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnRegisterCompleted OnRegistered;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Register")
-	bool bSubmitToServerOnClose = false;
-
-	UFUNCTION(BLueprintCallable)
-	void SetSubmitToServerOnClose(bool bEnable) { bSubmitToServerOnClose = bEnable; }
-	
+		
 	UFUNCTION()
 	void OnClicked_Submit();
 
 	UFUNCTION()
 	void OnClicked_Cancel();
+
+private:
+
+	bool ValidateID(const FString& ID, FString& OutErr) const;
 	
 	
 };

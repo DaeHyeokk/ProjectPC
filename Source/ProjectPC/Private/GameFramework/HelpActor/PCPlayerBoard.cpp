@@ -391,16 +391,9 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
 	APCPlayerState* PCPlayerState = ResolvePlayerState();
-	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
 	
+	if (!PCPlayerState || !Unit || !IsInRange(Y,X)) return false;
 	
-	if (!PCPlayerState || !SynergyComp || !Unit || !IsInRange(Y,X)) return false;
-
-	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
-	{
-		SynergyComp->RegisterHero(HeroUnit);
-	}
-
 	if (HasAuthority())
 	{
 		const int32 i = IndexOf(Y,X);
@@ -415,6 +408,7 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	EnsureExclusive(Unit);
 	const int32 i = IndexOf(Y,X);
 	PlayerField[i].Unit = Unit;
+	Unit->ChangedOnTile(true);
 
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
 	Unit->SetActorLocation(World,false);
@@ -429,18 +423,12 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit)
 {
 	APCPlayerState* PCPlayerState = ResolvePlayerState();
-	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
-	
-	
-	if (!PCPlayerState || !SynergyComp || !Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
-
-	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
-	{
-		SynergyComp->UnRegisterHero(HeroUnit);
-	}
+		
+	if (!PCPlayerState || !Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
+	Unit->ChangedOnTile(false);
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();

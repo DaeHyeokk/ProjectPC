@@ -76,7 +76,6 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 
 	Unit->SetOnCombatBoard(Board);
 	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
-	Unit->ChangedOnTile(true);
 	BindToUnit(Unit);
 
 	return true;

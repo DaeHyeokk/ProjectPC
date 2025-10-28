@@ -56,6 +56,26 @@ struct FSpawnSubsystemConfig
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
 };
 
+// 로딩 상태 변경 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnLoadingChanged);
+
+// 개별 클라 부트스트랩 플래그(서버 전용, 비복제)
+USTRUCT()
+struct FBootstrapFlags
+{
+	GENERATED_BODY()
+	// bitmask: 1=PS, 2=Pawn, 4=UI, 8=GS
+	UPROPERTY() uint8 Mask = 0;
+	UPROPERTY() double LastUpdate = 0.0;
+
+	bool HasPS()   const { return (Mask & 0x01) != 0; }
+	bool HasPawn() const { return (Mask & 0x02) != 0; }
+	bool HasUI()   const { return (Mask & 0x04) != 0; }
+	bool HasGS()   const { return (Mask & 0x08) != 0; }
+	bool All()     const { return (Mask & 0x0F) == 0x0F; }
+};
+
+
 USTRUCT(BlueprintType)
 struct FStageRuntimeState
 {
@@ -156,11 +176,10 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase, public IGameplay
 
 public:
 	APCCombatGameState();
-	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 #pragma region GameLogic
 	
@@ -187,6 +206,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 
+
+	// 추후에 삭제
 	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
 	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
 
@@ -195,6 +216,33 @@ public:
 
 #pragma endregion GameLogic
 
+
+
+#pragma region Loading
+
+
+// public:
+//
+// 	// 점유 로딩 상태
+// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+// 	bool bLoading = false;
+//
+// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+// 	float LoadingProgress = 0.f;
+//
+// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+// 	FString LoadingDetail;
+//
+// 	void SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail);
+//
+// 	UFUNCTION()
+// 	void OnRep_Loading();
+//
+// 	FOnLoadingChanged OnLoadingChanged;
+
+	// 클라 ACK 집계 (서버전용)
+	
+#pragma endregion Loading
 #pragma region UI
 
 public:

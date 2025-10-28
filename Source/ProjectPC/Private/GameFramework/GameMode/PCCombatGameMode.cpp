@@ -218,7 +218,6 @@ void APCCombatGameMode::BuildStageData()
 
 void APCCombatGameMode::StartFromBeginning()
 {
-	GetWorldTimerManager().ClearTimer(StartTimer);
 	Cursor = 0;
 	BeginCurrentStep();
 }

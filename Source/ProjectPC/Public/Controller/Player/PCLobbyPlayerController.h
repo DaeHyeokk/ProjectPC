@@ -44,6 +44,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitIdentity(const FString& DisplayName);
 
+	UFUNCTION(Server, Reliable)
+	void ServerSetIdentity();
+
 	// 결과 통지용
 	UFUNCTION(Client,Reliable)
 	void ClientAcceptedIdentity();

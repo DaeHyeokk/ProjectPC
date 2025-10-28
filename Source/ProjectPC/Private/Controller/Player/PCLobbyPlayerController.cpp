@@ -39,8 +39,7 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 			ClientRejectIdentity(TEXT("이미 사용 중인 ID입니다. 다른 ID를 입력하세요"));
 			return;
 		}
-
-		PS->bIdentified = true;
+		
 		PS->LocalUserId = DisplayName;
 		ClientAcceptedIdentity();
 	}
@@ -140,22 +139,38 @@ void APCLobbyPlayerController::SetLobbyUI()
 	}
 }
 
-void APCLobbyPlayerController::ShowNotice(const FText& Message)
+void APCLobbyPlayerController::ServerSetIdentity_Implementation()
 {
+	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+	{
+		PCPlayerState->bIdentified = true;
+	}
+
+	if (APCLobbyGameState* LobbyGameState = GetWorld()->GetGameState<APCLobbyGameState>())
+	{
+		LobbyGameState->RecountReady();
+	}
+}
+
+void APCLobbyPlayerController::ShowNotice(const FText& Message)
+{	
 	if (!IsLocalController()) return;
-	if (!NoticeWidget && NoticeWidgetClass)
+
+	if (!IsValid(NoticeWidget) && NoticeWidgetClass)
 	{
 		NoticeWidget = CreateWidget<UPCNoticeWidget>(this, NoticeWidgetClass);
-		if (NoticeWidget)
-		{
-			NoticeWidget->AddToViewport(200);
-		}
 	}
-	if (NoticeWidget)
+	if (!IsValid(NoticeWidget)) return;
+
+	// 뷰포트에 없으면 다시 붙여줌
+	if (!NoticeWidget->IsInViewport())
 	{
-		NoticeWidget->SetMessage(Message);
-		NoticeWidget->SetVisibility(ESlateVisibility::Visible);
+		NoticeWidget->AddToViewport(200);
+		NoticeWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
+
+	NoticeWidget->SetMessage(Message);
+	NoticeWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
 void APCLobbyPlayerController::HideNotice()
@@ -235,6 +250,7 @@ void APCLobbyPlayerController::ShowLobbyMenuWidget()
 	}
 	if (!LobbyMenuWidget->IsInViewport())
 		LobbyMenuWidget->AddToViewport();
+	
 	LobbyMenuWidget->SetVisibility(ESlateVisibility::Visible);
 	ApplyUIOnly(LobbyMenuWidget);
 
