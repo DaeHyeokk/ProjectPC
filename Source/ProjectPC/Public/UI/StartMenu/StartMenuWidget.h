@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "StartMenuWidget.generated.h"
 
+class UPCNoticeWidget;
 class URegisterWidget;
 class UTextBlock;
 class UButton;
@@ -21,20 +22,25 @@ class PROJECTPC_API UStartMenuWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+
+	URegisterWidget* GetRegisterWidget() const { return RegisterWidget; }
+	UPCNoticeWidget* GetNoticeWidget() const { return NoticeWidget; }
 	
 protected:
-
-	UFUNCTION()
-	void OnClicked_Register();
 
 	UFUNCTION()
 	void OnClicked_JoinLobby();
 
 	UFUNCTION()
+	void OnClicked_Register();
+	
+	UFUNCTION()
 	void RefreshButtons();
 	
 	void OpenRegister(bool bFocusName = true);
 	void ConnectToServer();
+	void ShowNotice(const FText& Message);
+	void HideNotice();
 	
 	UPROPERTY(Meta = (BindWidget))
 	UEditableTextBox* EB_DisplayName;
@@ -50,13 +56,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Register")
 	TSubclassOf<URegisterWidget> RegisterWidgetClass;
-	
-	
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Notice")
+	TSubclassOf<UPCNoticeWidget> NoticeWidgetClass;
 
 private:
 	UPROPERTY()
 	URegisterWidget* RegisterWidget = nullptr;
+
+	UPROPERTY()
+	UPCNoticeWidget* NoticeWidget = nullptr;
 	
 	FTimerHandle UIRefreshTimer;
 

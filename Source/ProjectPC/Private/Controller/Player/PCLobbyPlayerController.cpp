@@ -9,6 +9,8 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/Lobby/LobbyMenuWidget.h"
+#include "UI/StartMenu/PCNoticeWidget.h"
+#include "UI/StartMenu/RegisterWidget.h"
 #include "UI/StartMenu/StartMenuWidget.h"
 
 
@@ -16,9 +18,7 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 {
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{
-		PS->bIdentified = true;
-		PS->LocalUserId = DisplayName;
-		// (선택) 중복 닉 검사
+		// 중복 닉 검사
 		bool bTaken = false;
 		if (const AGameStateBase* GS = GetWorld()->GetGameState())
 		{
@@ -33,7 +33,16 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 				}
 			}
 		}
-		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); }
+		
+		if (bTaken)
+		{
+			ClientRejectIdentity(TEXT("이미 사용 중인 ID입니다. 다른 ID를 입력하세요"));
+			return;
+		}
+
+		PS->bIdentified = true;
+		PS->LocalUserId = DisplayName;
+		ClientAcceptedIdentity();
 	}
 }
 
@@ -131,9 +140,45 @@ void APCLobbyPlayerController::SetLobbyUI()
 	}
 }
 
+void APCLobbyPlayerController::ShowNotice(const FText& Message)
+{
+	if (!IsLocalController()) return;
+	if (!NoticeWidget && NoticeWidgetClass)
+	{
+		NoticeWidget = CreateWidget<UPCNoticeWidget>(this, NoticeWidgetClass);
+		if (NoticeWidget)
+		{
+			NoticeWidget->AddToViewport(200);
+		}
+	}
+	if (NoticeWidget)
+	{
+		NoticeWidget->SetMessage(Message);
+		NoticeWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void APCLobbyPlayerController::HideNotice()
+{
+	if (NoticeWidget)
+	{
+		NoticeWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void APCLobbyPlayerController::ClientAcceptedIdentity_Implementation()
+{
+	ShowNotice(FText::FromString(TEXT("등록이 완료되었습니다.")));
+
+	if (!StartMenuWidget) return;
+	URegisterWidget* Register = StartMenuWidget->GetRegisterWidget();
+	if (!Register) return;
+	Register->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void APCLobbyPlayerController::ClientRejectIdentity_Implementation(const FString& Reason)
 {
-	ClientMessage(Reason);
+	ShowNotice(FText::FromString(Reason));
 }
 
 void APCLobbyPlayerController::ServerNotifyLobbyUIShown_Implementation()
