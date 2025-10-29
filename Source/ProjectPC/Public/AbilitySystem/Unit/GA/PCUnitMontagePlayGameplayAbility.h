@@ -20,14 +20,15 @@ public:
 	
 protected:
 	virtual void OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
-	
-	FMontageConfig MontageConfig;
 
-	virtual void SetMontageConfig();
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> Montage;
+
+	virtual void SetMontage();
 	virtual FGameplayTag GetMontageTag() { return FGameplayTag::EmptyTag; }
-	virtual float GetMontagePlayRate(const UAnimMontage* Montage) { return 1.f; }
+	virtual float GetMontagePlayRate() { return 1.f; }
 	
-	virtual void StartPlayMontageAndWaitTask(UAnimMontage* Montage, const bool bStopWhenAbilityEnds = true);
+	virtual void StartPlayMontageAndWaitTask(const bool bStopWhenAbilityEnds = true);
 	
 	UFUNCTION()
 	virtual void OnMontageFinished();

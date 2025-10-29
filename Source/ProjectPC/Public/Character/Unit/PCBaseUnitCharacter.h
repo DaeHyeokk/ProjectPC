@@ -128,6 +128,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnDeathAnimCompleted();
 
+	UFUNCTION(BlueprintCallable)
+	void CombatWin(APCPlayerState* TargetPS);
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsCombatWin() const { return bIsCombatWin; }
+	
 protected:
 	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) { };
 	FDelegateHandle GameStateChangedHandle;
@@ -138,6 +144,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
 
+	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
+	bool bIsCombatWin = false;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Combat")
 	bool bIsDead = false;
 

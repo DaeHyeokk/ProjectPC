@@ -9,6 +9,7 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
+#include "Component/PCSynergyComponent.h"
 #include "Component/PCUnitEquipmentComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
@@ -120,6 +121,8 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 	
 	if (HasAuthority())
 	{
+		bIsCombatWin = false;
+		
 		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
 			return;
 
@@ -143,7 +146,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 			HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-			//bIsDead = false;
 		}
 
 		// 스턴 상태일 경우 스턴 태그 제거
@@ -151,7 +153,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		{
 			HeroUnitAbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(
 				FGameplayTagContainer(UnitGameplayTags::Unit_State_Combat_Stun));
-			//bIsStunned = false;
 		}
 		
 		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.2f);
@@ -162,6 +163,23 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 			AIC->ClearBlackboardValue();
 		}
 	}
+}
+
+void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	if (UPCSynergyComponent* SynergyComp = OwnerPS ? OwnerPS->GetSynergyComponent() : nullptr)
+	{
+		if (bIsOnField && !IsOnField)
+		{
+			SynergyComp->UnRegisterHero(this);
+		}
+		else if (IsOnField)
+		{
+			SynergyComp->RegisterHero(this);
+		}
+	}
+	
+	Super::ChangedOnTile(IsOnField);
 }
 
 void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
@@ -222,6 +240,12 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	}
 	else if (NewStateTag == CombatEndTag)
 	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			FGameplayEventData EmptyData;
+			ASC->HandleGameplayEvent(CombatEndTag, &EmptyData);
+		}
+		
 		RestoreFromCombatEnd();
 	}
 }

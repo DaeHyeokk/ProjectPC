@@ -70,6 +70,8 @@ private:
 	void RestoreFromCombatEnd();
 	
 public:
+	virtual void ChangedOnTile(const bool IsOnField) override;
+	
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
 
