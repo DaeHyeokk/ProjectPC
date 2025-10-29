@@ -743,7 +743,6 @@ void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 					const FVector Loc = HostPB->GetFieldWorldPos(y,x);
 					const FRotator Rot(0.f, HostPB->GetActorRotation().Yaw, 0.f);
 					U->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
-					U->ChangedOnTile(false);
 				}
 			}
 		}

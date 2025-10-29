@@ -24,7 +24,6 @@ public:
 	virtual void NativeDestruct() override;
 
 	URegisterWidget* GetRegisterWidget() const { return RegisterWidget; }
-	UPCNoticeWidget* GetNoticeWidget() const { return NoticeWidget; }
 	
 protected:
 
@@ -40,7 +39,7 @@ protected:
 	void OpenRegister(bool bFocusName = true);
 	void ConnectToServer();
 	void ShowNotice(const FText& Message);
-	void HideNotice();
+	
 	
 	UPROPERTY(Meta = (BindWidget))
 	UEditableTextBox* EB_DisplayName;
@@ -57,20 +56,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Register")
 	TSubclassOf<URegisterWidget> RegisterWidgetClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Notice")
-	TSubclassOf<UPCNoticeWidget> NoticeWidgetClass;
-
 private:
 	UPROPERTY()
 	URegisterWidget* RegisterWidget = nullptr;
-
-	UPROPERTY()
-	UPCNoticeWidget* NoticeWidget = nullptr;
 	
 	FTimerHandle UIRefreshTimer;
-
-	bool ValidateID(const FString& In, FString& OutErr) const;
-	
 	
 	
 	

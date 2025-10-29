@@ -438,7 +438,7 @@ void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 		++AliveCount;
 	}
 	
-	// AttributeChanageDelegate
+	// AttributeChangeDelegate
 	FDelegateHandle Handle = ASC->GetGameplayAttributeValueChangeDelegate(UPCPlayerAttributeSet::GetPlayerHPAttribute())
 	.AddLambda([this, PCPlayerState](const FOnAttributeChangeData& Data)
 	{
@@ -453,11 +453,7 @@ void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 		}
 	});
 	
-	HpDelegateHandles.Add(ASC,Handle);
-
-	
-
-	
+	HpDelegateHandles.Add(ASC,Handle);	
 }
 
 int32 APCCombatGameState::AssignFinalRankOnDeathById(const FString& LocalUserId)

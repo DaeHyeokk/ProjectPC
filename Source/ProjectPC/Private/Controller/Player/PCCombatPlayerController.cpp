@@ -144,17 +144,6 @@ void APCCombatPlayerController::BeginPlay()
 		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
 		PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
 	}
-	else
-	{
-		// 안전책: 월드 틱 이후 GameState를 다시 확인
-		GetWorldTimerManager().SetTimerForNextTick([this]()
-		{
-			if (APCCombatGameState* GS2 = GetWorld()->GetGameState<APCCombatGameState>())
-			{
-				GS2->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
-			}
-		});
-	}
 
 	// 마우스 호버 풀링함수
 	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
@@ -785,7 +774,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	}
 	else
 	{
-		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
+		// 재보장
 		if (!PlayerMainWidget->IsInViewport())
 			PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
@@ -1004,6 +993,8 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
+	bIsCancel = true;
+	
 	if (!IsLocalController())
 		return;
 
@@ -1067,6 +1058,8 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
 
+	bIsCancel = false;
+
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
 	{
@@ -1124,6 +1117,9 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 {
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
     const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+
+	if (bIsCancel)
+		return;
 
     // 드래그 유효성
     if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
