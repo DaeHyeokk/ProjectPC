@@ -730,6 +730,8 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 	}
 
 	Leaderboard = MoveTemp(NewReaderBoard);
+	GetPlayerStatesOrdered();
+	
 	ForceNetUpdate();
 	
 }
@@ -778,34 +780,36 @@ APCPlayerState* APCCombatGameState::FindPlayerStateByUserId(const FString& Local
 	return nullptr;
 }
 
-void APCCombatGameState::GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const
+void APCCombatGameState::GetPlayerStatesOrdered() 
 {
-	OutPlayerStates.Reset();
+	FindPlayerStates.Reset();
 
 	if (Leaderboard.Num() <= 0) return;
 
-	OutPlayerStates.SetNum(Leaderboard.Num());
+	FindPlayerStates.SetNum(Leaderboard.Num());
 
 	for (int32 i = 0; i < Leaderboard.Num(); ++i)
 	{
 		const FString& Id = Leaderboard[i].LocalUserId;
-		OutPlayerStates[i] = FindPlayerStateByUserId(Id);
+		FindPlayerStates[i] = FindPlayerStateByUserId(Id);
 	}
-
-	FindPlayerState.Broadcast(OutPlayerStates);
+	
 	
 }
 
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
-	GetPlayerStatesOrdered(FindPlayerStates);
-
+	GetPlayerStatesOrdered();
+	
 	if (!bLeaderBoardReady)
 	{
 		bLeaderBoardReady = true;
 		OnLeaderBoardReady.Broadcast();
 	}
+
+	FindPlayerState.Broadcast(FindPlayerStates);
+	
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const

@@ -235,11 +235,6 @@ public:
 	void StartClientBootStrap();
 	void TickClientBootStrap();
 	
-	// 플레이어 오버헤드 위젯 재 동기화
-	UFUNCTION(Client, Reliable)
-	void Client_RebindOverHead();
-
-	
 	// 게임스테이트 로딩 이벤트 구독
 	UFUNCTION()
 	void OnGameLoadingChanged();

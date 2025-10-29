@@ -101,13 +101,13 @@ void APCPlayerCharacter::OnRep_PlayerState()
 			ASC->InitAbilityActorInfo(PS, this);
 		}
 
-		if (OverHeadWidgetComp)
-		{
-			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-			{
-				OverheadWidget->BindToPlayerState(PS);
-			}
-		}
+		// if (OverHeadWidgetComp)
+		// {
+		// 	if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+		// 	{
+		// 		OverheadWidget->BindToPlayerState(PS);
+		// 	}
+		// }
 	}
 }
 
@@ -189,7 +189,7 @@ void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
 	}
 }
 
-void APCPlayerCharacter::SetOverHeadWidget()
+void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
 {
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{	

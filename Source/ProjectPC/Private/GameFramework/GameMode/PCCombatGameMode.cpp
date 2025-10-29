@@ -884,12 +884,9 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 	BindPlayerBoardsToPlayerStates();
 
 	// === OverheadWidget 보정 ===
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	for (TActorIterator<APCPlayerCharacter> It(GetWorld()); It; ++It)
 	{
-		if (auto* PC = Cast<APCCombatPlayerController>(It->Get()))
-		{
-			PC->Client_RebindOverHead();
-		}
+		It->Multicast_SetOverHeadWidget();
 	}
 	
 	if (APCCombatGameState* GS = GetCombatGameState())

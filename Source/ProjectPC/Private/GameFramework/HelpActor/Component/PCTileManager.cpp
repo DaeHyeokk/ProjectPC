@@ -75,7 +75,9 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
 
 	Unit->SetOnCombatBoard(Board);
-	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
+	FVector TWorld = FVector(Loc.X, Loc.Y, 71);
+	Unit->TeleportTo(TWorld, Rot, false, true);
+	//Unit->SetActorRotation(Rot, ETeleportType::TeleportPhysics);
 	BindToUnit(Unit);
 
 	return true;

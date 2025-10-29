@@ -529,7 +529,7 @@ protected:
 
 	// 순위대로 PS 뽑기
 	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
-	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
+	void GetPlayerStatesOrdered();
 	
 	UPROPERTY()
 	TArray<APCPlayerState*> FindPlayerStates;

@@ -43,6 +43,7 @@ void UStartMenuWidget::OnClicked_Register()
 void UStartMenuWidget::OnClicked_JoinLobby()
 {
 	UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>();
+	
 	if (!Profile) return;
 
 	if (!Profile->HasDisplayName())
@@ -63,6 +64,15 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 			EB_DisplayName->SetKeyboardFocus();
 		return;
 	}
+
+	if (CandidateID != Profile->GetUserID())
+	{
+		ShowNotice(FText::FromString(TEXT("등록되지 않은 아이디입니다.")));
+		if (EB_DisplayName)
+			EB_DisplayName->SetKeyboardFocus();
+		return;
+	}
+	
 	
 	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
