@@ -6,9 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "PCShopWidget.generated.h"
 
-class APCCombatPlayerController;
 struct FOnAttributeChangeData;
 
+class APCCombatPlayerController;
 class APCPlayerState;
 class UImage;
 class UHorizontalBox;
@@ -52,63 +52,63 @@ protected:
 	
 	// UMG Widget
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UHorizontalBox* PlayerShopBox;
+	TObjectPtr<UHorizontalBox> PlayerShopBox;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UHorizontalBox* ShopBox;
+	TObjectPtr<UHorizontalBox> ShopBox;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UOverlay* SellBox;
+	TObjectPtr<UOverlay> SellBox;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UWidgetSwitcher* WidgetSwitcher;
+	TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_BuyXP;
+	TObjectPtr<UButton> Btn_BuyXP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_Reroll;
+	TObjectPtr<UButton> Btn_Reroll;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_ShopLock;
+	TObjectPtr<UButton> Btn_ShopLock;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* GoldBalance;
+	TObjectPtr<UTextBlock> GoldBalance;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* WinningStreak;
+	TObjectPtr<UTextBlock> WinningStreak;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_ShopLock;
+	TObjectPtr<UImage> Img_ShopLock;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_WinningStreak;
+	TObjectPtr<UImage> Img_WinningStreak;
 
 	// Cost Probability
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Cost1;
+	TObjectPtr<UTextBlock> Cost1;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Cost2;
+	TObjectPtr<UTextBlock> Cost2;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Cost3;
+	TObjectPtr<UTextBlock> Cost3;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Cost4;
+	TObjectPtr<UTextBlock> Cost4;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Cost5;
+	TObjectPtr<UTextBlock> Cost5;
 
 	// Level
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Level;
+	TObjectPtr<UTextBlock> Level;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* XP;
+	TObjectPtr<UTextBlock> XP;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UProgressBar* XPBar;
+	TObjectPtr<UProgressBar> XPBar;
 
 	// ShopLock
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* ShopLock;
+	TObjectPtr<UTexture2D> ShopLock;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* ShopUnlock;
+	TObjectPtr<UTexture2D> ShopUnlock;
 
 	// WinningStreak
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Winning;
+	TObjectPtr<UTexture2D> Winning;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UTexture2D* Losing;
+	TObjectPtr<UTexture2D> Losing;
 
 public:
 	UFUNCTION(BlueprintCallable)

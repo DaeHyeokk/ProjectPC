@@ -78,26 +78,6 @@ void UPCShopWidget::CloseMenu()
 
 void UPCShopWidget::SetupShopSlots()
 {
-	// if (!ShopBox) return;
-	// if (!CachedPlayerState) return;
-	//
-	// ShopBox->ClearChildren();
-	//
-	// const auto& ShopSlots = CachedPlayerState->GetShopSlots();
-	//
-	// // GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
-	// int32 Index = 0;
-	// for (const FPCShopUnitData& UnitData : ShopSlots)
-	// {
-	// 	auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-	// 	if (!UnitSlotWidget) continue;
-	// 	
-	// 	UnitSlotWidget->Setup(UnitData, true, Index);
-	// 	ShopBox->AddChild(UnitSlotWidget);
-	//
-	// 	++Index;
-	// }
-
 	if (!ShopBox)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] ShopBox is NULL"));

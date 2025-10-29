@@ -95,6 +95,10 @@ struct FPlayerStandingRow
 	/** 플레이어ID 식별자 */
 	UPROPERTY(BlueprintReadOnly)
 	FString LocalUserId;
+
+	// 카메라 전환용 SeatIndex
+	UPROPERTY(BlueprintReadOnly)
+	int32 PlayerSeatIndex = -1;
 	
 	/** 최신 HP (실시간) */
 	UPROPERTY(BlueprintReadOnly)
@@ -141,6 +145,7 @@ DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardFindPlayerState, const TArray<APCPlayerState*>);
 DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 
 // Carousel 전용 델리게이트
@@ -313,7 +318,7 @@ public:
 protected:
 	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
-	UDataTable* LevelMaxXPDataTable;
+	TObjectPtr<UDataTable> LevelMaxXPDataTable;
 
 private:
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
@@ -372,7 +377,7 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
-	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+	TObjectPtr<UPCDataAsset_ProjectilePoolData> ProjectilePoolData;
 
 	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
 	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
@@ -456,13 +461,25 @@ protected:
 	void OnEliminated_Server(APCPlayerState* PCPlayerState);
 
 	// 리더보드 재구성, 마지막 1인 1등 처리
-	
 	void TryFinalizeLastSurvivor();
+
+	// 로컬 UserID로 플레이어스테이트 찾기
+	UFUNCTION()
+	APCPlayerState* FindPlayerStateByUserId(const FString& LocalUserId) const;
+
+	// 순위대로 PS 뽑기
+	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
+	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
+
+
+	UPROPERTY()
+	TArray<APCPlayerState*> FindPlayerStates;
+	
+	FOnLeaderboardFindPlayerState FindPlayerState;
 
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();
-
 	
 	FLeaderBoardMap CachedLeaderBoardMap;
 
@@ -507,11 +524,11 @@ public:
 protected:
 	// 아이템 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemDataTable;
+	TObjectPtr<UDataTable> ItemDataTable;
 
 	// 아이템 조합 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemCombineDataTable;
+	TObjectPtr<UDataTable> ItemCombineDataTable;
 
 	// 아이템 캡슐 블루프린트 클래스
 	UPROPERTY(EditAnywhere, Category = "ItemCapsuleClass")

@@ -4,13 +4,25 @@
 #include "UI/PlayerMainWidget/PCPlayerRowWidget.h"
 
 #include "AbilitySystemComponent.h"
+#include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 
 
-void UPCPlayerRowWidget::SetupPlayerInfo(FString NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
+bool UPCPlayerRowWidget::Initialize()
+{
+	if (!Super::Initialize())
+		return false;
+
+	if (!Btn_CameraSwitch) return false;
+	Btn_CameraSwitch->OnClicked.AddDynamic(this, &UPCPlayerRowWidget::SwitchCamera);
+
+	return true;
+}
+
+void UPCPlayerRowWidget::SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
 {
 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
 
@@ -58,6 +70,11 @@ void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
 			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
 		}
 	}
+}
+
+void UPCPlayerRowWidget::SwitchCamera()
+{
+	
 }
 
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)

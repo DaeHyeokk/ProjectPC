@@ -577,6 +577,7 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 			FPlayerStandingRow Row;
 			Row.LocalUserId = Id;
+			Row.PlayerSeatIndex = PCS->SeatIndex;
 			Row.Hp = HpCache.FindRef(Id);
 			Row.bEliminated = EliminatedSet.Contains(Id);
 			Row.FinalRank = FinalRanks.FindRef(Id);
@@ -704,9 +705,45 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 	RebuildAndReplicatedLeaderboard();
 }
 
+APCPlayerState* APCCombatGameState::FindPlayerStateByUserId(const FString& LocalUserId) const
+{
+	if (LocalUserId.IsEmpty()) return nullptr;
+
+	for (APlayerState* PlayerState : PlayerArray)
+	{
+		if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState))
+		{
+			if (PCPlayerState->LocalUserId == LocalUserId)
+			{
+				return PCPlayerState;
+			}
+		}
+	}
+	return nullptr;
+}
+
+void APCCombatGameState::GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const
+{
+	OutPlayerStates.Reset();
+
+	if (Leaderboard.Num() <= 0) return;
+
+	OutPlayerStates.SetNum(Leaderboard.Num());
+
+	for (int32 i = 0; i < Leaderboard.Num(); ++i)
+	{
+		const FString& Id = Leaderboard[i].LocalUserId;
+		OutPlayerStates[i] = FindPlayerStateByUserId(Id);
+	}
+
+	FindPlayerState.Broadcast(OutPlayerStates);
+	
+}
+
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
+	GetPlayerStatesOrdered(FindPlayerStates);
 
 	if (!bLeaderBoardReady)
 	{

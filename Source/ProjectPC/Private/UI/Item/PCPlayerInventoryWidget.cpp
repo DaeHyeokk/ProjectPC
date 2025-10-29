@@ -36,6 +36,7 @@ void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 			ItemSlots[i]->SetSlotIndex(i);
 		}
 	}
+	
 }
 
 FReply UPCPlayerInventoryWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

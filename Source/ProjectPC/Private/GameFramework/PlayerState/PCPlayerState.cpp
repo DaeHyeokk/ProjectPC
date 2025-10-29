@@ -238,7 +238,6 @@ void APCPlayerState::PlayerWin()
 	}
 
 	// 승리 보상 1원 지급
-
 	AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerGold, 1);
 }
 
@@ -312,7 +311,6 @@ void APCPlayerState::SetDisplayName_Server(const FString& InName)
 		LocalUserId = Clean;
 
 		SetPlayerName(Clean);
-		
 	}
 }
 

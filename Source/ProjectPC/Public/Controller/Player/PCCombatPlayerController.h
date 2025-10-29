@@ -69,32 +69,28 @@ protected:
 	virtual void BeginPlayingState() override;
 	virtual void AcknowledgePossession(APawn* P) override;
 	
+
+
+#pragma region Input
+	
 private:
-	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
+	// Player의 모든 Input에 대한 MappingContext, Action이 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
-	UPCDataAsset_PlayerInput* PlayerInputData;
+	TObjectPtr<UPCDataAsset_PlayerInput> PlayerInputData;
 	
 	FVector CachedDestination;
 	float FollowTime;
 
-#pragma region Input
-
+	FTimerHandle MoveTimerHandle;
+	
 	// Move
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
+	void UpdateMovement();
 
 	UFUNCTION(Server, Reliable)
 	void Server_StopMovement();
-
-	UFUNCTION(Server, Reliable)
-	void Server_SetRotation(const FVector& Destination);
-	
-	UFUNCTION(Server, Reliable)
-	void Server_MovetoLocation(const FVector& Destination);
-
-	UFUNCTION(Client, Reliable)
-	void Client_MovetoLocation(const FVector& Destination);
 	
 	// Shop
 	void OnBuyXPStarted();
@@ -114,7 +110,7 @@ protected:
 	TSubclassOf<UUserWidget> ShopWidgetClass;
 
 	UPROPERTY()
-	UPCShopWidget* ShopWidget;
+	TObjectPtr<UPCShopWidget> ShopWidget;
 
 public:
 	FTimerHandle LoadShop;
@@ -374,7 +370,7 @@ public:
 	TSubclassOf<UUserWidget> GameResultWidgetClass;
 
 	UPROPERTY()
-	UPCGameResultWidget* GameResultWidget;
+	TObjectPtr<UPCGameResultWidget> GameResultWidget;
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);

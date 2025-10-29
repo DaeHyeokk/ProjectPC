@@ -71,15 +71,15 @@ public:
 protected:
 	// 유닛 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitDataTable;
+	TObjectPtr<UDataTable> ShopUnitDataTable;
 
 	// 유닛 확률 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitProbabilityDataTable;
+	TObjectPtr<UDataTable> ShopUnitProbabilityDataTable;
 
 	// 유닛 판매 가격 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitSellingPriceDataTable;
+	TObjectPtr<UDataTable> ShopUnitSellingPriceDataTable;
 
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
 	TArray<FPCShopUnitData> ShopUnitDataList;
