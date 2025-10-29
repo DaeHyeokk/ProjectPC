@@ -215,15 +215,9 @@ public:
 	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
 	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
 
-	
-
-
 #pragma endregion GameLogic
 
-
-
 #pragma region Loading
-
 
 public:
 
@@ -258,6 +252,7 @@ public:
 	float ClientBootstrapRatio() const;
 	
 #pragma endregion Loading
+	
 #pragma region UI
 
 public:
@@ -300,11 +295,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
 	int32 StagesStartFlatIndex(int32 StageIdx) const;
-
 	
 	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
 	TArray<FGameplayTag> RoundPvETagFlat;
-		
 	
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
@@ -594,6 +587,4 @@ protected:
 	TSubclassOf<APCItemCapsule> ItemCapsuleClass;
 	
 #pragma endregion Item
-
-
 };
