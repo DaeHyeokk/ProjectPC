@@ -1225,7 +1225,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         if (bPlaced)
         {
-            Multicast_LerpMove(Unit, Snap, LerpDuration);
+            //Multicast_LerpMove(Unit, Snap, LerpDuration);
             Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else

@@ -411,7 +411,8 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	Unit->ChangedOnTile(true);
 
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
-	Unit->SetActorLocation(World,false);
+	FVector TWorld = FVector(World.X, World.Y, 0);
+	Unit->SetActorLocation(TWorld,false);
 
 	if (HasAuthority())
 	{

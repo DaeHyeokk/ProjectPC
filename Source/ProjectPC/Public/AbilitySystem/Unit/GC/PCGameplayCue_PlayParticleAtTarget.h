@@ -4,22 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameplayCueNotify_Burst.h"
-#include "PCGameplayCue_LevelUp.generated.h"
+#include "PCGameplayCue_PlayParticleAtTarget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTPC_API UPCGameplayCue_LevelUp : public UGameplayCueNotify_Burst
+class PROJECTPC_API UPCGameplayCue_PlayParticleAtTarget : public UGameplayCueNotify_Burst
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category="FX")
-	TObjectPtr<UParticleSystem> LevelUpFX = nullptr;
+	TObjectPtr<UParticleSystem> DefaultFX = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, Category="FX")
-	FName SocketName = TEXT("Root");
+	FName DefaultSocketName = TEXT("Root");
 	
 	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
 	virtual bool OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
