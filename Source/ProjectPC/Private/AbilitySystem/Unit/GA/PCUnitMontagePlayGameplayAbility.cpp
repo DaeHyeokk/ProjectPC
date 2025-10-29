@@ -22,21 +22,27 @@ void UPCUnitMontagePlayGameplayAbility::OnAvatarSet(const FGameplayAbilityActorI
 	Super::OnAvatarSet(ActorInfo, Spec);
 	
 	if (Unit)
-		SetMontageConfig();
+		SetMontage();
 }
 
-void UPCUnitMontagePlayGameplayAbility::SetMontageConfig()
+void UPCUnitMontagePlayGameplayAbility::SetMontage()
 {
 	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
 	{
 		const FGameplayTag MontageTag = GetMontageTag();
-		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
+		Montage = UnitAnimSet->GetMontageByTag(MontageTag);
 	}
 }
 
-void UPCUnitMontagePlayGameplayAbility::StartPlayMontageAndWaitTask(UAnimMontage* Montage, const bool bStopWhenAbilityEnds)
+void UPCUnitMontagePlayGameplayAbility::StartPlayMontageAndWaitTask(const bool bStopWhenAbilityEnds)
 {
-	const float MontagePlayRate = GetMontagePlayRate(Montage);
+	if (!Montage)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, true);
+		return;
+	}
+	
+	const float MontagePlayRate = GetMontagePlayRate();
 			
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, Montage, MontagePlayRate, NAME_None, bStopWhenAbilityEnds);

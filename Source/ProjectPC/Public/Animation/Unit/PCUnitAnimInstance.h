@@ -55,6 +55,12 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category="CombatState")
 	bool bIsDead;
+
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bIsCombatWin;
+
+	UPROPERTY(BlueprintReadOnly, Category="CombatState")
+	bool bHasCombatWinAnim;
 	
 	void PlayLevelStartMontage();
 	
@@ -101,5 +107,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAnimSequence> Death;
 
+	UPROPERTY(BlueprintReadOnly, Category="AnimSet", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UAnimSequence> CombatWinEmote;
+	
 	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
 };

@@ -115,6 +115,10 @@ struct FPlayerStandingRow
 	/** 플레이어ID 식별자 */
 	UPROPERTY(BlueprintReadOnly)
 	FString LocalUserId;
+
+	// 카메라 전환용 SeatIndex
+	UPROPERTY(BlueprintReadOnly)
+	int32 PlayerSeatIndex = -1;
 	
 	/** 최신 HP (실시간) */
 	UPROPERTY(BlueprintReadOnly)
@@ -373,7 +377,7 @@ public:
 protected:
 	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
-	UDataTable* LevelMaxXPDataTable;
+	TObjectPtr<UDataTable> LevelMaxXPDataTable;
 
 private:
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
@@ -432,7 +436,7 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
-	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
+	TObjectPtr<UPCDataAsset_ProjectilePoolData> ProjectilePoolData;
 
 	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
 	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
@@ -577,11 +581,11 @@ public:
 protected:
 	// 아이템 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemDataTable;
+	TObjectPtr<UDataTable> ItemDataTable;
 
 	// 아이템 조합 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemCombineDataTable;
+	TObjectPtr<UDataTable> ItemCombineDataTable;
 
 	// 아이템 캡슐 블루프린트 클래스
 	UPROPERTY(EditAnywhere, Category = "ItemCapsuleClass")

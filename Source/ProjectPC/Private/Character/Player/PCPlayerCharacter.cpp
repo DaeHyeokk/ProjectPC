@@ -62,6 +62,8 @@ APCPlayerCharacter::APCPlayerCharacter()
 	CarrySlot->SetupAttachment(GetRootComponent());
 	CarrySlot->SetRelativeLocation(FVector( -120.f, 0.f, 20.f));
 	CarrySlot->SetRelativeRotation(FRotator(0.f,0.f,0.f));
+
+	NetUpdateFrequency = 60.f;
 }
 
 void APCPlayerCharacter::BeginPlay()
@@ -121,14 +123,14 @@ void APCPlayerCharacter::Server_RequestCarouselPick_Implementation()
 void APCPlayerCharacter::CarouselUnitToSpawn()
 {
 	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
 	UPCPlayerInventory* PlayerInventory = PS->GetPlayerInventory();
-	if (!PS || !PlayerInventory) return;
+	if (!PlayerInventory) return;
 
 	const FGameplayTag UnitTag = CarouselUnitData.UnitTag;
 	const FGameplayTag ItemTag = CarouselUnitData.ItemTag;
-
-	//IsValidIndex(0) ? CarouselUnitData.ItemTag[0] : FGameplayTag();
-
+	
 	PS->UnitSpawn(UnitTag);
 	PlayerInventory->AddItemToInventory(ItemTag);
 }
@@ -186,20 +188,6 @@ void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
 		OverHeadWidgetComp->SetPivot(FVector2D(0.5f, 2.2f));
 	}
 }
-
-// void APCPlayerCharacter::SetOverHeadWidget_Implementation()
-// {
-// 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
-// 	{	
-// 		if (OverHeadWidgetComp)
-// 		{
-// 			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-// 			{
-// 				OverheadWidget->BindToPlayerState(PS);
-// 			}
-// 		}
-// 	}
-// }
 
 void APCPlayerCharacter::SetOverHeadWidget()
 {

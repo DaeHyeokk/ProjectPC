@@ -25,7 +25,7 @@ protected:
 	TSubclassOf<UUserWidget> ItemRecipeRowWidgetClass;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UVerticalBox* ItemInfoBox;
+	TObjectPtr<UVerticalBox> ItemInfoBox;
 
 private:
 	FGameplayTag CachedBaseItemTag;

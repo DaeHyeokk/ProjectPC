@@ -61,7 +61,7 @@ void APCBaseProjectile::BeginPlay()
 }
 
 
-void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor, bool IsPlayerAttack)
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
 	if (SpawnActor && TargetActor)
 	{
@@ -78,8 +78,48 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 		SetTarget(TargetActor);
 		
 		Target = TargetActor;
+	}
+}
 
-		bIsPlayerAttack = IsPlayerAttack;
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const AActor* SpawnActor, const AActor* TargetActor)
+{
+	if (SpawnActor && TargetActor)
+	{
+		ProjectileDataCharacterTag = UnitGameplayTags::Unit;
+		ProjectileDataAttackTypeTag = UnitGameplayTags::Unit_Ability_Attack;
+		
+		SetInstigator(SpawnActor->GetInstigator());
+		
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		SetActorTransform(SpawnTransform);
+	
+		SetProjectileProperty();
+		SetTarget(TargetActor);
+		
+		Target = TargetActor;
+		bIsPlayerAttack = true;
+	}
+}
+
+void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, const AActor* SpawnActor, const AActor* TargetActor)
+{
+	if (SpawnActor && TargetActor)
+	{
+		ProjectileDataCharacterTag = CharacterTag;
+		ProjectileDataAttackTypeTag = PlayerGameplayTags::Player_Action_Attack_Basic;
+		
+		SetInstigator(SpawnActor->GetInstigator());
+		
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		SetActorTransform(SpawnTransform);
+	
+		SetProjectileProperty();
+		SetTarget(TargetActor);
+		
+		Target = TargetActor;
+		bIsPlayerAttack = true;
 	}
 }
 
@@ -139,6 +179,11 @@ void APCBaseProjectile::SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpe
 	EffectSpecs = InEffectSpecs;
 }
 
+void APCBaseProjectile::SetDamage(float InDamage)
+{
+	PlayerDamage = InDamage;
+}
+
 void APCBaseProjectile::ReturnToPool()
 {
 	GetWorldTimerManager().ClearTimer(LifeTimer);
@@ -163,6 +208,10 @@ void APCBaseProjectile::ReturnToPool()
 	SetInstigator(nullptr);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
+
+	bIsHomingProjectile = true;
+	bIsPenetrating = false;
+	bIsPlayerAttack = false;
 
 	if (HasAuthority())
 	{
@@ -200,11 +249,11 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 
 			if (bIsPlayerAttack)
 			{
-				if (auto InstigatorPawn = Cast<APawn>(InstigatorActor))
+				if (auto OtherActorPawn = Cast<APawn>(OtherActor))
 				{
-					if (auto InstigatorPS = InstigatorPawn->GetPlayerState())
+					if (auto OtherPS = OtherActorPawn->GetPlayerState<APCPlayerState>())
 					{
-						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorPS, PlayerGameplayTags::Player_Event_ProjectileHit, FGameplayEventData());
+						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, PlayerDamage);
 					}
 				}
 			}

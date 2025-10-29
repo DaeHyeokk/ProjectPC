@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
-#include "DataAsset/Unit/PCDataAsset_UnitDefinition.h"
 #include "PCCarouselHeroCharacter.generated.h"
 
 class APCCarouselRing;

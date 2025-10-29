@@ -77,6 +77,7 @@ void UPCUnitAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bFullBody = GetCurveValue(TEXT("FullBody")) > 0.f;
 	bIsDead = CachedUnitCharacter->IsDead();
 	bIsStunned = CachedUnitCharacter->IsStunned();
+	bIsCombatWin = CachedUnitCharacter->IsCombatWin();
 }
 
 void UPCUnitAnimInstance::SetAnimSet(UPCDataAsset_UnitAnimSet* NewSet)
@@ -100,4 +101,8 @@ void UPCUnitAnimInstance::ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet)
 	StunStart = AnimSet->LocomotionSet.StunStart.LoadSynchronous();
 	StunIdle = AnimSet->LocomotionSet.StunIdle.LoadSynchronous();
 	Death = AnimSet->LocomotionSet.Death.LoadSynchronous();
+	CombatWinEmote = AnimSet->LocomotionSet.CombatWinEmote.LoadSynchronous();
+
+	if (CombatWinEmote)
+		bHasCombatWinAnim = true;
 }

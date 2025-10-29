@@ -233,10 +233,10 @@ void APCCombatPlayerController::OnInputStarted()
 
 void APCCombatPlayerController::OnSetDestinationTriggered()
 {
-	if (const UWorld* World = GetWorld())
-	{
-		FollowTime += World->GetDeltaSeconds();
-	}
+	// if (const UWorld* World = GetWorld())
+	// {
+	// 	FollowTime += World->GetDeltaSeconds();
+	// }
 
 	FHitResult Hit;
 	if (bool bHitSucceeded = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
@@ -244,78 +244,66 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 		CachedDestination = Hit.Location;
 	}
 
-	if (APawn* ControlledPawn = GetPawn())
+	if (!GetWorld()->GetTimerManager().IsTimerActive(MoveTimerHandle))
 	{
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector Direction = CachedDestination - CurrentLocation;
-			     
-		FRotator TargetRotation = Direction.Rotation();
-		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-			     
-		ControlledPawn->SetActorRotation(NewRotation);
-
-		Server_SetRotation(CachedDestination);
-		
-		if (FollowTime > PlayerInputData->ShortPressThreshold)
-		{
-			StopMovement();
-			Server_StopMovement();
-		}
-		
-		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
+		GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, &APCCombatPlayerController::UpdateMovement, 0.01f, true);
 	}
+
+	// if (APawn* ControlledPawn = GetPawn())
+	// {
+	// 	FVector CurrentLocation = ControlledPawn->GetActorLocation();
+	// 	FVector Direction = CachedDestination - CurrentLocation;
+	// 		     
+	// 	FRotator TargetRotation = Direction.Rotation();
+	// 	FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
+	// 	
+	// 	ControlledPawn->SetActorRotation(NewRotation);
+	// 	Server_SetRotation(CachedDestination);
+	// 	
+	// 	if (FollowTime > PlayerInputData->ShortPressThreshold)
+	// 	{
+	// 		StopMovement();
+	// 		Server_StopMovement();
+	// 	}
+	// 	
+	// 	FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+	// 	ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
+	// }
 }
 
 void APCCombatPlayerController::OnSetDestinationReleased()
 {
-	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
-	{
-		// StopMovement();
-		// Server_StopMovement();
-		Server_MovetoLocation(CachedDestination);
-	}
+	// if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
+	// {
+	// 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+	// 	Server_MovetoLocation(CachedDestination);
+	// }
 	
-	FollowTime = 0.f;
+	// FollowTime = 0.f;
 }
 
-void APCCombatPlayerController::Server_StopMovement_Implementation()
+void APCCombatPlayerController::UpdateMovement()
 {
 	if (APawn* ControlledPawn = GetPawn())
 	{
-		StopMovement();
-	}
-}
+		FVector Direction = CachedDestination - ControlledPawn->GetActorLocation();
+		if (Direction.SizeSquared() < FMath::Square(100.f))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+			return;
+		}
 
-void APCCombatPlayerController::Server_SetRotation_Implementation(const FVector& Destination)
-{
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector Direction = Destination - CurrentLocation;
-			     
-		FRotator TargetRotation = Direction.Rotation();
-		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-			     
+		FVector MoveDirection = Direction.GetSafeNormal();
+		ControlledPawn->AddMovementInput(MoveDirection, 1.f);
+		
+		FRotator NewRotation = FRotator(0.f, MoveDirection.Rotation().Yaw, 0.f);
 		ControlledPawn->SetActorRotation(NewRotation);
 	}
 }
 
-void APCCombatPlayerController::Server_MovetoLocation_Implementation(const FVector& Destination)
+void APCCombatPlayerController::Server_StopMovement_Implementation()
 {
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
-		Client_MovetoLocation(Destination);
-	}
-}
-
-void APCCombatPlayerController::Client_MovetoLocation_Implementation(const FVector& Destination)
-{
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
-	}
+	StopMovement();
 }
 
 void APCCombatPlayerController::OnBuyXPStarted()

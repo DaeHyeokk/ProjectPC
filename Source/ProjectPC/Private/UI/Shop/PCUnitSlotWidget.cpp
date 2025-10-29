@@ -28,15 +28,29 @@ bool UPCUnitSlotWidget::Initialize()
 
 void UPCUnitSlotWidget::Setup(const FPCShopUnitData& UnitData, bool bIsShopSlot, int32 NewSlotIndex)
 {
-	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job || !Img_UnitThumbnail || !Img_CostBorder) return;
+	if (!Text_UnitName || !Text_Cost || !Text_Species || !Text_Job
+		|| !Img_UnitThumbnail || !Img_CostBorder || !Img_Species || !Img_Job
+		|| !SynergyInfo) return;
 	
 	SlotIndex = NewSlotIndex;
 	UnitCost = UnitData.UnitCost;
 
 	Text_UnitName->SetText(FText::FromName(UnitData.UnitName));
 	Text_Cost->SetText(FText::AsNumber(UnitData.UnitCost));
-	Text_Species->SetText(FText::FromString(TagToString(UnitData.UnitSpeciesTag)));
-	Text_Job->SetText(FText::FromString(TagToString(UnitData.UnitJobTag)));
+
+	FPCSynergyUIRow SpeciesRow;
+	FPCSynergyUIRow JobRow;
+	if (SynergyInfo->Resolve(UnitData.UnitSpeciesTag, SpeciesRow)
+		&& SynergyInfo->Resolve(UnitData.UnitJobTag, JobRow))
+	{
+		Text_Species->SetText(SpeciesRow.DisplayName);
+		Text_Job->SetText(JobRow.DisplayName);
+
+		Img_Species->SetBrush(SpeciesRow.Icon);
+		Img_Species->SetBrushTintColor(FSlateColor(FLinearColor::White));
+		Img_Job->SetBrush(JobRow.Icon);
+		Img_Job->SetBrushTintColor(FSlateColor(FLinearColor::White));
+	}
 	
 	// 유닛 썸네일 세팅 (SoftObjectPtr 비동기 로드)
 	FSoftObjectPath TexturePath = UnitData.UnitTexture.ToSoftObjectPath();
@@ -131,17 +145,4 @@ void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
 	{
 		this->SetVisibility(ESlateVisibility::Hidden);
 	}
-}
-
-FString UPCUnitSlotWidget::TagToString(FGameplayTag Tag)
-{
-	FString TagStr = Tag.GetTagName().ToString();
-	int32 DotIndex;
-	
-	if (TagStr.FindLastChar('.', DotIndex))
-	{
-		return TagStr.RightChop(DotIndex + 1);
-	}
-
-	return TagStr;
 }

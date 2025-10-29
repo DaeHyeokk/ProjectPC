@@ -20,6 +20,7 @@ namespace GameStateTags
 namespace UnitGameplayTags
 {
 	// ==== Unit Types ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
@@ -36,10 +37,13 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Terra)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shogun) // Paragon Murdock 에셋 사용 
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_MatteBlack) // Paragon Murdock 에셋 사용
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ShadowOps)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	
@@ -56,23 +60,6 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoVamp)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoManaGain)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoSendDamageAppliedEvent)
-	
-	// ==== Unit Stat Tags ====
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_CurrentHealth)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_BaseDamage)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackRange)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackSpeed)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_PhysicalDefense)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MagicDefense)
-	//
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MaxMana)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CurrentMana)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_PhysicalDamageMultiplier)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MagicDamageMultiplier)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CritChance)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_LifeSteal)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
 
 	// ==== Unit Combat Text Type Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_CombatText_Damage_Physical)
@@ -111,6 +98,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Death)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Combat_Win)
 
 	// ==== Unit GameplayEvent Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectileSucceed)
@@ -121,6 +109,8 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_HitSucceed_BonusDamage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_DamageApplied)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_Win)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_End)
 
 	// ==== Unit Buff Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Darkness_TrueDamage)

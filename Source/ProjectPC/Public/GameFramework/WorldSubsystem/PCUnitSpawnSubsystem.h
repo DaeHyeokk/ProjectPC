@@ -75,6 +75,9 @@ public:
 		ESpawnActorCollisionHandlingMethod HandlingMethod =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 
+	UFUNCTION(BlueprintCallable, Category="Spawner")
+	APCBaseUnitCharacter* SpawnCloneUnitBySourceUnit(const APCBaseUnitCharacter* SourceUnit);
+	
 	const UPCDataAsset_UnitDefinition* ResolveDefinition(const FGameplayTag& UnitTag) const;
 	void ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
 	

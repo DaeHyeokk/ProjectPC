@@ -50,7 +50,7 @@ protected:
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")
-	UWidgetComponent* OverHeadWidgetComp;
+	TObjectPtr<UWidgetComponent> OverHeadWidgetComp;
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

@@ -10,7 +10,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Projectile/PCBaseProjectile.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
-#include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 
 UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 {
@@ -23,40 +22,19 @@ UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
 }
 
-void UPCUnitBaseAttackGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilitySpec& Spec)
-{
-	Super::OnAvatarSet(ActorInfo, Spec);
-	
-	if (MontageConfig.Montage)
-	{
-		if (!AbilityConfig.bSpawnProjectile)
-		{
-			SetAttackSucceedNotifyCount();
-		}
-		else
-		{
-			SetSpawnProjectileSucceedNotifyCount();
-		}
-
-		bUseMultiHit = (NotifyCount > 1);
-	}
-}
-
 void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                                        const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                                        const FGameplayEventData* TriggerEventData)
 {
-	if (!HasAuthority(&ActivationInfo))
+	// 서버가 아니거나 Commit에 실패했을 경우 어빌리티 종료
+	if (!HasAuthority(&ActivationInfo) || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 		return;
 	}
-		
-	if (UAnimMontage* Montage = MontageConfig.Montage)
+	
+	if (Montage)
 	{
-		bCommittedOnce = false;
-		
 		CurrentTarget = nullptr;
 		SetCurrentTarget(GetAvatarActorFromActorInfo());
 		if (!CurrentTarget.IsValid())
@@ -64,10 +42,8 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 			EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
 			return;
 		}
-
-		ReceivedNotifyCount = 0;
 		
-		StartPlayMontageAndWaitTask(Montage, false);
+		StartPlayMontageAndWaitTask();
 		
 		if (AbilityConfig.bSpawnProjectile)
 		{
@@ -76,6 +52,12 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 		else
 		{
 			StartAttackSucceedWaitTask();
+		}
+
+		// 공격 완료 즉시 적용하는 GE Apply
+		if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
+		{
+			ApplyCommittedEffectSpec(ASC, CurrentTarget.Get());
 		}
 	}
 	else
@@ -105,7 +87,7 @@ void UPCUnitBaseAttackGameplayAbility::StartAttackSucceedWaitTask()
 	this,
 	AttackSucceedTag,
 	nullptr,
-	!bUseMultiHit
+	false
 	);
 	if (WaitEventTask)
 	{
@@ -120,7 +102,7 @@ void UPCUnitBaseAttackGameplayAbility::StartProjectileSpawnSucceedWaitTask()
 		this,
 		SpawnProjectileSucceedTag,
 		nullptr,
-		true
+		false
 		);
 	if (WaitEventTask)
 	{
@@ -140,9 +122,6 @@ void UPCUnitBaseAttackGameplayAbility::OnAttackSucceed(FGameplayEventData Payloa
 	{
 		ApplyReceivedEventEffectSpec(ASC, AttackSucceedTag, CurrentTarget.Get());
 	}
-
-	ReceivedNotifyCount++;
-	AttackCommit();
 }
 
 void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventData Payload)
@@ -157,69 +136,4 @@ void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventDa
 			}
 		}
 	}
-
-	ReceivedNotifyCount++;
-	AttackCommit();
 }
-
-void UPCUnitBaseAttackGameplayAbility::SetAttackSucceedNotifyCount()
-{
-	UAnimMontage* Montage = MontageConfig.Montage;
-	if (!Montage)
-		return;
-
-	NotifyCount = 0;
-	
-	for (const FAnimNotifyEvent& NotifyEvent : Montage->Notifies)
-	{
-		if (const auto* Notify = Cast<UPCAnimNotify_SendGameplayEvent>(NotifyEvent.Notify))
-		{
-			if (Notify->EventTag == AttackSucceedTag)
-				NotifyCount++;
-		}
-	}
-}
-
-void UPCUnitBaseAttackGameplayAbility::SetSpawnProjectileSucceedNotifyCount()
-{
-	UAnimMontage* Montage = MontageConfig.Montage;
-	if (!Montage)
-		return;
-
-	NotifyCount = 0;
-	
-	for (const FAnimNotifyEvent& NotifyEvent : Montage->Notifies)
-	{
-		if (const auto* Notify = Cast<UPCAnimNotify_SpawnProjectile>(NotifyEvent.Notify))
-		{
-			if (Notify->EventTag == SpawnProjectileSucceedTag)
-				NotifyCount++;
-		}
-	}
-}
-
-//공격이 완료 되었을 때 호출 (원거리: 발사체 생성, 근거리: Hit 타이밍)
-void UPCUnitBaseAttackGameplayAbility::AttackCommit()
-{
-	if (!bCommittedOnce)
-	{
-		if (!CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
-		{
-			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-			return;
-		}
-	
-		// 공격 완료 즉시 적용하는 GE Apply
-		if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
-		{
-			ApplyCommittedEffectSpec(ASC, CurrentTarget.Get());
-		}
-
-		bCommittedOnce = true;
-	}
-	
-	// 후딜 없으면 바로 어빌리티 종료
-	if (!MontageConfig.bHasRecovery && ReceivedNotifyCount >= NotifyCount)
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-}
-

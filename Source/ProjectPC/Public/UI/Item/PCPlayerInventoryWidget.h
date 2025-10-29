@@ -23,10 +23,10 @@ class PROJECTPC_API UPCPlayerInventoryWidget : public UUserWidget
 
 protected:
 	UPROPERTY()
-	TArray<UPCItemSlotWidget*> ItemSlots;
+	TArray<TObjectPtr<UPCItemSlotWidget>> ItemSlots;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* DragImage;
+	TObjectPtr<UImage> DragImage;
 
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
