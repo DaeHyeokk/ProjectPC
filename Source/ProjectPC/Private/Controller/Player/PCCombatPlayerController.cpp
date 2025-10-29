@@ -116,8 +116,6 @@ void APCCombatPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Started, this, &APCCombatPlayerController::OnInputStarted);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCCombatPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
 
 		EnhancedInputComponent->BindAction(PlayerInputData->BuyXP, ETriggerEvent::Started, this, &APCCombatPlayerController::OnBuyXPStarted);
 		EnhancedInputComponent->BindAction(PlayerInputData->ShopRefresh, ETriggerEvent::Started, this, &APCCombatPlayerController::OnShopRefreshStarted);
@@ -227,11 +225,6 @@ void APCCombatPlayerController::OnInputStarted()
 
 void APCCombatPlayerController::OnSetDestinationTriggered()
 {
-	// if (const UWorld* World = GetWorld())
-	// {
-	// 	FollowTime += World->GetDeltaSeconds();
-	// }
-
 	FHitResult Hit;
 	if (bool bHitSucceeded = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
 	{
@@ -242,38 +235,6 @@ void APCCombatPlayerController::OnSetDestinationTriggered()
 	{
 		GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, &APCCombatPlayerController::UpdateMovement, 0.01f, true);
 	}
-
-	// if (APawn* ControlledPawn = GetPawn())
-	// {
-	// 	FVector CurrentLocation = ControlledPawn->GetActorLocation();
-	// 	FVector Direction = CachedDestination - CurrentLocation;
-	// 		     
-	// 	FRotator TargetRotation = Direction.Rotation();
-	// 	FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-	// 	
-	// 	ControlledPawn->SetActorRotation(NewRotation);
-	// 	Server_SetRotation(CachedDestination);
-	// 	
-	// 	if (FollowTime > PlayerInputData->ShortPressThreshold)
-	// 	{
-	// 		StopMovement();
-	// 		Server_StopMovement();
-	// 	}
-	// 	
-	// 	FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-	// 	ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
-	// }
-}
-
-void APCCombatPlayerController::OnSetDestinationReleased()
-{
-	// if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
-	// {
-	// 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-	// 	Server_MovetoLocation(CachedDestination);
-	// }
-	
-	// FollowTime = 0.f;
 }
 
 void APCCombatPlayerController::UpdateMovement()
@@ -292,12 +253,16 @@ void APCCombatPlayerController::UpdateMovement()
 		
 		FRotator NewRotation = FRotator(0.f, MoveDirection.Rotation().Yaw, 0.f);
 		ControlledPawn->SetActorRotation(NewRotation);
+		Server_SetActorRotation(NewRotation);
 	}
 }
 
-void APCCombatPlayerController::Server_StopMovement_Implementation()
+void APCCombatPlayerController::Server_SetActorRotation_Implementation(FRotator NewRotation)
 {
-	StopMovement();
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		ControlledPawn->SetActorRotation(NewRotation);
+	}
 }
 
 void APCCombatPlayerController::OnBuyXPStarted()

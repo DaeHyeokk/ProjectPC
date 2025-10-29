@@ -10,6 +10,9 @@
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+
 
 bool UPCPlayerRowWidget::Initialize()
 {
@@ -22,59 +25,136 @@ bool UPCPlayerRowWidget::Initialize()
 	return true;
 }
 
-void UPCPlayerRowWidget::SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
+// void UPCPlayerRowWidget::SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
+// {
+// 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
+//
+// 	// 플레이어 이름 세팅
+// 	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerName);
+// 	PlayerName->SetText(FText::FromString(NameText));
+//
+// 	// 플레이어 체력바 세팅
+// 	auto HP = NewPlayerHP;
+// 	auto HPPercent = HP / 100.f;
+// 	SetHP(HPPercent);
+//
+// 	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+// 	PlayerHP->SetText(FText::FromString(HPText));
+//
+// 	// 플레이어 초상화 세팅
+// 	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(NewPlayerCharacterTag);
+// 	FSoftObjectPath TexturePath = PortraitSoftPtr.ToSoftObjectPath();
+// 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+// 	
+// 	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+// 	{
+// 		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
+// 		{
+// 			Img_Portrait->SetBrushFromTexture(Texture);
+// 		}
+// 	});
+// }
+
+void UPCPlayerRowWidget::SetupPlayerInfo(const APCPlayerState* NewPlayerState)
 {
-	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
+	if (!NewPlayerState) return;
+	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return;
+
+	CachedPlayerState = NewPlayerState;
 
 	// 플레이어 이름 세팅
-	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerName);
+	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerState->LocalUserId);
 	PlayerName->SetText(FText::FromString(NameText));
 
-	// 플레이어 체력바 세팅
-	auto HP = NewPlayerHP;
-	auto HPPercent = HP / 100.f;
-	SetHP(HPPercent);
+	if (auto AttributeSet = NewPlayerState->GetAttributeSet())
+	{
+		// 플레이어 체력바 세팅
+		auto HP = AttributeSet->GetPlayerHP();
+		auto HPPercent = HP / 100.f;
+		SetHP(HPPercent);
 
-	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-	PlayerHP->SetText(FText::FromString(HPText));
+		auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+		PlayerHP->SetText(FText::FromString(HPText));
+	}
 
+	FGameplayTag CharacterTag;
+	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
+	{
+		FGameplayTagContainer Tags;
+		ASC->GetOwnedGameplayTags(Tags);
+
+		for (const FGameplayTag& Tag : Tags)
+		{
+			if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Player.Type"))))
+			{
+				CharacterTag = Tag;
+			}
+		}
+	}
+	
 	// 플레이어 초상화 세팅
-	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(NewPlayerCharacterTag);
+	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(CharacterTag);
 	FSoftObjectPath TexturePath = PortraitSoftPtr.ToSoftObjectPath();
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	TWeakObjectPtr<UPCPlayerRowWidget> WeakThis = this;
 	
-	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+	Streamable.RequestAsyncLoad(TexturePath, [WeakThis, TexturePath]()
 	{
 		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
 		{
-			Img_Portrait->SetBrushFromTexture(Texture);
+			WeakThis->Img_Portrait->SetBrushFromTexture(Texture);
 		}
 	});
 }
 
-void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
+void UPCPlayerRowWidget::UpdatePlayerHP()
 {
-	if (!PlayerHP || !CircularHPBar) return;
-	
-	auto HP = NewPlayerHP;
-	auto HPPercent = HP / 100.f;
-	SetHP(HPPercent);
-
-	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-	PlayerHP->SetText(FText::FromString(HPText));
-
-	if (HP <= 0)
+	if (!CachedPlayerState) return;
+	if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
 	{
-		if (Img_Portrait)
+		// 플레이어 체력바 세팅
+		auto HP = AttributeSet->GetPlayerHP();
+		auto HPPercent = HP / 100.f;
+		SetHP(HPPercent);
+
+		auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+		PlayerHP->SetText(FText::FromString(HPText));
+
+		if (HP <= 0)
 		{
-			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
+			if (Img_Portrait)
+			{
+				Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
+			}
 		}
 	}
 }
 
+// void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
+// {
+// 	if (!PlayerHP || !CircularHPBar) return;
+// 	
+// 	auto HP = NewPlayerHP;
+// 	auto HPPercent = HP / 100.f;
+// 	SetHP(HPPercent);
+//
+// 	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+// 	PlayerHP->SetText(FText::FromString(HPText));
+//
+// 	if (HP <= 0)
+// 	{
+// 		if (Img_Portrait)
+// 		{
+// 			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
+// 		}
+// 	}
+// }
+
 void UPCPlayerRowWidget::SwitchCamera()
 {
-	
+	if (!CachedPlayerState) return;
+
+	UE_LOG(LogTemp, Error, TEXT("Switch to : %s"), *CachedPlayerState->LocalUserId);
 }
 
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)

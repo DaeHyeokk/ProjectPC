@@ -145,7 +145,7 @@ DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardFindPlayerState, const TArray<APCPlayerState*>);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardFindPlayerState, const TArray<APCPlayerState*>&);
 DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 
 // Carousel 전용 델리게이트
@@ -416,6 +416,7 @@ public:
 
 	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
 	FOnLeaderBoardReadyNative OnLeaderBoardReady;
+	FOnLeaderboardFindPlayerState FindPlayerState;
 	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
@@ -471,12 +472,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
 	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
 
-
-	UPROPERTY()
-	TArray<APCPlayerState*> FindPlayerStates;
 	
-	FOnLeaderboardFindPlayerState FindPlayerState;
-
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();
@@ -490,6 +486,11 @@ protected:
 
 	void BroadCastLeaderboardMap();
 
+	UPROPERTY(Replicated)
+	TArray<APCPlayerState*> FindPlayerStates;
+
+public:
+	const TArray<APCPlayerState*>& GetPlayerStates() { return FindPlayerStates; };
 
 private:
 

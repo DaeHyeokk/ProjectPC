@@ -86,11 +86,10 @@ private:
 	// Move
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
-	void OnSetDestinationReleased();
 	void UpdateMovement();
 
 	UFUNCTION(Server, Reliable)
-	void Server_StopMovement();
+	void Server_SetActorRotation(FRotator NewRotation);
 	
 	// Shop
 	void OnBuyXPStarted();

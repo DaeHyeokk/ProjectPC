@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "PCLeaderBoardWidget.generated.h"
 
 struct FPlayerStandingRow;
 
-class UPCPlayerRowWidget;
 class APCCombatGameState;
+class UPCPlayerRowWidget;
 class UVerticalBox;
 
 /**
@@ -25,7 +26,8 @@ private:
 	APCCombatGameState* CachedGameState;
 
 	UPROPERTY()
-	TMap<FString, TObjectPtr<UPCPlayerRowWidget>> PlayerMap;
+	// TMap<FString, TObjectPtr<UPCPlayerRowWidget>> PlayerMap;
+	TMap<TWeakObjectPtr<APCPlayerState>, UPCPlayerRowWidget*> PlayerMap;
 
 public:
 	void BindToGameState(APCCombatGameState* NewGameState);
@@ -38,5 +40,6 @@ protected:
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
 public:
-	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
+	// void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
+	void SetupLeaderBoard(const TArray<APCPlayerState*>& NewPlayerArray) const;
 };

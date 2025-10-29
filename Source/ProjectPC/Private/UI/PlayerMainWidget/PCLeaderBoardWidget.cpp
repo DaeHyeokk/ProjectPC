@@ -12,29 +12,57 @@ void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
 	if (!NewGameState || !PlayerBox) return;
 	
-	NewGameState->OnLeaderboardMapUpdated.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
+	NewGameState->FindPlayerState.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
 	
-	for (const auto& PlayerRow : NewGameState->Leaderboard)
+	for (APCPlayerState* Player : NewGameState->GetPlayerStates())
 	{
 		auto PlayerRowWidget = CreateWidget<UPCPlayerRowWidget>(GetWorld(), PlayerRowWidgetClass);
-		if (!PlayerRowWidget) continue;
+		if (!PlayerRowWidget || !Player) continue;
 	
-		PlayerRowWidget->SetupPlayerInfo(PlayerRow.LocalUserId, PlayerRow.Hp, PlayerRow.CharacterTag);
-		PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
+		PlayerRowWidget->SetupPlayerInfo(Player);
+		// PlayerMap.Add(PlayerRow.LocalUserId, PlayerRowWidget);
+		PlayerMap.Add(TWeakObjectPtr<APCPlayerState>(Player), PlayerRowWidget);
 		PlayerBox->AddChild(PlayerRowWidget);
 	}
 }
 
-void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const
+// void UPCLeaderBoardWidget::SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const
+// {
+// 	TArray<UPCPlayerRowWidget*> RankArray;
+// 	
+// 	for (const auto& PlayerRow : NewMap)
+// 	{
+// 		if (auto PlayerRowWidget = PlayerMap.FindRef(PlayerRow.Key))
+// 		{
+// 			PlayerRowWidget->UpdatePlayerHP(PlayerRow.Value.Hp);
+// 			RankArray.Add(PlayerRowWidget);
+// 		}
+// 	}
+// 	
+// 	PlayerBox->ClearChildren();
+// 	for (const auto& Rank : RankArray)
+// 	{
+// 		if (Rank)
+// 		{
+// 			PlayerBox->AddChild(Rank);
+// 		}
+// 	}
+// }
+
+void UPCLeaderBoardWidget::SetupLeaderBoard(const TArray<APCPlayerState*>& NewPlayerArray) const
 {
 	TArray<UPCPlayerRowWidget*> RankArray;
 	
-	for (const auto& PlayerRow : NewMap)
+	for (const auto Player : NewPlayerArray)
 	{
-		if (auto PlayerRowWidget = PlayerMap.FindRef(PlayerRow.Key))
+		TWeakObjectPtr<APCPlayerState> PlayerKey(Player);
+		if (PlayerMap.Contains(PlayerKey))
 		{
-			PlayerRowWidget->UpdatePlayerHP(PlayerRow.Value.Hp);
-			RankArray.Add(PlayerRowWidget);
+			if (auto PlayerRowWidget = PlayerMap.FindRef(PlayerKey))
+			{
+				PlayerRowWidget->UpdatePlayerHP();
+				RankArray.Add(PlayerRowWidget);
+			}
 		}
 	}
 	
