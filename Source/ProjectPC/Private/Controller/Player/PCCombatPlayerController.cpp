@@ -29,6 +29,7 @@
 #include "Shop/PCShopManager.h"
 #include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/Item/PCPlayerInventoryWidget.h"
+#include "UI/Loading/PCLoadingWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 #include "UI/Synerge/PCSynergyPanelWidget.h"
@@ -134,37 +135,33 @@ void APCCombatPlayerController::SetupInputComponent()
 void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-		
-	ApplyGameInputMode();
 
-	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	if (IsLocalController())
 	{
-		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
-		PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
-	}
-	else
-	{
-		// 안전책: 월드 틱 이후 GameState를 다시 확인
-		GetWorldTimerManager().SetTimerForNextTick([this]()
+		ApplyGameInputMode();
+
+		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
-			if (APCCombatGameState* GS2 = GetWorld()->GetGameState<APCCombatGameState>())
-			{
-				GS2->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
-			}
-		});
+			PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
+			PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
+		}
+
+		// 마우스 호버 풀링함수
+		const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
+		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
+
+		LoadMainWidget();
 	}
-
-	// 마우스 호버 풀링함수
-	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
-	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-
-	LoadMainWidget();
+		
+	
 	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
 {
 	Super::BeginPlayingState();
+
+	if (!IsLocalController()) return;
 	
 	// 1) 입력 모드 게임용으로 재설정
 	ApplyGameInputMode();
@@ -188,12 +185,21 @@ void APCCombatPlayerController::BeginPlayingState()
 			/*From*/1.f, /*To*/0.f, /*Duration*/0.001f,
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->OnLoadingChanged.AddUObject(this, &ThisClass::OnGameLoadingChanged);
+		OnGameLoadingChanged();
+	}
+
+	StartClientBootStrap();
 }
 
 
 void APCCombatPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
+	bPawnReady = (P != nullptr);
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -714,6 +720,8 @@ void APCCombatPlayerController::ClearAllCameraTimers()
 
 void APCCombatPlayerController::EnsureScreenFade()
 {
+	if (!IsLocalController()) return;
+	
 	if (ScreenFadeWidget || !ScreenFadeClass)
 		return;
 	ScreenFadeWidget = CreateWidget<UUserWidget>(this, ScreenFadeClass);
@@ -730,6 +738,105 @@ void APCCombatPlayerController::SetScreenFadeVisible(bool bVisible, float Opacit
 		return;
 	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
 	ScreenFadeWidget->SetRenderOpacity(bVisible ? Opacity : 0.f);
+}
+
+void APCCombatPlayerController::StartClientBootStrap()
+{
+	GetWorldTimerManager().SetTimer(ThBootstrapPing, this, &ThisClass::TickClientBootStrap, 0.25f, true, 0.0f);
+}
+
+void APCCombatPlayerController::TickClientBootStrap()
+{
+	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	if (!PS || PS->LocalUserId.IsEmpty()) return;
+
+	const uint8 M = ComputeBootStrapMask();
+	Server_ReportBootStrap(PS->LocalUserId, M);	
+}
+
+void APCCombatPlayerController::Client_RebindOverHead_Implementation()
+{
+	if (!IsLocalController()) return;
+
+	if (APawn* P = GetPawn())
+	{
+		if (auto* PCChr = Cast<APCPlayerCharacter>(P))
+		{
+			PCChr->SetOverHeadWidget();
+		}
+	}
+}
+
+void APCCombatPlayerController::Server_ReportBootStrap_Implementation(const FString& LocalUserId, uint8 Mask)
+{
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->Server_UpdateBootstrap(LocalUserId,Mask);
+	}
+}
+
+void APCCombatPlayerController::OnGameLoadingChanged()
+{
+	if (!IsLocalController()) return;
+	
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (GS->bLoading)
+		{
+			ShowLoadingUI();
+			UpdateLoadingUI(GS->LoadingProgress, GS->LoadingDetail);
+		}
+		else
+		{
+			HideLoadingUI();
+		}
+	}
+}
+
+
+
+uint8 APCCombatPlayerController::ComputeBootStrapMask() const
+{
+	uint8 M = 0;
+	if (bPSReady)   M |= 0x01;
+	if (bPawnReady) M |= 0x02;
+	if (bUIReady)   M |= 0x04;
+	if (bGSBound)   M |= 0x08;
+	return M;
+}
+
+void APCCombatPlayerController::ShowLoadingUI()
+{
+	if (!IsLocalController()) return;
+	
+	if (!LoadingWidget && LoadingWidgetClass)
+	{
+		LoadingWidget = CreateWidget<UPCLoadingWidget>(this, LoadingWidgetClass);
+		if (LoadingWidget)
+		{
+			LoadingWidget->AddToViewport(10000);
+		}
+	}
+	if (LoadingWidget)
+	{
+		LoadingWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void APCCombatPlayerController::UpdateLoadingUI(float Pct01, const FString& Line)
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->SetProgress(Pct01, FText::FromString(Line));
+	}
+}
+
+void APCCombatPlayerController::HideLoadingUI()
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
 
 void APCCombatPlayerController::EnsureMainHUDCreated()
@@ -750,7 +857,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	}
 	else
 	{
-		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
+		// 재보장
 		if (!PlayerMainWidget->IsInViewport())
 			PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
@@ -815,7 +922,7 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 
 void APCCombatPlayerController::TryInitHUDWithPlayerState()
 {
-	if (!IsLocalController() && PlayerMainWidget) 
+	if (!IsLocalController() || !PlayerMainWidget) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
 		return;
@@ -868,23 +975,29 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	SynergyWidget->SynergyComponentBinding(SynergyComp);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
 
+	bUIReady = true;
+
 }
 
 void APCCombatPlayerController::TryInitWidgetWithGameState()
 {
-	if (!IsLocalController() && PlayerMainWidget) return;
+	if (!IsLocalController() || !PlayerMainWidget) return;
 
 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		PlayerMainWidget->InitAndBind(CombatGameState);
+		bGSBound = true;
 	}
+	
 }
 
 void APCCombatPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	
 	TryInitHUDWithPlayerState();
-	//Client_RequestIdentity();
+
+	bPSReady = (GetPlayerState<APCPlayerState>() != nullptr);
 
 	
 }
@@ -950,7 +1063,7 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
-	bool bBattle, float Blend)
+	float Blend)
 {
 	if (CurrentCameraType == ECameraFocusType::Board && CurrentBoardSeatIndex == BoardSeatIndex)
 		return;
@@ -969,6 +1082,8 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
+	bIsCancel = true;
+	
 	if (!IsLocalController())
 		return;
 
@@ -1032,6 +1147,8 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
 
+	bIsCancel = false;
+
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
 	{
@@ -1089,6 +1206,9 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 {
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
     const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+
+	if (bIsCancel)
+		return;
 
     // 드래그 유효성
     if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())

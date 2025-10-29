@@ -29,7 +29,7 @@ protected:
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData) override;
 	
-	virtual void SetMontageConfig() override;
+	virtual void SetMontage() override;
 	virtual FGameplayTag GetMontageTag() override { return UnitGameplayTags::Unit_Montage_Attack_Basic; }
-	virtual float GetMontagePlayRate(const UAnimMontage* Montage) override;
+	virtual float GetMontagePlayRate() override;
 };

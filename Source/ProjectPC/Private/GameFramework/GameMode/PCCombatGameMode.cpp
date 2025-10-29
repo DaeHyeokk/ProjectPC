@@ -9,7 +9,9 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Components/WidgetComponent.h"
 #include "Controller/Player/PCCombatPlayerController.h"
+#include "Engine/PawnIterator.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -19,6 +21,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "Shop/PCShopManager.h"
+#include "UI/PlayerMainWidget/PCPlayerOverheadWidget.h"
 
 
 APCCombatGameMode::APCCombatGameMode()
@@ -33,6 +36,7 @@ void APCCombatGameMode::BeginPlay()
 	Super::BeginPlay();
 	BuildHelperActor();
 	BuildStageData();
+	EnterLoadingPhase();
 	
 			
 	if (!GetWorld())
@@ -55,44 +59,13 @@ void APCCombatGameMode::BeginPlay()
 void APCCombatGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-	APCPlayerState* PS = NewPlayer ? Cast<APCPlayerState>(NewPlayer->PlayerState) : nullptr;
-	if (!PS) return;
-    
-	// 사용중인 좌석 체크
-	TArray<bool> UsedSeats;
-	UsedSeats.Init(false, 8);
-    
-	for (APlayerState* PlayerState : GameState->PlayerArray)
-	{
-		if (APCPlayerState* OtherPS = Cast<APCPlayerState>(PlayerState))
-		{			
-			if (OtherPS != PS && OtherPS->SeatIndex >= 0 && OtherPS->SeatIndex < 8)
-			{
-				UsedSeats[OtherPS->SeatIndex] = true;
-			}
-		}
-	}
-    
-	// 빈 좌석 찾기
-	int32 SeatIndex = 0;
-	for (int32 i = 0; i < 8; i++)
-	{
-		if (!UsedSeats[i])
-		{
-			SeatIndex = i;
-			break;
-		}
-	}
-	
-	PS->SeatIndex = SeatIndex;
-	PS->ForceNetUpdate();
-	
+		
 	if (auto* PC = Cast<APCCombatPlayerController>(NewPlayer))
 	{
 		PC->Client_RequestIdentity();
 	}
 	
-	OnOnePlayerArrived();
+	//OnOnePlayerArrived();
 }
 
 int32 APCCombatGameMode::GetTotalSeatSlots() const
@@ -218,7 +191,6 @@ void APCCombatGameMode::BuildStageData()
 
 void APCCombatGameMode::StartFromBeginning()
 {
-	GetWorldTimerManager().ClearTimer(StartTimer);
 	Cursor = 0;
 	BeginCurrentStep();
 }
@@ -574,7 +546,7 @@ void APCCombatGameMode::TryPlacePlayersAfterTravel()
 
 	CollectPlayerBoards();
 	
-	GetWorldTimerManager().SetTimer(ThWaitReady, this, &APCCombatGameMode::StartWhenReady,0.25f, true,0.0f);
+	//GetWorldTimerManager().SetTimer(ThWaitReady, this, &APCCombatGameMode::StartWhenReady,0.25f, true,0.0f);
 	
 }
 
@@ -652,7 +624,7 @@ void APCCombatGameMode::MovePlayersToBoardsAndCameraSet()
 			Pawn->TeleportTo(Seat.GetLocation(), Pawn->GetActorRotation(), false, true);
 		}
 		
-		PlayerController->ClientFocusBoardBySeatIndex(BoardIdx, false, 0);
+		PlayerController->ClientFocusBoardBySeatIndex(BoardIdx, 0);
 	}
 }
 
@@ -790,6 +762,145 @@ APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
 }
 
 
+void APCCombatGameMode::EnterLoadingPhase()
+{
+	if (APCCombatGameState* GS = GetCombatGameState())
+	{
+		GS->SetLoadingState(true, 0.f, TEXT("Waiting for Players.."));
+	}
+
+	GetWorldTimerManager().SetTimer(ThLoadingPoll, this, &ThisClass::PollLoading, 0.25f, true, 0.0f);
+}
+
+void APCCombatGameMode::PollLoading()
+{
+	APCCombatGameState* GS = GetCombatGameState();
+	if (!GS) return;
+
+	// 1) 인원 접속 확인
+	const int32 Expected = (ExpectedPlayers > 0) ? ExpectedPlayers : (GS ? GS->PlayerArray.Num() : 0);
+	const int32 Connected = GS ? GS->PlayerArray.Num() : 0;
+	const float P1 = (Expected > 0) ? FMath::Clamp(Connected / Expected, 0.f, 1.0f) : 0.f;
+
+	// 2) ID 입력 확인
+	int32 Ready = 0;
+	int32 Total = 0;
+	AreAllPlayersIdentified(Ready, Total);
+	const float P2 = (Total > 0) ? Ready / Total : 0.f;
+
+	// ★★★ 좌석/보드 준비는 'ID가 모두 준비된 뒤' 딱 1회만 수행
+	if (P2 >= 1.f)
+	{
+		AssignSeatDeterministicOnce();   // SeatIndex 확정
+		BuildHelperActor();              // Seat->Board 맵 재구축
+		CollectPlayerBoards();           // Seat->PlayerBoard 캐시
+	}
+
+	// 3) 보드 / 타일 / 플레이어보드 확인
+	bool bBoardsOK = true;
+	if (GS)
+	{
+		for (APlayerState* PSB : GS->PlayerArray)
+		{
+			const APCPlayerState* PCPS = Cast<APCPlayerState>(PSB);
+			if (!PCPS) continue;
+			if (PCPS->SeatIndex < 0)
+			{
+				bBoardsOK = false;
+				break;
+			}
+			APCCombatBoard* Board = GS->GetBoardBySeat(PCPS->SeatIndex);
+			if (!IsValid(Board) || !IsValid(Board->TileManager))
+			{
+				bBoardsOK = false;
+				break;
+			}
+			if (!FindPlayerBoardBySeat(PCPS->SeatIndex))
+			{
+				bBoardsOK = false;
+				break;
+			}
+		}
+	}
+	const float P3 = bBoardsOK ? 1.f : 0.f;
+
+	// 4) 서브시스템 / 스테이지 / 샵 매니저
+	bool bSystems = true;
+	if (!GetCombatManager())
+	{
+		bSystems = false;
+	}
+	if (!StageData)
+	{
+		bSystems = false;
+	}
+	if (!IsValid(GS->GetShopManager()))
+	{
+		bSystems = false;
+	}
+
+	const float P4 = bSystems ? 1.f : 0.f;
+
+	// UI 바인딩전 LeaderBoard 생성
+	if (!bAttributesBound && P1 >= 1.f && P2 >= 1.f)
+	{
+		BindPlayerAttribute();
+		bAttributesBound = true;
+		GS->SetLoadingState(true, 0.80f, TEXT("Seeding LeaderBoard..."));
+		return;
+	}
+
+	// 5) 클라 UI 동기화 확인
+	const float P5 = GS->ClientBootstrapRatio();
+
+	const float Progress = W_Connected * P1 + W_Identified * P2 + W_Board * P3 +
+		W_Systems * P4 + W_ClientUI * P5;
+
+	FString Detail;
+	if (Connected < Expected)       Detail = FString::Printf(TEXT("Players %d/%d connected"), Connected, Expected);
+	else if (Ready < Total)         Detail = FString::Printf(TEXT("Identities %d/%d ready"), Ready, Total);
+	else if (!bBoardsOK)            Detail = TEXT("Boards/TileManagers/PlayerBoards not ready");
+	else if (!bSystems)             Detail = TEXT("Systems/Stage/Shop not ready");
+	else if (P5 < 1.f)              Detail = TEXT("Clients binding UI…");
+	else                            Detail = TEXT("Ready");
+
+	GS->SetLoadingState(true, Progress, Detail);
+
+	if (Progress >= 1.f)
+	{
+		ExitLoadingPhaseAndStart();
+	}
+	
+}
+
+void APCCombatGameMode::ExitLoadingPhaseAndStart()
+{
+	GetWorldTimerManager().ClearTimer(ThLoadingPoll);
+	
+	// AssignSeatDeterministicOnce();
+	// BuildHelperActor();
+
+	InitializeHomeBoardsForPlayers();
+	BindPlayerBoardsToPlayerStates();
+
+	// === OverheadWidget 보정 ===
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* PC = Cast<APCCombatPlayerController>(It->Get()))
+		{
+			PC->Client_RebindOverHead();
+		}
+	}
+	
+	if (APCCombatGameState* GS = GetCombatGameState())
+	{
+		GS->SetLoadingState(false, 1.f, TEXT("Ready"));
+		GS->SetGameStateTag(GameStateTags::Game_State_NonCombat);
+	}
+
+	StartFromBeginning();
+}
+
 bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) 
 {
 	 APCCombatGameState* GS = GetCombatGameState();
@@ -899,8 +1010,6 @@ void APCCombatGameMode::StartWhenReady()
 
 void APCCombatGameMode::AssignSeatDeterministicOnce()
 {
-	if (bSeatsFinalized) return;
-
 	AGameStateBase* GS = GameState;
 	if (!GS) return;
 
@@ -951,7 +1060,6 @@ void APCCombatGameMode::AssignSeatDeterministicOnce()
 
 	// 좌석→보드 맵 재구축
 	BuildHelperActor();
-	bSeatsFinalized = true;
 }
 
 void APCCombatGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)

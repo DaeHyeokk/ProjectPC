@@ -10,19 +10,6 @@
 class UBlendSpace1D;
 
 USTRUCT(BlueprintType)
-struct FMontageConfig
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montage")
-	TObjectPtr<UAnimMontage> Montage = nullptr;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintType, Category="Montage|Style")
-	bool bHasRecovery = false;
-	
-};
-
-USTRUCT(BlueprintType)
 struct FUnitLocomotionSet
 {
 	GENERATED_BODY()
@@ -56,6 +43,9 @@ struct FUnitLocomotionSet
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSoftObjectPtr<UAnimSequence> Death;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSoftObjectPtr<UAnimSequence> CombatWinEmote;
 };
 /**
  * 
@@ -70,17 +60,14 @@ public:
 	FUnitLocomotionSet LocomotionSet;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
-	TMap<FGameplayTag, FMontageConfig> MontageConfigByTagMap;
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageByTagMap;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Montages")
-	TArray<FMontageConfig> BasicAttackMontageConfigs;
-	
-	UFUNCTION(BlueprintCallable)
-	FMontageConfig GetMontageConfigByTag(const FGameplayTag& MontageTag) const;
-
-	UFUNCTION(BlueprintCallable)
-	bool TryGetRandomBasicAttackMontageConfigByTag(FMontageConfig& OutConfig) const;
+	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
 	
 	UFUNCTION(BlueprintCallable)
 	UAnimMontage* GetMontageByTag(const FGameplayTag& MontageTag) const;
+
+	UFUNCTION(BlueprintCallable)
+	UAnimMontage* GetRandomBasicAttackMontage() const;
 };

@@ -27,16 +27,16 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 		}
 	}
 
-	if (NewPlayerState->LocalUserId.IsEmpty())
-	{
-		GetWorld()->GetTimerManager().SetTimer(
-			ThCheckUserId,
-			this,
-			&UPCPlayerOverheadWidget::CheckAndUpdateUserId,
-			0.1f,
-			true // 반복
-		);
-	}
+	// if (NewPlayerState->LocalUserId.IsEmpty())
+	// {
+	// 	GetWorld()->GetTimerManager().SetTimer(
+	// 		ThCheckUserId,
+	// 		this,
+	// 		&UPCPlayerOverheadWidget::CheckAndUpdateUserId,
+	// 		0.1f,
+	// 		true // 반복
+	// 	);
+	// }
 
 	SetupPlayerInfo();
 }

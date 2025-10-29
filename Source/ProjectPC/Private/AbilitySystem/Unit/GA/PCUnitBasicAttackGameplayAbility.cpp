@@ -48,24 +48,28 @@ void UPCUnitBasicAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 		return;
 	}
 	
-	SetMontageConfig();
+	SetMontage();
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 }
 
-void UPCUnitBasicAttackGameplayAbility::SetMontageConfig()
+void UPCUnitBasicAttackGameplayAbility::SetMontage()
 {
 	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
 	{
-		UnitAnimSet->TryGetRandomBasicAttackMontageConfigByTag(MontageConfig);
+		Montage = UnitAnimSet->GetRandomBasicAttackMontage();
+	}
+	else
+	{
+		Montage = nullptr;
 	}
 }
 
-float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate(const UAnimMontage* Montage)
+float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate()
 {
 	UAbilitySystemComponent* ASC = Unit ? Unit->GetAbilitySystemComponent() : nullptr;
 	float PlayRate = 1.f;
 	
-	if (CooldownGameplayEffectClass && ASC)
+	if (CooldownGameplayEffectClass && ASC && Montage)
 	{
 		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
 		const float AttackSpeed = UnitAttrSet ? UnitAttrSet->GetEffectiveAttackSpeed() : 0.f;

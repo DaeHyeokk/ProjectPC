@@ -63,7 +63,7 @@ protected:
 	bool bAutoRefresh = true;
 
 	UPROPERTY(EditAnywhere, Category="Lobby|Refresh", meta=(ClampMin="0.05", UIMin="0.05"))
-	float RefreshIntervalSec = 0.30f;
+	float RefreshIntervalSec = 0.5f;
 
 private:
 	// ============== 내부 상태 ==============

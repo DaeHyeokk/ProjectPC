@@ -11,11 +11,7 @@ class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHeroDestroyed, APCHeroUnitCharacter*);
-DECLARE_MULTICAST_DELEGATE_ThreeParams(
-	FOnHeroSynergyTagChanged,
-	const APCHeroUnitCharacter*,
-	const FGameplayTag&,
-	bool);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHeroSynergyTagChanged, const APCHeroUnitCharacter*);
 DECLARE_MULTICAST_DELEGATE(FOnHeroLevelUp);
 
 /**
@@ -70,13 +66,12 @@ protected:
 	// 전투 관련 //
 	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
 	
-public:
-	virtual void ChangedOnTile(const bool IsOnField) override;
-	
 private:
 	void RestoreFromCombatEnd();
 	
 public:
+	virtual void ChangedOnTile(const bool IsOnField) override;
+	
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
 
@@ -88,5 +83,5 @@ public:
 	FOnHeroLevelUp OnHeroLevelUp;
 	
 private:
-	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const;
+	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount);
 };

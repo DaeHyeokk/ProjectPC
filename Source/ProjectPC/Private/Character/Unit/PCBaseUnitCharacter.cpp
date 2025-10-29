@@ -332,6 +332,24 @@ void APCBaseUnitCharacter::OnDeathAnimCompleted()
 	SetActorLocation(FVector(99999.f,99999.f,99999.f));
 }
 
+void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
+{
+	if (!HasAuthority() || !bIsOnField || bIsDead || !TargetPS)
+		return;
+
+	bIsCombatWin = true;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		FGameplayEventData EventData;
+		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
+		EventData.Instigator = this;
+		EventData.Target = TargetPS;
+
+		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+	}
+}
+
 void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))

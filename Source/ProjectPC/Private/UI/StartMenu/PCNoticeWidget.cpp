@@ -7,13 +7,15 @@
 #include "Components/TextBlock.h"
 
 
+
+
 void UPCNoticeWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
 	if (Btn_OK)
 	{
-		Btn_OK->OnClicked.AddDynamic(this, &UPCNoticeWidget::RemoveFromParent);
+		Btn_OK->OnClicked.AddDynamic(this, &UPCNoticeWidget::ButtonClick);
 	}
 }
 
@@ -26,3 +28,7 @@ void UPCNoticeWidget::SetMessage(const FText& Message)
 	}
 }
 
+void UPCNoticeWidget::ButtonClick()
+{
+	SetVisibility(ESlateVisibility::Hidden);
+}
