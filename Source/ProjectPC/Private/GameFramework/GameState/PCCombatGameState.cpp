@@ -153,6 +153,59 @@ APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
 	return nullptr;
 }
 
+void APCCombatGameState::SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail)
+{
+	if (!HasAuthority()) return;
+	bLoading = bInLoading;
+	LoadingProgress = FMath::Clamp(InProgress, 0.f, 1.0f);
+	LoadingDetail = InDetail;
+	OnRep_Loading();
+	
+}
+
+void APCCombatGameState::OnRep_Loading()
+{
+	OnLoadingChanged.Broadcast();
+}
+
+void APCCombatGameState::Server_UpdateBootstrap(const FString& LocalUserId, uint8 Mask)
+{
+	if (!HasAuthority() || LocalUserId.IsEmpty()) return;
+
+	FBootstrapFlags& Flag = BootstrapById.FindOrAdd(LocalUserId);
+	Flag.Mask = Mask;
+	Flag.LastUpdate = GetServerWorldTimeSeconds();
+}
+
+bool APCCombatGameState::AreAllClientsBootstrapped(int32& OutReady, int32& OutTotal) const
+{
+	OutReady = 0;
+	OutTotal = 0;
+
+	for (APlayerState* PlayerState : PlayerArray)
+	{
+		const APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState);
+		if (!PCPlayerState) continue;
+
+		++OutTotal;
+
+		const FBootstrapFlags* Flag = BootstrapById.Find(PCPlayerState->LocalUserId);
+		if (Flag && Flag->All())
+		{
+			++OutReady;
+		}
+	}
+	return (OutTotal > 0) && (OutReady == OutTotal);
+}
+
+float APCCombatGameState::ClientBootstrapRatio() const
+{
+	int32 Ready = 0;
+	int32 Total = 0;
+	AreAllClientsBootstrapped(Ready, Total);
+	return (Total > 0) ? Ready / Total : 0.0f;
+}
+
 float APCCombatGameState::GetStageRemainingSeconds() const
 {
 	const float Now = GetServerWorldTimeSeconds();
@@ -329,6 +382,11 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	// 로딩 관련
+	DOREPLIFETIME(APCCombatGameState, bLoading);
+	DOREPLIFETIME(APCCombatGameState, LoadingProgress);
+	DOREPLIFETIME(APCCombatGameState, LoadingDetail);
+
 	DOREPLIFETIME_CONDITION_NOTIFY(APCCombatGameState, GameStateTag, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
@@ -339,6 +397,8 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
 	DOREPLIFETIME(APCCombatGameState, RoundPvETagFlat);
 	DOREPLIFETIME(APCCombatGameState, SeatRoundResult);
+
+	
 	
 }
 

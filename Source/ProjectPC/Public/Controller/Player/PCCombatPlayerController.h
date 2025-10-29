@@ -9,6 +9,7 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class UPCLoadingWidget;
 class UPCPlayerInventoryWidget;
 class UPCGameResultWidget;
 class UPCTileManager;
@@ -197,7 +198,7 @@ public:
 
 	// 보드 인덱스로 카메라 변경
 	UFUNCTION(Client, Reliable)
-	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, bool bBattle, float Blend = 0.35f);
+	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, float Blend = 0.35f);
 		
 	// 서버->클라 캐러셀 카메라 세팅 (회전초밥 등 사용)
 	UFUNCTION(Client, Reliable)
@@ -224,6 +225,49 @@ public:
 
 
 #pragma endregion Camera
+
+#pragma region Loading
+public:
+	// 부트스트랩 플래그
+	bool bPSReady = false;
+	bool bPawnReady = false;
+	bool bUIReady = false;
+	bool bGSBound = false;
+
+	// 로컬 풀링
+	FTimerHandle ThBootstrapPing;
+	void StartClientBootStrap();
+	void TickClientBootStrap();
+	
+	// 플레이어 오버헤드 위젯 재 동기화
+	UFUNCTION(Client, Reliable)
+	void Client_RebindOverHead();
+
+	
+	// 게임스테이트 로딩 이벤트 구독
+	UFUNCTION()
+	void OnGameLoadingChanged();
+
+	// 서버로 ACK ( 완료 시그널 전송 )
+	UFUNCTION(Server,Reliable)
+	void Server_ReportBootStrap(const FString& LocalUserId, uint8 Mask);
+
+private:
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPCLoadingWidget> LoadingWidgetClass;
+
+	UPROPERTY()
+	UPCLoadingWidget* LoadingWidget = nullptr;
+	
+	// 헬퍼
+	uint8 ComputeBootStrapMask() const;
+	void ShowLoadingUI();
+	void UpdateLoadingUI(float Pct01, const FString& Line);
+	void HideLoadingUI();
+
+	
+#pragma endregion
 
 #pragma region UI
 public:

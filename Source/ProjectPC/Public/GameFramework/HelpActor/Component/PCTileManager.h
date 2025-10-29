@@ -188,6 +188,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
+	// 전투 승리 유닛 팀인덱스로 찾기
+	TArray<APCBaseUnitCharacter*> GetWinnerUnitByTeamIndex(int32 WinnerTeamIndex);
+
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 

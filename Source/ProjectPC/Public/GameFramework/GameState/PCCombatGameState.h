@@ -221,26 +221,37 @@ public:
 #pragma region Loading
 
 
-// public:
-//
-// 	// 점유 로딩 상태
-// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
-// 	bool bLoading = false;
-//
-// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
-// 	float LoadingProgress = 0.f;
-//
-// 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
-// 	FString LoadingDetail;
-//
-// 	void SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail);
-//
-// 	UFUNCTION()
-// 	void OnRep_Loading();
-//
-// 	FOnLoadingChanged OnLoadingChanged;
+public:
+
+	// 점유 로딩 상태
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	bool bLoading = false;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	float LoadingProgress = 0.f;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	FString LoadingDetail;
+
+	void SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail);
+
+	UFUNCTION()
+	void OnRep_Loading();
+
+	FOnLoadingChanged OnLoadingChanged;
 
 	// 클라 ACK 집계 (서버전용)
+	// 로컬 유저 ID로 클라 UI 동기화 체크
+	TMap<FString, FBootstrapFlags> BootstrapById;
+
+	// 서버 : 수신 갱신
+	void Server_UpdateBootstrap(const FString& LocalUserId, uint8 Mask);
+
+	// 서버 : 모든 플레이어(관전자 제외) UI 준비 여부
+	bool AreAllClientsBootstrapped(int32& OutReady, int32& OutTotal) const;
+
+	// 유틸 : 현재 집계 비율 ( 0 ~ 1 )
+	float ClientBootstrapRatio() const;
 	
 #pragma endregion Loading
 #pragma region UI
@@ -460,6 +471,7 @@ public:
 
 	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
 	FOnLeaderBoardReadyNative OnLeaderBoardReady;
+	FOnLeaderboardFindPlayerState FindPlayerState;
 	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
@@ -514,12 +526,9 @@ protected:
 	// 순위대로 PS 뽑기
 	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
 	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
-
-
+	
 	UPROPERTY()
 	TArray<APCPlayerState*> FindPlayerStates;
-	
-	FOnLeaderboardFindPlayerState FindPlayerState;
 
 	// 위젯 갱신
 	UFUNCTION()

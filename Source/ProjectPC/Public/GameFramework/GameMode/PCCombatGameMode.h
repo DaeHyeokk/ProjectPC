@@ -150,6 +150,25 @@ protected:
 	// 데이터 로딩
 
 private:
+
+	FTimerHandle ThLoadingPoll;
+
+	// 가중치
+	float W_Connected = 0.25f;
+	float W_Identified = 0.20f;
+	float W_Board = 0.10f;
+	float W_Systems = 0.25f;
+	float W_ClientUI = 0.20f;
+
+	// 리더보드 생성 확인
+	bool bAttributesBound = false;
+
+	// 진입 / 폴링 / 종료
+	void EnterLoadingPhase();
+	void PollLoading();
+	void ExitLoadingPhaseAndStart();
+
+	
 	bool bSeatsFinalized = false;
 	FTimerHandle ThWaitReady;
 	bool IsRoundSystemReady(FString& WhyNot);

@@ -247,16 +247,13 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 
 	case ETileAction::Release:
 		{
-			bool bAny = false;
 			if (Tile.IsOwnedBy(InUnit))
 			{
 				Tile.Unit = nullptr;
-				bAny = true;
 			}
 			if (Tile.IsReservedBy(InUnit))
 			{
 				Tile.ReservedUnit = nullptr;
-				bAny = true;
 			}
 		}
 	}
@@ -307,6 +304,31 @@ bool UPCTileManager::EnsureExclusive(APCBaseUnitCharacter* InUnit)
 	}
 	
 	return false;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetWinnerUnitByTeamIndex(int32 WinnerTeamIndex)
+{
+	TArray<APCBaseUnitCharacter*> WinnerUnit;
+	
+	auto AddIfField = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetTeamIndex() && Unit->GetTeamIndex() == WinnerTeamIndex)
+		{
+			if (!WinnerUnit.Contains(Unit))
+			{
+				WinnerUnit.Add(Unit);
+			}
+		}
+	};
+	
+	for (const auto& T : Field)
+	{
+		AddIfField(T.Unit);
+	}
+
+	return WinnerUnit;
 }
 
 void UPCTileManager::CreateField()
