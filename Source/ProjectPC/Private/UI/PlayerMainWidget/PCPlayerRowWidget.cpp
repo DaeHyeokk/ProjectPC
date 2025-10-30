@@ -55,18 +55,20 @@ bool UPCPlayerRowWidget::Initialize()
 // 	});
 // }
 
-void UPCPlayerRowWidget::SetupPlayerInfo(const APCPlayerState* NewPlayerState)
+void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return;
 
 	CachedPlayerState = NewPlayerState;
 
+	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningFlame);
+
 	// 플레이어 이름 세팅
-	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerState->LocalUserId);
+	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
 	PlayerName->SetText(FText::FromString(NameText));
 
-	if (auto AttributeSet = NewPlayerState->GetAttributeSet())
+	if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
 	{
 		// 플레이어 체력바 세팅
 		auto HP = AttributeSet->GetPlayerHP();
@@ -78,7 +80,7 @@ void UPCPlayerRowWidget::SetupPlayerInfo(const APCPlayerState* NewPlayerState)
 	}
 
 	FGameplayTag CharacterTag;
-	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
 		FGameplayTagContainer Tags;
 		ASC->GetOwnedGameplayTags(Tags);
@@ -159,4 +161,18 @@ void UPCPlayerRowWidget::SwitchCamera()
 
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)
 {
+}
+
+void UPCPlayerRowWidget::SetWinningFlame_Implementation()
+{
+	if (!CachedPlayerState) return;
+
+	if (CachedPlayerState->GetPlayerWinningStreak() >= 3)
+	{
+		bIsBurning = true;
+	}
+	else
+	{
+		bIsBurning = false;
+	}
 }
