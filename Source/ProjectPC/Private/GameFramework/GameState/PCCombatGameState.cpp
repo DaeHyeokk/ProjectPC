@@ -153,6 +153,41 @@ APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
 	return nullptr;
 }
 
+void APCCombatGameState::ArmStepStart(double InServerWorldStartTime)
+{
+	if (!HasAuthority()) return;
+	bStepArmed = true;
+	StepArmTimeWS = InServerWorldStartTime;
+	
+}
+
+void APCCombatGameState::Server_ReportUILoadingClosed_Implementation(const FString& LocalUserId)
+{
+	if (!HasAuthority() || LocalUserId.IsEmpty()) return;
+	FUILoadingFlags& Flags = UILoadingById.FindOrAdd(LocalUserId);
+	Flags.bClosed = true;
+	Flags.LastUpdate = GetServerWorldTimeSeconds();
+}
+
+bool APCCombatGameState::AreAllLoadingUIClosed(int32& OutReady, int32& OutTotal) const
+{
+	OutReady = 0;
+	OutTotal = 0;
+	for (APlayerState* PSB : PlayerArray)
+	{
+		if (const APCPlayerState* PCPS = Cast<APCPlayerState>(PSB))
+		{
+			++OutTotal;
+			const FUILoadingFlags* Flags = UILoadingById.Find(PCPS->LocalUserId);
+			if (Flags && Flags->bClosed)
+			{
+				++OutReady;
+			}
+		}
+	}
+	return (OutTotal > 0) && (OutReady == OutTotal);
+}
+
 void APCCombatGameState::SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail)
 {
 	if (!HasAuthority()) return;

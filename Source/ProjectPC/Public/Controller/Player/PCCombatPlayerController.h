@@ -243,6 +243,10 @@ public:
 	UFUNCTION(Server,Reliable)
 	void Server_ReportBootStrap(const FString& LocalUserId, uint8 Mask);
 
+	// 동시시작 알림
+	UFUNCTION()
+	void HandlePreStartArmed();
+
 private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -253,6 +257,7 @@ private:
 	
 	// 헬퍼
 	uint8 ComputeBootStrapMask() const;
+	void ShowPlayerMainUI();
 	void ShowLoadingUI();
 	void UpdateLoadingUI(float Pct01, const FString& Line);
 	void HideLoadingUI();
@@ -279,6 +284,9 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_ShowWidget();
+
+	UFUNCTION(Client,Reliable)
+	void Client_ShowPlayerMainWidget();
 
 	UFUNCTION(Client, Reliable)
 	void Client_HideWidget();

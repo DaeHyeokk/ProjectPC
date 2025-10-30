@@ -10,7 +10,6 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
@@ -153,6 +152,7 @@ void APCCombatPlayerController::BeginPlay()
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
 		LoadMainWidget();
+		
 	}
 		
 	
@@ -192,8 +192,23 @@ void APCCombatPlayerController::BeginPlayingState()
 	{
 		GS->OnLoadingChanged.AddUObject(this, &ThisClass::OnGameLoadingChanged);
 		OnGameLoadingChanged();
+
+		FTimerHandle Th;
+		GetWorldTimerManager().SetTimer(Th, [this]()
+		{
+			if (APCCombatGameState* LGS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				static bool bPrevArmed = false;
+				if (LGS->bStepArmed && !bPrevArmed)
+				{
+					bPrevArmed = true;
+					HandlePreStartArmed();
+				}
+			}
+		}, 0.1f, true, 0.f);
 	}
 
+	
 	StartClientBootStrap();
 }
 
@@ -351,14 +366,6 @@ void APCCombatPlayerController::LoadShopWidget()
 		}
 	}
 }
-
-// void APCCombatPlayerController::LoadMainWidget_Implementation()
-// {
-// 	if (IsLocalController())
-// 	{
-// 		EnsureMainHUDCreated();
-// 	}	
-// }
 
 void APCCombatPlayerController::LoadMainWidget()
 {
@@ -762,8 +769,8 @@ void APCCombatPlayerController::EnsureScreenFade()
 	ScreenFadeWidget = CreateWidget<UUserWidget>(this, ScreenFadeClass);
 	if (ScreenFadeWidget)
 	{
-		ScreenFadeWidget->AddToViewport(10000);
-		ScreenFadeWidget->SetVisibility(ESlateVisibility::Hidden);
+		ScreenFadeWidget->AddToViewport(100);
+		ScreenFadeWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -771,7 +778,7 @@ void APCCombatPlayerController::SetScreenFadeVisible(bool bVisible, float Opacit
 {
 	if (!ScreenFadeWidget)
 		return;
-	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
+	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	ScreenFadeWidget->SetRenderOpacity(bVisible ? Opacity : 0.f);
 }
 
@@ -815,6 +822,27 @@ void APCCombatPlayerController::OnGameLoadingChanged()
 	}
 }
 
+void APCCombatPlayerController::HandlePreStartArmed()
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->PlayFadeOut();
+	}
+
+	SetScreenFadeVisible(false, 0.f);
+
+	FTimerHandle ThAck;
+	GetWorldTimerManager().SetTimer(ThAck, [this]()
+	{
+		if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+		{
+			if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				GS->Server_ReportUILoadingClosed(PS->LocalUserId);
+			}
+		}
+	},1.f, false);
+}
 
 
 uint8 APCCombatPlayerController::ComputeBootStrapMask() const
@@ -827,6 +855,16 @@ uint8 APCCombatPlayerController::ComputeBootStrapMask() const
 	return M;
 }
 
+void APCCombatPlayerController::ShowPlayerMainUI()
+{
+	if (!IsLocalController()) return;
+
+	if (PlayerMainWidget)
+	{
+		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
 void APCCombatPlayerController::ShowLoadingUI()
 {
 	if (!IsLocalController()) return;
@@ -836,7 +874,7 @@ void APCCombatPlayerController::ShowLoadingUI()
 		LoadingWidget = CreateWidget<UPCLoadingWidget>(this, LoadingWidgetClass);
 		if (LoadingWidget)
 		{
-			LoadingWidget->AddToViewport(10000);
+			LoadingWidget->AddToViewport(2000);
 		}
 	}
 	if (LoadingWidget)
@@ -857,7 +895,7 @@ void APCCombatPlayerController::HideLoadingUI()
 {
 	if (LoadingWidget)
 	{
-		LoadingWidget->SetVisibility(ESlateVisibility::Hidden);
+		LoadingWidget->RemoveFromParent();
 	}
 }
 
@@ -869,6 +907,8 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	// 이미 있으면 보장만
 	if (!IsValid(PlayerMainWidget))
 	{
+		EnsureScreenFade();
+		SetScreenFadeVisible(true,1);
 		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
@@ -950,7 +990,6 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		return;
 	}
 	
-	PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
 
 	if (!PCPlayerState)
@@ -1048,6 +1087,11 @@ void APCCombatPlayerController::HideWidget()
 	PlayerMainWidget->SetShopWidgetVisible(false);
 }
 
+void APCCombatPlayerController::Client_ShowPlayerMainWidget_Implementation()
+{
+	ShowPlayerMainUI();
+}
+
 void APCCombatPlayerController::ApplyGameInputMode()
 {
 	FInputModeGameAndUI Mode;
@@ -1064,8 +1108,9 @@ void APCCombatPlayerController::ApplyGameInputMode()
 
 
 void APCCombatPlayerController::Client_ShowWidget_Implementation()
-{
+{	
 	ShowWidget();
+	ShowPlayerMainUI();
 }
 
 void APCCombatPlayerController::Client_HideWidget_Implementation()

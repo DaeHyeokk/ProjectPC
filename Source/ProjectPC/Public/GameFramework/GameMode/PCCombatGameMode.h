@@ -151,7 +151,11 @@ protected:
 
 private:
 
+	// 관리 타이머
 	FTimerHandle ThLoadingPoll;
+	FTimerHandle ThPreStartBarrier;
+	FTimerHandle ThArmTimeout;
+	FTimerHandle ThStartAt;
 
 	// 가중치
 	float W_Connected = 0.25f;
@@ -162,6 +166,10 @@ private:
 
 	// 리더보드 생성 확인
 	bool bAttributesBound = false;
+
+	// 모든 플레이어 동시시작 체크
+	void PollPreStartBarrier();
+	void FinishPreStartAndSchedule();
 
 	// 진입 / 폴링 / 종료
 	void EnterLoadingPhase();

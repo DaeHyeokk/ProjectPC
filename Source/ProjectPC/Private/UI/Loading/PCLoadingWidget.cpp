@@ -23,6 +23,15 @@ void UPCLoadingWidget::NativeOnInitialized()
 	
 }
 
+void UPCLoadingWidget::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
+{
+	Super::OnAnimationFinished_Implementation(Animation);
+	if (Animation == FadeOut)
+	{
+		SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 
 void UPCLoadingWidget::SetProgress(float InProgress, const FText& InDetail)
 {
@@ -38,3 +47,13 @@ void UPCLoadingWidget::SetProgress(float InProgress, const FText& InDetail)
 	}
 }
 
+void UPCLoadingWidget::PlayFadeOut()
+{
+	if (!FadeOut)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FadeOut animation is null"));
+		return;
+	}
+
+	PlayAnimationForward(FadeOut);
+}

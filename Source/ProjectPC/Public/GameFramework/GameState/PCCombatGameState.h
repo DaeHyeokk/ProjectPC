@@ -75,6 +75,16 @@ struct FBootstrapFlags
 	bool All()     const { return (Mask & 0x0F) == 0x0F; }
 };
 
+// === UI 닫힘 ACK 집계(서버 전용) ===
+USTRUCT()
+struct FUILoadingFlags
+{
+	GENERATED_BODY()
+	UPROPERTY() bool bClosed = false;
+	UPROPERTY() double LastUpdate = 0.0;
+};
+
+
 
 USTRUCT(BlueprintType)
 struct FStageRuntimeState
@@ -237,6 +247,17 @@ public:
 	UPROPERTY(ReplicatedUsing=OnRep_Loading)
 	FString LoadingDetail;
 
+	// 시작 예고 신호
+	UPROPERTY(Replicated)
+	bool bStepArmed = false;
+
+	// 서버 월드시간
+	UPROPERTY(Replicated)
+	double StepArmTimeWS = 0.0;
+
+	void ArmStepStart(double InServerWorldStartTime);
+
+	
 	void SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail);
 
 	UFUNCTION()
@@ -247,6 +268,14 @@ public:
 	// 클라 ACK 집계 (서버전용)
 	// 로컬 유저 ID로 클라 UI 동기화 체크
 	TMap<FString, FBootstrapFlags> BootstrapById;
+
+	// 동시시작용 Map
+	TMap<FString, FUILoadingFlags> UILoadingById;
+
+	UFUNCTION(Server, Reliable)
+	void Server_ReportUILoadingClosed(const FString& LocalUserId);
+
+	bool AreAllLoadingUIClosed(int32& OutReady, int32& OutTotal) const;
 
 	// 서버 : 수신 갱신
 	void Server_UpdateBootstrap(const FString& LocalUserId, uint8 Mask);

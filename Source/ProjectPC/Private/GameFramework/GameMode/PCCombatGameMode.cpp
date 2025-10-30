@@ -256,6 +256,15 @@ void APCCombatGameMode::EndCurrentStep()
 void APCCombatGameMode::Step_Start()
 {
 	PlaceAllPlayersOnCarousel();
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			PCPlayerController->Client_ShowPlayerMainWidget();
+		}
+	}
+	
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -282,9 +291,7 @@ void APCCombatGameMode::Step_Setup()
 				{
 					PCPlayerState->ApplyRoundReward();
 				}
-			}
-			PCPlayerController->Client_ShowWidget();
-			
+			}			
 		}
 	}
 }
@@ -762,6 +769,42 @@ APCPlayerState* APCCombatGameMode::FindPlayerStateBySeat(int32 SeatIdx)
 }
 
 
+void APCCombatGameMode::PollPreStartBarrier()
+{
+	if (APCCombatGameState* GS = GetGameState<APCCombatGameState>())
+	{
+		int32 Ready = 0;
+		int32 Total = 0;
+		if (GS->AreAllLoadingUIClosed(Ready, Total) && Total>0 && Ready==Total)
+		{
+			FinishPreStartAndSchedule();
+		}
+	}
+}
+
+void APCCombatGameMode::FinishPreStartAndSchedule()
+{
+	GetWorldTimerManager().ClearTimer(ThPreStartBarrier);
+	GetWorldTimerManager().ClearTimer(ThArmTimeout);
+
+	APCCombatGameState* GS = GetGameState<APCCombatGameState>();
+	if (!GS) return;
+
+	GS->SetLoadingState(false, 1.f, TEXT("Ready"));
+
+	const double Now = GS->GetServerWorldTimeSeconds();
+	const double TStart = GS->StepArmTimeWS;
+	const float Delay = FMath::Max(0.f, TStart-Now);
+
+	GetWorldTimerManager().SetTimer(ThStartAt, this, &ThisClass::StartFromBeginning, Delay, false);
+
+	FStageRuntimeState S;
+	S.Stage = EPCStageType::Start;
+	S.ServerStartTime = TStart;
+	S.ServerEndTime = TStart + (StageData ? StageData->GetDefaultDuration(EPCStageType::Start) : 1.f);
+	GS->SetStageRunTime(S);
+}
+
 void APCCombatGameMode::EnterLoadingPhase()
 {
 	if (APCCombatGameState* GS = GetCombatGameState())
@@ -877,9 +920,6 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 {
 	GetWorldTimerManager().ClearTimer(ThLoadingPoll);
 	
-	// AssignSeatDeterministicOnce();
-	// BuildHelperActor();
-
 	InitializeHomeBoardsForPlayers();
 	BindPlayerBoardsToPlayerStates();
 
@@ -888,14 +928,27 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 	{
 		It->Multicast_SetOverHeadWidget();
 	}
-	
-	if (APCCombatGameState* GS = GetCombatGameState())
-	{
-		GS->SetLoadingState(false, 1.f, TEXT("Ready"));
-		GS->SetGameStateTag(GameStateTags::Game_State_NonCombat);
-	}
 
-	StartFromBeginning();
+	APCCombatGameState* GS = GetCombatGameState();
+	if (!GS) return;
+	
+	// 1) Tstart: 서버 월드 시간 기준으로 약간 미래(1.5초 권장)
+	const double Now    = GS->GetServerWorldTimeSeconds(); // 또는 GetWorld()->GetTimeSeconds()
+	const double Tstart = Now + 1.50;
+
+	// 2) 시작 예고 (여전히 bLoading=true 유지)
+	GS->SetLoadingState(true, 0.99f, TEXT("Starting…"));
+	GS->ArmStepStart(Tstart);
+
+	// 3) Barrier: 모든 클라가 UI 닫았는지 0.05s 간격으로 확인
+	GetWorldTimerManager().SetTimer(ThPreStartBarrier, this, &ThisClass::PollPreStartBarrier, 0.05f, true, 0.0f);
+
+	// 4) 안전 타임아웃: Tstart 직전까지 ACK가 다 안 오면 강행
+	const float ArmTimeout = FMath::Max(0.1f, float(Tstart - Now) - 0.2f);
+	GetWorldTimerManager().SetTimer(ThArmTimeout, [this]()
+	{
+		FinishPreStartAndSchedule();
+	}, ArmTimeout, false);
 }
 
 bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) 

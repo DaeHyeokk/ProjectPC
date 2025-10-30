@@ -40,6 +40,7 @@ public:
 	void SetShopWidgetVisible(bool bVisible);
 	
 protected:
+	virtual void NativeConstruct() override;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<class UPCGameStateWidget> W_GameStateWidget;
 
