@@ -921,10 +921,7 @@ APCBaseUnitCharacter* APCCombatManager::SpawnCreepAt(APCCombatBoard* Board, int3
 	// 팀 보장
 	if (Unit->GetTeamIndex() != CreepTeam)
 		Unit->SetTeamIndex(CreepTeam);
-
-	Unit->SetActorHiddenInGame(false);
-	Unit->SetActorEnableCollision(true);
-
+	
 	// (Y,X) 자리 또는 주변 빈칸에 배치 (적 방향)
 	if (!PlaceOrNearest(TM, YX.X, YX.Y, Unit))
 	{

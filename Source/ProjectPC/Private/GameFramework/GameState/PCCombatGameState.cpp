@@ -392,6 +392,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	DOREPLIFETIME(APCCombatGameState, Leaderboard);
+	DOREPLIFETIME(APCCombatGameState, FindPlayerStates);
 
 	DOREPLIFETIME(APCCombatGameState, RoundsPerStage);
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);

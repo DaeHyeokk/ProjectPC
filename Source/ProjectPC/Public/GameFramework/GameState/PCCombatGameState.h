@@ -531,7 +531,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
 	void GetPlayerStatesOrdered();
 	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<APCPlayerState*> FindPlayerStates;
 
 	// 위젯 갱신

@@ -91,6 +91,9 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 				{
 					const FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
+
+					UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, MovePoint : X = %d, Y = %d"),*OwnerUnit->GetName(), MovePoint.Y, MovePoint.X)
+					UE_LOG(LogTemp, Warning, TEXT("Unit Name : %s, MoveLocation : X = %f, Y = %f, Z = %f"),*OwnerUnit->GetName(),MoveLocation.X, MoveLocation.Y, MoveLocation.Z)
 					
 					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))
 					{
