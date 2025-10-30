@@ -70,6 +70,11 @@ void APCHeroUnitCharacter::LevelUp()
 
 	FGameplayCueParameters Params;
 	Params.TargetAttachComponent = GetMesh();
+
+	FHitResult HitResult;
+	HitResult.BoneName = TEXT("Root");
+	Params.EffectContext.AddHitResult(HitResult);
+	
 	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
@@ -98,8 +103,6 @@ void APCHeroUnitCharacter::BeginPlay()
 		{
 			SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy, EGameplayTagEventType::AnyCountChange)
 			.AddUObject(this, &ThisClass::OnSynergyTagChanged);
-			// SynergyTagChangedHandle = ASC->RegisterGenericGameplayTagEvent()
-			// .AddUObject(this, &ThisClass::OnSynergyTagChanged);
 		}
 	}
 }

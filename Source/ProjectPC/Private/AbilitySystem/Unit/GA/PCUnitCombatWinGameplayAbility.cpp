@@ -4,6 +4,9 @@
 #include "AbilitySystem/Unit/GA/PCUnitCombatWinGameplayAbility.h"
 
 #include "BaseGameplayTags.h"
+#include "Character/Projectile/PCBaseProjectile.h"
+#include "Character/Unit/PCBaseUnitCharacter.h"
+#include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
 UPCUnitCombatWinGameplayAbility::UPCUnitCombatWinGameplayAbility()
 {
@@ -24,5 +27,14 @@ void UPCUnitCombatWinGameplayAbility::ActivateAbility(const FGameplayAbilitySpec
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
 		return;
+	}
+
+	if (UPCProjectilePoolSubsystem* ProjectilePoolSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>() : nullptr)
+	{
+		const FTransform OwnerTransform = Unit->GetActorTransform();
+		if (APCBaseProjectile* Projectile = ProjectilePoolSubsystem->SpawnProjectile(OwnerTransform, Unit, TriggerEventData->Target))
+		{
+			Projectile->SetDamage(1.f);
+		}
 	}
 }

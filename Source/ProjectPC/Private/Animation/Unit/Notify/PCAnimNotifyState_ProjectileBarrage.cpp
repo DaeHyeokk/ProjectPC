@@ -81,13 +81,11 @@ void UPCAnimNotifyState_ProjectileBarrage::SpawnProjectileAndFX(USkeletalMeshCom
 	
 	if (SocketName.IsNone() || !MeshComp->DoesSocketExist(SocketName))
 		return;
-	
-	const FTransform SocketTransform = MeshComp->GetSocketTransform(SocketName, RTS_World);
 
 	// Dedicated Server에서는 이펙트 생성 X
 	if (MuzzleFX && Owner->GetNetMode() != NM_DedicatedServer)
 	{
-		UParticleSystemComponent* ParticleComp = UGameplayStatics::SpawnEmitterAttached(
+		UGameplayStatics::SpawnEmitterAttached(
 			MuzzleFX,
 			MeshComp,
 			SocketName,
@@ -109,6 +107,7 @@ void UPCAnimNotifyState_ProjectileBarrage::SpawnProjectileAndFX(USkeletalMeshCom
 	// 발사체는 서버에서만 생성 
 	if (Owner->HasAuthority())
 	{
+		const FTransform SocketTransform = MeshComp->GetSocketTransform(SocketName, RTS_World);
 		APCBaseProjectile* Projectile = nullptr;
 		
 		if (auto* ProjectilePool = World->GetSubsystem<UPCProjectilePoolSubsystem>())

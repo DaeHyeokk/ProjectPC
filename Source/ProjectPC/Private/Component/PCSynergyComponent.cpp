@@ -69,7 +69,6 @@ void UPCSynergyComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UPCSynergyComponent, SynergyCountArray);
-	//DOREPLIFETIME(UPCSynergyComponent, SynergyData);
 }
 
 void UPCSynergyComponent::BeginPlay()
