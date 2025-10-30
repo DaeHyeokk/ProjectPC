@@ -75,7 +75,9 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
 
 	Unit->SetOnCombatBoard(Board);
-	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
+	FVector TWorld = FVector(Loc.X, Loc.Y, 71);
+	Unit->TeleportTo(TWorld, Rot, false, true);
+	//Unit->SetActorRotation(Rot, ETeleportType::TeleportPhysics);
 	BindToUnit(Unit);
 
 	return true;
@@ -482,21 +484,16 @@ void UPCTileManager::DebugDrawTiles(float Duration, bool bPersistent, bool bShow
 		if (bShowIndex) Lines.Add(FString::Printf(TEXT("#%d"), i));
 		if (bShowYX)
 		{
-			const int32 Y = i / Rows;
-			const int32 X = i % Rows;
-			Lines.Add(FString::Printf(TEXT("(Y=%d,X=%d)"), Y, X));
+			const int32 Y = P.Y;
+			const int32 X = P.X;
+			Lines.Add(FString::Printf(TEXT("(X=%d,Y=%d)"), X, Y));
 		}
-		if (bShowUnit)
-		{
-			if (T.Unit)            { Lines.Add(FString::Printf(TEXT("U:%s"), *T.Unit->GetName())); }
-			else if (T.IsReserved()){ Lines.Add(FString::Printf(TEXT("R:%s"), *T.ReservedUnit->GetName())); }
-			else                   { Lines.Add(TEXT("Free")); }
-		}
+	
 		const FString Label = FString::Join(Lines, TEXT(" "));
 
 		// 스피어/텍스트
-		DrawDebugSphere(World, P, 12.f, 12, FColor::White, bPersistent, Life, 0, 0.8f);
-		DrawDebugString(World, P + FVector(0,0,20.f), Label, nullptr, FColor::White, Life, false, 1.0f);
+		DrawDebugSphere(World, P, 12.f, 12, FColor::Green, bPersistent, Life, 0, 0.8f);
+		DrawDebugString(World, P + FVector(0,-140,40.f), Label, nullptr, FColor::Black, Life, false, 1.0f);
 	}
 }
 

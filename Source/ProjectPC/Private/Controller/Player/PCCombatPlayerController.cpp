@@ -754,19 +754,6 @@ void APCCombatPlayerController::TickClientBootStrap()
 	Server_ReportBootStrap(PS->LocalUserId, M);	
 }
 
-void APCCombatPlayerController::Client_RebindOverHead_Implementation()
-{
-	if (!IsLocalController()) return;
-
-	if (APawn* P = GetPawn())
-	{
-		if (auto* PCChr = Cast<APCPlayerCharacter>(P))
-		{
-			PCChr->SetOverHeadWidget();
-		}
-	}
-}
-
 void APCCombatPlayerController::Server_ReportBootStrap_Implementation(const FString& LocalUserId, uint8 Mask)
 {
 	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
@@ -1314,7 +1301,8 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         if (bPlaced)
         {
-            Multicast_LerpMove(Unit, Snap, LerpDuration);
+        	// FVector UnitLoc = Unit->GetActorLocation();
+            // Multicast_LerpMove(Unit, UnitLoc, LerpDuration);
             Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else
@@ -1350,9 +1338,9 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
                 OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
 
             // 비주얼 이동
-            Multicast_LerpMove(Unit,    UnitDest,  LerpDuration);
+            //Multicast_LerpMove(Unit,    UnitDest,  LerpDuration);
             if (!OtherDest.IsNearlyZero())
-                Multicast_LerpMove(DstUnit, OtherDest, LerpDuration);
+                //Multicast_LerpMove(DstUnit, OtherDest, LerpDuration);
 
             Client_DragEndResult(true, UnitDest, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }

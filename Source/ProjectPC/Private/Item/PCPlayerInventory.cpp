@@ -191,12 +191,11 @@ void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int3
 			}
 		}
 	}
-
-	bool bIsBattle = false;
+	
 
 	if (APCCombatGameState* PCCombatState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
-		bIsBattle = PCCombatState->bIsbattle();
+		bool bIsBattle = PCCombatState->bIsbattle();
 		if (!bIsBattle)
 		{
 			// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)

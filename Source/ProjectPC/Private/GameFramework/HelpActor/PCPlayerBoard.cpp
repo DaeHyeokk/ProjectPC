@@ -390,6 +390,8 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 
 bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
+	if (!HasAuthority()) return false;
+	
 	APCPlayerState* PCPlayerState = ResolvePlayerState();
 	
 	if (!PCPlayerState || !Unit || !IsInRange(Y,X)) return false;
@@ -411,7 +413,12 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	Unit->ChangedOnTile(true);
 
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
-	Unit->SetActorLocation(World,false);
+	FVector TWorld = FVector(World.X, World.Y, 71.f);
+	Unit->TeleportTo(TWorld, Unit->GetActorRotation(), false, true);
+
+	FVector TestVector = Unit->GetActorLocation();
+
+	UE_LOG(LogTemp, Warning, TEXT("Unit Location : X : %f, Y : %f, Z : %f"), TestVector.X,TestVector.Y,TestVector.Z)
 
 	if (HasAuthority())
 	{

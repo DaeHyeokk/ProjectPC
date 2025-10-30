@@ -11,13 +11,13 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
-class APCItemCapsule;
-class UAbilitySystemComponent;
-class APCUnitCombatTextActor;
-class UPCTileManager;
 class APCCombatBoard;
-class UPCShopManager;
+class APCItemCapsule;
 class APCPlayerState;
+class APCUnitCombatTextActor;
+class UAbilitySystemComponent;
+class UPCTileManager;
+class UPCShopManager;
 
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
@@ -74,7 +74,6 @@ struct FBootstrapFlags
 	bool HasGS()   const { return (Mask & 0x08) != 0; }
 	bool All()     const { return (Mask & 0x0F) == 0x0F; }
 };
-
 
 USTRUCT(BlueprintType)
 struct FStageRuntimeState
@@ -209,8 +208,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
-
-
+	
 	// 추후에 삭제
 	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
 	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
@@ -331,7 +329,6 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool WasRoundDraw(int32 StageIdx, int32 RoundIdx) const;
 	
-	
 protected:
 	
 	UFUNCTION()
@@ -349,7 +346,6 @@ protected:
 
 	int32 TotalRoundsFloat() const;
 
-	
 #pragma endregion UI
 	
 #pragma region Shop
@@ -522,8 +518,8 @@ protected:
 
 	// 순위대로 PS 뽑기
 	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
-	void GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const;
-	
+	void GetPlayerStatesOrdered();
+
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();

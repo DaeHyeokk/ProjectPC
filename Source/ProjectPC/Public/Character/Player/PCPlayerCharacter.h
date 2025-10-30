@@ -41,8 +41,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
-	
-	void SetOverHeadWidget();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetOverHeadWidget();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")

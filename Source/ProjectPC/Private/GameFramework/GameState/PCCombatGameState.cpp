@@ -239,8 +239,6 @@ void APCCombatGameState::SetRoundsPerStage(const TArray<int32>& InCounts)
 	}
 }
 
-
-
 void APCCombatGameState::SetRoundMajorsFlat(const TArray<FGameplayTag>& InFlatMajors)
 {
 	RoundMajorFlat = InFlatMajors;
@@ -303,7 +301,6 @@ int32 APCCombatGameState::GetMySeatIndex() const
 	}
 	return -1;
 }
-
 
 ERoundResult APCCombatGameState::GetRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx) const
 {
@@ -393,14 +390,11 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	DOREPLIFETIME(APCCombatGameState, Leaderboard);
 	DOREPLIFETIME(APCCombatGameState, FindPlayerStates);
-	
+
 	DOREPLIFETIME(APCCombatGameState, RoundsPerStage);
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
 	DOREPLIFETIME(APCCombatGameState, RoundPvETagFlat);
 	DOREPLIFETIME(APCCombatGameState, SeatRoundResult);
-
-	
-	
 }
 
 int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
@@ -566,6 +560,7 @@ int32 APCCombatGameState::GetFinalRankFor(const FString& LocalUserId) const
 {
 	if (const int32* R = FinalRanks.Find(LocalUserId))
 		return *R;
+	
 	return 0;
 }
 
@@ -592,6 +587,7 @@ void APCCombatGameState::RemovePlayerState(APlayerState* PlayerState)
 
 		RebuildAndReplicatedLeaderboard();
 	}
+	
 	Super::RemovePlayerState(PlayerState);
 }
 
@@ -731,8 +727,9 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 	}
 
 	Leaderboard = MoveTemp(NewReaderBoard);
-	ForceNetUpdate();
+	GetPlayerStatesOrdered();
 	
+	ForceNetUpdate();
 }
 
 void APCCombatGameState::TryFinalizeLastSurvivor()
@@ -779,34 +776,33 @@ APCPlayerState* APCCombatGameState::FindPlayerStateByUserId(const FString& Local
 	return nullptr;
 }
 
-void APCCombatGameState::GetPlayerStatesOrdered(TArray<APCPlayerState*>& OutPlayerStates) const
+void APCCombatGameState::GetPlayerStatesOrdered() 
 {
-	OutPlayerStates.Reset();
+	FindPlayerStates.Reset();
 
 	if (Leaderboard.Num() <= 0) return;
 
-	OutPlayerStates.SetNum(Leaderboard.Num());
+	FindPlayerStates.SetNum(Leaderboard.Num());
 
 	for (int32 i = 0; i < Leaderboard.Num(); ++i)
 	{
 		const FString& Id = Leaderboard[i].LocalUserId;
-		OutPlayerStates[i] = FindPlayerStateByUserId(Id);
+		FindPlayerStates[i] = FindPlayerStateByUserId(Id);
 	}
-
-	FindPlayerState.Broadcast(OutPlayerStates);
-	
 }
 
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
-	GetPlayerStatesOrdered(FindPlayerStates);
-
+	GetPlayerStatesOrdered();
+	
 	if (!bLeaderBoardReady)
 	{
 		bLeaderBoardReady = true;
 		OnLeaderBoardReady.Broadcast();
 	}
+
+	FindPlayerState.Broadcast(FindPlayerStates);
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const
