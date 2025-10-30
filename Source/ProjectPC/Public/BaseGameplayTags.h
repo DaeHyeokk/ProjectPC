@@ -37,15 +37,16 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Terra)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shogun) // Paragon Murdock 에셋 사용 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_MatteBlack) // Paragon Murdock 에셋 사용
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ShadowOps)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shogun) // Paragon Murdock
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_MatteBlack) // Paragon Murdock
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Twinblast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ShadowOps) // Paragon Twinblast
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_GRIMexe)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_IggyScorch)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
@@ -202,6 +203,7 @@ namespace GameplayEffectTags
 namespace GameplayCueTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_HitImpact)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Haste)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UI_Unit_CombatText)
 }

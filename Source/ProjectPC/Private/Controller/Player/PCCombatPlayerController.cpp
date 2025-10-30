@@ -152,9 +152,6 @@ void APCCombatPlayerController::BeginPlay()
 
 		LoadMainWidget();
 	}
-		
-	
-	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
@@ -195,7 +192,6 @@ void APCCombatPlayerController::BeginPlayingState()
 	StartClientBootStrap();
 }
 
-
 void APCCombatPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
@@ -226,7 +222,6 @@ void APCCombatPlayerController::OnInputStarted()
 	}
 
 	HeroStatusWidget->HidePanel();
-	
 }
 
 void APCCombatPlayerController::OnSetDestinationTriggered()
@@ -624,7 +619,6 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 
 	CarouselRing->ApplyCentralViewForSeat(this, SeatIndex, 0.f);
 	SwitchCameraWhileBlack(CarouselRing, BlendTime, 0.08f,0.15f,0.5f);
-	
 }
 
 void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
@@ -634,7 +628,6 @@ void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
-	
 	UWorld* World = GetWorld();
 	if (!World) return;
 	for (TActorIterator<APCCombatBoard> It(World); It; ++It)
@@ -662,6 +655,7 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 		if (It->BoardSeatIndex == BoardSeatIndex)
 			return *It;
 	}
+	
 	return nullptr;
 }
 
@@ -779,8 +773,6 @@ void APCCombatPlayerController::OnGameLoadingChanged()
 		}
 	}
 }
-
-
 
 uint8 APCCombatPlayerController::ComputeBootStrapMask() const
 {
@@ -963,7 +955,6 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
 
 	bUIReady = true;
-
 }
 
 void APCCombatPlayerController::TryInitWidgetWithGameState()
@@ -975,7 +966,6 @@ void APCCombatPlayerController::TryInitWidgetWithGameState()
 		PlayerMainWidget->InitAndBind(CombatGameState);
 		bGSBound = true;
 	}
-	
 }
 
 void APCCombatPlayerController::OnRep_PlayerState()
@@ -985,8 +975,6 @@ void APCCombatPlayerController::OnRep_PlayerState()
 	TryInitHUDWithPlayerState();
 
 	bPSReady = (GetPlayerState<APCPlayerState>() != nullptr);
-
-	
 }
 
 void APCCombatPlayerController::ShowWidget()
@@ -1066,7 +1054,6 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 	SwitchCameraWhileBlack(CombatBoard, Blend,0.08f, 0.15f, 0.5f);
 }
 
-
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
 	bIsCancel = true;
@@ -1109,7 +1096,6 @@ void APCCombatPlayerController::OnMouse_Pressed()
 		if (DragComponent)
 			DragComponent->OnMouse_Pressed(this);
 	}
-	
 }
 
 void APCCombatPlayerController::OnMouse_Released()
@@ -1388,8 +1374,6 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 			CachedPreviewUnit = PreviewHero;
 		}
 	}
-	
-	
 }
 
 void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit)
@@ -1458,7 +1442,6 @@ void APCCombatPlayerController::Multicast_LerpMove_Implementation(APCBaseUnitCha
 			true,true,Duration,false,EMoveComponentAction::Move,FLatentActionInfo());
 	}
 }
-
 
 UPCTileManager* APCCombatPlayerController::GetTileManager() const
 {
@@ -1666,7 +1649,6 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 		CachedHoverUnit = nullptr;
 		ClearHoverHighLight();
 	}
-	
 }
 
 void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32 Ranking)

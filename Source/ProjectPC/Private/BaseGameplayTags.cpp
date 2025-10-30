@@ -38,13 +38,14 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Terra, "Unit.Type.Hero.Terra")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Shogun, "Unit.Type.Hero.Shogun")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_MatteBlack, "Unit.Type.Hero.MatteBlack")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_TwinBlast, "Unit.Type.Hero.TwinBlast")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Twinblast, "Unit.Type.Hero.Twinblast")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_ShadowOps, "Unit.Type.Hero.ShadowOps")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_GRIMexe, "Unit.Type.Hero.GRIMexe")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_IggyScorch, "Unit.Type.Hero.IggyScorch")
 	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Shinbi, "Unit.Type.Hero.Shinbi")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Revenant, "Unit.Type.Hero.Revenant")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Murdock, "Unit.Type.Hero.Murdock")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Hero_Zinx, "Unit.Type.Hero.Zinx")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep, "Unit.Type.Creep")
 	
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_MinionLv1, "Unit.Type.Creep.MinionLv1")
@@ -202,6 +203,7 @@ namespace GameplayEffectTags
 namespace GameplayCueTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_LevelUp, "GameplayCue.VFX.Unit.LevelUp")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_HitImpact, "GameplayCue.VFX.Unit.HitImpact")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Haste, "GameplayCue.VFX.Unit.Haste")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_UI_Unit_CombatText, "GameplayCue.UI.Unit.CombatText")
 }

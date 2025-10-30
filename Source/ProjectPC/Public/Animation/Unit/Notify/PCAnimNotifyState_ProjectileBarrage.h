@@ -59,7 +59,7 @@ public:
 	FName TargetUnitKeyName = TEXT("TargetUnit");
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FX")
-	UParticleSystem* MuzzleFX = nullptr;
+	TObjectPtr<UParticleSystem> MuzzleFX = nullptr;
 
 	UPROPERTY(VisibleAnywhere, Category="Event")
 	FGameplayTag EventTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;

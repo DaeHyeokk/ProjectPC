@@ -344,7 +344,7 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 		FGameplayEventData EventData;
 		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
 		EventData.Instigator = this;
-		EventData.Target = TargetPS;
+		EventData.Target = TargetPS->GetPawn();
 
 		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 	}

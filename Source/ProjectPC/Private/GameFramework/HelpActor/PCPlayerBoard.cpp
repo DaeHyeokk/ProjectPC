@@ -4,6 +4,8 @@
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 
 #include "AbilitySystemComponent.h"
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Component/PCSynergyComponent.h"
@@ -11,7 +13,6 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Net/UnrealNetwork.h"
 #include "UI/Board/PCBoardWidget.h"
 
 
@@ -73,7 +74,6 @@ void APCPlayerBoard::OnHISM(bool bIsOn, bool bIsBattle)
 		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
 	}
-	
 }
 
 void APCPlayerBoard::BuildHISM()
@@ -107,7 +107,6 @@ void APCPlayerBoard::BuildHISM()
 
 		// 서버도 즉시 재구성(클라는 OnRep에서)
 		RebuildHISM_FromArrays();
-		
 	}
 	else
 	{
@@ -223,7 +222,6 @@ bool APCPlayerBoard::IsInRange(int32 Y, int32 X) const
 {
 	return (Y >= 0 && Y < Cols && X >= 0 && X < Rows);
 }
-
 
 APCBaseUnitCharacter* APCPlayerBoard::GetFieldUnit(int32 Y, int32 X) const
 {
@@ -347,6 +345,7 @@ TArray<APCBaseUnitCharacter*> APCPlayerBoard::GetBenchUnitByTag(FGameplayTag Uni
 			}
 		}
 	};
+	
 	for (const auto& T : PlayerBench)
 	{
 		AddIfBench(T.Unit);
@@ -385,6 +384,7 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 		PlayerBench[bi].Unit = nullptr;
 		return true;
 	}
+	
 	return false;
 }
 
@@ -452,6 +452,7 @@ bool APCPlayerBoard::RemoveFromField(int32 Y, int32 X)
 	{
 		RecountAndPushToWidget_Server();
 	}
+	
 	return true;
 }
 
@@ -757,6 +758,7 @@ int32 APCPlayerBoard::CountFieldUnits() const
 			++Count;
 		}
 	}
+	
 	return Count;
 }
 
@@ -777,7 +779,6 @@ void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(const FGameplayTag&
 		CapacityWidgetComp->SetVisibility(bVisible);
 		
 	}
-	
 }
 
 void APCPlayerBoard::OnLevelChanged(const FOnAttributeChangeData& Data)
@@ -837,6 +838,7 @@ const UPCPlayerAttributeSet* APCPlayerBoard::ResolveSet() const
 	{
 		return PCPlayerState->GetAttributeSet();
 	}
+	
 	return nullptr;
 }
 
@@ -918,6 +920,3 @@ int32 APCPlayerBoard::GetFirstOccupiedBenchIndex() const
 
 	return INDEX_NONE;
 }
-
-
-
