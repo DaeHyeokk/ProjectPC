@@ -146,7 +146,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 
 		FTransform SpawnTransform(Direction.Rotation(), InstLoc);
 		auto Projectile = ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, CharacterTag, InstigatorPawn, TargetPawn);
-		Projectile->SetDamage(-100.f);
+		Projectile->SetDamage(Damage);
 	}
 }
 

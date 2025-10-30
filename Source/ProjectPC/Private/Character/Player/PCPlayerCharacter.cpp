@@ -100,14 +100,6 @@ void APCPlayerCharacter::OnRep_PlayerState()
 		{
 			ASC->InitAbilityActorInfo(PS, this);
 		}
-
-		// if (OverHeadWidgetComp)
-		// {
-		// 	if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-		// 	{
-		// 		OverheadWidget->BindToPlayerState(PS);
-		// 	}
-		// }
 	}
 }
 

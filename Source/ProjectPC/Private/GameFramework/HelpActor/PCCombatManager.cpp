@@ -341,11 +341,7 @@ void APCCombatManager::BuildCloneForHost(int32 PairIndex, int32 DonorSeat)
 
 			if (UnitSpawnSystem)
 			{
-				Clone = UnitSpawnSystem->SpawnUnitByTag(SourceUnit->GetUnitTag(), CloneTeamIdx, SourceUnit->GetUnitLevel());
-			}
-
-			if (Clone->GetTeamIndex() != CloneTeamIdx)
-			{
+				Clone = UnitSpawnSystem->SpawnCloneUnitBySourceUnit(SourceUnit);
 				Clone->SetTeamIndex(CloneTeamIdx);
 			}
 
@@ -1176,19 +1172,56 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 		UnbindAllForPair(PairIndex);
 		Pair.bRunning = false;
 
-		if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+		if (bHostWon)
 		{
-			int32 StageOne=0, RoundOne=0;
-			GetCurrentStageRoundOne(StageOne, RoundOne);
-			const int32 StageIdx = StageOne;      
-			const int32 RoundIdx = RoundOne;
-
+			// 승리시 승패판정만 전달
 			const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
-			const int32 WinnerSeat = bHostWon ? HostSeat : INDEX_NONE;
-			const int32 LoserSeat  = bHostWon ? INDEX_NONE : HostSeat;
+			if (HostSeat != INDEX_NONE)
+			{
+				if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+				{
+					int32 StageOne=0, RoundOne=0;
+					GetCurrentStageRoundOne(StageOne, RoundOne);
+					const int32 StageIdx = StageOne;      
+					const int32 RoundIdx = RoundOne;
 
-			GS->ApplyRoundResultForSeat(HostSeat, StageIdx, RoundIdx, bHostWon ? ERoundResult::Victory : ERoundResult::Defeat);
+					CombatGameState->ApplyRoundResultForSeat(HostSeat, StageIdx, RoundIdx, bHostWon ? ERoundResult::Victory : ERoundResult::Defeat);
+				}
+			}
 		}
+		else
+		{
+
+			// 클론전투 패배시 데미지 로직
+			APCCombatBoard* HostBoard = Pair.Host.Get();
+			UPCTileManager* HostTM = HostBoard->TileManager;
+			const int32 WinerSeatIndex = GetCreepTeamIndexForBoard(HostBoard);
+			const int32 TargetSeatIndex = HostBoard->BoardSeatIndex;
+			APCPlayerState* TargetPlayerState = FindPlayerStateBySeat(TargetSeatIndex);
+			
+			TArray<APCBaseUnitCharacter*> AliveUnit = HostTM->GetWinnerUnitByTeamIndex(WinerSeatIndex);
+			if (!HostBoard || !HostTM || !AliveUnit.IsEmpty()) return;
+			
+			for (int32 i = 0; i < AliveUnit.Num(); ++i)
+			{
+				AliveUnit[i]->CombatWin(TargetPlayerState);
+			}
+			
+			const int32 HostSeat = Pair.Host.IsValid() ? Pair.Host->BoardSeatIndex : INDEX_NONE;
+			if (HostSeat != INDEX_NONE)
+			{
+				if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+				{
+					int32 StageOne=0, RoundOne=0;
+					GetCurrentStageRoundOne(StageOne, RoundOne);
+					const int32 StageIdx = StageOne;      
+					const int32 RoundIdx = RoundOne;
+
+					CombatGameState->ApplyRoundResultForSeat(HostSeat, StageIdx, RoundIdx, bHostWon ? ERoundResult::Victory : ERoundResult::Defeat);
+				}
+			}
+		}
+		
 		return;
 	}
 
@@ -1220,9 +1253,9 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 
 			// 클론전투 패배시 데미지 로직
 			APCCombatBoard* HostBoard = Pair.Host.Get();
-			UPCTileManager* HostTM = HostBoard->TileManager;
 			const int32 WinerSeatIndex = GetCreepTeamIndexForBoard(HostBoard);
 			const int32 TargetSeatIndex = HostBoard->BoardSeatIndex;
+			UPCTileManager* HostTM = HostBoard->TileManager;
 			APCPlayerState* TargetPlayerState = FindPlayerStateBySeat(TargetSeatIndex);
 			
 			TArray<APCBaseUnitCharacter*> AliveUnit = HostTM->GetWinnerUnitByTeamIndex(WinerSeatIndex);
@@ -1372,7 +1405,7 @@ int32 APCCombatManager::GetStageBaseDamageDefault(int32 StageIdx) const
 	switch (StageIdx)
 	{
 	case 1:  return 0;
-	case 2:  return 30;
+	case 2:  return 2;
 	case 3:  return 5;
 	case 4:  return 8;
 	case 5:  return 10;

@@ -253,7 +253,7 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 				{
 					if (auto OtherPS = OtherActorPawn->GetPlayerState<APCPlayerState>())
 					{
-						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, PlayerDamage);
+						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, -PlayerDamage);
 					}
 				}
 			}
