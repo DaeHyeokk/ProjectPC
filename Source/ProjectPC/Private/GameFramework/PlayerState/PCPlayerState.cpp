@@ -221,7 +221,7 @@ void APCPlayerState::ReturnAllUnitToShop()
 
 void APCPlayerState::OnRep_PlayerWinningStreak()
 {
-	OnWinningStreakUpdated.Broadcast();
+	OnWinningStreakUpdated.Broadcast(PlayerWinningStreak);
 }
 
 void APCPlayerState::PlayerWin()

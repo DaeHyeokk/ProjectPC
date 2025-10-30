@@ -888,6 +888,14 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 	{
 		It->Multicast_SetOverHeadWidget();
 	}
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APCCombatPlayerController* CombatController = Cast<APCCombatPlayerController>(*It))
+		{
+			CombatController->TryInitWidgetWithGameState();
+		}
+	}
 	
 	if (APCCombatGameState* GS = GetCombatGameState())
 	{

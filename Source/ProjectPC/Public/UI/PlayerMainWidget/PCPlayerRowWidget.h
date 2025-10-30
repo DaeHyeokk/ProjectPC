@@ -43,23 +43,23 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UButton> Btn_CameraSwitch;
 
-	UPROPERTY(BlueprintReadOnly)
-	bool bIsBurning = false;
-
 private:
 	UPROPERTY()
 	APCPlayerState* CachedPlayerState;
 
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	int32 WinningStreak = 0;
+
 public:
-	// void SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag);
 	void SetupPlayerInfo(APCPlayerState* NewPlayerState);
 
-	// void UpdatePlayerHP(float NewPlayerHP);
-	void UpdatePlayerHP();
-	
+	void UpdatePlayerHP(const FOnAttributeChangeData& Data);
+	void SetWinningStreak(int32 NewWinningStreak);
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetHP(float HPPercent);
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetWinningFlame();
 

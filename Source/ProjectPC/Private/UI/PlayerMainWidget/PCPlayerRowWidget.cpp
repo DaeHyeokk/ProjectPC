@@ -25,36 +25,6 @@ bool UPCPlayerRowWidget::Initialize()
 	return true;
 }
 
-// void UPCPlayerRowWidget::SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
-// {
-// 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
-//
-// 	// 플레이어 이름 세팅
-// 	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerName);
-// 	PlayerName->SetText(FText::FromString(NameText));
-//
-// 	// 플레이어 체력바 세팅
-// 	auto HP = NewPlayerHP;
-// 	auto HPPercent = HP / 100.f;
-// 	SetHP(HPPercent);
-//
-// 	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-// 	PlayerHP->SetText(FText::FromString(HPText));
-//
-// 	// 플레이어 초상화 세팅
-// 	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(NewPlayerCharacterTag);
-// 	FSoftObjectPath TexturePath = PortraitSoftPtr.ToSoftObjectPath();
-// 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
-// 	
-// 	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
-// 	{
-// 		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
-// 		{
-// 			Img_Portrait->SetBrushFromTexture(Texture);
-// 		}
-// 	});
-// }
-
 void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
@@ -62,7 +32,15 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 
 	CachedPlayerState = NewPlayerState;
 
-	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningFlame);
+	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningStreak);
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+	{
+		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+			.AddUObject(this, &UPCPlayerRowWidget::UpdatePlayerHP);
+		}
+	}
 
 	// 플레이어 이름 세팅
 	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
@@ -109,48 +87,29 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 	});
 }
 
-void UPCPlayerRowWidget::UpdatePlayerHP()
+void UPCPlayerRowWidget::UpdatePlayerHP(const FOnAttributeChangeData& Data)
 {
-	if (!CachedPlayerState) return;
-	if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+	// 플레이어 체력바 세팅
+	auto HP = Data.NewValue;
+	auto HPPercent = HP / 100.f;
+	SetHP(HPPercent);
+
+	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+	PlayerHP->SetText(FText::FromString(HPText));
+
+	if (HP <= 0)
 	{
-		// 플레이어 체력바 세팅
-		auto HP = AttributeSet->GetPlayerHP();
-		auto HPPercent = HP / 100.f;
-		SetHP(HPPercent);
-
-		auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-		PlayerHP->SetText(FText::FromString(HPText));
-
-		if (HP <= 0)
+		if (Img_Portrait)
 		{
-			if (Img_Portrait)
-			{
-				Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
-			}
+			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
 		}
 	}
 }
 
-// void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
-// {
-// 	if (!PlayerHP || !CircularHPBar) return;
-// 	
-// 	auto HP = NewPlayerHP;
-// 	auto HPPercent = HP / 100.f;
-// 	SetHP(HPPercent);
-//
-// 	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-// 	PlayerHP->SetText(FText::FromString(HPText));
-//
-// 	if (HP <= 0)
-// 	{
-// 		if (Img_Portrait)
-// 		{
-// 			Img_Portrait->SetColorAndOpacity(FLinearColor(0.1f, 0.1f, 0.1f, 1.0f));
-// 		}
-// 	}
-// }
+void UPCPlayerRowWidget::SetWinningStreak(int32 NewWinningStreak)
+{
+	WinningStreak = NewWinningStreak;	
+}
 
 void UPCPlayerRowWidget::SwitchCamera()
 {
@@ -165,14 +124,4 @@ void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)
 
 void UPCPlayerRowWidget::SetWinningFlame_Implementation()
 {
-	if (!CachedPlayerState) return;
-
-	if (CachedPlayerState->GetPlayerWinningStreak() >= 3)
-	{
-		bIsBurning = true;
-	}
-	else
-	{
-		bIsBurning = false;
-	}
 }

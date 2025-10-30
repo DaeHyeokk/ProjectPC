@@ -1260,8 +1260,8 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	APCPlayerState* LoserPlayerState = FindPlayerStateBySeat(bHostWon ? GuestSeat : HostSeat);
 	if (!WinnerPlayerState || !LoserPlayerState) return;
 
-	WinnerPlayerState->PlayerWin();
 	LoserPlayerState->PlayerLose();
+	WinnerPlayerState->PlayerWin();
 
 	const int32 StageIndex      = GetCurrentStageIndex();
 	const int32 StageBaseDamage = GetStageBaseDamageFromDT(StageIndex);
@@ -1371,8 +1371,8 @@ int32 APCCombatManager::GetStageBaseDamageDefault(int32 StageIdx) const
 {
 	switch (StageIdx)
 	{
-	case 1:  return 0;
-	case 2:  return 30;
+	case 1:  return 30;
+	case 2:  return 2;
 	case 3:  return 5;
 	case 4:  return 8;
 	case 5:  return 10;

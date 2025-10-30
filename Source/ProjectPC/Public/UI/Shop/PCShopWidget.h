@@ -132,7 +132,7 @@ private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
-	void OnPlayerWinningStreakChanged();
+	void OnPlayerWinningStreakChanged(int32 NewWinningStreak);
 
 public:
 	void SetSlotHidden(int32 SlotIndex);

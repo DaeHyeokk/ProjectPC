@@ -13,7 +13,7 @@ class UPCSynergyComponent;
 class UPCPlayerInventory;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
-DECLARE_MULTICAST_DELEGATE(FOnWinningStreakUpdated);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnWinningStreakUpdated, int32);
 
 class APCPlayerBoard;
 class APCHeroUnitCharacter;

@@ -142,7 +142,7 @@ void APCCombatPlayerController::BeginPlay()
 
 		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
-			PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
+			// PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
 			PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
 		}
 
@@ -957,16 +957,26 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	bUIReady = true;
 }
 
-void APCCombatPlayerController::TryInitWidgetWithGameState()
+void APCCombatPlayerController::TryInitWidgetWithGameState_Implementation()
 {
 	if (!IsLocalController() || !PlayerMainWidget) return;
 
 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		PlayerMainWidget->InitAndBind(CombatGameState);
-		bGSBound = true;
 	}
 }
+
+// void APCCombatPlayerController::TryInitWidgetWithGameState()
+// {
+// 	if (!IsLocalController() || !PlayerMainWidget) return;
+//
+// 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
+// 	{
+// 		PlayerMainWidget->InitAndBind(CombatGameState);
+// 		bGSBound = true;
+// 	}
+// }
 
 void APCCombatPlayerController::OnRep_PlayerState()
 {
@@ -975,6 +985,9 @@ void APCCombatPlayerController::OnRep_PlayerState()
 	TryInitHUDWithPlayerState();
 
 	bPSReady = (GetPlayerState<APCPlayerState>() != nullptr);
+	bGSBound = true;
+
+	// TryInitWidgetWithGameState();
 }
 
 void APCCombatPlayerController::ShowWidget()

@@ -266,6 +266,8 @@ public:
 	void EnsureMainHUDCreated();
 
 	void TryInitHUDWithPlayerState();
+
+	UFUNCTION(Client, Reliable)
 	void TryInitWidgetWithGameState();
 	
 	virtual void OnRep_PlayerState() override;

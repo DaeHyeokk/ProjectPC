@@ -510,7 +510,7 @@ void UPCTileManager::DebugClearPersistent() const
 void UPCTileManager::Editor_DrawTilesPersistent()
 {
 	// 에디터에서도 동작: 맵 열린 상태에서 디테일 버튼 클릭 시 그려지고 유지
-	DebugDrawTiles(1e6f /*사실상 영구*/, true, true, true, true);
+	// DebugDrawTiles(1e6f /*사실상 영구*/, true, true, true, true);
 }
 
 void UPCTileManager::Editor_ClearDebug()

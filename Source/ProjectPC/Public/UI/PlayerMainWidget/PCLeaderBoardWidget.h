@@ -27,7 +27,7 @@ private:
 
 	UPROPERTY()
 	// TMap<FString, TObjectPtr<UPCPlayerRowWidget>> PlayerMap;
-	TMap<TWeakObjectPtr<APCPlayerState>, UPCPlayerRowWidget*> PlayerMap;
+	TMap<FString, UPCPlayerRowWidget*> PlayerMap;
 
 public:
 	void BindToGameState(APCCombatGameState* NewGameState);
@@ -41,5 +41,5 @@ protected:
 
 public:
 	// void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
-	void SetupLeaderBoard(const TArray<APCPlayerState*>& NewPlayerArray) const;
+	void SetupLeaderBoard(const TArray<FString>& NewPlayerRanking) const;
 };

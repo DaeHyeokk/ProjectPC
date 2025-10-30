@@ -257,21 +257,20 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 	}
 }
 
-void UPCShopWidget::OnPlayerWinningStreakChanged()
+void UPCShopWidget::OnPlayerWinningStreakChanged(int32 NewWinningStreak)
 {
 	if (!WinningStreak || !Img_WinningStreak || !Winning || !Losing) return;
 	if (!CachedPlayerState) return;
 
-	auto WinningCount = CachedPlayerState->GetPlayerWinningStreak();
-	if (WinningCount > 0)
+	if (NewWinningStreak > 0)
 	{
 		Img_WinningStreak->SetBrushFromTexture(Winning);
-		WinningStreak->SetText(FText::AsNumber(WinningCount));
+		WinningStreak->SetText(FText::AsNumber(NewWinningStreak));
 	}
 	else
 	{
 		Img_WinningStreak->SetBrushFromTexture(Losing);
-		WinningStreak->SetText(FText::AsNumber(-WinningCount));
+		WinningStreak->SetText(FText::AsNumber(-NewWinningStreak));
 	}
 }
 

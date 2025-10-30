@@ -389,7 +389,7 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	DOREPLIFETIME(APCCombatGameState, Leaderboard);
-	DOREPLIFETIME(APCCombatGameState, FindPlayerStates);
+	// DOREPLIFETIME(APCCombatGameState, PlayerRanking);
 
 	DOREPLIFETIME(APCCombatGameState, RoundsPerStage);
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
@@ -773,21 +773,19 @@ APCPlayerState* APCCombatGameState::FindPlayerStateByUserId(const FString& Local
 			}
 		}
 	}
+	
 	return nullptr;
 }
 
 void APCCombatGameState::GetPlayerStatesOrdered() 
 {
-	FindPlayerStates.Reset();
+	PlayerRanking.Reset();
 
 	if (Leaderboard.Num() <= 0) return;
-
-	FindPlayerStates.SetNum(Leaderboard.Num());
-
+	
 	for (int32 i = 0; i < Leaderboard.Num(); ++i)
 	{
-		const FString& Id = Leaderboard[i].LocalUserId;
-		FindPlayerStates[i] = FindPlayerStateByUserId(Id);
+		PlayerRanking.Add(Leaderboard[i].LocalUserId); 
 	}
 }
 
@@ -801,8 +799,8 @@ void APCCombatGameState::OnRep_Leaderboard()
 		bLeaderBoardReady = true;
 		OnLeaderBoardReady.Broadcast();
 	}
-
-	FindPlayerState.Broadcast(FindPlayerStates);
+	
+	OnPlayerRankingChanged.Broadcast(PlayerRanking);
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const
