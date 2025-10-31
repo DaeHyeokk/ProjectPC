@@ -159,7 +159,7 @@ FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const 
 
 				ItemRecipeWidget->AddToViewport(9999);
 				ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-				ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(400.0f, 520.0f));
+				ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(320.0f, 520.0f));
 
 				float RecipeYOffset = -50.0f - (SlotIndex * 30.0f);
 				ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, RecipeYOffset));

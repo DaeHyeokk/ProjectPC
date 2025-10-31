@@ -25,7 +25,7 @@ void APCItemCapsule::SetOwnerPlayer(int32 NewTeamIndex)
 
 void APCItemCapsule::SetRandomRewardTag()
 {
-	if (FMath::RandRange(0, 1) == 0)
+	if (FMath::RandHelper(1) == 0)
 	{
 		if (const auto ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 		{
