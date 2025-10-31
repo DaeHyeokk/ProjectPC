@@ -7,6 +7,7 @@
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
+#include "Abilities/Tasks/AbilityTask_ApplyRootMotionJumpForce.h"
 
 
 UPCUnitBasicAttackGameplayAbility::UPCUnitBasicAttackGameplayAbility()
@@ -61,6 +62,7 @@ void UPCUnitBasicAttackGameplayAbility::SetMontage()
 	else
 	{
 		Montage = nullptr;
+		
 	}
 }
 

@@ -120,8 +120,6 @@ void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-	
 	if (HasAuthority())
 	{
 		bIsCombatWin = false;

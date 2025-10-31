@@ -8,6 +8,7 @@
 #include "BTTask_FindApproachLocation.generated.h"
 
 class APCBaseUnitCharacter;
+
 /**
  * 
  */

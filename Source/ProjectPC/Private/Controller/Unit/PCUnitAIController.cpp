@@ -10,7 +10,6 @@
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Navigation/PathFollowingComponent.h"
 
-
 void APCUnitAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
@@ -75,16 +74,52 @@ void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 	{
 		if (OwnerUnit.IsValid())
 		{
-			if (const APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
+			if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
 			{
-				const FIntPoint LastPoint = OwnerBoard->GetFieldUnitPoint(OwnerUnit.Get());
-				OwnerUnit->GetOnCombatBoard()->SetTileState(LastPoint.Y, LastPoint.X, OwnerUnit.Get(), ETileAction::Release);
-				OwnerUnit->GetOnCombatBoard()->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
-				bIsMoving = false;
+				OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Release);
+				OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
 			}
-			
-			GetBlackboardComponent()->ClearValue(TEXT("ApproachLocation"));
 		}
+	}
+	else
+	{
+		if (OwnerUnit.IsValid())
+		{
+			if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
+			{
+				OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Release);
+			}
+		}
+	}
+	
+	bIsMoving = false;
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		BB->ClearValue(TEXT("ApproachLocation"));
+	}
+}
+
+void APCUnitAIController::OnJumpCompleted(bool bIsSucceed)
+{
+	if (OwnerUnit.IsValid())
+	{
+		if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
+		{
+			if (bIsSucceed)
+			{
+				OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
+			}
+			else
+			{
+				OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Occupy);
+			}
+		}
+	}
+	
+	bIsMoving = false;
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		BB->ClearValue(TEXT("JumpLocation"));
 	}
 }
 
@@ -97,9 +132,10 @@ void APCUnitAIController::UpdateTeamId()
 	}
 }
 
-void APCUnitAIController::SetMovePoint(const FIntPoint& MovePoint)
+void APCUnitAIController::SetCachedPoint(const FIntPoint& MovePoint, const FIntPoint& LastPoint)
 {
 	CachedMovePoint = MovePoint;
+	CachedLastPoint = LastPoint;
 	bIsMoving = true;
 }
 
@@ -109,6 +145,8 @@ void APCUnitAIController::ClearBlackboardValue()
 	{
 		BB->ClearValue(TEXT("TargetUnit"));
 		BB->ClearValue(TEXT("ApproachLocation"));
+		BB->ClearValue(TEXT("JumpLocation"));
+		BB->SetValueAsBool(TEXT("HasExecutedCombatStartAction"), false);
 	}
 }
 
@@ -138,6 +176,23 @@ void APCUnitAIController::HandleUnitStateTagChanged(FGameplayTag ChangedTag, int
 		{
 			BB->SetValueAsBool(TEXT("IsStun"), bActive);
 		}
+		else if (ChangedTag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Jumping))
+		{
+			BB->SetValueAsBool(TEXT("IsJumping"), bActive);
+		}
+	}
+}
+
+void APCUnitAIController::HandleUnitAssassinSynergyTagChanged(FGameplayTag ChangedTag, int32 NewCount)
+{
+	const bool bActive = (NewCount > 0);
+
+	if (UBlackboardComponent* BB = GetBlackboardComponent())
+	{
+		if (ChangedTag.MatchesTagExact(SynergyGameplayTags::Synergy_Job_Assassin))
+		{
+			BB->SetValueAsBool(TEXT("HasAssassinSynergy"), bActive);
+		}
 	}
 }
 
@@ -154,10 +209,22 @@ void APCUnitAIController::BindUnitASCDelegates()
 		OnStunTagHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Stun)
 		.AddUObject(this, &ThisClass::HandleUnitStateTagChanged);
 
+		OnJumpingTagHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Jumping)
+		.AddUObject(this, &ThisClass::HandleUnitStateTagChanged);
+		
 		HandleUnitStateTagChanged(UnitGameplayTags::Unit_State_Combat_Dead,
 			ASC->GetGameplayTagCount(UnitGameplayTags::Unit_State_Combat_Dead));
 		HandleUnitStateTagChanged(UnitGameplayTags::Unit_State_Combat_Stun,
 			ASC->GetGameplayTagCount(UnitGameplayTags::Unit_State_Combat_Stun));
+		HandleUnitStateTagChanged(UnitGameplayTags::Unit_State_Combat_Jumping,
+			ASC->GetGameplayTagCount(UnitGameplayTags::Unit_State_Combat_Jumping));
+
+		// Assassin Synergy가 부여되는 경우 추가
+		OnAssassinTagHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy_Job_Assassin)
+		.AddUObject(this, &ThisClass::HandleUnitAssassinSynergyTagChanged);
+
+		HandleUnitAssassinSynergyTagChanged(SynergyGameplayTags::Synergy_Job_Assassin,
+			ASC->GetGameplayTagCount(SynergyGameplayTags::Synergy_Job_Assassin));
 	}
 }
 
@@ -169,9 +236,24 @@ void APCUnitAIController::UnBindUnitASCDelegates()
 	if (UAbilitySystemComponent* ASC = OwnerUnit->GetAbilitySystemComponent())
 	{
 		if (OnDeadTagHandle.IsValid())
+		{
 			ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Dead).Remove(OnDeadTagHandle);
-
+			OnDeadTagHandle.Reset();
+		}
 		if (OnStunTagHandle.IsValid())
+		{
 			ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Stun).Remove(OnStunTagHandle);
+			OnStunTagHandle.Reset();
+		}
+		if (OnJumpingTagHandle.IsValid())
+		{
+			ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Jumping).Remove(OnJumpingTagHandle);
+			OnJumpingTagHandle.Reset();
+		}
+		if (OnAssassinTagHandle.IsValid())
+		{
+			ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy_Job_Assassin).Remove(OnAssassinTagHandle);
+			OnAssassinTagHandle.Reset();
+		}
 	}
 }

@@ -16,8 +16,10 @@ UPCUnitBaseAttackGameplayAbility::UPCUnitBaseAttackGameplayAbility()
 	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_Attack);
 
 	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Jumping);
 
 	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Ability_Attack);
+	BlockAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_Ability_Movement_Jump);
 	
 	ActivationOwnedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Attacking);
 }

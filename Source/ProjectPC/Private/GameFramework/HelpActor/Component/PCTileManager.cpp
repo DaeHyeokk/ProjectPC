@@ -258,6 +258,7 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 				Tile.ReservedUnit = nullptr;
 				bAny = true;
 			}
+			return true;
 		}
 	}
 	return false;

@@ -17,21 +17,22 @@ UCLASS()
 class PROJECTPC_API APCUnitAIController : public AAIController
 {
 	GENERATED_BODY()
-
+	
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 private:
-	UPROPERTY(Transient)
 	FIntPoint CachedMovePoint;
-
+	FIntPoint CachedLastPoint;
+	
 	bool bIsMoving = false;
 	
 public:
+	void OnJumpCompleted(bool bIsSucceed);
 	void UpdateTeamId();
-	void SetMovePoint(const FIntPoint& MovePoint);
+	void SetCachedPoint(const FIntPoint& MovePoint, const FIntPoint& LastPoint);
 	void ClearBlackboardValue();
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -43,6 +44,9 @@ private:
 
 	UFUNCTION()
 	void HandleUnitStateTagChanged(FGameplayTag ChangedTag, int32 NewCount);
+	
+	UFUNCTION()
+	void HandleUnitAssassinSynergyTagChanged(FGameplayTag ChangedTag, int32 NewCount);
 
 	void BindUnitASCDelegates();
 	void UnBindUnitASCDelegates();
@@ -56,4 +60,6 @@ private:
 	FDelegateHandle OnGameStateTagChangedHandle;
 	FDelegateHandle OnStunTagHandle;
 	FDelegateHandle OnDeadTagHandle;
+	FDelegateHandle OnJumpingTagHandle;
+	FDelegateHandle OnAssassinTagHandle;
 };

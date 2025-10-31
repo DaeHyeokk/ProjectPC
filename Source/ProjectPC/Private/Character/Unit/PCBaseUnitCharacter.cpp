@@ -38,13 +38,14 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = 250.f;
-
+	
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
-	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	
 	GetCapsuleComponent()->SetCapsuleSize(76.f, 100.f, true);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	
 	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
 	StatusBarComp->SetIsReplicated(true);
@@ -178,11 +179,6 @@ void APCBaseUnitCharacter::BeginPlay()
 		}
 	}
 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
 	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
 	{
 		UnitAnimInstance->PlayLevelStartMontage();
@@ -218,6 +214,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -310,8 +307,6 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 
 void APCBaseUnitCharacter::Die()
 {
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	
 	if (HasAuthority())
 	{
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
@@ -334,17 +329,19 @@ void APCBaseUnitCharacter::OnDeathAnimCompleted()
 
 void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 {
-	if (!HasAuthority() || !bIsOnField || bIsDead || !TargetPS)
+	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
 
 	bIsCombatWin = true;
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
+		APawn* TargetPawn = TargetPS ? TargetPS->GetPawn() : nullptr;
+		
 		FGameplayEventData EventData;
 		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
 		EventData.Instigator = this;
-		EventData.Target = TargetPS->GetPawn();
+		EventData.Target = TargetPawn;
 
 		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
 	}
