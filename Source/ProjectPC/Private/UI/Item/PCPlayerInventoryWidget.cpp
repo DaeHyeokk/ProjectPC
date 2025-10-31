@@ -16,6 +16,7 @@
 void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState, bool IsOwner)
 {
 	if (!NewPlayerState) return;
+	UnBindFromPlayerState();
 
 	bIsOwningInventory = IsOwner;
 	

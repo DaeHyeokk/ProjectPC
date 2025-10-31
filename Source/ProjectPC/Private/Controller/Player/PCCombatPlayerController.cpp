@@ -1745,8 +1745,12 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 	// 정찰 중인 플레이어 인벤토리 확인
 	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
 	{
-		InventoryWidget->UnBindFromPlayerState();
 		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, false);
+	}
+
+	if (auto SynergyWidget = PlayerMainWidget->GetSynergyWidget())
+	{
+		SynergyWidget->SynergyComponentBinding(OnPatrolPlayerState->GetSynergyComponent());
 	}
 }
 
@@ -1779,8 +1783,12 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 
 	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
 	{
-		InventoryWidget->UnBindFromPlayerState();
 		InventoryWidget->BindToPlayerState(PS, true);
+	}
+
+	if (auto SynergyWidget = PlayerMainWidget->GetSynergyWidget())
+	{
+		SynergyWidget->SynergyComponentBinding(PS->GetSynergyComponent());
 	}
 }
 

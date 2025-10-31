@@ -75,9 +75,15 @@ void APCCreepUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 void APCCreepUnitCharacter::Die()
 {
-	if (auto ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
-		ItemSpawnSubsystem->SpawnItemCapsule(GetActorTransform(), GetTeamIndex() - 50);
+		if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+		{
+			if (auto ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
+			{
+				ItemSpawnSubsystem->SpawnItemCapsule(GetActorTransform(), GetTeamIndex() - 50);
+			}
+		}
 	}
 	
 	Super::Die();
