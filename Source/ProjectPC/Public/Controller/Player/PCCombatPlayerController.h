@@ -91,7 +91,14 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetActorRotation(FRotator NewRotation);
-	
+	UFUNCTION(Server, Reliable)
+	void Server_SetActorTransform(FTransform NewTransform);
+
+public:
+	UFUNCTION(Client, Reliable)
+	void Client_StopMoving();
+
+private:
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();
@@ -144,20 +151,6 @@ public:
 	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
-
-#pragma region Inventory
-//
-// protected:
-// 	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
-// 	TSubclassOf<UUserWidget> InventoryWidgetClass;
-//
-// 	UPROPERTY()
-// 	UPCPlayerInventoryWidget* InventoryWidget;
-//
-// public:
-// 	void LoadInventoryWidget();
-	
-#pragma endregion Inventory
 
 #pragma region Camera
 	// 게임 카메라 세팅
@@ -218,7 +211,6 @@ public:
 	void EnsureScreenFade();
 	void SetScreenFadeVisible(bool bVisible, float Opacity = 1.f);
 
-
 #pragma endregion Camera
 
 #pragma region Loading
@@ -260,8 +252,8 @@ private:
 #pragma endregion
 
 #pragma region UI
+	
 public:
-
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
 
@@ -298,7 +290,6 @@ private:
 #pragma region Drag&Drop
 
 public:
-
 	void ApplyGameInputMode();
 
 	// === 드래그 RPC ===
@@ -419,4 +410,16 @@ public:
 	void OnResultMenuToggled();
 
 #pragma endregion GameResult
+
+#pragma region Patrol
+
+public:
+	// 정찰용 시점 변환, 캐릭터 이동, 인벤토리 변경
+	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
+	void PlayerEndPatrol(bool IsPlayerTravel);
+
+	UFUNCTION(Client, Reliable)
+	void Client_RequestPlayerReturn();
+
+#pragma endregion Patrol
 };

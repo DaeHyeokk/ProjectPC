@@ -56,6 +56,8 @@ public:
 
 	void UpdatePlayerHP(const FOnAttributeChangeData& Data);
 	void SetWinningStreak(int32 NewWinningStreak);
+	void ExpandRenderSize();
+	void RestoreRenderSize();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetHP(float HPPercent);

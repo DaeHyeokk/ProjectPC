@@ -85,47 +85,29 @@ void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, int32 TargetIn
 {
 	if (Inventory.IsValidIndex(DraggedInventoryIndex) && Inventory.IsValidIndex(TargetInventoryIndex))
 	{
-		DropItemAtInventory(DraggedInventoryIndex, TargetInventoryIndex);
+		Server_DropItemAtInventory(DraggedInventoryIndex, TargetInventoryIndex);
 	}
 }
 
 void UPCPlayerInventory::EndDragItem(int32 DraggedInventoryIndex, const FVector2D& DroppedScreenLoc)
 {
-	// if (Inventory.IsValidIndex(DraggedInventoryIndex))
-	// {
-	// 	FHitResult Hit;
-	// 	
-	// 	if (auto PS = Cast<APlayerState>(GetOwner()))
-	// 	{
-	// 		if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
-	// 		{
-	// 			PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
-	// 		}
-	// 	}
-	//
-	// 	DropItemAtOutsideInventory(DraggedInventoryIndex, Hit.Location);
-	// }
-
 	if (!Inventory.IsValidIndex(DraggedInventoryIndex))
 		return;
 
 	FHitResult Hit;
-
 	if (auto PS = Cast<APlayerState>(GetOwner()))
 	{
 		if (auto PC = Cast<APlayerController>(PS->GetPlayerController()))
 		{
-			// 드롭 지점으로 화면 트레이스 (클라)
 			PC->GetHitResultAtScreenPosition(DroppedScreenLoc, ECC_Visibility, true, Hit);
 		}
 	}
 
-	// 맞은 액터와 월드 위치를 서버로 보냄 (액터는 nullptr 가능)
 	const FVector WorldLoc = Hit.bBlockingHit ? Hit.ImpactPoint : FVector::ZeroVector;
-	DropItemAtOutsideInventoryWithActor(DraggedInventoryIndex, Hit.GetActor(), WorldLoc);
+	Server_DropItemAtOutsideInventory(DraggedInventoryIndex, Hit.GetActor(), WorldLoc);
 }
 
-void UPCPlayerInventory::DropItemAtInventory_Implementation(int32 DraggedInventoryIndex, int32 TargetInventoryIndex)
+void UPCPlayerInventory::Server_DropItemAtInventory_Implementation(int32 DraggedInventoryIndex, int32 TargetInventoryIndex)
 {
 	if (Inventory.IsValidIndex(DraggedInventoryIndex) && Inventory.IsValidIndex(TargetInventoryIndex))
 	{
@@ -144,14 +126,14 @@ void UPCPlayerInventory::DropItemAtOutsideInventory(int32 DraggedInventoryIndex,
 				bool bIsOnField = false;
 				int32 X = -1;
 				int32 Y = -1;
-				int32 BenchIndex=-1;
+				int32 BenchIndex = -1;
 				FVector Snap = DroppedWorldLoc;
 				
 				if (PB->WorldAnyTile(DroppedWorldLoc, false, bIsOnField, Y, X, BenchIndex, Snap))
 				{
+					// DroppedWorldLoc 위치에 Unit이 존재하면 아이템 장착 시도
 					if (APCBaseUnitCharacter* Unit = bIsOnField ? PB->GetFieldUnit(Y, X) : PB->GetBenchUnit(BenchIndex))
 					{
-						// 여기에 유닛 아이템 장착 추가
 						if (UPCUnitEquipmentComponent* EquipmentComp = Unit->GetEquipmentComponent())
 						{
 							if (EquipmentComp->TryEquipItem(Inventory[DraggedInventoryIndex]))
@@ -166,18 +148,16 @@ void UPCPlayerInventory::DropItemAtOutsideInventory(int32 DraggedInventoryIndex,
 	}
 }
 
-void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int32 DraggedInventoryIndex,
-	AActor* HitActor, const FVector& DroppedWorldLoc)
+void UPCPlayerInventory::Server_DropItemAtOutsideInventory_Implementation(int32 DraggedInventoryIndex, AActor* HitActor, const FVector& DroppedWorldLoc)
 {
 	if (!Inventory.IsValidIndex(DraggedInventoryIndex))
 		return;
 
-	// 1) 액터 직접 히트 → 유닛이면 장착 시도
+	// HitActor가 유닛으로 캐스팅 성공하면 (HitActor가 유닛이면) 아이템 장착 시도
 	if (APCBaseUnitCharacter* HitUnit = Cast<APCBaseUnitCharacter>(HitActor))
 	{
 		if (auto PS = Cast<APCPlayerState>(GetOwner()))
 		{
-			// 내 유닛만 허용(적에게 장착 방지)
 			if (HitUnit->GetTeamIndex() == PS->SeatIndex)
 			{
 				if (auto Equip = HitUnit->GetEquipmentComponent())
@@ -185,20 +165,19 @@ void UPCPlayerInventory::DropItemAtOutsideInventoryWithActor_Implementation(int3
 					if (Equip->TryEquipItem(Inventory[DraggedInventoryIndex]))
 					{
 						RemoveItemFromInventory(DraggedInventoryIndex);
-						return; // 성공
+						return;
 					}
 				}
 			}
 		}
 	}
-	
 
 	if (APCCombatGameState* PCCombatState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		bool bIsBattle = PCCombatState->bIsbattle();
 		if (!bIsBattle)
 		{
-			// 2) 폴백: 기존 “보드 타일 스냅” 경로 사용 (전투 중/외 상관없이 동작)
+			// 타일 기반으로도 유닛 추적 시도
 			DropItemAtOutsideInventory(DraggedInventoryIndex, DroppedWorldLoc);
 		}
 	}

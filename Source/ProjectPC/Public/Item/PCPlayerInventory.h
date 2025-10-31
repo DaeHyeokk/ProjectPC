@@ -38,19 +38,21 @@ public:
 
 	void CombineItem(int32 ItemIndex1, int32 ItemIndex2);
 	void SwapItem(int32 ItemIndex1, int32 ItemIndex2);
-	
+
+	// 인벤토리 아이템 슬롯에 드랍됐을 때
 	void EndDragItem(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
+	// 인벤토리 아이템 슬롯이 아닌 곳에 드랍됐을 때
 	void EndDragItem(int32 DraggedInventoryIndex, const FVector2D& DroppedScreenLoc);
-
-	UFUNCTION(Server, Reliable)
-	void DropItemAtInventory(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
-
 	
-	void DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc);
+	UFUNCTION(Server, Reliable)
+	void Server_DropItemAtInventory(int32 DraggedInventoryIndex, int32 TargetInventoryIndex);
 
-	// Test
+	// 액터 기반 유닛 추적
 	UFUNCTION(Server,Reliable)
-	void DropItemAtOutsideInventoryWithActor(int32 DraggedInventoryIndex, AActor* HitActor, const FVector& DroppedWorldLoc);
+	void Server_DropItemAtOutsideInventory(int32 DraggedInventoryIndex, AActor* HitActor, const FVector& DroppedWorldLoc);
+	
+	// 타일 기반 유닛 추적
+	void DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

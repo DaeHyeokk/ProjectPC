@@ -600,6 +600,11 @@ void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
 			FocusCameraToBoard(GPS->SeatIndex, HostSeat, true, 0);
 		}
 	}
+
+	if (APCPlayerState* GuestState = FindPlayerStateBySeat(GuestSeat))
+	{
+		GuestState->SetCurrentSeatIndex(HostSeat);
+	}
 }
 
 void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
@@ -639,6 +644,7 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 		if (APCPlayerState* GuestPlayerState = FindPlayerStateBySeat(GuestSeat))
 		{
 			FocusCameraToBoard(GuestPlayerState->SeatIndex, GuestSeat, false, 0);
+			GuestPlayerState->SetCurrentSeatIndex(GuestSeat);
 		}
 	}
 }

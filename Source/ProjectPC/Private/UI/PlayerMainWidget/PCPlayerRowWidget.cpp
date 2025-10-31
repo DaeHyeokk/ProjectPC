@@ -11,6 +11,7 @@
 #include "Engine/StreamableManager.h"
 
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
 
@@ -31,6 +32,23 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return;
 
 	CachedPlayerState = NewPlayerState;
+
+	if (auto PC = GetOwningPlayer())
+	{
+		if (auto PS = PC->GetPlayerState<APCPlayerState>())
+		{
+			if (PS == CachedPlayerState)
+			{
+				ExpandRenderSize();
+				CircularHPBar->SetColorAndOpacity(FLinearColor(0.07f, 1.f, 0.1f, 1.f));
+				PlayerName->SetColorAndOpacity(FLinearColor(1.f, 0.8f, 0.05f, 1.f));
+			}
+			else
+			{
+				CircularHPBar->SetColorAndOpacity(FLinearColor(1.f, 0.f, 0.02f, 1.f));
+			}
+		}
+	}
 
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningStreak);
 	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
@@ -111,11 +129,26 @@ void UPCPlayerRowWidget::SetWinningStreak(int32 NewWinningStreak)
 	WinningStreak = NewWinningStreak;	
 }
 
+void UPCPlayerRowWidget::ExpandRenderSize()
+{
+	SetRenderScale(FVector2D(1.15f, 1.15f));
+	SetRenderTranslation(FVector2D(-15.f, 0.f));
+}
+
+void UPCPlayerRowWidget::RestoreRenderSize()
+{
+	SetRenderScale(FVector2D(1.f, 1.f));
+	SetRenderTranslation(FVector2D(0.f, 0.f));
+}
+
 void UPCPlayerRowWidget::SwitchCamera()
 {
 	if (!CachedPlayerState) return;
 
-	UE_LOG(LogTemp, Error, TEXT("Switch to : %s"), *CachedPlayerState->LocalUserId);
+	if (auto OwnerPC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	{
+		OwnerPC->PlayerPatrol(CachedPlayerState);
+	}
 }
 
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)

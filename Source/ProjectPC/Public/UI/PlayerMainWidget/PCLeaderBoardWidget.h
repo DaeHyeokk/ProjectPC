@@ -40,6 +40,6 @@ protected:
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
 public:
-	// void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap) const;
 	void SetupLeaderBoard(const TArray<FString>& NewPlayerRanking) const;
+	void ExpandPlayerRowWidget(FString PlayerName);
 };

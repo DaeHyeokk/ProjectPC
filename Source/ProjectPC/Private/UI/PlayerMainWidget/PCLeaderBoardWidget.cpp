@@ -44,7 +44,6 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TArray<FString>& NewPlayerRank
 		{
 			if (auto PlayerRowWidget = PlayerMap.FindRef(Player))
 			{
-				// PlayerRowWidget->UpdatePlayerHP();
 				RankArray.Add(PlayerRowWidget);
 			}
 		}
@@ -57,6 +56,21 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TArray<FString>& NewPlayerRank
 		{
 			PlayerBox->AddChild(Rank);
 			Rank->SetWinningFlame();
+		}
+	}
+}
+
+void UPCLeaderBoardWidget::ExpandPlayerRowWidget(FString PlayerName)
+{
+	for (auto Player : PlayerMap)
+	{
+		if (Player.Key == PlayerName && IsValid(Player.Value))
+		{
+			Player.Value->ExpandRenderSize();
+		}
+		else
+		{
+			Player.Value->RestoreRenderSize();
 		}
 	}
 }

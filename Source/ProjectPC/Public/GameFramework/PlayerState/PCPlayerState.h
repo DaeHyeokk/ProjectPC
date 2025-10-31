@@ -100,7 +100,7 @@ private:
 	UPROPERTY()
 	FGameplayTagContainer AllStateTags;
 	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	FGameplayTag CurrentStateTag;
 	
 public:
@@ -147,6 +147,9 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerWinningStreak)
 	int32 PlayerWinningStreak = 0;
 
+	UPROPERTY(Replicated)
+	int32 CurrentSeatIndex = -1;
+	
 	UFUNCTION()
 	void OnRep_PlayerWinningStreak();
 
@@ -161,6 +164,9 @@ public:
 	FOnWinningStreakUpdated OnWinningStreakUpdated;
 	
 	int32 GetPlayerWinningStreak() const;
+
+	void SetCurrentSeatIndex(int32 InCurrentSeatIndex);
+	int32 GetCurrentSeatIndex() const { return CurrentSeatIndex; };
 
 #pragma endregion Combat
 

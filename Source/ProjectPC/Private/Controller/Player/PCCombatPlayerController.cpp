@@ -10,7 +10,6 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
@@ -30,6 +29,7 @@
 #include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/Item/PCPlayerInventoryWidget.h"
 #include "UI/Loading/PCLoadingWidget.h"
+#include "UI/PlayerMainWidget/PCLeaderBoardWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 #include "UI/Synerge/PCSynergyPanelWidget.h"
@@ -142,7 +142,6 @@ void APCCombatPlayerController::BeginPlay()
 
 		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
-			// PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
 			PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
 		}
 
@@ -264,6 +263,19 @@ void APCCombatPlayerController::Server_SetActorRotation_Implementation(FRotator 
 	{
 		ControlledPawn->SetActorRotation(NewRotation);
 	}
+}
+
+void APCCombatPlayerController::Server_SetActorTransform_Implementation(FTransform NewTransform)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		ControlledPawn->SetActorTransform(NewTransform);
+	}
+}
+
+void APCCombatPlayerController::Client_StopMoving_Implementation()
+{
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 }
 
 void APCCombatPlayerController::OnBuyXPStarted()
@@ -402,16 +414,16 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
@@ -943,7 +955,7 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
 		return;
 	}
-	InventoryWidget->BindToPlayerState(PCPlayerState);
+	InventoryWidget->BindToPlayerState(PCPlayerState, true);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
 
 	if (!SynergyWidget)
@@ -1686,5 +1698,96 @@ void APCCombatPlayerController::OnResultMenuToggled()
 	else
 	{
 		GameResultWidget->OpenMenu();
+	}
+}
+
+void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState)
+{
+	if (!OnPatrolPlayerState || !IsLocalController()) return;
+
+	// 정찰 대상이 캐러셀에 있거나 죽었으면 정찰 불가능
+	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Carousel
+		|| OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead)
+	{
+		return;
+	}
+
+	// 정찰 대상이 본인이면 정찰 종료
+	if (GetPlayerState<APCPlayerState>() == OnPatrolPlayerState)
+	{
+		PlayerEndPatrol(false);
+		return;
+	}
+	
+	// 카메라 이동
+	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
+	
+	// if (CurrentCameraType == ECameraFocusType::Board && CurrentBoardSeatIndex == BoardSeatIndex)
+	// 	return;
+
+	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
+	if (!CombatBoard)
+		return;
+
+	SetViewTarget(CombatBoard);
+	HideWidget();
+	
+	// 캐릭터 이동
+	Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+
+	// 정찰 중인 플레이어 Row 위젯 강조
+	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
+	{
+		LeaderBoardWidget->ExpandPlayerRowWidget(OnPatrolPlayerState->LocalUserId);
+	}
+
+	// 정찰 중인 플레이어 인벤토리 확인
+	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
+	{
+		InventoryWidget->UnBindFromPlayerState();
+		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, false);
+	}
+}
+
+void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
+{
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
+	auto BoardSeatIndex = PS->GetCurrentSeatIndex();
+	
+	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
+	if (!CombatBoard)
+		return;
+
+	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
+	SetViewTarget(CombatBoard);
+	ShowWidget();
+
+	if (!IsPlayerTravel)
+	{
+		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
+	}
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+
+	// 위젯 복구
+	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
+	{
+		LeaderBoardWidget->ExpandPlayerRowWidget(PS->LocalUserId);
+	}
+
+	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
+	{
+		InventoryWidget->UnBindFromPlayerState();
+		InventoryWidget->BindToPlayerState(PS, true);
+	}
+}
+
+void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
+{
+	if (IsLocalController())
+	{
+		PlayerEndPatrol(true);
 	}
 }

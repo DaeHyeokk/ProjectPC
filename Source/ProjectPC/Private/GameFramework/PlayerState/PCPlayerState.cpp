@@ -91,6 +91,8 @@ void APCPlayerState::BeginPlay()
 		PlayerAbilitySystemComponent->ApplyInitializedEffects();
 		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
 		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
+
+		
 	}
 }
 
@@ -273,8 +275,13 @@ int32 APCPlayerState::GetPlayerWinningStreak() const
 	return PlayerWinningStreak;
 }
 
+void APCPlayerState::SetCurrentSeatIndex(int32 InCurrentSeatIndex)
+{
+	CurrentSeatIndex = InCurrentSeatIndex;
+}
+
 bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
-	FReplicationFlags* RepFlags)
+                                         FReplicationFlags* RepFlags)
 {
 	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
@@ -299,6 +306,8 @@ void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>&
 	DOREPLIFETIME(APCPlayerState, PlayerLevel);
 	DOREPLIFETIME(APCPlayerState, PlayerBoard);
 	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
+	DOREPLIFETIME(APCPlayerState, CurrentSeatIndex);
+	DOREPLIFETIME(APCPlayerState, CurrentStateTag);
 }
 
 void APCPlayerState::SetDisplayName_Server(const FString& InName)

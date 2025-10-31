@@ -13,11 +13,13 @@
 #include "UI/Item/PCItemSlotWidget.h"
 
 
-void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
+void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState, bool IsOwner)
 {
 	if (!NewPlayerState) return;
-	PlayerInventory = NewPlayerState->GetPlayerInventory();
 
+	bIsOwningInventory = IsOwner;
+	
+	PlayerInventory = NewPlayerState->GetPlayerInventory();
 	PlayerInventory->OnInventoryUpdated.AddUObject(this, &UPCPlayerInventoryWidget::SetupInventory);
 	
 	for (int32 i = 1; i <= PlayerInventory->MaxInventorySlots; ++i)
@@ -36,11 +38,42 @@ void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 			ItemSlots[i]->SetSlotIndex(i);
 		}
 	}
-	
+
+	SetupInventory();
+}
+
+void UPCPlayerInventoryWidget::UnBindFromPlayerState()
+{
+	if (PlayerInventory)
+	{
+		PlayerInventory->OnInventoryUpdated.RemoveAll(this);
+		PlayerInventory = nullptr;
+	}
+
+	for (int32 i = 0; i < ItemSlots.Num(); ++i)
+	{
+		if (ItemSlots[i])
+		{
+			ItemSlots[i]->RemoveItem();
+		}
+	}
+
+	ItemSlots.Empty();
+
+	if (DragImage)
+	{
+		DragImage->SetVisibility(ESlateVisibility::Collapsed);
+		DragImage->SetBrushFromTexture(nullptr);
+	}
+
+	DragSlotIndex = -1;
+	bIsDragging = false;
+	bIsOwningInventory = true;
 }
 
 FReply UPCPlayerInventoryWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+	if (!bIsOwningInventory) return FReply::Unhandled();
 	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
 	DragSlotIndex = GetSlotIndexAtMousePos(InGeometry, InMouseEvent.GetScreenSpacePosition());
@@ -60,6 +93,7 @@ FReply UPCPlayerInventoryWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
 void UPCPlayerInventoryWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
 	UDragDropOperation*& OutOperation)
 {
+	if (!bIsOwningInventory) return;
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
 	if (DragSlotIndex == -1 || !ItemSlots.IsValidIndex(DragSlotIndex))
@@ -92,6 +126,7 @@ void UPCPlayerInventoryWidget::NativeOnDragDetected(const FGeometry& InGeometry,
 bool UPCPlayerInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 	UDragDropOperation* InOperation)
 {
+	if (!bIsOwningInventory) return false;
 	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 
 	if (!InOperation || !PlayerInventory)
@@ -136,6 +171,7 @@ bool UPCPlayerInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const F
 void UPCPlayerInventoryWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent,
 	UDragDropOperation* InOperation)
 {
+	if (!bIsOwningInventory) return;
 	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
 
 	if (!PlayerInventory)
