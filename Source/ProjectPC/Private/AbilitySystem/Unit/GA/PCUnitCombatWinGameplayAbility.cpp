@@ -10,8 +10,6 @@
 
 UPCUnitCombatWinGameplayAbility::UPCUnitCombatWinGameplayAbility()
 {
-	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
-
 	FAbilityTriggerData TriggerData;;
 	TriggerData.TriggerTag = UnitGameplayTags::Unit_Event_Combat_Win;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;

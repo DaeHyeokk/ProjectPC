@@ -733,7 +733,7 @@ void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 		if (APCBaseUnitCharacter* Creep = WU.Get())
 			RemoveUnitFromAny(TM, Creep);
 	Pair.PvECreeps.Reset();
-
+	
 	// 2) TM 비우기
 	TM->ClearAll();
 

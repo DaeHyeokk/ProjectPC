@@ -43,4 +43,5 @@ protected:
 private:
 	void SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackboardComponent* BB) const;
 	void ClearTargetActorKey(UBlackboardComponent* BB) const;
+	bool IsTargetInRange(const int8 Range, const int8 TargetDist) const;
 };

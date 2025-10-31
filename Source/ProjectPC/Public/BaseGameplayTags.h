@@ -45,8 +45,10 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_GRIMexe)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_IggyScorch)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gadget)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Muriel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FengMao)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
@@ -73,6 +75,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Movement_Jump)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
@@ -90,6 +93,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Stun)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Jumping)
 
 	// ==== Unit Cooldown Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
@@ -112,6 +116,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_Win)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_End)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Jump_Start)
 
 	// ==== Unit Buff Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Darkness_TrueDamage)
