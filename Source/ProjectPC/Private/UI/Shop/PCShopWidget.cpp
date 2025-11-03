@@ -40,12 +40,14 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
+	// 플레이어 상점 슬롯 변화, 연승 기록 구독
 	CachedPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
 	
 	SetupShopSlots();
 	SetupPlayerInfo();
 
+	// 플레이어 어트리뷰트 (Level, XP, Gold) 구독
 	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
 		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
@@ -65,54 +67,23 @@ void UPCShopWidget::InitWithPC(APCCombatPlayerController* InPC)
 	CachedController = InPC;
 }
 
-void UPCShopWidget::OpenMenu()
-{
-	AddToViewport(100);
-	SetVisibility(ESlateVisibility::Hidden);
-}
-
-void UPCShopWidget::CloseMenu()
-{
-	RemoveFromParent();
-}
-
 void UPCShopWidget::SetupShopSlots()
 {
-	if (!ShopBox)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] ShopBox is NULL"));
-		return;
-	}
-
-	if (!CachedPlayerState)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] CachedPlayerState is NULL"));
-		return;
-	}
+	if (!ShopBox || !CachedPlayerState)
 
 	ShopBox->ClearChildren();
-	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Cleared children."));
 
 	const auto& ShopSlots = CachedPlayerState->GetShopSlots();
-	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] ShopSlots count = %d"), ShopSlots.Num());
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
 	int32 Index = 0;
 	for (const FPCShopUnitData& UnitData : ShopSlots)
 	{
 		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-		if (!UnitSlotWidget)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] Failed to create UnitSlotWidget at Index=%d"), Index);
-			continue;
-		}
+		if (!UnitSlotWidget) continue;
 
 		UnitSlotWidget->Setup(UnitData, true, Index);
 		ShopBox->AddChild(UnitSlotWidget);
-
-		UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Added UnitSlotWidget Index=%d, UnitTag=%s"), 
-			Index, *UnitData.UnitTag.ToString());
-
 		++Index;
 	}
 }
@@ -186,11 +157,13 @@ void UPCShopWidget::OnClickedShopLock()
 
 	if (CurrentResource && CurrentResource == ShopLock)
 	{
+		// 상점 잠금 해제
 		Img_ShopLock->SetBrushFromTexture(ShopUnlock);
 		CachedController->ShopRequest_ShopLock(false);
 	}
 	else
 	{
+		// 상점 잠금
 		Img_ShopLock->SetBrushFromTexture(ShopLock);
 		CachedController->ShopRequest_ShopLock(true);
 	}
@@ -264,11 +237,13 @@ void UPCShopWidget::OnPlayerWinningStreakChanged(int32 NewWinningStreak)
 
 	if (NewWinningStreak > 0)
 	{
+		// 연승
 		Img_WinningStreak->SetBrushFromTexture(Winning);
 		WinningStreak->SetText(FText::AsNumber(NewWinningStreak));
 	}
 	else
 	{
+		// 연패
 		Img_WinningStreak->SetBrushFromTexture(Losing);
 		WinningStreak->SetText(FText::AsNumber(-NewWinningStreak));
 	}

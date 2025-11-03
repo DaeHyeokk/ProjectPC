@@ -78,6 +78,7 @@ void APCCombatGameState::BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boar
 			MaxSeat = FMath::Max(MaxSeat, CombatBoard->BoardSeatIndex);
 		}
 	}
+	
 	SeatToBoard.SetNum(MaxSeat+1);
 	for (APCCombatBoard* CombatBoard : Boards)
 	{
@@ -126,6 +127,7 @@ UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) c
 
 	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
 		return HostBoard->TileManager;
+	
 	return nullptr;
 }
 
@@ -150,17 +152,19 @@ APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
 
 	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
 		return HostBoard;
+	
 	return nullptr;
 }
 
 void APCCombatGameState::SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail)
 {
 	if (!HasAuthority()) return;
+	
 	bLoading = bInLoading;
 	LoadingProgress = FMath::Clamp(InProgress, 0.f, 1.0f);
 	LoadingDetail = InDetail;
-	OnRep_Loading();
 	
+	OnRep_Loading();
 }
 
 void APCCombatGameState::OnRep_Loading()
@@ -195,6 +199,7 @@ bool APCCombatGameState::AreAllClientsBootstrapped(int32& OutReady, int32& OutTo
 			++OutReady;
 		}
 	}
+	
 	return (OutTotal > 0) && (OutReady == OutTotal);
 }
 
@@ -202,7 +207,9 @@ float APCCombatGameState::ClientBootstrapRatio() const
 {
 	int32 Ready = 0;
 	int32 Total = 0;
+	
 	AreAllClientsBootstrapped(Ready, Total);
+	
 	return (Total > 0) ? Ready / Total : 0.0f;
 }
 
@@ -299,6 +306,7 @@ int32 APCCombatGameState::GetMySeatIndex() const
 			return PS->SeatIndex;
 		}
 	}
+	
 	return -1;
 }
 
@@ -338,6 +346,7 @@ int32 APCCombatGameState::TotalRoundsFloat() const
 	{
 		Sum += FMath::Max(0, V);
 	}
+	
 	return Sum;
 }
 
@@ -389,7 +398,6 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
 	DOREPLIFETIME(APCCombatGameState, bBoardMappingComplete);
 	DOREPLIFETIME(APCCombatGameState, Leaderboard);
-	// DOREPLIFETIME(APCCombatGameState, PlayerRanking);
 
 	DOREPLIFETIME(APCCombatGameState, RoundsPerStage);
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
@@ -822,6 +830,7 @@ void APCCombatGameState::BroadCastLeaderboardMap()
 			Map.Add(Row.LocalUserId, Row);
 		}
 	}
+	
 	CachedLeaderboardMap = Map;
 	OnLeaderboardMapUpdated.Broadcast(Map);
 }

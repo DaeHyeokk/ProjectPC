@@ -9,24 +9,23 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class APCBaseUnitCharacter;
+class APCCombatBoard;
+class APCCarouselRing;
+class APCHeroUnitCharacter;
 class UPCLoadingWidget;
 class UPCPlayerInventoryWidget;
 class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
-class APCBaseUnitCharacter;
 class UPCPlayerMainWidget;
-class APCCombatBoard;
-class APCCarouselRing;
 class UPCDataAsset_PlayerInput;
 class UPCShopWidget;
 class UUserWidget;
-class APCHeroUnitCharacter;
 
 /**
  * 
  */
-
 
 // === 드래그 페이로드(서버 RPC에서만 사용) ===
 USTRUCT()
@@ -68,9 +67,8 @@ protected:
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
 	virtual void BeginPlayingState() override;
+	virtual void OnRep_PlayerState() override;
 	virtual void AcknowledgePossession(APawn* P) override;
-	
-
 
 #pragma region Input
 	
@@ -112,20 +110,10 @@ private:
 	bool bIsShopLocked = false;
 	bool bIsShopRequestInProgress = false;
 	
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
-	TSubclassOf<UUserWidget> ShopWidgetClass;
-
 	UPROPERTY()
 	TObjectPtr<UPCShopWidget> ShopWidget;
 
 public:
-	FTimerHandle LoadShop;
-
-	void LoadShopWidget();
-	
-	void LoadMainWidget();
-
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
 
 	void ShopRequest_ShopRefresh(float GoldCost);
@@ -178,7 +166,7 @@ public:
 	int32 CurrentCarouselSeatIndex = -1;
 
 	UPROPERTY()
-	int32 CurrentBoardSeatIndex = -1;
+	int32 FocusedBoardSeatIndex = -1;
 	
 	// 자기 보드 인덱스 저장
 	UFUNCTION(Client, Reliable)
@@ -254,6 +242,8 @@ private:
 #pragma region UI
 	
 public:
+	void LoadMainWidget();
+	
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
 
@@ -262,19 +252,15 @@ public:
 	UFUNCTION(Client, Reliable)
 	void TryInitWidgetWithGameState();
 	
-	virtual void OnRep_PlayerState() override;
-
 	UFUNCTION(BlueprintCallable)
-	void ShowWidget();
-
+	void ShowShopWidget();
 	UFUNCTION(BlueprintCallable)
-	void HideWidget();
+	void HideShopWidget();
 
 	UFUNCTION(Client, Reliable)
-	void Client_ShowWidget();
-
+	void Client_ShowShopWidget();
 	UFUNCTION(Client, Reliable)
-	void Client_HideWidget();
+	void Client_HideShopWidget();
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
 
@@ -415,11 +401,14 @@ public:
 
 public:
 	// 정찰용 시점 변환, 캐릭터 이동, 인벤토리 변경
+	UFUNCTION(Client, Reliable)
+	void Client_RequestPlayerReturn();
+	
 	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
 	void PlayerEndPatrol(bool IsPlayerTravel);
 
-	UFUNCTION(Client, Reliable)
-	void Client_RequestPlayerReturn();
+	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState);
+	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol, bool IsPlayerTravel);
 
 #pragma endregion Patrol
 };

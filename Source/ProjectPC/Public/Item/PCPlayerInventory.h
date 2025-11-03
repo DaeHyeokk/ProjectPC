@@ -15,6 +15,9 @@ UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCPlayerInventory : public UActorComponent
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
@@ -35,6 +38,7 @@ public:
 
 	bool AddItemToInventory(FGameplayTag AddedItemTag);
 	void RemoveItemFromInventory(int32 ItemIndex);
+	void EmptyInventory();
 
 	void CombineItem(int32 ItemIndex1, int32 ItemIndex2);
 	void SwapItem(int32 ItemIndex1, int32 ItemIndex2);
@@ -53,7 +57,4 @@ public:
 	
 	// 타일 기반 유닛 추적
 	void DropItemAtOutsideInventory(int32 DraggedInventoryIndex, const FVector& DroppedWorldLoc);
-
-protected:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -21,7 +21,37 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
+private:
+	FTimerHandle LifeTimer;
+
+public:
+	// 유닛 to 유닛
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor);
+	// 유닛 to 플레이어
+	void ActiveProjectile(const FTransform& SpawnTransform, const AActor* SpawnActor, const AActor* TargetActor);
+	// 플레이어 to 플레이어
+	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, const AActor* SpawnActor, const AActor* TargetActor);
+	// 발사체 오브젝트 풀에 반환
+	void ReturnToPool();
+	
+	void SetProjectileProperty();
+	void SetTarget(const AActor* TargetActor);
+	void SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs);
+	void SetDamage(float InDamage);
+
+private:
+	UFUNCTION()
+	void OnRep_ProjectileDataTag();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_Overlap(AActor* OtherActor);
+
+#pragma region ProjectileData
+	
+protected:
 	UPROPERTY()
 	UProjectileMovementComponent* ProjectileMovement;
 
@@ -48,6 +78,10 @@ protected:
 
 	UPROPERTY(ReplicatedUsing = OnRep_ProjectileDataTag)
 	FGameplayTag ProjectileDataAttackTypeTag;
+
+private:
+	UPROPERTY()
+	const AActor* Target;
 	
 	UPROPERTY()
 	TArray<UPCEffectSpec*> EffectSpecs;
@@ -58,37 +92,5 @@ protected:
 	bool bIsPenetrating = false;
 	bool bIsPlayerAttack = false;
 
-	FTimerHandle LifeTimer;
-	
-private:
-	UPROPERTY()
-	const AActor* Target;
-
-public:
-	// 유닛 to 유닛
-	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor);
-
-	// 유닛 to 플레이어
-	void ActiveProjectile(const FTransform& SpawnTransform, const AActor* SpawnActor, const AActor* TargetActor);
-
-	// 플레이어 to 플레이어
-	void ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, const AActor* SpawnActor, const AActor* TargetActor);
-	
-	void SetProjectileProperty();
-	void SetTarget(const AActor* TargetActor);
-	void SetEffectSpecs(const TArray<UPCEffectSpec*>& InEffectSpecs);
-	void SetDamage(float InDamage);
-	
-	void ReturnToPool();
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-protected:
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	
-	UFUNCTION()
-	void OnRep_ProjectileDataTag();
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_Overlap(AActor* OtherActor);
+#pragma endregion ProjectileData
 };

@@ -10,13 +10,13 @@ struct FOnAttributeChangeData;
 
 class APCCombatPlayerController;
 class APCPlayerState;
-class UImage;
-class UHorizontalBox;
-class UOverlay;
 class UButton;
+class UHorizontalBox;
+class UImage;
+class UOverlay;
+class UProgressBar;
 class UTextBlock;
 class UWidgetSwitcher;
-class UProgressBar;
 
 /**
  * 
@@ -111,11 +111,6 @@ protected:
 	TObjectPtr<UTexture2D> Losing;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void OpenMenu();
-	UFUNCTION(BlueprintCallable)
-	void CloseMenu();
-	
 	UFUNCTION()
 	void SetupShopSlots();
 	UFUNCTION()

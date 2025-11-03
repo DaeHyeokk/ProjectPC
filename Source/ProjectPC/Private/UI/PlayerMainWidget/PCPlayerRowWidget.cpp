@@ -39,17 +39,20 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 		{
 			if (PS == CachedPlayerState)
 			{
+				// 플레이어 본인 위젯이면 확대, HPBar와 PlayerName 색 강조
 				ExpandRenderSize();
 				CircularHPBar->SetColorAndOpacity(FLinearColor(0.07f, 1.f, 0.1f, 1.f));
 				PlayerName->SetColorAndOpacity(FLinearColor(1.f, 0.8f, 0.05f, 1.f));
 			}
 			else
 			{
+				// 타 플레이어 위젯이면 HPBar를 빨간색으로 색 강조
 				CircularHPBar->SetColorAndOpacity(FLinearColor(1.f, 0.f, 0.02f, 1.f));
 			}
 		}
 	}
 
+	// 플레이어 연승 기록, 어트리뷰트 (HP) 구독
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningStreak);
 	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
@@ -107,7 +110,6 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 
 void UPCPlayerRowWidget::UpdatePlayerHP(const FOnAttributeChangeData& Data)
 {
-	// 플레이어 체력바 세팅
 	auto HP = Data.NewValue;
 	auto HPPercent = HP / 100.f;
 	SetHP(HPPercent);

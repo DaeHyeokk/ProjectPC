@@ -273,18 +273,17 @@ void APCCombatGameMode::Step_Setup()
 	{
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			PCPlayerController->Client_ShowWidget();
-			PCPlayerController->Server_ShopRefresh(0);
-
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				if (!NotReward)
+				if (NotReward)
+				{
+					PCPlayerController->Server_ShopRefresh(0);
+				}
+				else
 				{
 					PCPlayerState->ApplyRoundReward();
 				}
 			}
-			PCPlayerController->Client_ShowWidget();
-			
 		}
 	}
 }
@@ -299,8 +298,6 @@ void APCCombatGameMode::Step_Travel()
 	{
 		if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			// PCCombatPlayerController->Client_ShowWidget();
-			// PCCombatPlayerController->Client_StopMoving();
 			PCCombatPlayerController->Client_RequestPlayerReturn();
 		}
 	}
@@ -334,15 +331,6 @@ void APCCombatGameMode::Step_Travel()
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();
 			
-			// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-			// {
-			// 	if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
-			// 	{
-			// 		PCCombatPlayerController->Client_HideWidget();
-			// 		PCCombatPlayerController->Client_StopMoving();
-			// 	}
-			// }
-			
 			break;
 		}
 	case EPCStageType::PvE:
@@ -352,7 +340,7 @@ void APCCombatGameMode::Step_Travel()
 				PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Preparation);
 			}
 		}
-		default:
+	default:
 		break;
 	}
 }
@@ -363,8 +351,6 @@ void APCCombatGameMode::Step_Return()
 	{
 		if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
-			// PCCombatPlayerController->Client_ShowWidget();
-			// PCCombatPlayerController->Client_StopMoving();
 			PCCombatPlayerController->Client_RequestPlayerReturn();
 		}
 	}
@@ -392,15 +378,6 @@ void APCCombatGameMode::Step_Return()
 	else if (Prev->StageType == EPCStageType::Carousel)
 	{
 		MovePlayersToBoardsAndCameraSet();
-		// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		// {
-		// 	if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
-		// 	{
-		// 		// PCCombatPlayerController->Client_ShowWidget();
-		// 		// PCCombatPlayerController->Client_StopMoving();
-		// 		PCCombatPlayerController->Client_RequestPlayerReturn();
-		// 	}
-		// }
 		PlaceAllPlayersPickUpUnit();
 	}
 	else if (Prev->StageType == EPCStageType::Start)
@@ -518,14 +495,13 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 				if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 				{
 					// PCPlayerState->UnitSpawn(SpawnTag[SpawnIndex]);
-					PCPlayerState->UnitSpawn(UnitGameplayTags::Unit_Type_Hero_ShadowOps);
+					PCPlayerState->UnitSpawn(UnitGameplayTags::Unit_Type_Hero_IggyScorch);
 					++SpawnIndex;
 				}
 			}
 		}
 	}
 }
-
 
 void APCCombatGameMode::InitializeHomeBoardsForPlayers()
 {

@@ -25,7 +25,8 @@ void APCItemCapsule::SetOwnerPlayer(int32 NewTeamIndex)
 
 void APCItemCapsule::SetRandomRewardTag()
 {
-	if (FMath::RandHelper(1) == 0)
+	// 50프로 확률로 RewardTag를 재료 아이템 or 골드로 설정
+	if (FMath::RandHelper(2) == 0)
 	{
 		if (const auto ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 		{
@@ -50,6 +51,7 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 		{
 			if (RewardTag == PlayerGameplayTags::Player_Stat_PlayerGold)
 			{
+				// 골드 5원 획득 후, 아이템 캡슐 소멸
 				TargetPlayer->AddValueToPlayerStat(RewardTag, 5);
 				Destroy();
 				return;
@@ -58,13 +60,15 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 			{
 				if (TargetPlayer->GetPlayerInventory()->AddItemToInventory(RewardTag))
 				{
+					// 아이템 획득에 성공했으면, 아이템 캡슐 소멸
 					Destroy();
 					return;
 				}
 			}
 		}
 	}
-	
+
+	// 인벤토리가 꽉 찼으면 다시 콜리전 킴
 	SetActorEnableCollision(true);
 }
 

@@ -37,7 +37,6 @@ APCBaseProjectile::APCBaseProjectile()
 	MeshComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	MeshComp->SetupAttachment(RootComponent);
 	MeshComp->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));
-	//MeshComp->SetRelativeLocationAndRotation(FVector(100.f,0.f,0.f), FRotator(0.f,-90.f,0.f));
 	
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovement->UpdatedComponent = RootComponent;
@@ -60,11 +59,71 @@ void APCBaseProjectile::BeginPlay()
 	SetReplicateMovement(true);
 }
 
+void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataCharacterTag);
+	DOREPLIFETIME(APCBaseProjectile, ProjectileDataAttackTypeTag);
+}
+
+void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	if (!HasAuthority()) return;
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (AActor* InstigatorActor = GetInstigator())
+	{
+		if (OtherActor != InstigatorActor)
+		{
+			if (bIsHomingProjectile && OtherActor != Target) return;
+		
+			if (HitEffect)
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
+				Multicast_Overlap(OtherActor);
+			}
+
+			if (bIsPlayerAttack)
+			{
+				if (auto OtherActorPawn = Cast<APawn>(OtherActor))
+				{
+					if (auto OtherPS = OtherActorPawn->GetPlayerState<APCPlayerState>())
+					{
+						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, PlayerDamage);
+					}
+				}
+			}
+			else
+			{
+				for (auto EffectSpec : EffectSpecs)
+				{
+					if (EffectSpec)
+					{
+						if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
+						{
+							if (auto ASC = Unit->GetAbilitySystemComponent())
+							{
+								EffectSpec->ApplyEffect(ASC, Target);
+							}
+						}
+					}
+				}
+			}
+			
+			if (!bIsPenetrating)
+			{
+				ReturnToPool();
+			}
+		}
+	}
+}
 
 void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGameplayTag CharacterTag, FGameplayTag AttackTypeTag, const AActor* SpawnActor, const AActor* TargetActor)
 {
 	if (SpawnActor && TargetActor)
 	{
+		// 유닛 to 유닛 발사체는 캐릭터, 공격타입별로 상이
 		ProjectileDataCharacterTag = CharacterTag;
 		ProjectileDataAttackTypeTag = AttackTypeTag;
 		
@@ -85,6 +144,7 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, const
 {
 	if (SpawnActor && TargetActor)
 	{
+		// 유닛 to 플레이어 발사체는 1개로 고정
 		ProjectileDataCharacterTag = UnitGameplayTags::Unit;
 		ProjectileDataAttackTypeTag = UnitGameplayTags::Unit_Ability_Attack;
 		
@@ -106,6 +166,7 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 {
 	if (SpawnActor && TargetActor)
 	{
+		// 플레이어 to 플레이어 발사체는 캐릭터별로 공격타입 고정
 		ProjectileDataCharacterTag = CharacterTag;
 		ProjectileDataAttackTypeTag = PlayerGameplayTags::Player_Action_Attack_Basic;
 		
@@ -120,6 +181,44 @@ void APCBaseProjectile::ActiveProjectile(const FTransform& SpawnTransform, FGame
 		
 		Target = TargetActor;
 		bIsPlayerAttack = true;
+	}
+}
+
+void APCBaseProjectile::ReturnToPool()
+{
+	GetWorldTimerManager().ClearTimer(LifeTimer);
+	
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->bIsHomingProjectile = false;
+		ProjectileMovement->HomingTargetComponent = nullptr;
+	}
+
+	if (Target)
+	{
+		Target = nullptr;
+	}
+
+	if (TrailEffectComp)
+	{
+		TrailEffectComp->SetActive(false);
+	}
+	
+	SetInstigator(nullptr);
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	bIsHomingProjectile = true;
+	bIsPenetrating = false;
+	bIsPlayerAttack = false;
+
+	if (HasAuthority())
+	{
+		if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
+		{
+			ProjectilePoolSubsystem->ReturnProjectile(this);
+		}
 	}
 }
 
@@ -184,106 +283,9 @@ void APCBaseProjectile::SetDamage(float InDamage)
 	PlayerDamage = InDamage;
 }
 
-void APCBaseProjectile::ReturnToPool()
-{
-	GetWorldTimerManager().ClearTimer(LifeTimer);
-	
-	if (ProjectileMovement)
-	{
-		ProjectileMovement->StopMovementImmediately();
-		ProjectileMovement->bIsHomingProjectile = false;
-		ProjectileMovement->HomingTargetComponent = nullptr;
-	}
-
-	if (Target)
-	{
-		Target = nullptr;
-	}
-
-	if (TrailEffectComp)
-	{
-		TrailEffectComp->SetActive(false);
-	}
-	
-	SetInstigator(nullptr);
-	SetActorHiddenInGame(true);
-	SetActorEnableCollision(false);
-
-	bIsHomingProjectile = true;
-	bIsPenetrating = false;
-	bIsPlayerAttack = false;
-
-	if (HasAuthority())
-	{
-		if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
-		{
-			ProjectilePoolSubsystem->ReturnProjectile(this);
-		}
-	}
-}
-
-void APCBaseProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataCharacterTag);
-	DOREPLIFETIME(APCBaseProjectile, ProjectileDataAttackTypeTag);
-}
-
-void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
-{
-	if (!HasAuthority()) return;
-	Super::NotifyActorBeginOverlap(OtherActor);
-
-	if (AActor* InstigatorActor = GetInstigator())
-	{
-		if (OtherActor != InstigatorActor)
-		{
-			if (bIsHomingProjectile && OtherActor != Target) return;
-		
-			if (HitEffect)
-			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, OtherActor->GetActorLocation(), OtherActor->GetActorRotation());
-				Multicast_Overlap(OtherActor);
-			}
-
-			if (bIsPlayerAttack)
-			{
-				if (auto OtherActorPawn = Cast<APawn>(OtherActor))
-				{
-					if (auto OtherPS = OtherActorPawn->GetPlayerState<APCPlayerState>())
-					{
-						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, PlayerDamage);
-					}
-				}
-			}
-			else
-			{
-				for (auto EffectSpec : EffectSpecs)
-				{
-					if (EffectSpec)
-					{
-						if (auto Unit = Cast<APCBaseUnitCharacter>(GetInstigator()))
-						{
-							if (auto ASC = Unit->GetAbilitySystemComponent())
-							{
-								EffectSpec->ApplyEffect(ASC, Target);
-							}
-						}
-					}
-				}
-			}
-			
-			if (!bIsPenetrating)
-			{
-				ReturnToPool();
-			}
-		}
-	}
-}
-
 void APCBaseProjectile::OnRep_ProjectileDataTag()
 {
+	// 클라에 캐릭터 Tag, 공격타입 Tag가 복제되면 클라에서도 발사체 속성 설정
 	SetProjectileProperty();
 }
 

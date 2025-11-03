@@ -10,6 +10,7 @@
 
 void UPCItemRecipeWidget::Setup(FGameplayTag BaseItemTag)
 {
+	// 새롭게 입력된 아이템 태그가 기존과 다를 때만 새롭게 세팅
 	if (CachedBaseItemTag == BaseItemTag) return;
 
 	if (const auto ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())

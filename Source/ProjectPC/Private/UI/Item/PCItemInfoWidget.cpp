@@ -15,6 +15,7 @@
 
 void UPCItemInfoWidget::Setup(FGameplayTag ItemTag)
 {
+	// 새롭게 입력된 아이템 태그가 기존과 다를 때만 새롭게 세팅
 	if (CachedItemTag == ItemTag) return;
 
 	if (const auto ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
@@ -47,6 +48,7 @@ void UPCItemInfoWidget::SetItemInfo()
 				Text_ItemName->SetText(FText::FromName(Item->ItemName));
 				Text_ItemUniqueEffect->SetText(Item->ItemUniqueEffect);
 
+				// 아이템 이미지 비동기 로드
 				FSoftObjectPath TexturePath = Item->ItemTexture.ToSoftObjectPath();
 				FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
 				TWeakObjectPtr<UPCItemInfoWidget> WeakThis = this;
@@ -62,6 +64,7 @@ void UPCItemInfoWidget::SetItemInfo()
 					}
 				});
 
+				// 아이템 효과 개수만큼 ItemStatWidget을 생성해서 세팅
 				if (const auto ItemEffectSpecList = ItemManager->GetItemEffectSpecList(CachedItemTag))
 				{
 					for (const auto EffectSpec : ItemEffectSpecList->EffectSpecs)

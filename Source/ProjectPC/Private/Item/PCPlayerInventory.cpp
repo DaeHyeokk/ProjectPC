@@ -8,12 +8,18 @@
 
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"
-#include "GameFramework/GameMode/PCCombatGameMode.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 
+
+void UPCPlayerInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UPCPlayerInventory, Inventory);
+}
 
 void UPCPlayerInventory::OnRep_Inventory()
 {
@@ -46,6 +52,11 @@ void UPCPlayerInventory::RemoveItemFromInventory(int32 ItemIndex)
 		return;
 
 	Inventory.RemoveAt(ItemIndex);
+}
+
+void UPCPlayerInventory::EmptyInventory()
+{
+	Inventory.Empty();
 }
 
 void UPCPlayerInventory::CombineItem(int32 ItemIndex1, int32 ItemIndex2)
@@ -182,11 +193,3 @@ void UPCPlayerInventory::Server_DropItemAtOutsideInventory_Implementation(int32 
 		}
 	}
 }
-
-void UPCPlayerInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UPCPlayerInventory, Inventory);
-}
-

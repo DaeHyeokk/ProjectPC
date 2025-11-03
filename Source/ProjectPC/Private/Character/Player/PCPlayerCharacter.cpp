@@ -7,10 +7,7 @@
 #include "EngineUtils.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/CapsuleComponent.h"
-#include "Camera/CameraComponent.h"
-#include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -38,17 +35,6 @@ APCPlayerCharacter::APCPlayerCharacter()
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
-
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->TargetArmLength = 1200.f;
-	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
-	CameraBoom->bDoCollisionTest = false;
-
-	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
-	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	TopDownCameraComponent->bUsePawnControlRotation = false;
 
 	bIsDead = false;
 	
@@ -100,73 +86,6 @@ void APCPlayerCharacter::OnRep_PlayerState()
 		{
 			ASC->InitAbilityActorInfo(PS, this);
 		}
-
-		// if (OverHeadWidgetComp)
-		// {
-		// 	if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-		// 	{
-		// 		OverheadWidget->BindToPlayerState(PS);
-		// 	}
-		// }
-	}
-}
-
-void APCPlayerCharacter::Server_RequestCarouselPick_Implementation()
-{
-	for (TActorIterator<APCCarouselRing> It(GetWorld()); It; ++It)
-	{
-		CarouselRing = *It;
-	}
-	CarouselRing->Server_TryPickForPlayer(this);
-}
-
-void APCPlayerCharacter::CarouselUnitToSpawn()
-{
-	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
-	if (!PS) return;
-	
-	UPCPlayerInventory* PlayerInventory = PS->GetPlayerInventory();
-	if (!PlayerInventory) return;
-
-	const FGameplayTag UnitTag = CarouselUnitData.UnitTag;
-	const FGameplayTag ItemTag = CarouselUnitData.ItemTag;
-	
-	PS->UnitSpawn(UnitTag);
-	PlayerInventory->AddItemToInventory(ItemTag);
-}
-
-void APCPlayerCharacter::PlayerDie()
-{
-	GetCharacterMovement()->StopMovementImmediately();
-	
-	auto PC = Cast<APCCombatPlayerController>(GetController());
-	if (!PC) return;
-	
-	if (HasAuthority())
-	{
-		bIsDead = true;
-
-		PC->Client_HideWidget();
-	}
-	
-	DisableInput(PC);
-}
-
-void APCPlayerCharacter::OnPlayerDeathAnimFinished()
-{
-	Destroy();
-}
-
-void APCPlayerCharacter::Client_PlayMontage_Implementation(UAnimMontage* Montage, float InPlayRate)
-{
-	if (!Montage) return;
-
-	if (auto CharMesh = GetMesh())
-	{
-		if (auto Anim = CharMesh->GetAnimInstance())
-		{
-			Anim->Montage_Play(Montage, InPlayRate); 
-		}
 	}
 }
 
@@ -203,4 +122,61 @@ void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
 	}
 }
 
+void APCPlayerCharacter::PlayerDie()
+{
+	GetCharacterMovement()->StopMovementImmediately();
+	
+	auto PC = Cast<APCCombatPlayerController>(GetController());
+	if (!PC) return;
+	
+	if (HasAuthority())
+	{
+		bIsDead = true;
 
+		PC->Client_HideShopWidget();
+	}
+	
+	DisableInput(PC);
+}
+
+void APCPlayerCharacter::Client_PlayMontage_Implementation(UAnimMontage* Montage, float InPlayRate)
+{
+	if (!Montage) return;
+
+	if (auto CharMesh = GetMesh())
+	{
+		if (auto Anim = CharMesh->GetAnimInstance())
+		{
+			Anim->Montage_Play(Montage, InPlayRate); 
+		}
+	}
+}
+
+void APCPlayerCharacter::OnPlayerDeathAnimFinished()
+{
+	Destroy();
+}
+
+void APCPlayerCharacter::Server_RequestCarouselPick_Implementation()
+{
+	for (TActorIterator<APCCarouselRing> It(GetWorld()); It; ++It)
+	{
+		CarouselRing = *It;
+	}
+	CarouselRing->Server_TryPickForPlayer(this);
+}
+
+void APCPlayerCharacter::CarouselUnitToSpawn()
+{
+	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
+	UPCPlayerInventory* PlayerInventory = PS->GetPlayerInventory();
+	if (!PlayerInventory) return;
+
+	const FGameplayTag UnitTag = CarouselUnitData.UnitTag;
+	const FGameplayTag ItemTag = CarouselUnitData.ItemTag;
+	
+	PS->UnitSpawn(UnitTag);
+	PlayerInventory->AddItemToInventory(ItemTag);
+}

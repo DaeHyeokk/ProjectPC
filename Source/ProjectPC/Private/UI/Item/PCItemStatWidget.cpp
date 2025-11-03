@@ -12,6 +12,7 @@ void UPCItemStatWidget::Setup(FGameplayTag StatTag, float StatValue, bool bIsMul
 {
 	if (!Img_Stat || !Text_StatValue || !DA_StatIcons) return;
 
+	// 스탯 아이콘 비동기 로드
 	auto StatIconSoftPtr = DA_StatIcons->GetStatIcon(StatTag);
 	if (!StatIconSoftPtr.IsNull())
 	{
@@ -34,10 +35,12 @@ void UPCItemStatWidget::Setup(FGameplayTag StatTag, float StatValue, bool bIsMul
 	FString StatValueText;
 	if (bIsMultiplier)
 	{
+		// 퍼센트 증가
 		StatValueText = FString::Printf(TEXT("+%d%%"), static_cast<int32>(StatValue));
 	}
 	else
 	{
+		// 단순 수치 증가
 		StatValueText = FString::Printf(TEXT("+%d"), static_cast<int32>(StatValue));
 	}
 
