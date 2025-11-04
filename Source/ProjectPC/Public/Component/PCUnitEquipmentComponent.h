@@ -10,6 +10,7 @@
 #include "PCUnitEquipmentComponent.generated.h"
 
 
+class APCBaseUnitCharacter;
 class UPCUnitEquipmentComponent;
 class UPCPlayerInventory;
 class UPCItemManagerSubsystem;
@@ -31,7 +32,7 @@ protected:
 	
 public:
 	void SetMaxSlotSize(int32 MaxSize) { MaxSlotSize = MaxSize; }
-	bool TryEquipItem(const FGameplayTag& ItemTag);
+	bool TryEquipItem(const FGameplayTag& ItemTag, bool bIsUnion = false);
 	void UnionEquipmentComponent(UPCUnitEquipmentComponent* InEquipmentComp);
 	void ReturnAllItemToPlayerInventory(const bool bIsDestroyedHero = false);
 	void ReturnItemToPlayerInventory(const FGameplayTag& ItemTag) const;
@@ -42,7 +43,7 @@ public:
 	
 private:
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UAbilitySystemComponent> OwnerASC = nullptr;
+	TWeakObjectPtr<APCBaseUnitCharacter> Owner = nullptr;
 
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UPCPlayerInventory> OwnerPlayerInventory = nullptr;
@@ -60,11 +61,12 @@ private:
 	UFUNCTION()
 	void OnRep_SlotItemTags() const;
 
-	void SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex);
+	void SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex, const bool bPlayParticle);
 	void RemoveItemSlot(const int32 SlotIndex);
 	void ApplyItemEffects(const FGameplayTag& ItemTag, const int32 SlotIndex);
 	void RemoveSlotActiveEffects(const int32 SlotIndex);
 	const FPCEffectSpecList* ResolveItemEffectSpecList(const FGameplayTag& ItemTag) const;
 
+	void PlayItemEquippedParticle() const;
 	bool HasAuthority() const;
 };

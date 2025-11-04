@@ -365,10 +365,10 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
-	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
-	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
-	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
-	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
+	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
@@ -980,10 +980,10 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 		DragComponent->HideGhost();
 	}
 
-	if (!CachedPreviewUnit.IsValid()) return;
-	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
+	// if (!CachedPreviewUnit.IsValid()) return;
+	//
+	// CachedPreviewUnit->ActionDrag(false);
+	// CachedPreviewUnit = nullptr;
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
@@ -1064,7 +1064,7 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{		
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
-		Client_CurrentDragUnit(Unit);
+		PreviewUnit->ActionDrag(true);
 	}
 	else
 	{
@@ -1076,6 +1076,14 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 {
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
     const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+
+	if (CurrentDragUnit.Get())
+	{
+		if (APCHeroUnitCharacter* HeroUnitCharacter = Cast<APCHeroUnitCharacter>(CurrentDragUnit))
+		{
+			HeroUnitCharacter->ActionDrag(false);
+		}
+	}
 
 	if (bIsCancel)
 		return;
@@ -1255,7 +1263,7 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	
 	if (bOk && PreviewHero)
 	{
-		PreviewHero->ActionDrag(bOk);
+		//PreviewHero->ActionDrag(bOk);
 		
 		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
@@ -1306,15 +1314,15 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
 
-	if (PreviewUnit)
-	{
-		PreviewUnit->ActionDrag(false);
-	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
-	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
+	// if (PreviewUnit)
+	// {
+	// 	PreviewUnit->ActionDrag(false);
+	// }
+	//
+	// if (!CachedPreviewUnit.IsValid()) return;
+	//
+	// CachedPreviewUnit->ActionDrag(false);
+	// CachedPreviewUnit = nullptr;
 }
 
 bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit) const

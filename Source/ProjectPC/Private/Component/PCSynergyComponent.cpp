@@ -166,6 +166,10 @@ void UPCSynergyComponent::RegisterHero(APCHeroUnitCharacter* Hero)
 		for (const FGameplayTag& SynergyTag : SynergyTags)
 		{
 			ApplySynergyEffects(SynergyTag);
+
+			GetWorld()->GetTimerManager().SetTimerForNextTick(
+				FTimerDelegate::CreateUObject(this, &UPCSynergyComponent::PlaySynergyActiveParticle, SynergyTag)
+				);
 		}
 	}
 }
@@ -338,6 +342,28 @@ void UPCSynergyComponent::ApplySynergyEffects(const FGameplayTag& SynergyTag)
 	Params.Instigator = Instigator;
 		
 	Synergy->GrantGE(Params);
+}
+
+void UPCSynergyComponent::PlaySynergyActiveParticle(FGameplayTag SynergyTag)
+{
+	UPCSynergyBase* Synergy = *SynergyToTagMap.Find(SynergyTag);
+	
+	if (!Synergy)
+		return;
+	
+	TArray<APCHeroUnitCharacter*> CurrentHeroes;
+	GatherRegisteredHeroes(CurrentHeroes);
+
+	AActor* Instigator = GetOwner();
+	int32 Count = SynergyCountMap.FindRef(SynergyTag);
+	
+	FSynergyApplyParams Params;
+	Params.SynergyTag = SynergyTag;
+	Params.Count = Count;
+	Params.Units = CurrentHeroes;
+	Params.Instigator = Instigator;
+		
+	Synergy->PlayActiveParticleAtUnit(Params);
 }
 
 void UPCSynergyComponent::BindGameStateDelegates()

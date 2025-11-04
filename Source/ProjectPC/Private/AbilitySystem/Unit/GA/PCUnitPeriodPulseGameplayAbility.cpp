@@ -3,9 +3,11 @@
 
 #include "AbilitySystem/Unit/GA/PCUnitPeriodPulseGameplayAbility.h"
 
+#include "AbilitySystemComponent.h"
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
+#include "Particles/ParticleSystem.h"
 
 
 UPCUnitPeriodPulseGameplayAbility::UPCUnitPeriodPulseGameplayAbility()
@@ -65,4 +67,23 @@ void UPCUnitPeriodPulseGameplayAbility::ApplyConfiguredEffects()
 		return;
 	
 	ApplyCommittedEffectSpec(ASC);
+
+	if (ActiveParticleEffect)
+	{
+	
+		if (USkeletalMeshComponent* UnitMesh = Unit ? Unit->GetMesh() : nullptr)
+		{
+			FGameplayCueParameters Params;
+			Params.TargetAttachComponent = UnitMesh;
+			Params.SourceObject = ActiveParticleEffect;
+
+			FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+			FHitResult HitResult;
+			HitResult.BoneName = AttachedSocketName;
+			Ctx.AddHitResult(HitResult);
+			Params.EffectContext = Ctx;
+		
+			ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_PlayEffectAtSocket, Params);
+		}
+	}
 }

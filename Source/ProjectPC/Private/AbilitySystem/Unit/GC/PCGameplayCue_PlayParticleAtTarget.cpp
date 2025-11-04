@@ -3,7 +3,6 @@
 
 #include "AbilitySystem/Unit/GC/PCGameplayCue_PlayParticleAtTarget.h"
 
-#include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 
@@ -23,27 +22,24 @@ static bool SpawnParticle_Internal(AActor* MyTarget, const FGameplayCueParameter
 	USceneComponent* AttachComp = Params.TargetAttachComponent.Get();
 	if (!AttachComp)
 	{
-		if (const ACharacter* Char = Cast<ACharacter>(MyTarget))
-		{
-			AttachComp = Char->GetMesh();
-		}
-		else
-		{
-			AttachComp = Char->GetRootComponent();
-		}
+		FVector SpawnLoc = Params.Location;
+		UGameplayStatics::SpawnEmitterAtLocation(
+			MyTarget->GetWorld(),
+			FX,
+			SpawnLoc
+			);
 	}
-
-	FName SocketName = InSocketName;
-	if (const FHitResult* HitResult = Params.EffectContext.GetHitResult())
+	else
 	{
-		if (HitResult->BoneName.IsValid() && !HitResult->BoneName.IsNone())
+		FName SocketName = InSocketName;
+		if (const FHitResult* HitResult = Params.EffectContext.GetHitResult())
 		{
-			SocketName = HitResult->BoneName;
+			if (HitResult->BoneName.IsValid() && !HitResult->BoneName.IsNone())
+			{
+				SocketName = HitResult->BoneName;
+			}
 		}
-	}
-
-	if (AttachComp)
-	{
+		
 		UGameplayStatics::SpawnEmitterAttached(
 			FX,
 			AttachComp,
@@ -53,15 +49,7 @@ static bool SpawnParticle_Internal(AActor* MyTarget, const FGameplayCueParameter
 			EAttachLocation::Type::SnapToTarget
 			);
 	}
-	else
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(
-			MyTarget->GetWorld(),
-			FX,
-			MyTarget->GetActorTransform()
-			);
-	}
-	
+
 	return true;
 }
 

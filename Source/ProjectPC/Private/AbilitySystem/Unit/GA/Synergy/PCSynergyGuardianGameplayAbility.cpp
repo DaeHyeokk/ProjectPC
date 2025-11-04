@@ -7,7 +7,7 @@
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Utility/PCUnitCombatUtils.h"
-
+#include "Particles/ParticleSystem.h"
 
 UPCSynergyGuardianGameplayAbility::UPCSynergyGuardianGameplayAbility()
 {
@@ -48,7 +48,11 @@ void UPCSynergyGuardianGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 		{
 			ActiveEffectsMap.Add(AllyASC, EffectHandles);
 		}
+
+		PlayParticle(Ally, NearUnitParticle);
 	}
+
+	PlayParticle(Unit, AbilityActiveParticle);
 }
 
 void UPCSynergyGuardianGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -113,5 +117,29 @@ void UPCSynergyGuardianGameplayAbility::FindNearlyAllies(TArray<APCBaseUnitChara
 				}
 			}
 		}
+	}
+}
+
+void UPCSynergyGuardianGameplayAbility::PlayParticle(const APCBaseUnitCharacter* TargetUnit, UParticleSystem* Particle) const
+{
+	if (!HasAuthority(&CurrentActivationInfo) || !Particle || !TargetUnit)
+		return;
+
+	UAbilitySystemComponent* ASC = TargetUnit->GetAbilitySystemComponent();
+	USkeletalMeshComponent* UnitMesh = TargetUnit->GetMesh();
+	
+	if (ASC && UnitMesh)
+	{
+		FGameplayCueParameters Params;
+		Params.TargetAttachComponent = UnitMesh;
+		Params.SourceObject = Particle;
+
+		FGameplayEffectContextHandle Ctx = ASC->MakeEffectContext();
+		FHitResult HitResult;
+		HitResult.BoneName = AttachedSocketName;
+		Ctx.AddHitResult(HitResult);
+		Params.EffectContext = Ctx;
+		
+		ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_PlayEffectAtSocket, Params);
 	}
 }

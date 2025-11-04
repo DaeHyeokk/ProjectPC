@@ -52,7 +52,7 @@ void UPCAnimNotify_SpawnParticleAtTargetSocket::Notify(USkeletalMeshComponent* M
 		Ctx.AddHitResult(HitResult);
 		Params.EffectContext = Ctx;
 		
-		TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_HitImpact, Params);
+		TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_PlayEffectAtSocket, Params);
 	}
 	
 }

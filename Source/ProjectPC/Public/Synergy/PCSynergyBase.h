@@ -47,6 +47,8 @@ public:
 	void RevokeHeroGrantGAs(const APCHeroUnitCharacter* Hero);
 	void ResetAll();
 
+	void PlayActiveParticleAtUnit(const FSynergyApplyParams& Params) const;
+	
 	FORCEINLINE void SetSynergyData(UPCDataAsset_SynergyData* InSynergyData) { SynergyData = InSynergyData; }
 	FORCEINLINE const UPCDataAsset_SynergyData* GetSynergyData() const { return SynergyData; }
 	
