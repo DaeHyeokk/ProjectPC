@@ -17,8 +17,7 @@
 
 bool UPCUnitSlotWidget::Initialize()
 {
-	bool SuperSuccess = Super::Initialize();
-	if (!SuperSuccess) return false;
+	if (!Super::Initialize()) return false;
 
 	if (!Btn_UnitSlot) return false;
 	Btn_UnitSlot->OnClicked.AddDynamic(this, &UPCUnitSlotWidget::OnClickedUnitSlot);
@@ -147,5 +146,9 @@ void UPCUnitSlotWidget::SetSlotHidden(bool IsHidden)
 	if (IsHidden)
 	{
 		this->SetVisibility(ESlateVisibility::Hidden);
+	}
+	else
+	{
+		this->SetVisibility(ESlateVisibility::Visible);
 	}
 }

@@ -263,7 +263,6 @@ void APCCombatGameMode::Step_Start()
 			PCPlayerController->Client_ShowPlayerMainWidget();
 		}
 	}
-	
 }
 
 void APCCombatGameMode::Step_Setup()
@@ -515,7 +514,7 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 				if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 				{
 					// PCPlayerState->UnitSpawn(SpawnTag[SpawnIndex]);
-					PCPlayerState->UnitSpawn(UnitGameplayTags::Unit_Type_Hero_IggyScorch);
+					PCPlayerState->UnitSpawn(UnitGameplayTags::Unit_Type_Hero_Gadget);
 					++SpawnIndex;
 				}
 			}

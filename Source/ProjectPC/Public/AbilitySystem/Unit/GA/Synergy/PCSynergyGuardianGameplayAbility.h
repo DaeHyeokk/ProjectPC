@@ -37,9 +37,19 @@ protected:
 	
 	FGameplayTag GuardianSynergyTag = SynergyGameplayTags::Synergy_Job_Guardian;
 
+	UPROPERTY(EditDefaultsOnly, Category="FX")
+	TObjectPtr<UParticleSystem> AbilityActiveParticle = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="FX")
+	TObjectPtr<UParticleSystem> NearUnitParticle = nullptr;
+	
+	FName AttachedSocketName = TEXT("Impact");
+	
 private:
 	TMap<TWeakObjectPtr<UAbilitySystemComponent>, TArray<FActiveGameplayEffectHandle>> ActiveEffectsMap;
 
 	void RevokeAllAppliedEffects();
 	void FindNearlyAllies(TArray<APCBaseUnitCharacter*>& OutAllies) const;
+
+	void PlayParticle(const APCBaseUnitCharacter* TargetUnit, UParticleSystem* Particle) const;
 };

@@ -121,7 +121,7 @@ public:
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ShopSlots)
 	TArray<FPCShopUnitData> ShopSlots;
-	
+
 	UFUNCTION()
 	void OnRep_ShopSlots();
 	

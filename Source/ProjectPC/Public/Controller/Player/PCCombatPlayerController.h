@@ -422,7 +422,7 @@ public:
 	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
 	void PlayerEndPatrol(bool IsPlayerTravel);
 
-	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState);
+	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner);
 	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol, bool IsPlayerTravel);
 
 #pragma endregion Patrol

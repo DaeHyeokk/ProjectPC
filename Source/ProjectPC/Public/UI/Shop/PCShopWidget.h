@@ -14,6 +14,7 @@ class UButton;
 class UHorizontalBox;
 class UImage;
 class UOverlay;
+class UPCUnitSlotWidget;
 class UProgressBar;
 class UTextBlock;
 class UWidgetSwitcher;
@@ -28,8 +29,12 @@ class PROJECTPC_API UPCShopWidget : public UUserWidget
 
 protected:
 	virtual bool Initialize() override;
+	virtual void NativeDestruct() override;
 
 private:
+	UPROPERTY()
+	TArray<UPCUnitSlotWidget*> UnitSlotWidgets;
+	
 	UPROPERTY()
 	APCPlayerState* CachedPlayerState;
 

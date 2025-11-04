@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"

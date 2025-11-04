@@ -8,19 +8,46 @@
 #include "UI/PlayerMainWidget/PCPlayerRowWidget.h"
 
 
+void UPCLeaderBoardWidget::NativeDestruct()
+{
+	if (CachedGameState)
+	{
+		CachedGameState->OnPlayerRankingChanged.RemoveAll(this);
+	}
+
+	for (auto& Player : PlayerMap)
+	{
+		if (auto PlayerRowWidget = PlayerMap.FindRef(Player.Key))
+		{
+			PlayerRowWidget->UnBindFromPlayerState();
+		}
+	}
+	
+	PlayerMap.Empty();
+
+	if (PlayerBox)
+	{
+		PlayerBox->ClearChildren();
+	}
+	
+	Super::NativeDestruct();
+}
+
 void UPCLeaderBoardWidget::BindToGameState(APCCombatGameState* NewGameState)
 {
 	if (!NewGameState || !PlayerBox) return;
 
-	// 플레이어 순위 변화 구독
-	NewGameState->OnPlayerRankingChanged.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
+	CachedGameState = NewGameState;
 
-	for (auto Player : NewGameState->GetPlayerRanking())
+	// 플레이어 순위 변화 구독
+	CachedGameState->OnPlayerRankingChanged.AddUObject(this, &UPCLeaderBoardWidget::SetupLeaderBoard);
+
+	for (auto Player : CachedGameState->GetPlayerRanking())
 	{
 		auto PlayerRowWidget = CreateWidget<UPCPlayerRowWidget>(GetWorld(), PlayerRowWidgetClass);
 		if (!PlayerRowWidget) continue;
 
-		for (auto PS : NewGameState->PlayerArray)
+		for (auto PS : CachedGameState->PlayerArray)
 		{
 			if (auto PCPS = Cast<APCPlayerState>(PS))
 			{
@@ -43,12 +70,9 @@ void UPCLeaderBoardWidget::SetupLeaderBoard(const TArray<FString>& NewPlayerRank
 	// FString Key값으로 캐싱된 PlayerMap의 Value(PlayerRowWidget)를 찾아 순위별로 RankArray에 정렬
 	for (const auto Player : NewPlayerRanking)
 	{
-		if (PlayerMap.Contains(Player))
+		if (auto PlayerRowWidget = PlayerMap.FindRef(Player))
 		{
-			if (auto PlayerRowWidget = PlayerMap.FindRef(Player))
-			{
-				RankArray.Add(PlayerRowWidget);
-			}
+			RankArray.Add(PlayerRowWidget);
 		}
 	}
 

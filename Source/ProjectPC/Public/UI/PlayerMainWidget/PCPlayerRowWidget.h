@@ -24,6 +24,7 @@ class PROJECTPC_API UPCPlayerRowWidget : public UUserWidget
 	
 protected:
 	virtual bool Initialize() override;
+	virtual void NativeDestruct() override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Portrait")
 	TObjectPtr<UPCDataAsset_PlayerPortrait> PlayerPortrait;
@@ -53,6 +54,7 @@ protected:
 
 public:
 	void SetupPlayerInfo(APCPlayerState* NewPlayerState);
+	void UnBindFromPlayerState();
 
 	void UpdatePlayerHP(const FOnAttributeChangeData& Data);
 	void SetWinningStreak(int32 NewWinningStreak);
@@ -67,5 +69,5 @@ public:
 
 private:
 	UFUNCTION()
-	void SwitchCamera();
+	void PlayerPatrol();
 };

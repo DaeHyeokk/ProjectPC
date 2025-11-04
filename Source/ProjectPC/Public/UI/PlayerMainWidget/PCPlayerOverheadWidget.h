@@ -20,6 +20,9 @@ class PROJECTPC_API UPCPlayerOverheadWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void NativeDestruct() override;
+
 private:
 	UPROPERTY()
 	APCPlayerState* CachedPlayerState;

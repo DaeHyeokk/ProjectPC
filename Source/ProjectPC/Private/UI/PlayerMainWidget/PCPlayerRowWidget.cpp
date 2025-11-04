@@ -21,9 +21,16 @@ bool UPCPlayerRowWidget::Initialize()
 		return false;
 
 	if (!Btn_CameraSwitch) return false;
-	Btn_CameraSwitch->OnClicked.AddDynamic(this, &UPCPlayerRowWidget::SwitchCamera);
+	Btn_CameraSwitch->OnClicked.AddDynamic(this, &UPCPlayerRowWidget::PlayerPatrol);
 
 	return true;
+}
+
+void UPCPlayerRowWidget::NativeDestruct()
+{
+	UnBindFromPlayerState();
+	
+	Super::NativeDestruct();
 }
 
 void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
@@ -108,6 +115,25 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 	});
 }
 
+void UPCPlayerRowWidget::UnBindFromPlayerState()
+{
+	if (CachedPlayerState)
+	{
+		CachedPlayerState->OnWinningStreakUpdated.RemoveAll(this);
+
+		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+		{
+			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+					.RemoveAll(this);
+			}
+		}
+
+		CachedPlayerState = nullptr;
+	}
+}
+
 void UPCPlayerRowWidget::UpdatePlayerHP(const FOnAttributeChangeData& Data)
 {
 	auto HP = Data.NewValue;
@@ -143,7 +169,7 @@ void UPCPlayerRowWidget::RestoreRenderSize()
 	SetRenderTranslation(FVector2D(0.f, 0.f));
 }
 
-void UPCPlayerRowWidget::SwitchCamera()
+void UPCPlayerRowWidget::PlayerPatrol()
 {
 	if (!CachedPlayerState) return;
 

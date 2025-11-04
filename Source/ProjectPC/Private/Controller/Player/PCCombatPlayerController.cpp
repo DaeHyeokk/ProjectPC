@@ -11,6 +11,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Kismet/GameplayStatics.h"
+
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
@@ -129,7 +130,6 @@ void APCCombatPlayerController::BeginPlay()
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
 		LoadMainWidget();
-		
 	}
 }
 
@@ -182,7 +182,6 @@ void APCCombatPlayerController::BeginPlayingState()
 		}, 0.1f, true, 0.f);
 	}
 
-	
 	StartClientBootStrap();
 }
 
@@ -845,7 +844,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		// 뷰포트에 항상 붙여둔다 (단 1회)
 		PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
-		
 	}
 	else
 	{
@@ -1045,7 +1043,6 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	
 	CachedPreviewUnit->ActionDrag(false);
 	CachedPreviewUnit = nullptr;
-	
 }
 
 void APCCombatPlayerController::CancelDragServer_Implementation()
@@ -1270,7 +1267,6 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
             Client_DragEndResult(false, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
 
-    	
         CurrentDragUnit = nullptr;
         CurrentDragId   = 0;
         return;
@@ -1659,7 +1655,7 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 	}
 
 	HideShopWidget();
-	PatrolWidgetChange(OnPatrolPlayerState);
+	PatrolWidgetChange(OnPatrolPlayerState, false);
 	PatrolTransformChange(OnPatrolPlayerState, false, false);
 }
 
@@ -1672,20 +1668,20 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 	
 	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
 	ShowShopWidget();
-	PatrolWidgetChange(PS);
+	PatrolWidgetChange(PS, true);
 	PatrolTransformChange(PS, true, IsPlayerTravel);
 }
 
-void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState)
+void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
-
+	
 	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
 	
 	// 정찰 대상이 현재 보고있는 보드 위에 있으면 위젯 안 바꿈
 	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
 		return;
-
+	
 	// 정찰 중인 플레이어 Row 위젯 강조
 	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
 	{
@@ -1695,8 +1691,7 @@ void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlaye
 	// 정찰 중인 플레이어 인벤토리 확인
 	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
 	{
-		InventoryWidget->UnBindFromPlayerState();
-		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, true);
+		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, IsOwner);
 	}
 
 	// 정찰 중인 플레이어 시너지 확인

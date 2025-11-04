@@ -75,6 +75,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
 
+private:
+	UPROPERTY(ReplicatedUsing=OnRep_IsDragging)
+	bool bIsDragging;
+
+	UFUNCTION()
+	void OnRep_IsDragging() const;
+
+	void SetMeshVisibility(bool bHide) const;
+	
 	// 시너지 관련 //
 public:
 	FOnHeroDestroyed OnHeroDestroyed;
@@ -83,5 +92,5 @@ public:
 	FOnHeroLevelUp OnHeroLevelUp;
 	
 private:
-	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount);
+	void OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const;
 };

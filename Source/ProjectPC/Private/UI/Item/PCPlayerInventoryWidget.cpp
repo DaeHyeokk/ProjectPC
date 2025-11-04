@@ -13,6 +13,13 @@
 #include "UI/Item/PCItemSlotWidget.h"
 
 
+void UPCPlayerInventoryWidget::NativeDestruct()
+{
+	UnBindFromPlayerState();
+	
+	Super::NativeDestruct();
+}
+
 void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState, bool IsOwner)
 {
 	if (!NewPlayerState) return;
@@ -232,10 +239,10 @@ void UPCPlayerInventoryWidget::SetupInventory()
 			{
 				ItemSlots[i]->SetItem(PlayerInventory->GetInventory()[i]);
 			}
-			else
-			{
-				ItemSlots[i]->RemoveItem();
-			}
+			// else
+			// {
+			// 	ItemSlots[i]->RemoveItem();
+			// }
 		}
 	}
 }
