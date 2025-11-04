@@ -40,14 +40,16 @@ void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBar
 {
 	if (!SourceStatusBar || !StatusSwitcher || !SourceStatusBar->StatusSwitcher)
 		return;
-
+	
 	const int32 SrcIndex = SourceStatusBar->StatusSwitcher->GetActiveWidgetIndex();
 	StatusSwitcher->SetActiveWidgetIndex(SrcIndex);
 	
 	if (UPCUnitStatusBarWidget* ActiveStatusBar = Cast<UPCUnitStatusBarWidget>(StatusSwitcher->GetActiveWidget()))
 	{
+		const UPCUnitStatusBarWidget* SrcStatusBar = Cast<UPCUnitStatusBarWidget>(SourceStatusBar->StatusSwitcher->GetActiveWidget());
 		const UAbilitySystemComponent* SrcASC = SourceStatusBar->ASC.Get();
-		
+
+		const FLinearColor HPBarColor = SrcStatusBar->GetHPBarColor();
 		const float HP = SrcASC->GetNumericAttribute(SourceStatusBar->HealthAttr);
 		const float MaxHP = SrcASC->GetNumericAttribute(SourceStatusBar->MaxHealthAttr);
 		const float Mana = SrcASC->GetNumericAttribute(SourceStatusBar->ManaAttr);
@@ -56,7 +58,7 @@ void UPCHeroStatusBarWidget::CopyVariantBySourceStatusBar(const UPCHeroStatusBar
 		if (SourceStatusBar->Unit.IsValid())
 		{
 			TArray<FGameplayTag> ItemTags = SourceStatusBar->Unit->GetEquipItemTags();
-			ActiveStatusBar->InitConstantValue(HP, MaxHP, Mana, MaxMana, ItemTags);
+			ActiveStatusBar->InitConstantValue(HPBarColor, HP, MaxHP, Mana, MaxMana, ItemTags);
 		}
 	}
 }

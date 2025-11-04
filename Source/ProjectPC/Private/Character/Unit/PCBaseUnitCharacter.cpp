@@ -311,13 +311,14 @@ void APCBaseUnitCharacter::Die()
 	{
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
-			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+			if (!bIsDead)
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+
+				ASC->CancelAllAbilities();
+				OnUnitDied.Broadcast(this);
 			}
-			ASC->CancelAllAbilities();
-			OnUnitDied.Broadcast(this);
 		}
 	}
 }
@@ -332,6 +333,7 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
 
+	SetActorRotation(FRotator(0.f,-180.f,0));
 	bIsCombatWin = true;
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
