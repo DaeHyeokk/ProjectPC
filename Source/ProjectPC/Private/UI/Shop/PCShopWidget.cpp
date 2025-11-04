@@ -222,6 +222,20 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 		CostTextBlocks[i]->SetText(FText::FromString(Text));
 	}
 
+	if (PlayerLevel == 10)
+	{
+		FString XPText = FString::Printf(TEXT("최대"));
+		XP->SetText(FText::FromString(XPText));
+		XPBar->SetPercent(0.f);
+
+		if (Btn_BuyXP)
+		{
+			Btn_BuyXP->SetIsEnabled(false);
+		}
+
+		return;
+	}
+
 	PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
 	FString XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
@@ -235,6 +249,21 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 {
 	if (!XP || !XPBar) return;
+	
+	if (PlayerLevel == 10)
+	{
+		FString XPText = FString::Printf(TEXT("최대"));
+		XP->SetText(FText::FromString(XPText));
+		XPBar->SetPercent(0.f);
+
+		if (Btn_BuyXP)
+		{
+			Btn_BuyXP->SetIsEnabled(false);
+		}
+
+		return;
+	}
+	
 	
 	PlayerXP = static_cast<int32>(Data.NewValue);
 	

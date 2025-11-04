@@ -248,6 +248,7 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Normal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_MaxLevel)
 	
 	// ==== Player Shop Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyXP)
