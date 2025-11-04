@@ -4,9 +4,7 @@
 #include "Character/Projectile/PCBaseProjectile.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "AbilitySystemGlobals.h"
 #include "BaseGameplayTags.h"
-#include "AbilitySystem/Player/GA/PCGameplayAbility_DamageEvent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -14,7 +12,6 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "DataAsset/Projectile/PCDataAsset_ProjectileData.h"
-#include "GameFramework/PlayerState.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 #include "Net/UnrealNetwork.h"
 

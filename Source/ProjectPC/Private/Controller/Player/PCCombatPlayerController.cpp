@@ -1643,8 +1643,9 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
 
-	// 정찰 대상이 죽었으면 정찰 불가능
-	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead)
+	// 정찰 대상이 죽었거나 Carousel에 있으면 정찰 불가능
+	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead
+		|| OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Carousel)
 		return;
 
 	// 정찰 대상이 본인이면 정찰 종료
@@ -1675,12 +1676,6 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
-	
-	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
-	
-	// 정찰 대상이 현재 보고있는 보드 위에 있으면 위젯 안 바꿈
-	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
-		return;
 	
 	// 정찰 중인 플레이어 Row 위젯 강조
 	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())

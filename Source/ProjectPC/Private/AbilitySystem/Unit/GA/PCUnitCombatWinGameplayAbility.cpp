@@ -32,7 +32,7 @@ void UPCUnitCombatWinGameplayAbility::ActivateAbility(const FGameplayAbilitySpec
 		const FTransform OwnerTransform = Unit->GetActorTransform();
 		if (APCBaseProjectile* Projectile = ProjectilePoolSubsystem->SpawnProjectile(OwnerTransform, Unit, TriggerEventData->Target))
 		{
-			Projectile->SetDamage(1.f);
+			Projectile->SetDamage(-1.f);
 		}
 	}
 }

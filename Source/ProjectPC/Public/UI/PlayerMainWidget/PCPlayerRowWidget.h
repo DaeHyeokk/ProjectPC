@@ -24,7 +24,6 @@ class PROJECTPC_API UPCPlayerRowWidget : public UUserWidget
 	
 protected:
 	virtual bool Initialize() override;
-	virtual void NativeDestruct() override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Portrait")
 	TObjectPtr<UPCDataAsset_PlayerPortrait> PlayerPortrait;

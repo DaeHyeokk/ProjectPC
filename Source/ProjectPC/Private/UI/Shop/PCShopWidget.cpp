@@ -120,10 +120,6 @@ void UPCShopWidget::SetupShopSlots()
 			ShopBox->AddChild(UnitSlotWidgets[Index]);
 			++Index;
 		}
-		
-		// UnitSlotWidget->Setup(UnitData, true, Index);
-		// ShopBox->AddChild(UnitSlotWidget);
-		// ++Index;
 	}
 }
 
@@ -175,7 +171,6 @@ void UPCShopWidget::OnClickedBuyXP()
 	{
 		CachedController->ShopRequest_BuyXP();
 	}
-	
 }
 
 void UPCShopWidget::OnClickedReroll()
@@ -184,7 +179,6 @@ void UPCShopWidget::OnClickedReroll()
 	{
 		CachedController->ShopRequest_ShopRefresh(2);
 	}
-	
 }
 
 void UPCShopWidget::OnClickedShopLock()
