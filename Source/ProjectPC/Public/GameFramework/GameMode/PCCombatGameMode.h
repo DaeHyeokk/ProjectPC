@@ -111,7 +111,6 @@ private:
 	
 	// 공동 유틸 함수
 	void InitializeHomeBoardsForPlayers();
-	void TryPlacePlayersAfterTravel();
 	void PlaceAllPlayersOnCarousel();
 	void PlaceAllPlayersPickUpUnit();
 	void MovePlayersToBoardsAndCameraSet();
@@ -176,8 +175,6 @@ private:
 	void PollPreStartBarrier();
 	void FinishPreStartAndSchedule();
 
-	
-
 	// 진입 / 폴링 / 종료
 	void EnterLoadingPhase();
 	void PollLoading();
@@ -194,8 +191,9 @@ private:
 	int32 ExpectedPlayers = 0;
 	int32 ArrivedPlayers = 0;
 	bool bTriggeredAfterTravel = false;
+
+	// 레벨트레블로 넘어온 플레이어 체크
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
-	void OnOnePlayerArrived();
 
 	// ── Carousel wave open schedule ──────────────────────────────
 protected:

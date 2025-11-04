@@ -32,11 +32,6 @@ void UPCItemSlotWidget::SetSlotIndex(int32 NewSlotIndex)
 void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 {
 	if (!Img_Item) return;
-	
-	// 새롭게 입력된 아이템 태그가 기존과 다를 때만 새롭게 세팅
-	if (CachedBaseItemTag == NewItemTag) return;
-
-	CachedBaseItemTag = NewItemTag;
 
 	const FGameplayTag BaseTag = FGameplayTag::RequestGameplayTag(TEXT("Item.Type.Base"));
 	bIsBaseItem = NewItemTag.MatchesTag(BaseTag);

@@ -70,6 +70,7 @@ void UPCShopWidget::InitWithPC(APCCombatPlayerController* InPC)
 void UPCShopWidget::SetupShopSlots()
 {
 	if (!ShopBox || !CachedPlayerState)
+		return;
 
 	ShopBox->ClearChildren();
 

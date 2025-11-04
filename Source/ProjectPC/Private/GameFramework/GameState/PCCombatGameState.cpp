@@ -427,6 +427,8 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, bLoading);
 	DOREPLIFETIME(APCCombatGameState, LoadingProgress);
 	DOREPLIFETIME(APCCombatGameState, LoadingDetail);
+	DOREPLIFETIME(APCCombatGameState, bStepArmed);
+	DOREPLIFETIME(APCCombatGameState, StepArmTimeWS);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(APCCombatGameState, GameStateTag, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);

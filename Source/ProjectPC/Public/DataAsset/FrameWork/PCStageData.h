@@ -52,8 +52,8 @@ struct FRoundSpec
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
 	FGameplayTag GameRoundTag;
 
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
-	// FGameplayTag PvESubTag;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
+	FGameplayTag PvESubTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Round")
 	TArray<FRoundStep> Steps;

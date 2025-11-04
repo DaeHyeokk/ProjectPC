@@ -15,7 +15,7 @@
 #include "DataAsset/UI/PCWidgetIconData.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/PlayerMainWidget/PCRoundCellWidget.h"
+#include "UI/PlayerMainWidget/PCStepNoticeWidget.h"
 
 
 void UPCGameStateWidget::NativeOnInitialized()
@@ -39,6 +39,11 @@ void UPCGameStateWidget::NativeDestruct()
 		{
 			PCGameState->OnRoundsLayoutChanged.Remove(LayOutHandle);
 		}
+
+		if (GameStateChangeHandle.IsValid())
+		{
+			PCGameState->OnGameStateTagChanged.Remove(GameStateChangeHandle);
+		}
 		
 	}
 	GetWorld()->GetTimerManager().ClearTimer(TickHandle);
@@ -53,6 +58,7 @@ void UPCGameStateWidget::GameStateBinding()
 	{
 		RepHandle = PCGameState->OnStageRuntimeChanged.AddUObject(this, &UPCGameStateWidget::ReFreshStatic);
 		ReFreshStatic();
+		GameStateChangeHandle = PCGameState->OnGameStateTagChanged.AddUObject(this, &UPCGameStateWidget::SetStepWidget);
 	}
 
 	LayOutHandle = PCGameState->OnRoundsLayoutChanged.AddUObject(this, &UPCGameStateWidget::OnRoundsLayoutChanged_Handler);
@@ -127,6 +133,25 @@ void UPCGameStateWidget::TickUpdate()
 	}
 
 	UpdateRoundChipsState();
+}
+
+void UPCGameStateWidget::SetStepWidget(const FGameplayTag& GameStateTag)
+{
+	if (!GameStateTag.IsValid() || !W_StepNoticeWidget || BattleText.IsEmpty() || SetUpText.IsEmpty()) return;
+
+	W_StepNoticeWidget->SetVisibility(ESlateVisibility::Visible);
+
+	if (GameStateTag == GameStateTags::Game_State_NonCombat)
+	{
+		W_StepNoticeWidget->SetWidget(true,SetUpText);
+		return;
+	}
+
+	if (GameStateTag == GameStateTags::Game_State_Combat_Preparation)
+	{
+		W_StepNoticeWidget->SetWidget(false,BattleText);
+	}
+	
 }
 
 void UPCGameStateWidget::OnRoundsLayoutChanged_Handler()
@@ -235,11 +260,12 @@ void UPCGameStateWidget::UpdateRoundChipsState()
 		const bool bPastLose = bPast ? PCGameState->WasRoundDefeat(S,Idx) : false;
 
 		const FGameplayTag Major = PCGameState->GetMajorStageForRound(S, i);
+		const FGameplayTag PvESub = PCGameState->GetPvETagForRound(S,i);
 
 		// 아이콘
 		if (Chips[i].Icon)
 		{
-			if (UTexture2D* Tex = PickIconFor(Major, bCurrent, bPastWin, bPastLose))
+			if (UTexture2D* Tex = PickIconFor(Major, PvESub, bCurrent, bPastWin, bPastLose))
 			{
 				Chips[i].Icon->SetBrushFromTexture(Tex, true);
 				Chips[i].Icon->SetDesiredSizeOverride(RoundIconSize);
@@ -256,41 +282,52 @@ void UPCGameStateWidget::UpdateRoundChipsState()
 	}
 }
 
-const FStageIconVariant* UPCGameStateWidget::ChooseVariantFor(FGameplayTag Major) const
+const FStageIconVariant* UPCGameStateWidget::ChooseVariantFor(FGameplayTag Major, FGameplayTag PvESub) const
 {
 	if (!IconData) return nullptr;
 
+	// PvP
 	if (Major.MatchesTagExact(GameRoundTags::GameRound_PvP))
-	{
 		return &IconData->PvP;
-	}
-	else if (Major.MatchesTagExact(GameRoundTags::GameRound_PvE))
+
+	// PvE (서브태그 우선)
+	if (Major.MatchesTagExact(GameRoundTags::GameRound_PvE))
 	{
+		if (PvESub.MatchesTag(GameRoundTags::GameRound_PvE_MinionsLv1))
+			return &IconData->PvE_MinionLv1;
+
+		if (PvESub.MatchesTag(GameRoundTags::GameRound_PvE_MinionsLv2))
+			return &IconData->PvE_MinionLv2;
+
+		if (PvESub.MatchesTag(GameRoundTags::GameRound_PvE_MinionsLv3))
+			return &IconData->PvE_MinionLv3;
+
+		if (PvESub.MatchesTag(GameRoundTags::GameRound_PvE_MinionsLv4))
+			return &IconData->PvE_MinionLv4;
+
+		// 서브태그가 없거나 매칭 실패 → 기본 PvE
 		return &IconData->PvE;
 	}
-	else if (Major.MatchesTagExact(GameRoundTags::GameRound_Carousel))
-	{
+
+	// 캐러셀 / 스타트
+	if (Major.MatchesTagExact(GameRoundTags::GameRound_Carousel))
 		return &IconData->Carousel;
-	}
-	else if (Major.MatchesTagExact(GameRoundTags::GameRound_Start))
-	{
+
+	if (Major.MatchesTagExact(GameRoundTags::GameRound_Start))
 		return &IconData->Start;
-	}
+
 	return nullptr;
 }
 
-UTexture2D* UPCGameStateWidget::PickIconFor(FGameplayTag Major, bool bCurrent, bool bPastWin, bool bPastLose) const
+UTexture2D* UPCGameStateWidget::PickIconFor(FGameplayTag Major, FGameplayTag PvESub, bool bCurrent, bool bPastWin, bool bPastLose) const
 {
-	const FStageIconVariant* Variant = ChooseVariantFor(Major);
+	const FStageIconVariant* Variant = ChooseVariantFor(Major, PvESub);
 	if (!Variant) return nullptr;
 
-	if (bCurrent && Variant->Current)
-		return Variant->Current;
-	if (bPastWin && Variant->Victory)
-		return Variant->Victory;
-	if (bPastLose && Variant->Defeat)
-		return Variant->Defeat;
-	
+	if (bCurrent && Variant->Current) return Variant->Current;
+	if (bPastWin && Variant->Victory) return Variant->Victory;
+	if (bPastLose && Variant->Defeat) return Variant->Defeat;
+
 	return Variant->UpComing ? Variant->UpComing : Variant->Current;
 }
 

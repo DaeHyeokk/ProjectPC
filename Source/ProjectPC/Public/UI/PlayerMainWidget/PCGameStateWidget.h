@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "PCGameStateWidget.generated.h"
 
+class UPCStepNoticeWidget;
 class USizeBox;
 class ISlateTextureAtlasInterface;
 struct FStageIconVariant;
@@ -81,6 +82,8 @@ protected:
 	int32 CachedChipCount = 0;
 
 private:
+
+	
 	TWeakObjectPtr<APCCombatGameState> PCGameState;
 	FDelegateHandle RepHandle;
 	FTimerHandle TickHandle;
@@ -91,6 +94,7 @@ private:
 
 	void ReFreshStatic();
 	void TickUpdate();
+	
 
 	// 레이아웃 체인지 핸들러
 	void OnRoundsLayoutChanged_Handler();
@@ -100,17 +104,32 @@ private:
 	void UpdateRoundChipsState();
 	
 	// 아이콘 선택
-	const FStageIconVariant* ChooseVariantFor(FGameplayTag Major) const;
-	UTexture2D* PickIconFor(FGameplayTag Major, bool bCurrent, bool bPastWin, bool bPastLose) const;
+	const FStageIconVariant* ChooseVariantFor(FGameplayTag Major, FGameplayTag PvESub) const;
+	UTexture2D* PickIconFor(FGameplayTag Major,FGameplayTag PvESub, bool bCurrent, bool bPastWin, bool bPastLose) const;
 
 	bool WasRoundVictory(int32 StageIdx, int32 RoundIdx) const {return false;}
- 
 	
 	// 헬퍼
 	void ClearHB();
+
+
+protected:
+	// 게임 스텝 노티스 위젯
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UPCStepNoticeWidget> W_StepNoticeWidget;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Notice")
+	FText SetUpText;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Notice")
+	FText BattleText;
+
+private:
 	
-	//void RebuildRoundCellsIfNeeded();
-	void UpdateArrow(bool bForce);
+	FDelegateHandle GameStateChangeHandle;
+	void SetStepWidget(const FGameplayTag& GameStateTag);
+
+	
 	
 	
 };
