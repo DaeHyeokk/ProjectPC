@@ -865,7 +865,48 @@ bool APCCombatManager::GetCurrentStageRoundOne(int32& OutStageOne, int32& OutRou
 
 FGameplayTag APCCombatManager::GetCreepTagForStageRound(int32 StageOne, int32 RoundOne) const
 {
-	return UnitGameplayTags::Unit_Type_Creep_MinionLv1;
+	using namespace UnitGameplayTags;
+	
+	// 기본값(안 맞는 케이스-안전장치)
+	FGameplayTag DefaultTag = Unit_Type_Creep_Melee;
+	
+	switch (StageOne)
+	{
+	case 1:
+		switch (RoundOne)
+		{
+	case 2: return Unit_Type_Creep_Melee;  
+	case 3: return Unit_Type_Creep_Melee;   
+	case 4: return Unit_Type_Creep_Melee;    
+	default: break;
+		}
+		break;
+	
+	case 2:
+		if (RoundOne == 7) return Unit_Type_Creep_Range;  // 2-7
+		break;
+	
+	case 3:
+		if (RoundOne == 7) return Unit_Type_Creep_Melee;  // 3-7
+		break;
+	
+	case 4:
+		if (RoundOne == 7) return Unit_Type_Creep_Range;   // 4-7
+		break;
+	
+	case 5:
+		if (RoundOne == 7) return Unit_Type_Creep_Melee;    // 5-7
+		break;
+	
+	case 6:
+		if (RoundOne == 7) return Unit_Type_Creep_Range;    // 6-7
+		break;
+	
+	default:
+		break;
+	}
+	
+	return DefaultTag;
 }
 
 int32 APCCombatManager::GetCreepLevelForStageRound(int32 StageOne, int32 RoundOne) const

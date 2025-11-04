@@ -26,6 +26,7 @@ void UCenterPlayerWidget::NativeConstruct()
     // 기본 표시
     if (TbSubtitle) TbSubtitle->SetText(FText::FromString(TEXT("Little Legend")));
     if (TbName)     TbName->SetText(FText::FromString(TEXT("Player")));
+    if (Img_Ready) Img_Ready->SetVisibility(ESlateVisibility::Hidden);
     if (TbLevel)    TbLevel->SetText(FText::AsNumber(CachedLevel));
 }
 
@@ -73,6 +74,8 @@ void UCenterPlayerWidget::SetPlayer(APCPlayerState* PS)
 
     // 레벨/아바타 소스가 아직 없으면 임시 값
     SetLevel(PS->PlayerLevel > 0 ? PS->PlayerLevel : CachedLevel);
+
+    if (Img_Ready)  Img_Ready->SetVisibility(PlayerPS->bIsReady  ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 }
 
 void UCenterPlayerWidget::SetDisplayName(const FText& Name)

@@ -42,6 +42,18 @@ public:
 	FStageIconVariant PvE;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")
+	FStageIconVariant PvE_MinionLv1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")
+	FStageIconVariant PvE_MinionLv2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")
+	FStageIconVariant PvE_MinionLv3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")
+	FStageIconVariant PvE_MinionLv4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")
 	FStageIconVariant Carousel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Icons")

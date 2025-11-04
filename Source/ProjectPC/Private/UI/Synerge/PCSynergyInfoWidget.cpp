@@ -2,7 +2,6 @@
 
 
 #include "UI/Synerge/PCSynergyInfoWidget.h"
-
 #include "Component/PCSynergyComponent.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -15,7 +14,7 @@ void UPCSynergyInfoWidget::SetSynergyInfo(const FPCSynergyUIRow& UI, const FSyne
 	if (SynergyIcon)
 	{
 		SynergyIcon->SetBrush(UI.Icon);
-		SynergyIcon->SetBrushTintColor(EStyleColor::White);
+		SynergyIcon->SetColorAndOpacity(FLinearColor::White);
 	}
 
 	if (SynergyName)

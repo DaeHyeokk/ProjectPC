@@ -22,20 +22,30 @@ public:
 	// 바인딩 (UMG에서 위의 이름으로 만들어 둠)
 	UPROPERTY(meta=(BindWidget))
 	UBorder* RootFrame = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UImage*  ImgAvatar = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UBorder* LevelBadge = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TbLevel = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UImage*  ImgCrown = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TbName = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TbSubtitle = nullptr;
+	
 	UPROPERTY(meta=(BindWidget))
 	UBorder* Slot_LittleLegend = nullptr;
+
+	UPROPERTY(meta=(BindWidget))
+	UImage* Img_Ready = nullptr;
 
 	// 스타일(에셋이 없으면 색상으로 대체)
 	UPROPERTY(EditAnywhere, Category="Style") UTexture2D* FrameTexture = nullptr;

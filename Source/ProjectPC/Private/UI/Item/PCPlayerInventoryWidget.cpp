@@ -23,7 +23,7 @@ void UPCPlayerInventoryWidget::NativeDestruct()
 void UPCPlayerInventoryWidget::BindToPlayerState(APCPlayerState* NewPlayerState, bool IsOwner)
 {
 	if (!NewPlayerState) return;
-	UnBindFromPlayerState();
+	// UnBindFromPlayerState();
 
 	// 플레이어 정찰 중, 타인 인벤토리 간섭 방지를 위한 플래그
 	bIsOwningInventory = IsOwner;

@@ -262,12 +262,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void HideShopWidget();
 
+	UFUNCTION(Client,Reliable)
+	void Client_ShowPlayerMainWidget();
+
 	UFUNCTION(Client, Reliable)
 	void Client_ShowShopWidget();
 	UFUNCTION(Client, Reliable)
 	void Client_HideShopWidget();
-	UFUNCTION(Client, Reliable)
-	void Client_ShowPlayerMainWidget();
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
 

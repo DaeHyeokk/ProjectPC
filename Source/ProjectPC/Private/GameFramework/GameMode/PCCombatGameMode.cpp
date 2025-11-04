@@ -541,32 +541,6 @@ void APCCombatGameMode::InitializeHomeBoardsForPlayers()
 	}
 }
 
-void APCCombatGameMode::TryPlacePlayersAfterTravel()
-{
-	AGameStateBase* GameStateBase = GameState;
-	if (!GameStateBase) return;
-
-	if (GameStateBase->PlayerArray.Num() <= 0)
-		return;
-
-	int32 NumPlayerController = 0;
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		++NumPlayerController;
-	}
-	
-	if (NumPlayerController <= 0)
-		return;
-
-	GetWorldTimerManager().ClearTimer(WaitAllPlayerController);
-
-	AssignSeatDeterministicOnce();
-
-	CollectPlayerBoards();
-	
-	//GetWorldTimerManager().SetTimer(ThWaitReady, this, &APCCombatGameMode::StartWhenReady,0.25f, true,0.0f);
-	
-}
 
 void APCCombatGameMode::PlaceAllPlayersOnCarousel()
 {
@@ -957,6 +931,14 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 		It->Multicast_SetOverHeadWidget();
 	}
 
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
+		{
+			PCPlayerController->TryInitWidgetWithGameState();
+		}
+	}
+
 	APCCombatGameState* GS = GetCombatGameState();
 	if (!GS) return;
 	
@@ -1153,25 +1135,6 @@ void APCCombatGameMode::InitGame(const FString& MapName, const FString& Options,
 	const FString S = UGameplayStatics::ParseOption(Options, TEXT("ExpPlayers"));
 	ExpectedPlayers = S.IsEmpty() ? 0 : FCString::Atoi(*S);
 }
-
-void APCCombatGameMode::OnOnePlayerArrived()
-{
-	if (ExpectedPlayers <= 0 && GameState)
-		ExpectedPlayers = GameState->PlayerArray.Num(); // 보험
-
-	++ArrivedPlayers;
-
-	if (!bTriggeredAfterTravel && ExpectedPlayers > 0 && ArrivedPlayers >= ExpectedPlayers)
-	{
-		bTriggeredAfterTravel = true;
-		// Pawn/PS/보드 참조 안정화용 한 틱 딜레이
-		GetWorldTimerManager().SetTimerForNextTick([this]()
-		{
-			TryPlacePlayersAfterTravel();
-		});
-	}
-}
-
 
 // Carousel Helper
 void APCCombatGameMode::BuildCarouselWavesByHP(TArray<TArray<int32>>& OutWaves)

@@ -920,7 +920,6 @@ void APCCombatPlayerController::TryInitWidgetWithGameState_Implementation()
 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		PlayerMainWidget->InitAndBind(CombatGameState);
-		bGSBound = true;
 	}
 }
 
@@ -1134,7 +1133,8 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{		
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
-		Client_CurrentDragUnit(Unit);
+		Client_CurrentDragUnit(PreviewUnit);
+		PreviewUnit->ActionDrag(true);
 	}
 	else
 	{
@@ -1149,6 +1149,14 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
 	if (bIsCancel)
 		return;
+
+	if (CurrentDragUnit.Get())
+	{
+		if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(CurrentDragUnit))
+		{
+			HeroUnit->ActionDrag(false);
+		}
+	}
 
     // 드래그 유효성
     if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
@@ -1255,8 +1263,6 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         if (bPlaced)
         {
-        	// FVector UnitLoc = Unit->GetActorLocation();
-            // Multicast_LerpMove(Unit, UnitLoc, LerpDuration);
             Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else
@@ -1278,24 +1284,8 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
             bDstField ? PB->GetFieldWorldPos(Y, X)
                       : PB->GetBenchWorldPos(BenchIdx);
 
-        // 스왑 수행
-        const FIntPoint SrcGridForOther = PB->GetFieldUnitGridPoint(Unit);
-        const int32     SrcBenchForOther= PB->GetBenchUnitIndex(Unit);
-
         if (PB->Swap(Unit, DstUnit))
         {
-            // 상대 유닛의 목적지 = Unit의 원래 자리
-            FVector OtherDest = FVector::ZeroVector;
-            if (SrcGridForOther != FIntPoint::NoneValue)
-                OtherDest = PB->GetFieldWorldPos(SrcGridForOther.X, SrcGridForOther.Y);
-            else if (SrcBenchForOther != INDEX_NONE && !bInBattle)
-                OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
-
-            // 비주얼 이동
-            //Multicast_LerpMove(Unit,    UnitDest,  LerpDuration);
-            if (!OtherDest.IsNearlyZero())
-                //Multicast_LerpMove(DstUnit, OtherDest, LerpDuration);
-
             Client_DragEndResult(true, UnitDest, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else
@@ -1326,7 +1316,7 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	
 	if (bOk && PreviewHero)
 	{
-		PreviewHero->ActionDrag(bOk);
+		//PreviewHero->ActionDrag(bOk);
 		
 		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
@@ -1377,15 +1367,15 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
 
-	if (PreviewUnit)
-	{
-		PreviewUnit->ActionDrag(false);
-	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
-	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
+	// if (PreviewUnit)
+	// {
+	// 	PreviewUnit->ActionDrag(false);
+	// }
+	//
+	// if (!CachedPreviewUnit.IsValid()) return;
+	//
+	// CachedPreviewUnit->ActionDrag(false);
+	// CachedPreviewUnit = nullptr;
 }
 
 bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit) const

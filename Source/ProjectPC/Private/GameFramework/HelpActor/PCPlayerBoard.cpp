@@ -427,11 +427,10 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	
 	EnsureExclusive(Unit);
 	PlayerField[i].Unit = Unit;
-	Unit->ChangedOnTile(true);
-
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
 	FVector TWorld = FVector(World.X, World.Y, 50.f);
 	Unit->TeleportTo(TWorld, Unit->GetActorRotation(), false, true);
+	Unit->ChangedOnTile(true);
 	
 	if (SpawnEffect) 
 	{
@@ -798,7 +797,6 @@ void APCPlayerBoard::RecountAndPushToWidget_Server()
 	if (!HasAuthority())
 		return;
 	CurUnits = CountFieldUnits();
-	OnRep_FieldCount();
 }
 
 void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(const FGameplayTag& GameState)
