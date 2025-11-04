@@ -24,6 +24,9 @@ public:
 	UFUNCTION()
 	void SetData(const FSynergyData& InData);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Synergy")
+	TSubclassOf<UUserWidget> SynergyInfoWidget;
+
 protected:
 
 	UPROPERTY(meta = (BindWidget))
@@ -56,8 +59,14 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* TierSlash2;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* TierSlash3;
+
 	UPROPERTY(EditAnywhere, Category = "Synergy|UI")
 	TObjectPtr<UPCSynergyInfoData> SynergyUIData;
+
+	UPROPERTY(Transient)
+	UUserWidget* CachedInfoWidget = nullptr;
 	
 	
 };

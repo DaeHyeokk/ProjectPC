@@ -42,3 +42,10 @@ void UPCPlayerMainWidget::SetShopWidgetVisible(bool bVisible)
 
 	W_ShopWidget->SetVisibility(ESlateVisibility::Hidden);
 }
+
+void UPCPlayerMainWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	SetVisibility(ESlateVisibility::Hidden);
+}

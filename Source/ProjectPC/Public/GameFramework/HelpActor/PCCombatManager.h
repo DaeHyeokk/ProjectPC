@@ -176,6 +176,9 @@ public:
 	void ReturnPlayersForPair(int32 PairIndex, float Blend = 0.35f);
 	
 
+	// 승리체크
+	void CheckVictory();
+	
 	// ===== PvE: 크립 스폰/원복 =====
 	// 현재 스테이지/라운드를 읽고 BuildCreepPoints를 사용해 좌표 생성 → 크립 스폰/배치/바인딩
 	UFUNCTION(BlueprintCallable, Category="Combat|PvE")
@@ -225,7 +228,8 @@ private:
 	UFUNCTION()
 	void OnAnyUnitDied(APCBaseUnitCharacter* Unit);
 	
-	void CheckPairVictory(int32 PairIndex);	
+	void CheckPairVictory(int32 PairIndex);
+	
 	void ResolvePairResult(int32 PairIndex, bool bHostWon);
 
 	// Clone PvP
@@ -243,6 +247,8 @@ private:
 public:
 	
 	int32 FindRunningPairIndexBySeat(int32 SeatIndex) const;
+	// 타임아웃 핸들러
+	void HandleBattleFinished();
 
 	// 데미지 관련
 public:
@@ -258,6 +264,21 @@ public:
 
 
 protected:
+
+	// 전투 제한시간
+	UPROPERTY(EditAnywhere, Category = "Combat|TimeOut")
+	float MaxBattleDuration = 35.f;
+
+	FTimerHandle BattleTimerHandle;
+
+	// 전투 진행도 체크 함수
+	void NotifyAllBattleFinished();
+
+
+
+	// 무승부 처리
+	void ResolvePairDraw(int32 PairIndex);
+	
 	int32 GetCurrentStageIndex() const;
 	int32 GetStageBaseDamageFromDT(int32 StageIdx) const;
 	int32 GetStageBaseDamageDefault(int32 StageIdx) const;

@@ -222,6 +222,10 @@ public:
 	UFUNCTION(Server,Reliable)
 	void Server_ReportBootStrap(const FString& LocalUserId, uint8 Mask);
 
+	// 동시시작 알림
+	UFUNCTION()
+	void HandlePreStartArmed();
+
 private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -232,6 +236,7 @@ private:
 	
 	// 헬퍼
 	uint8 ComputeBootStrapMask() const;
+	void ShowPlayerMainUI();
 	void ShowLoadingUI();
 	void UpdateLoadingUI(float Pct01, const FString& Line);
 	void HideLoadingUI();
@@ -263,6 +268,10 @@ public:
 	void Client_HideShopWidget();
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
+
+	// VFX
+	UFUNCTION(Client, Reliable)
+	void Client_PlaceFX(UNiagaraSystem* System, FVector Location, FRotator Rotation = FRotator::ZeroRotator);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -328,6 +337,9 @@ public:
 
 	bool bIsCancel = false;
 	void CancelDrag(const FGameplayTag& GameStateTag);
+
+	UFUNCTION(Server,Reliable)
+	void CancelDragServer();
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();

@@ -130,6 +130,7 @@ void APCCombatPlayerController::BeginPlay()
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
 		LoadMainWidget();
+		
 	}
 }
 
@@ -166,8 +167,23 @@ void APCCombatPlayerController::BeginPlayingState()
 	{
 		GS->OnLoadingChanged.AddUObject(this, &ThisClass::OnGameLoadingChanged);
 		OnGameLoadingChanged();
+
+		FTimerHandle Th;
+		GetWorldTimerManager().SetTimer(Th, [this]()
+		{
+			if (APCCombatGameState* LGS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				static bool bPrevArmed = false;
+				if (LGS->bStepArmed && !bPrevArmed)
+				{
+					bPrevArmed = true;
+					HandlePreStartArmed();
+				}
+			}
+		}, 0.1f, true, 0.f);
 	}
 
+	
 	StartClientBootStrap();
 }
 
@@ -684,8 +700,8 @@ void APCCombatPlayerController::EnsureScreenFade()
 	ScreenFadeWidget = CreateWidget<UUserWidget>(this, ScreenFadeClass);
 	if (ScreenFadeWidget)
 	{
-		ScreenFadeWidget->AddToViewport(10000);
-		ScreenFadeWidget->SetVisibility(ESlateVisibility::Hidden);
+		ScreenFadeWidget->AddToViewport(100);
+		ScreenFadeWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -693,7 +709,7 @@ void APCCombatPlayerController::SetScreenFadeVisible(bool bVisible, float Opacit
 {
 	if (!ScreenFadeWidget)
 		return;
-	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
+	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	ScreenFadeWidget->SetRenderOpacity(bVisible ? Opacity : 0.f);
 }
 
@@ -737,6 +753,29 @@ void APCCombatPlayerController::OnGameLoadingChanged()
 	}
 }
 
+void APCCombatPlayerController::HandlePreStartArmed()
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->PlayFadeOut();
+	}
+
+	SetScreenFadeVisible(false, 0.f);
+
+	FTimerHandle ThAck;
+	GetWorldTimerManager().SetTimer(ThAck, [this]()
+	{
+		if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+		{
+			if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				GS->Server_ReportUILoadingClosed(PS->LocalUserId);
+			}
+		}
+	},1.f, false);
+}
+
+
 uint8 APCCombatPlayerController::ComputeBootStrapMask() const
 {
 	uint8 M = 0;
@@ -745,6 +784,16 @@ uint8 APCCombatPlayerController::ComputeBootStrapMask() const
 	if (bUIReady)   M |= 0x04;
 	if (bGSBound)   M |= 0x08;
 	return M;
+}
+
+void APCCombatPlayerController::ShowPlayerMainUI()
+{
+	if (!IsLocalController()) return;
+
+	if (PlayerMainWidget)
+	{
+		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+	}
 }
 
 void APCCombatPlayerController::ShowLoadingUI()
@@ -756,7 +805,7 @@ void APCCombatPlayerController::ShowLoadingUI()
 		LoadingWidget = CreateWidget<UPCLoadingWidget>(this, LoadingWidgetClass);
 		if (LoadingWidget)
 		{
-			LoadingWidget->AddToViewport(10000);
+			LoadingWidget->AddToViewport(2000);
 		}
 	}
 	if (LoadingWidget)
@@ -777,7 +826,7 @@ void APCCombatPlayerController::HideLoadingUI()
 {
 	if (LoadingWidget)
 	{
-		LoadingWidget->SetVisibility(ESlateVisibility::Hidden);
+		LoadingWidget->RemoveFromParent();
 	}
 }
 
@@ -789,6 +838,8 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	// 이미 있으면 보장만
 	if (!IsValid(PlayerMainWidget))
 	{
+		EnsureScreenFade();
+		SetScreenFadeVisible(true,1);
 		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
@@ -813,7 +864,6 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		return;
 	}
 	
-	PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
 
 	if (!PCPlayerState)
@@ -870,6 +920,7 @@ void APCCombatPlayerController::TryInitWidgetWithGameState_Implementation()
 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
 		PlayerMainWidget->InitAndBind(CombatGameState);
+		bGSBound = true;
 	}
 }
 
@@ -895,6 +946,18 @@ void APCCombatPlayerController::HideShopWidget()
 		return;
 
 	PlayerMainWidget->SetShopWidgetVisible(false);
+}
+
+void APCCombatPlayerController::Client_ShowPlayerMainWidget_Implementation()
+{
+	ShowPlayerMainUI();
+}
+
+void APCCombatPlayerController::Client_PlaceFX_Implementation(UNiagaraSystem* System, FVector Location,
+	FRotator Rotation)
+{
+	if (!System) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),System, Location, Rotation, FVector(0.8f), true, true, ENCPoolMethod::AutoRelease);
 }
 
 void APCCombatPlayerController::ApplyGameInputMode()
@@ -952,7 +1015,7 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
-	bIsCancel = true;
+	CancelDragServer();
 	
 	if (!IsLocalController())
 		return;
@@ -983,6 +1046,14 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	
 	CachedPreviewUnit->ActionDrag(false);
 	CachedPreviewUnit = nullptr;
+	
+}
+
+void APCCombatPlayerController::CancelDragServer_Implementation()
+{
+	bIsCancel = true;
+	CurrentDragUnit = nullptr;
+	CurrentDragId = 0;
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
@@ -1135,6 +1206,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
     // 출발지 정보
     const FIntPoint SrcGrid  = PB->GetFieldUnitGridPoint(Unit);
+	const int32 SrcIndex = PB->GetFieldUnitIndex(Unit);
     const bool      bSrcField= (SrcGrid != FIntPoint::NoneValue);
     const int32     SrcBench = bSrcField ? INDEX_NONE : PB->GetBenchUnitIndex(Unit);
 
@@ -1154,7 +1226,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
     	
     	if (bSrcField)
     	{
-    		PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
+    		PB->RemoveFromField(SrcIndex);
     	}
     	else if (SrcBench != INDEX_NONE)
     	{
@@ -1216,7 +1288,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
             FVector OtherDest = FVector::ZeroVector;
             if (SrcGridForOther != FIntPoint::NoneValue)
                 OtherDest = PB->GetFieldWorldPos(SrcGridForOther.X, SrcGridForOther.Y);
-            else if (SrcBenchForOther != INDEX_NONE)
+            else if (SrcBenchForOther != INDEX_NONE && !bInBattle)
                 OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
 
             // 비주얼 이동

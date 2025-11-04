@@ -20,6 +20,18 @@ struct FPCSynergyUITierSet
 };
 
 USTRUCT(BlueprintType)
+struct FPCSynergyTierLine
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Threshold = 0;          // 2, 4, 6 처럼
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Line;                   // "최대 체력의 8%..." 같은 설명
+};
+
+USTRUCT(BlueprintType)
 struct FPCSynergyUIRow
 {
 	GENERATED_BODY()
@@ -35,8 +47,19 @@ struct FPCSynergyUIRow
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FPCSynergyUITierSet TierSet;
+
+	// ▼ 추가
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(MultiLine=true))
+	FText Summary; // 상단 짧은 요약 ("마법사가 추가 주문력을 얻습니다.")
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(MultiLine=true))
+	FText Description;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FPCSynergyTierLine> TierLines; // (2) … (4) … (6) …
 	
 };
+
 
 UCLASS()
 class PROJECTPC_API UPCSynergyInfoData : public UDataAsset

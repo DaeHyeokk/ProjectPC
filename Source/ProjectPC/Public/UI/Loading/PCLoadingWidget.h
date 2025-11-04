@@ -20,15 +20,22 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetProgress(float InProgress, const FText& InDetail);
 
-	virtual void NativeOnInitialized() override;
+	UFUNCTION(BlueprintCallable)
+	void PlayFadeOut();
 
 protected:
+
+	virtual void NativeOnInitialized() override;
+	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* Progress = nullptr;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DetailText = nullptr;
-	
+
+	UPROPERTY(Transient, meta=(BindWidgetAnimOptional))
+	UWidgetAnimation* FadeOut = nullptr;
+		
 	
 };

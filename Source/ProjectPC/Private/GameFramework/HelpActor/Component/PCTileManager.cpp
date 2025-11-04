@@ -73,9 +73,8 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
 
 	Unit->SetOnCombatBoard(Board);
-	FVector TWorld = FVector(Loc.X, Loc.Y, 71);
+	FVector TWorld = FVector(Loc.X, Loc.Y, 50.f);
 	Unit->TeleportTo(TWorld, Rot, false, true);
-	//Unit->SetActorRotation(Rot, ETeleportType::TeleportPhysics);
 	BindToUnit(Unit);
 
 	return true;
@@ -310,7 +309,7 @@ bool UPCTileManager::EnsureExclusive(APCBaseUnitCharacter* InUnit)
 	const FIntPoint GridPoint = GetFieldUnitGridPoint(InUnit);
 	if (GridPoint != FIntPoint::NoneValue)
 	{
-		RemoveFromField(GridPoint.X, GridPoint.Y, false);
+		RemoveFromField(GridPoint.Y, GridPoint.X, false);
 		return true;
 	}
 	
@@ -325,7 +324,7 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetWinnerUnitByTeamIndex(int32 Win
 	{
 		if (!IsValid(Unit)) return;
 
-		if (Unit->GetTeamIndex() && Unit->GetTeamIndex() == WinnerTeamIndex)
+		if (Unit->GetTeamIndex() == WinnerTeamIndex)
 		{
 			if (!WinnerUnit.Contains(Unit))
 			{
@@ -340,6 +339,21 @@ TArray<APCBaseUnitCharacter*> UPCTileManager::GetWinnerUnitByTeamIndex(int32 Win
 	}
 
 	return WinnerUnit;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllAliveUnit()
+{
+	TArray<APCBaseUnitCharacter*> AliveUnit;
+
+	for (const auto& T : Field)
+	{
+		if (T.Unit != nullptr)
+		{
+			AliveUnit.Add(T.Unit);
+		}
+	}
+
+	return AliveUnit;
 }
 
 void UPCTileManager::CreateField()
@@ -488,13 +502,14 @@ void UPCTileManager::DebugDrawTiles(float Duration, bool bPersistent, bool bShow
 		if (!Field.IsValidIndex(i)) continue;
 		const FTile& T = Field[i];
 		const FVector P = T.Position;
+		const FIntPoint Intpoint = T.UnitIntPoint;
 
 		TArray<FString> Lines;
 		if (bShowIndex) Lines.Add(FString::Printf(TEXT("#%d"), i));
 		if (bShowYX)
 		{
-			const int32 Y = P.Y;
-			const int32 X = P.X;
+			const int32 Y = Intpoint.Y;
+			const int32 X = Intpoint.X;
 			Lines.Add(FString::Printf(TEXT("(X=%d,Y=%d)"), X, Y));
 		}
 	

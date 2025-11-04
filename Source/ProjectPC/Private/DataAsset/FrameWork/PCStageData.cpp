@@ -160,6 +160,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
                 S(EPCStageType::Setup,   30.f),
                 S(EPCStageType::Travel,   DefaultTravelSeconds),
                 S(EPCStageType::PvP,     30.f),
+            	S(EPCStageType::PvPResult, 2.f),
                 S(EPCStageType::Return,   3.f)
             });
         	TagRound(SIdx, R, GameRoundTags::GameRound_PvP);
