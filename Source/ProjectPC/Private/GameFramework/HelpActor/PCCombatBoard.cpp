@@ -55,7 +55,7 @@ void APCCombatBoard::BeginPlay()
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
-		//TileManager->DebugDrawTiles(1e6f, true);
+		// TileManager->DebugDrawTiles(1e6f, true);
 	}
 }
 
@@ -152,6 +152,15 @@ void APCCombatBoard::ApplyClientMirrorView()
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
 {
 	return TileManager ? TileManager->GetFieldUnit(Y, X) : nullptr;
+}
+
+// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+void APCCombatBoard::GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const
+{
+	if (TileManager)
+	{
+		TileManager->GetAllFieldUnits(FieldUnits);
+	}
 }
 
 FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const

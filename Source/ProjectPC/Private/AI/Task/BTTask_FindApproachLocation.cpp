@@ -3,10 +3,7 @@
 
 #include "AI/Task/BTTask_FindApproachLocation.h"
 
-#include "AbilitySystemComponent.h"
 #include "AIController.h"
-#include "BaseGameplayTags.h"
-#include "Algo/RandomShuffle.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Controller/Unit/PCUnitAIController.h"
@@ -92,7 +89,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 				// 다음에 탐색할 지점에 유닛이 있고, 적 유닛일 경우
 				if (NextUnit && PCUnitCombatUtils::IsHostile(OwnerUnit, NextUnit))
 				{
-					const FIntPoint MovePoint = HereData.FirstMovePosition;
+					FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
 
 					//UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, MovePoint : X = %d, Y = %d"),*OwnerUnit->GetName(), MovePoint.X, MovePoint.Y)
@@ -101,7 +98,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))
 					{
 						BB->SetValueAsVector(ApproachLocationKey.SelectedKeyName, MoveLocation);
-						UnitAIC->SetMovePoint(MovePoint);
+						UnitAIC->SetCachedPoint(MovePoint, StartPoint);
 						return EBTNodeResult::Succeeded;
 					}
 				}

@@ -12,12 +12,12 @@ void UPCProjectilePoolSubsystem::InitializeProjectilePoolData(const FPCProjectil
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client) return;
 	
 	ProjectilePoolData = NewProjectilePoolData;
-
 	if (!ProjectilePoolData.ProjectileBaseClass) return;
 
 	for (int32 i=0; i<ProjectilePoolData.InitialReserveSize; ++i)
 	{
-		if (auto Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
+		// InitialReserveSize만큼 발사체 미리 생성하고, Queue에 삽입
+ 		if (auto Projectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 			ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 		{
 			ProjectilePool.Enqueue(Projectile);
@@ -34,11 +34,13 @@ APCBaseProjectile* UPCProjectilePoolSubsystem::SpawnProjectile(const FTransform&
 			APCBaseProjectile* SpawnedProjectile = nullptr;
 			if (!ProjectilePool.IsEmpty() && ProjectilePool.Dequeue(SpawnedProjectile))
 			{
+				// 오브젝트 풀에서 꺼낼 수 있으면 즉시 활성화
 				SpawnedProjectile->ActiveProjectile(SpawnTransform, CharacterTag, AttackTypeTag, SpawnActor, TargetActor);
 				return SpawnedProjectile;
 			}
 			else
 			{
+				// 오브젝트 풀이 비었거나 꺼낸 발사체가 nullptr일 경우 새로 생성
 				if (SpawnedProjectile = GetWorld()->SpawnActor<APCBaseProjectile>(
 					ProjectilePoolData.ProjectileBaseClass, FVector::ZeroVector, FRotator::ZeroRotator))
 				{
@@ -114,6 +116,7 @@ void UPCProjectilePoolSubsystem::ReturnProjectile(APCBaseProjectile* ReturnedPro
 
 	if (ReturnedProjectile)
 	{
+		// 반환된 발사체 오브젝트 풀 Queue에 삽입
 		ProjectilePool.Enqueue(ReturnedProjectile);
 	}
 }

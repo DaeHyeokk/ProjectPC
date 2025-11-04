@@ -4,8 +4,6 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "Windows/WindowsApplication.h"
-
 
 // Sets default values for this component's properties
 UPCTileManager::UPCTileManager()
@@ -105,6 +103,16 @@ APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
 	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
+}
+
+// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+void UPCTileManager::GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const
+{
+	for (const FTile& Tile : Field)
+	{
+		if (Tile.Unit)
+			FieldUnits.Add(Tile.Unit);
+	}
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
@@ -526,7 +534,7 @@ void UPCTileManager::DebugClearPersistent() const
 void UPCTileManager::Editor_DrawTilesPersistent()
 {
 	// 에디터에서도 동작: 맵 열린 상태에서 디테일 버튼 클릭 시 그려지고 유지
-	DebugDrawTiles(1e6f /*사실상 영구*/, true, true, true, true);
+	// DebugDrawTiles(1e6f /*사실상 영구*/, true, true, true, true);
 }
 
 void UPCTileManager::Editor_ClearDebug()

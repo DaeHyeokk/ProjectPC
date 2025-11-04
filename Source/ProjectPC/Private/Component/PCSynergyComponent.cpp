@@ -269,7 +269,7 @@ void UPCSynergyComponent::UpdateSynergyCountMap(const FGameplayTagContainer& Syn
 	}
 
 	SynergyCountArray.ResetToMap(SynergyCountMap);
-	DebugPrintSynergyCounts();
+	//DebugPrintSynergyCounts();
 }
 
 void UPCSynergyComponent::RecountSynergyCountMapForUnitTag(const FGameplayTag& UnitTag)
@@ -315,7 +315,7 @@ void UPCSynergyComponent::RecountSynergyCountMapForUnitTag(const FGameplayTag& U
 	}
 
 	SynergyCountArray.ResetToMap(SynergyCountMap);
-	DebugPrintSynergyCounts();
+	//DebugPrintSynergyCounts();
 }
 
 void UPCSynergyComponent::ApplySynergyEffects(const FGameplayTag& SynergyTag)

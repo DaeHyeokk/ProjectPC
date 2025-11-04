@@ -38,8 +38,6 @@ public:
 	
 	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-
-	void UpdateStatusBarUI() const;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -47,6 +45,8 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	void UpdateStatusBarUI() const;
+	void UpdateMeshScale() const;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;

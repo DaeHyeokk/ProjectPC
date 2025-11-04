@@ -33,6 +33,12 @@ bool UPCGameplayAbility_BuyUnit::CanActivateAbility(const FGameplayAbilitySpecHa
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
 	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))
+	{
+		return false;
+	}
+	
+	// 서버가 아니거나, CostGE 클래스가 nullptr이면 Activate 막음
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
@@ -55,10 +61,12 @@ void UPCGameplayAbility_BuyUnit::ApplyCost(const FGameplayAbilitySpecHandle Hand
 	{
 		if (BuyCount == 0)
 		{
+			// 1개 구매 시
 			CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -UnitCost);
 		}
 		else
 		{
+			// 여러개 동시 구매 시
 			CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -(UnitCost * BuyCount));
 		}
 		
@@ -85,13 +93,14 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		return;
 	}
 
+	// GA 이벤트 호출 시, 받은 TriggerEventData를 통해 필요한 데이터 분해 
 	const auto* TargetData = TriggerEventData->TargetData.Get(0);
 	SlotIndex = TargetData->GetHitResult()->Location.X;
 	BuyCount = TargetData->GetHitResult()->Location.Y;
 	UnitTag = PS->GetShopSlots()[SlotIndex].UnitTag;
 	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 
-	const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
+	const auto CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
 	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost * BuyCount)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -112,6 +121,7 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 		}
 		else
 		{
+			// 여러개 구매 -> 벤치가 꽉찬 상태이므로, 새로운 유닛 스폰 대신 즉시 레벨업 실행
 			GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
 		}
 	}

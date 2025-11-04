@@ -42,16 +42,65 @@ APCPlayerState::APCPlayerState()
 	SynergyComponent = CreateDefaultSubobject<UPCSynergyComponent>(TEXT("SynergyComponent"));
 }
 
-void APCPlayerState::UnitSpawn(FGameplayTag UnitTag)
+void APCPlayerState::BeginPlay()
 {
-	if (!HasAuthority()) return;
-	
-	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
-	if (!PlayerBoard || !SpawnSubsystem) return;
+	Super::BeginPlay();
 
-	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1, this);
-	int32 LowBenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
-	PlayerBoard->PlaceUnitOnBench(LowBenchIndex,Unit);
+	if (HasAuthority())
+	{
+		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
+		PlayerAbilitySystemComponent->ApplyInitializedEffects();
+		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
+		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
+	}
+}
+
+void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(APCPlayerState, bIsReady);
+	DOREPLIFETIME(APCPlayerState, LocalUserId);
+	DOREPLIFETIME(APCPlayerState, bIsLeader);
+	DOREPLIFETIME(APCPlayerState, SeatIndex);
+	DOREPLIFETIME(APCPlayerState, bIdentified);
+	DOREPLIFETIME(APCPlayerState, ShopSlots);
+	DOREPLIFETIME(APCPlayerState, PlayerLevel);
+	DOREPLIFETIME(APCPlayerState, PlayerBoard);
+	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
+	DOREPLIFETIME(APCPlayerState, CurrentSeatIndex);
+	DOREPLIFETIME(APCPlayerState, CurrentStateTag);
+}
+
+bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
+										 FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	if (PlayerInventory)
+	{
+		bWroteSomething |= Channel->ReplicateSubobject(PlayerInventory, *Bunch, *RepFlags);
+	}
+
+	return bWroteSomething;
+}
+
+void APCPlayerState::SetDisplayName_Server(const FString& InName)
+{
+	if (HasAuthority())
+	{
+		FString Clean = InName;
+		Clean.TrimStartAndEndInline();
+		Clean = Clean.Left(24);
+		LocalUserId = Clean;
+
+		SetPlayerName(Clean);
+	}
+}
+
+void APCPlayerState::OnRep_SeatIndex()
+{
+	ResolvePlayerBoardOnClient();
 }
 
 void APCPlayerState::SetPlayerBoard(APCPlayerBoard* InBoard)
@@ -78,20 +127,18 @@ void APCPlayerState::ResolvePlayerBoardOnClient()
 			break;
 		}
 	}
-	
 }
 
-void APCPlayerState::BeginPlay()
+void APCPlayerState::UnitSpawn(FGameplayTag UnitTag)
 {
-	Super::BeginPlay();
+	if (!HasAuthority()) return;
+	
+	UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>();
+	if (!PlayerBoard || !SpawnSubsystem) return;
 
-	if (HasAuthority())
-	{
-		PlayerAbilitySystemComponent->ApplyInitializedAbilities();
-		PlayerAbilitySystemComponent->ApplyInitializedEffects();
-		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
-		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
-	}
+	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1, this);
+	int32 LowBenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
+	PlayerBoard->PlaceUnitOnBench(LowBenchIndex,Unit);
 }
 
 UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const
@@ -124,6 +171,7 @@ void APCPlayerState::ChangeState(FGameplayTag NewStateTag)
 				if (CurrentStateTag == PlayerGameplayTags::Player_State_Dead)
 				{
 					PlayerCharacter->PlayerDie();
+					PlayerInventory->EmptyInventory();
 					ReturnAllUnitToShop();
 					PlayerResult();
 				}
@@ -221,7 +269,7 @@ void APCPlayerState::ReturnAllUnitToShop()
 
 void APCPlayerState::OnRep_PlayerWinningStreak()
 {
-	OnWinningStreakUpdated.Broadcast();
+	OnWinningStreakUpdated.Broadcast(PlayerWinningStreak);
 }
 
 void APCPlayerState::PlayerWin()
@@ -273,49 +321,7 @@ int32 APCPlayerState::GetPlayerWinningStreak() const
 	return PlayerWinningStreak;
 }
 
-bool APCPlayerState::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
-	FReplicationFlags* RepFlags)
+void APCPlayerState::SetCurrentSeatIndex(int32 InCurrentSeatIndex)
 {
-	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	if (PlayerInventory)
-	{
-		bWroteSomething |= Channel->ReplicateSubobject(PlayerInventory, *Bunch, *RepFlags);
-	}
-
-	return bWroteSomething;
-}
-
-void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(APCPlayerState, bIsReady);
-	DOREPLIFETIME(APCPlayerState, LocalUserId);
-	DOREPLIFETIME(APCPlayerState, bIsLeader);
-	DOREPLIFETIME(APCPlayerState, SeatIndex);
-	DOREPLIFETIME(APCPlayerState, bIdentified);
-	DOREPLIFETIME(APCPlayerState, ShopSlots);
-	DOREPLIFETIME(APCPlayerState, PlayerLevel);
-	DOREPLIFETIME(APCPlayerState, PlayerBoard);
-	DOREPLIFETIME(APCPlayerState, PlayerWinningStreak);
-}
-
-void APCPlayerState::SetDisplayName_Server(const FString& InName)
-{
-	if (HasAuthority())
-	{
-		FString Clean = InName;
-		Clean.TrimStartAndEndInline();
-		Clean = Clean.Left(24);
-		LocalUserId = Clean;
-
-		SetPlayerName(Clean);
-	}
-}
-
-
-void APCPlayerState::OnRep_SeatIndex()
-{
-	ResolvePlayerBoardOnClient();
+	CurrentSeatIndex = InCurrentSeatIndex;
 }

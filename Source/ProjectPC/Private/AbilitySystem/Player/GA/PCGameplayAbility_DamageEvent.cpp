@@ -39,7 +39,8 @@ bool UPCGameplayAbility_DamageEvent::CanActivateAbility(const FGameplayAbilitySp
 	{
 		return false;
 	}
-	
+
+	// 서버가 아니면 Activate 막음
 	if (!ActorInfo->IsNetAuthority())
 	{
 		return false;
@@ -60,6 +61,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
+	// GA 이벤트 호출 시, 받은 TriggerEventData를 통해 필요한 데이터 분해 
 	float Damage = TriggerEventData->EventMagnitude;
 	TWeakObjectPtr<AActor> TargetPS = const_cast<AActor*>(TriggerEventData->Target.Get());
 	auto InstigatorPS = const_cast<AActor*>(TriggerEventData->Instigator.Get());
@@ -75,7 +77,8 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 
 	FGameplayTag CharacterTag;
 	FGameplayTag AttackTypeTag;
-	
+
+	// 발사체 활성화를 위한 캐릭터 Tag, 공격타입 Tag 얻기
 	if (auto InstigatorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorPS))
 	{
 		InstigatorPawn = Cast<APawn>(InstigatorASC->GetAvatarActor());
@@ -107,6 +110,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
+	// 애님 몽타주 실행 (비동기 로드)
 	if (PlayerAttackAnimData)
 	{
 		if (auto AttackMontageSoftPtr = PlayerAttackAnimData->GetAttackMontage(CharacterTag, AttackTypeTag))
@@ -138,6 +142,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		}
 	}
 
+	// 발사체 활성화
 	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
 	{
 		FVector InstLoc = InstigatorPawn->GetActorLocation();
@@ -146,7 +151,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 
 		FTransform SpawnTransform(Direction.Rotation(), InstLoc);
 		auto Projectile = ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, CharacterTag, InstigatorPawn, TargetPawn);
-		Projectile->SetDamage(Damage);
+		Projectile->SetDamage(-Damage);
 	}
 }
 

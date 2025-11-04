@@ -19,72 +19,6 @@
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 
 
-// namespace
-// {
-// 	// (Y,X) 로 받았으니 FIntPoint.X=Y, FIntPoint.Y=X 로 저장
-// 	static bool BuildCreepPoints(int32 StageOne, int32 RoundOne, TArray<FIntPoint>& Out)
-// 	{
-// 		Out.Reset();
-//
-// 		switch (StageOne)
-// 		{
-// 		case 1:
-// 			switch (RoundOne)
-// 			{
-// 		case 2: Out = { FIntPoint(5,2), FIntPoint(5,4) }; return true;
-// 		case 3: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1) }; return true;
-// 		case 4: Out = { FIntPoint(5,2), FIntPoint(5,4), FIntPoint(6,1), FIntPoint(6,4) }; return true;
-
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		case 2:
-// 			switch (RoundOne)
-// 			{
-// 		case 7: Out = { FIntPoint(4,0), FIntPoint(4,5), FIntPoint(6,1) }; return true;
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		case 3:
-// 			switch (RoundOne)
-// 			{
-// 		case 7: Out = { FIntPoint(5,3), FIntPoint(7,1), FIntPoint(7,2), FIntPoint(7,4), FIntPoint(7,5) }; return true;
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		case 4:
-// 			switch (RoundOne)
-// 			{
-// 		case 7: Out = { FIntPoint(5,1), FIntPoint(5,5), FIntPoint(6,1), FIntPoint(6,4), FIntPoint(7,3) }; return true;
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		case 5:
-// 			switch (RoundOne)
-// 			{
-// 		case 7: Out = { FIntPoint(5,3) }; return true;
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		case 6:
-// 			switch (RoundOne)
-// 			{
-// 		case 7: Out = { FIntPoint(5,3) }; return true;
-// 		default: break;
-// 			}
-// 			break;
-//
-// 		default: break;
-// 		}
-// 		return false;
-// 	}
-// }
-
 namespace
 {
 	// (X,Y) 로 받았으니 FIntPoint.X=X, FIntPoint.Y=Y 로 저장
@@ -661,6 +595,11 @@ void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
 			FocusCameraToBoard(GPS->SeatIndex, HostSeat, true, 0);
 		}
 	}
+
+	if (APCPlayerState* GuestState = FindPlayerStateBySeat(GuestSeat))
+	{
+		GuestState->SetCurrentSeatIndex(HostSeat);
+	}
 }
 
 void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
@@ -700,6 +639,7 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 		if (APCPlayerState* GuestPlayerState = FindPlayerStateBySeat(GuestSeat))
 		{
 			FocusCameraToBoard(GuestPlayerState->SeatIndex, GuestSeat, false, 0);
+			GuestPlayerState->SetCurrentSeatIndex(GuestSeat);
 		}
 	}
 }
@@ -792,7 +732,7 @@ void APCCombatManager::FinishPvEBattleForSeat(int32 HostSeatIndex)
 		if (APCBaseUnitCharacter* Creep = WU.Get())
 			RemoveUnitFromAny(TM, Creep);
 	Pair.PvECreeps.Reset();
-
+	
 	// 2) TM 비우기
 	TM->ClearAll();
 
@@ -1360,8 +1300,8 @@ void APCCombatManager::ResolvePairResult(int32 PairIndex, bool bHostWon)
 	APCPlayerState* LoserPlayerState = FindPlayerStateBySeat(bHostWon ? GuestSeat : HostSeat);
 	if (!WinnerPlayerState || !LoserPlayerState) return;
 
-	WinnerPlayerState->PlayerWin();
 	LoserPlayerState->PlayerLose();
+	WinnerPlayerState->PlayerWin();
 
 	const int32 StageIndex      = GetCurrentStageIndex();
 	const int32 StageBaseDamage = GetStageBaseDamageFromDT(StageIndex);

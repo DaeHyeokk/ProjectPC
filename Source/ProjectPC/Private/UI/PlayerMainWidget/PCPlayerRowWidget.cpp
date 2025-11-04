@@ -10,6 +10,10 @@
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Controller/Player/PCCombatPlayerController.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+
 
 bool UPCPlayerRowWidget::Initialize()
 {
@@ -22,41 +26,91 @@ bool UPCPlayerRowWidget::Initialize()
 	return true;
 }
 
-void UPCPlayerRowWidget::SetupPlayerInfo(const FString& NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag)
+void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 {
-	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return; 
+	if (!NewPlayerState) return;
+	if (!PlayerName || !PlayerHP || !CircularHPBar || !Img_Portrait) return;
+
+	CachedPlayerState = NewPlayerState;
+
+	if (auto PC = GetOwningPlayer())
+	{
+		if (auto PS = PC->GetPlayerState<APCPlayerState>())
+		{
+			if (PS == CachedPlayerState)
+			{
+				// 플레이어 본인 위젯이면 확대, HPBar와 PlayerName 색 강조
+				ExpandRenderSize();
+				CircularHPBar->SetColorAndOpacity(FLinearColor(0.07f, 1.f, 0.1f, 1.f));
+				PlayerName->SetColorAndOpacity(FLinearColor(1.f, 0.8f, 0.05f, 1.f));
+			}
+			else
+			{
+				// 타 플레이어 위젯이면 HPBar를 빨간색으로 색 강조
+				CircularHPBar->SetColorAndOpacity(FLinearColor(1.f, 0.f, 0.02f, 1.f));
+			}
+		}
+	}
+
+	// 플레이어 연승 기록, 어트리뷰트 (HP) 구독
+	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningStreak);
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+	{
+		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+			.AddUObject(this, &UPCPlayerRowWidget::UpdatePlayerHP);
+		}
+	}
 
 	// 플레이어 이름 세팅
-	auto NameText = FString::Printf(TEXT("%s"), *NewPlayerName);
+	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
 	PlayerName->SetText(FText::FromString(NameText));
 
-	// 플레이어 체력바 세팅
-	auto HP = NewPlayerHP;
-	auto HPPercent = HP / 100.f;
-	SetHP(HPPercent);
+	if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+	{
+		// 플레이어 체력바 세팅
+		auto HP = AttributeSet->GetPlayerHP();
+		auto HPPercent = HP / 100.f;
+		SetHP(HPPercent);
 
-	auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-	PlayerHP->SetText(FText::FromString(HPText));
+		auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+		PlayerHP->SetText(FText::FromString(HPText));
+	}
 
+	FGameplayTag CharacterTag;
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+	{
+		FGameplayTagContainer Tags;
+		ASC->GetOwnedGameplayTags(Tags);
+
+		for (const FGameplayTag& Tag : Tags)
+		{
+			if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Player.Type"))))
+			{
+				CharacterTag = Tag;
+			}
+		}
+	}
+	
 	// 플레이어 초상화 세팅
-	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(NewPlayerCharacterTag);
+	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(CharacterTag);
 	FSoftObjectPath TexturePath = PortraitSoftPtr.ToSoftObjectPath();
 	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	TWeakObjectPtr<UPCPlayerRowWidget> WeakThis = this;
 	
-	Streamable.RequestAsyncLoad(TexturePath, [this, TexturePath]()
+	Streamable.RequestAsyncLoad(TexturePath, [WeakThis, TexturePath]()
 	{
 		if (UTexture2D* Texture = Cast<UTexture2D>(TexturePath.ResolveObject()))
 		{
-			Img_Portrait->SetBrushFromTexture(Texture);
+			WeakThis->Img_Portrait->SetBrushFromTexture(Texture);
 		}
 	});
 }
 
-void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
+void UPCPlayerRowWidget::UpdatePlayerHP(const FOnAttributeChangeData& Data)
 {
-	if (!PlayerHP || !CircularHPBar) return;
-	
-	auto HP = NewPlayerHP;
+	auto HP = Data.NewValue;
 	auto HPPercent = HP / 100.f;
 	SetHP(HPPercent);
 
@@ -72,11 +126,37 @@ void UPCPlayerRowWidget::UpdatePlayerHP(float NewPlayerHP)
 	}
 }
 
+void UPCPlayerRowWidget::SetWinningStreak(int32 NewWinningStreak)
+{
+	WinningStreak = NewWinningStreak;	
+}
+
+void UPCPlayerRowWidget::ExpandRenderSize()
+{
+	SetRenderScale(FVector2D(1.15f, 1.15f));
+	SetRenderTranslation(FVector2D(-15.f, 0.f));
+}
+
+void UPCPlayerRowWidget::RestoreRenderSize()
+{
+	SetRenderScale(FVector2D(1.f, 1.f));
+	SetRenderTranslation(FVector2D(0.f, 0.f));
+}
+
 void UPCPlayerRowWidget::SwitchCamera()
 {
-	
+	if (!CachedPlayerState) return;
+
+	if (auto OwnerPC = Cast<APCCombatPlayerController>(GetOwningPlayer()))
+	{
+		OwnerPC->PlayerPatrol(CachedPlayerState);
+	}
 }
 
 void UPCPlayerRowWidget::SetHP_Implementation(float HPPercent)
+{
+}
+
+void UPCPlayerRowWidget::SetWinningFlame_Implementation()
 {
 }

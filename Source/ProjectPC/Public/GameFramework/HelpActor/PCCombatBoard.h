@@ -128,6 +128,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	APCBaseUnitCharacter* GetUnitAt(int32 Y, int32 X) const;
 
+	// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+	UFUNCTION(Category="Tile")
+	void GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const;
+	
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const;
 

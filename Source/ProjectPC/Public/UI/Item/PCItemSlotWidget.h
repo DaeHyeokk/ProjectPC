@@ -39,6 +39,7 @@ private:
 	int32 SlotIndex = -1;
 	bool bIsItemSet = false;
 	bool bIsBaseItem = false;
+	FGameplayTag CachedBaseItemTag;
 
 	UPROPERTY()
 	UTexture2D* CachedThumbnail;

@@ -30,6 +30,7 @@ void UPCPlayerAbilitySystemComponent::ApplyInitializedAbilities()
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
+	// GA 부여
 	for (const auto& InitialGAClass : PlayerAbilityData->InitializedAbilities)
 	{
 		auto AbilitySpec = FGameplayAbilitySpec(InitialGAClass, 0, INDEX_NONE, nullptr);

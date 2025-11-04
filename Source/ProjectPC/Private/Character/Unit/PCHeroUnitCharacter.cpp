@@ -93,6 +93,19 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 	}
 }
 
+void APCHeroUnitCharacter::UpdateMeshScale() const
+{
+	if (!GetMesh())
+		return;
+	
+	FVector MeshScale = FVector::OneVector;
+	float IncreaseSize = FMath::Max(0.f,0.12 * (GetUnitLevel() - 1));
+	FVector IncreaseSizeVector = FVector(IncreaseSize, IncreaseSize, IncreaseSize);
+	MeshScale += IncreaseSizeVector;
+
+	GetMesh()->SetRelativeScale3D(MeshScale);
+}
+
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -120,8 +133,6 @@ void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-	
 	if (HasAuthority())
 	{
 		bIsCombatWin = false;
@@ -228,6 +239,7 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
+	UpdateMeshScale();
 	OnHeroLevelUp.Broadcast();
 }
 

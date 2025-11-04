@@ -16,6 +16,7 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
+	// 플레이어 어트리뷰트 (HP, Level) 구독
 	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
 	{
 		if (auto AttributeSet = NewPlayerState->GetAttributeSet())
@@ -26,17 +27,6 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerHPChanged);
 		}
 	}
-
-	// if (NewPlayerState->LocalUserId.IsEmpty())
-	// {
-	// 	GetWorld()->GetTimerManager().SetTimer(
-	// 		ThCheckUserId,
-	// 		this,
-	// 		&UPCPlayerOverheadWidget::CheckAndUpdateUserId,
-	// 		0.1f,
-	// 		true // 반복
-	// 	);
-	// }
 
 	SetupPlayerInfo();
 }
@@ -101,21 +91,5 @@ void UPCPlayerOverheadWidget::OnPlayerHPChanged(const FOnAttributeChangeData& Da
 	else
 	{
 		HPBar->SetPercent(1.f);
-	}
-}
-
-void UPCPlayerOverheadWidget::CheckAndUpdateUserId()
-{
-	if (!CachedPlayerState)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
-		return;
-	}
-
-	if (!CachedPlayerState->LocalUserId.IsEmpty())
-	{
-		// UserId 받았으니 갱신하고 타이머 정지
-		SetupPlayerInfo();
-		GetWorld()->GetTimerManager().ClearTimer(ThCheckUserId);
 	}
 }

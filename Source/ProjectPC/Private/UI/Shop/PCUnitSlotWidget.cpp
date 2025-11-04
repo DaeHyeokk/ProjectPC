@@ -113,19 +113,22 @@ void UPCUnitSlotWidget::SetupButton()
 	auto GS = GetWorld()->GetGameState<APCCombatGameState>();
 	if (!GS) return;
 	
-	if (auto PS = GetOwningPlayer()->GetPlayerState<APCPlayerState>())
+	if (auto PC = GetOwningPlayer())
 	{
-		if (auto AttributeSet = PS->GetAttributeSet())
+		if (auto PS = PC->GetPlayerState<APCPlayerState>())
 		{
-			if (static_cast<int32>(AttributeSet->GetPlayerGold()) < UnitCost)
+			if (auto AttributeSet = PS->GetAttributeSet())
 			{
-				Btn_UnitSlot->SetIsEnabled(false);
-				SetRenderOpacity(0.3f);
-			}
-			else
-			{
-				Btn_UnitSlot->SetIsEnabled(true);
-				SetRenderOpacity(1.f);
+				if (static_cast<int32>(AttributeSet->GetPlayerGold()) < UnitCost)
+				{
+					Btn_UnitSlot->SetIsEnabled(false);
+					SetRenderOpacity(0.3f);
+				}
+				else
+				{
+					Btn_UnitSlot->SetIsEnabled(true);
+					SetRenderOpacity(1.f);
+				}
 			}
 		}
 	}

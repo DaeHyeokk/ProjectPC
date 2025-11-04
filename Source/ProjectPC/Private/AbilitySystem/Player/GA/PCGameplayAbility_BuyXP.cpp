@@ -27,7 +27,8 @@ bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHand
 	{
 		return false;
 	}
-	
+
+	// 서버가 아니거나, CostGE 클래스가 nullptr이면 Activate 막음
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
@@ -39,14 +40,15 @@ bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHand
 bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle,
                                          const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+	if (const auto AttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
 	{
-		if (static_cast<int32>(CostAttributeSet->GetPlayerLevel()) == 10)
+		// 10레벨이면 레벨업 불가
+		if (static_cast<int32>(AttributeSet->GetPlayerLevel()) == 10)
 		{
 			return false;
 		}
 		
-		return CostAttributeSet->GetPlayerGold() >= CostValue;
+		return AttributeSet->GetPlayerGold() >= CostValue;
 	}
 	
 	return false;

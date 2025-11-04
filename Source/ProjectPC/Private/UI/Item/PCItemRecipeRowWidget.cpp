@@ -20,6 +20,7 @@ void UPCItemRecipeRowWidget::Setup(FGameplayTag BaseItemTag, FGameplayTag Advanc
 		const auto BaseItem = ItemManager->GetItemData(BaseItemTag);
 		const auto AdvancedItem = ItemManager->GetItemData(AdvancedItemTag);
 
+		// 아이템 이미지 비동기 로드
 		if (BaseItem && BaseItem->IsValid() && AdvancedItem && AdvancedItem->IsValid())
 		{
 			TArray<FSoftObjectPath> ItemTexturePath;

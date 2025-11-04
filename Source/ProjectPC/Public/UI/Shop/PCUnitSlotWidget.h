@@ -37,7 +37,7 @@ protected:
 	TObjectPtr<UPCSynergyInfoData> SynergyInfo;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* Btn_UnitSlot;
+	TObjectPtr<UButton> Btn_UnitSlot;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UImage> Img_CostBorder;

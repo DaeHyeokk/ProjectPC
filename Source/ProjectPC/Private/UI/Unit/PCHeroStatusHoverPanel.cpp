@@ -398,7 +398,7 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 		{
 			auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag(CurHero->GetUnitTag());
 	
-			if (UnitData.UnitName != "Dummy")
+			if (UnitData.UnitName != NAME_None)
 			{
 				UnitSlotWidget->Setup(UnitData, false);
 			}

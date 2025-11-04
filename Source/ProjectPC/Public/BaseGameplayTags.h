@@ -23,19 +23,19 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven) // Paragon Sparrow
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader) // Paragon Drongo
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Phase)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kitty)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kitty) // Paragon Phase
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gideon)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Mephisto)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Undertow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Mephisto) // Paragon Gideon
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Undertow) // Paragon Gideon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Wukong)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing) // Paragon Wukong
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal) // Paragon Wukong
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Terra)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shogun) // Paragon Murdock
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_MatteBlack) // Paragon Murdock
@@ -45,11 +45,32 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_GRIMexe)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_IggyScorch)
-	
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gadget)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Muriel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FengMao)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Khaimera)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Bengal)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kwang)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ZombieKwang)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Serath)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sevarog)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Aurora)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_UndeadQueen)	// Paragon Aurora
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Countess)	// Paragon Countess
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Serika)	// Paragon Countess
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kallari)	// Paragon Kallari
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Riktor)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sektor)	// Paragon Riktor
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Steel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Rampage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Narbash)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Boris)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_Melee)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_Range)
 
 	// ==== Unit Attack Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
@@ -73,6 +94,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Movement_Jump)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
@@ -90,6 +112,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Stun)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Jumping)
 
 	// ==== Unit Cooldown Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
@@ -112,6 +135,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_Win)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_End)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Jump_Start)
 
 	// ==== Unit Buff Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Darkness_TrueDamage)

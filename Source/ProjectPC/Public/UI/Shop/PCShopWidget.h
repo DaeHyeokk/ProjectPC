@@ -10,13 +10,13 @@ struct FOnAttributeChangeData;
 
 class APCCombatPlayerController;
 class APCPlayerState;
-class UImage;
-class UHorizontalBox;
-class UOverlay;
 class UButton;
+class UHorizontalBox;
+class UImage;
+class UOverlay;
+class UProgressBar;
 class UTextBlock;
 class UWidgetSwitcher;
-class UProgressBar;
 
 /**
  * 
@@ -111,11 +111,6 @@ protected:
 	TObjectPtr<UTexture2D> Losing;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void OpenMenu();
-	UFUNCTION(BlueprintCallable)
-	void CloseMenu();
-	
 	UFUNCTION()
 	void SetupShopSlots();
 	UFUNCTION()
@@ -132,7 +127,7 @@ private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerXPChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
-	void OnPlayerWinningStreakChanged();
+	void OnPlayerWinningStreakChanged(int32 NewWinningStreak);
 
 public:
 	void SetSlotHidden(int32 SlotIndex);

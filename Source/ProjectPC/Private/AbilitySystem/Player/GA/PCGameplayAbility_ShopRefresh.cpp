@@ -35,7 +35,8 @@ bool UPCGameplayAbility_ShopRefresh::CanActivateAbility(const FGameplayAbilitySp
 	{
 		return false;
 	}
-	
+
+	// 서버가 아니거나, CostGE 클래스가 nullptr이면 Activate 막음
 	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
 	{
 		return false;
@@ -88,6 +89,7 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 			{
 				if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
 				{
+					// 상점 업데이트 호출
 					GS->GetShopManager()->UpdateShopSlots(PS);
 				}
 			}

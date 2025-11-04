@@ -29,11 +29,14 @@ protected:
 	TObjectPtr<UImage> DragImage;
 
 public:
-	void BindToPlayerState(APCPlayerState* NewPlayerState);
+	void BindToPlayerState(APCPlayerState* NewPlayerState, bool IsOwner);
+	void UnBindFromPlayerState();
 
 private:
 	UPROPERTY()
-	UPCPlayerInventory* PlayerInventory;
+	UPCPlayerInventory* PlayerInventory = nullptr;
+
+	bool bIsOwningInventory = true;
 	
 	int32 DragSlotIndex = -1;
 	bool bIsDragging = false;

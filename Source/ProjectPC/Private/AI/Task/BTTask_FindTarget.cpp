@@ -81,7 +81,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 		APCBaseUnitCharacter* HereUnit = Board->GetUnitAt(HerePoint.Y, HerePoint.X);
 
 		// 현재 유닛이 유효하고, 자기 자신이 아니며, 사거리 내에 있고, 적일 경우
-		if (HereUnit && OwnerUnit != HereUnit && Range >= HereDist && PCUnitCombatUtils::IsHostile(OwnerUnit, HereUnit))
+		if (HereUnit && OwnerUnit != HereUnit && IsTargetInRange(Range, HereDist) && PCUnitCombatUtils::IsHostile(OwnerUnit, HereUnit))
 		{
 			switch (TargetSearchMode)
 			{
@@ -92,6 +92,7 @@ EBTNodeResult::Type UBTTask_FindTarget::ExecuteTask(UBehaviorTreeComponent& Owne
 				
 				// 가장 멀리 있는 적을 찾는거라면 현재 적을 Target 후보에 추가
 			case ETargetSearchMode::FarthestInRange:
+			case ETargetSearchMode::Farthest:
 				Farthest = HereUnit;
 				break;
 
@@ -146,4 +147,9 @@ void UBTTask_FindTarget::SetTargetActorKey(APCBaseUnitCharacter* Target, UBlackb
 void UBTTask_FindTarget::ClearTargetActorKey(UBlackboardComponent* BB) const
 {
 	BB->ClearValue(TargetUnitKey.SelectedKeyName);
+}
+
+bool UBTTask_FindTarget::IsTargetInRange(const int8 Range, const int8 TargetDist) const
+{
+	return TargetSearchMode != ETargetSearchMode::Farthest ? Range >= TargetDist : true;
 }
