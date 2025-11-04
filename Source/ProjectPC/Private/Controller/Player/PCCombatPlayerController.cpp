@@ -1668,7 +1668,7 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 	}
 
 	HideShopWidget();
-	PatrolWidgetChange(OnPatrolPlayerState);
+	PatrolWidgetChange(OnPatrolPlayerState, false);
 	PatrolTransformChange(OnPatrolPlayerState, false, false);
 }
 
@@ -1681,14 +1681,20 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 	
 	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
 	ShowShopWidget();
-	PatrolWidgetChange(PS);
+	PatrolWidgetChange(PS, true);
 	PatrolTransformChange(PS, true, IsPlayerTravel);
 }
 
-void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState)
+void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
-
+	
+	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
+	
+	// 정찰 대상이 현재 보고있는 보드 위에 있으면 위젯 안 바꿈
+	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
+		return;
+	
 	// 정찰 중인 플레이어 Row 위젯 강조
 	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
 	{
@@ -1698,7 +1704,7 @@ void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlaye
 	// 정찰 중인 플레이어 인벤토리 확인
 	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
 	{
-		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, true);
+		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, IsOwner);
 	}
 
 	// 정찰 중인 플레이어 시너지 확인

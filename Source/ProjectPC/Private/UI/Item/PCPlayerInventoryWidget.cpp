@@ -239,10 +239,10 @@ void UPCPlayerInventoryWidget::SetupInventory()
 			{
 				ItemSlots[i]->SetItem(PlayerInventory->GetInventory()[i]);
 			}
-			else
-			{
-				ItemSlots[i]->RemoveItem();
-			}
+			// else
+			// {
+			// 	ItemSlots[i]->RemoveItem();
+			// }
 		}
 	}
 }

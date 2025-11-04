@@ -263,7 +263,6 @@ void APCCombatGameMode::Step_Start()
 			PCPlayerController->Client_ShowPlayerMainWidget();
 		}
 	}
-	
 }
 
 void APCCombatGameMode::Step_Setup()

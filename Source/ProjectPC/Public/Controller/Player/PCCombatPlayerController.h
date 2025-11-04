@@ -266,6 +266,8 @@ public:
 	void Client_ShowShopWidget();
 	UFUNCTION(Client, Reliable)
 	void Client_HideShopWidget();
+	UFUNCTION(Client, Reliable)
+	void Client_ShowPlayerMainWidget();
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
 
@@ -419,7 +421,7 @@ public:
 	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
 	void PlayerEndPatrol(bool IsPlayerTravel);
 
-	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState);
+	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner);
 	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol, bool IsPlayerTravel);
 
 #pragma endregion Patrol
