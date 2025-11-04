@@ -191,6 +191,9 @@ public:
 	// 전투 승리 유닛 팀인덱스로 찾기
 	TArray<APCBaseUnitCharacter*> GetWinnerUnitByTeamIndex(int32 WinnerTeamIndex);
 
+	// 살아남은 모든 유닛 가져오기
+	TArray<APCBaseUnitCharacter*> GetAllAliveUnit();
+
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 

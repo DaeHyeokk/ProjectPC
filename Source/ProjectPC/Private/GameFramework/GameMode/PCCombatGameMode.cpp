@@ -9,9 +9,7 @@
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
-#include "Components/WidgetComponent.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "Engine/PawnIterator.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/HelpActor/PCCarouselRing.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
@@ -21,7 +19,7 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "Shop/PCShopManager.h"
-#include "UI/PlayerMainWidget/PCPlayerOverheadWidget.h"
+
 
 
 APCCombatGameMode::APCCombatGameMode()
@@ -237,6 +235,7 @@ void APCCombatGameMode::BeginCurrentStep()
 	case EPCStageType::Travel : Step_Travel(); break;
 	case EPCStageType::Return : Step_Return(); break;
 	case EPCStageType::PvP : Step_PvP(); break;
+	case EPCStageType::PvPResult : Step_PvPResult(); break;
 	case EPCStageType::CreepSpawn : Step_CreepSpawn(); break;
 	case EPCStageType::PvE : Step_PvE(); break;
 	case EPCStageType::Carousel : Step_Carousel(); break;
@@ -362,7 +361,7 @@ void APCCombatGameMode::Step_Return()
 		MovePlayersToBoardsAndCameraSet();
 		return;
 	}
-	if (Prev->StageType == EPCStageType::PvP)
+	if (Prev->StageType == EPCStageType::PvPResult)
 	{
 
 		if (APCCombatGameState* PCGameState = GetCombatGameState())
@@ -413,6 +412,15 @@ void APCCombatGameMode::Step_PvP()
 	{
 		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
 	}
+
+	if (!CombatManager) return;
+	CombatManager->CheckVictory();
+}
+
+void APCCombatGameMode::Step_PvPResult()
+{
+	if (!CombatManager) return;
+	CombatManager->HandleBattleFinished();
 }
 
 void APCCombatGameMode::Step_PvE()
@@ -421,6 +429,9 @@ void APCCombatGameMode::Step_PvE()
 	{
 		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
 	}
+
+	if (!CombatManager) return;
+	CombatManager->CheckVictory();
 }
 
 
@@ -803,6 +814,22 @@ void APCCombatGameMode::FinishPreStartAndSchedule()
 	S.ServerStartTime = TStart;
 	S.ServerEndTime = TStart + (StageData ? StageData->GetDefaultDuration(EPCStageType::Start) : 1.f);
 	GS->SetStageRunTime(S);
+}
+
+void APCCombatGameMode::ForceShortenCurrentStep(float NewRemainingSeconds)
+{
+	if (!GetCombatGameState()) return;
+	NewRemainingSeconds = FMath::Max(0.1f, NewRemainingSeconds);
+
+	GetWorldTimerManager().ClearTimer(RoundTimer);
+	GetWorldTimerManager().SetTimer(RoundTimer, this, &APCCombatGameMode::EndCurrentStep, NewRemainingSeconds, false);
+
+	FStageRuntimeState S = GetCombatGameState()->GetStageRunTime();
+	const double Now = NowServer();
+	const float Elapsed = FMath::Max(0.f, Now - S.ServerStartTime);
+	S.Duration = Elapsed + NewRemainingSeconds;
+	S.ServerEndTime = Now + NewRemainingSeconds;
+	GetCombatGameState()->SetStageRunTime(S);
 }
 
 void APCCombatGameMode::EnterLoadingPhase()
@@ -1240,7 +1267,7 @@ void APCCombatGameMode::StartSubWaveTimerUI(float DurationSeconds)
 {
 	if (auto* GS = GetCombatGameState())
 	{
-		FStageRuntimeState S;
+		FStageRuntimeState S = GS->GetStageRunTime();
 		S.Stage            = EPCStageType::Carousel; // 그대로
 		S.Duration         = DurationSeconds;
 		S.ServerStartTime  = NowServer();

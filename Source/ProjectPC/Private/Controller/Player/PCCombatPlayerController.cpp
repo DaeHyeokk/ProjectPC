@@ -450,15 +450,6 @@ void APCCombatPlayerController::ShopRequest_ShopLock(bool ShopLockState)
 void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost)
 {
 	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_BFSword);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_ChainVest);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_GiantsBelt);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_LargeRod);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_NegatronCloak);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_RecurveBow);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_SparringGloves);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
-	GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
@@ -926,62 +917,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	}
 }
 
-// void APCCombatPlayerController::TryInitHUDWithPlayerState_Implementation()
-// {
-// 	if (PlayerMainWidget)
-// 	{
-// 		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-// 		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
-//
-// 		if (!PCPlayerState)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerState is NULL"));
-// 			return;
-// 		}
-// 		
-// 		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
-// 		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
-// 		UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
-// 		UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
-//
-// 		if (!SynergyComp)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyComponent is NULL (PlayerState=%s)"), *PCPlayerState->GetName());
-// 			return;
-// 		}
-// 	
-// 		if (!ShopWidgetRef)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
-// 			return;
-// 		}
-// 		ShopWidgetRef->BindToPlayerState(PCPlayerState);
-// 		ShopWidgetRef->InitWithPC(this);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
-//
-// 		if (!InventoryWidget)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
-// 			return;
-// 		}
-// 		InventoryWidget->BindToPlayerState(PCPlayerState);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
-//
-// 		if (!SynergyWidget)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyWidget is NULL"));
-// 			return;
-// 		}
-// 		SynergyWidget->SynergyComponentBinding(SynergyComp);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
-// 	}
-// 	else
-// 	{
-// 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
-// 	}
-// }
-
-
 void APCCombatPlayerController::TryInitHUDWithPlayerState()
 {
 	if (!IsLocalController() || !PlayerMainWidget) 
@@ -1092,6 +1027,13 @@ void APCCombatPlayerController::Client_ShowPlayerMainWidget_Implementation()
 	ShowPlayerMainUI();
 }
 
+void APCCombatPlayerController::Client_PlaceFX_Implementation(UNiagaraSystem* System, FVector Location,
+	FRotator Rotation)
+{
+	if (!System) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),System, Location, Rotation, FVector(0.8f), true, true, ENCPoolMethod::AutoRelease);
+}
+
 void APCCombatPlayerController::ApplyGameInputMode()
 {
 	FInputModeGameAndUI Mode;
@@ -1149,7 +1091,7 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
-	bIsCancel = true;
+	CancelDragServer();
 	
 	if (!IsLocalController())
 		return;
@@ -1180,6 +1122,14 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	
 	CachedPreviewUnit->ActionDrag(false);
 	CachedPreviewUnit = nullptr;
+	
+}
+
+void APCCombatPlayerController::CancelDragServer_Implementation()
+{
+	bIsCancel = true;
+	CurrentDragUnit = nullptr;
+	CurrentDragId = 0;
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
@@ -1333,6 +1283,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
     // 출발지 정보
     const FIntPoint SrcGrid  = PB->GetFieldUnitGridPoint(Unit);
+	const int32 SrcIndex = PB->GetFieldUnitIndex(Unit);
     const bool      bSrcField= (SrcGrid != FIntPoint::NoneValue);
     const int32     SrcBench = bSrcField ? INDEX_NONE : PB->GetBenchUnitIndex(Unit);
 
@@ -1352,7 +1303,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
     	
     	if (bSrcField)
     	{
-    		PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
+    		PB->RemoveFromField(SrcIndex);
     	}
     	else if (SrcBench != INDEX_NONE)
     	{
@@ -1414,7 +1365,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
             FVector OtherDest = FVector::ZeroVector;
             if (SrcGridForOther != FIntPoint::NoneValue)
                 OtherDest = PB->GetFieldWorldPos(SrcGridForOther.X, SrcGridForOther.Y);
-            else if (SrcBenchForOther != INDEX_NONE)
+            else if (SrcBenchForOther != INDEX_NONE && !bInBattle)
                 OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
 
             // 비주얼 이동

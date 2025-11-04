@@ -57,6 +57,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Camera")
 	float ReturnCameraBlend = 0.f;
 
+	// 전투종료시 타이머 강제 변경
+	UFUNCTION()
+	void ForceShortenCurrentStep(float NewRemainingSeconds);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
@@ -100,6 +104,7 @@ private:
 	void Step_Travel();
 	void Step_Return();
 	void Step_PvP();
+	void Step_PvPResult();
 	void Step_PvE();
 	void Step_CreepSpawn();
 	void Step_Carousel();
@@ -171,6 +176,8 @@ private:
 	void PollPreStartBarrier();
 	void FinishPreStartAndSchedule();
 
+	
+
 	// 진입 / 폴링 / 종료
 	void EnterLoadingPhase();
 	void PollLoading();
@@ -205,7 +212,7 @@ protected:
 	void OpenCarouselWave(int32 WaveIdx);
 	void FinishCarouselRound();
 
-	// 서브 웨이브 타이머를 UI에 1초 단위로 보여주고 싶으면 이걸로 GameState StageRuntime 갱신
+	
 	void StartSubWaveTimerUI(float DurationSeconds);
 };
 

@@ -97,10 +97,8 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnCloneUnitBySourceUnit(const AP
 	const int32 TeamIndex = SourceUnit->GetTeamIndex();
 	const int32 UnitLevel = SourceUnit->GetUnitLevel();
 	APCPlayerState* OwnerPS = SourceUnit->GetOwnerPlayerState();
-	AActor* Owner = SourceUnit->GetOwner();
-	APawn* Instigator = SourceUnit->GetInstigator();
 	
-	APCBaseUnitCharacter* CloneUnit = SpawnUnitByTag(UnitTag, TeamIndex, UnitLevel, OwnerPS, Owner, Instigator);
+	APCBaseUnitCharacter* CloneUnit = SpawnUnitByTag(UnitTag, TeamIndex, UnitLevel, OwnerPS);
 	if (!CloneUnit)
 		return nullptr;
 	

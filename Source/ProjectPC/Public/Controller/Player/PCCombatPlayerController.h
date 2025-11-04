@@ -146,20 +146,6 @@ public:
 
 #pragma endregion Shop
 
-#pragma region Inventory
-//
-// protected:
-// 	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
-// 	TSubclassOf<UUserWidget> InventoryWidgetClass;
-//
-// 	UPROPERTY()
-// 	UPCPlayerInventoryWidget* InventoryWidget;
-//
-// public:
-// 	void LoadInventoryWidget();
-	
-#pragma endregion Inventory
-
 #pragma region Camera
 	// 게임 카메라 세팅
 
@@ -293,6 +279,10 @@ public:
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
 
+	// VFX
+	UFUNCTION(Client, Reliable)
+	void Client_PlaceFX(UNiagaraSystem* System, FVector Location, FRotator Rotation = FRotator::ZeroRotator);
+
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPCPlayerMainWidget> PlayerMainWidgetClass = nullptr;
@@ -358,6 +348,9 @@ public:
 
 	bool bIsCancel = false;
 	void CancelDrag(const FGameplayTag& GameStateTag);
+
+	UFUNCTION(Server,Reliable)
+	void CancelDragServer();
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();

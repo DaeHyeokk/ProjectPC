@@ -21,6 +21,7 @@ enum class EPCStageType : uint8
 	Setup UMETA(DisplayName = "Setup"),
 	Travel UMETA(DisplayName = "Travel"),
 	PvP UMETA(DisplayName = "PvP"),
+	PvPResult UMETA(DisplayName = "PvP Result"),
 	CreepSpawn UMETA(DisplayName = "CreepSpawn"),
 	PvE UMETA(DisplayName = "PvE"),
 	Carousel UMETA(DisplayName = "Carousel"),

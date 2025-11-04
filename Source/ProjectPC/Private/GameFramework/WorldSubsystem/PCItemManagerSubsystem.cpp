@@ -95,7 +95,7 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
 
 	if (AllBaseItemTags.Num() > 0)
 	{
-		int32 RandomIndex = FMath::RandRange(0, AllBaseItemTags.Num() - 1);
+		int32 RandomIndex = FMath::RandHelper( AllBaseItemTags.Num() - 1);
 
 		if (const auto NewItem = GetItemData(AllBaseItemTags.GetByIndex(RandomIndex)))
 		{

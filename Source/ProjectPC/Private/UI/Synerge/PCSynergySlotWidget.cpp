@@ -8,6 +8,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "DataAsset/UI/PCSynergyInfoData.h"
+#include "UI/Synerge/PCSynergyInfoWidget.h"
 
 
 void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
@@ -55,8 +56,8 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 			SetNumOrEmpty(TierThresholds2, InData.Thresholds.IsValidIndex(0) ? InData.Thresholds[0] : -1);
 			TierThresholds3->SetText(FText::GetEmpty());
 			TierThresholds4->SetText(FText::GetEmpty());
-			TierSlash1->SetText(FText::GetEmpty());
 			TierSlash2->SetText(FText::GetEmpty());
+			TierSlash3->SetText(FText::GetEmpty());
 		}
 		else
 		{
@@ -66,15 +67,24 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 			SetNumOrEmpty(TierThresholds3, InData.Thresholds.IsValidIndex(2) ? InData.Thresholds[2] : -1);
 			SetNumOrEmpty(TierThresholds4, InData.Thresholds.IsValidIndex(3) ? InData.Thresholds[3] : -1);
 
-			if (InData.Thresholds.IsValidIndex(2) && InData.Thresholds.IsValidIndex(3))
+			if (InData.Thresholds.IsValidIndex(0) && InData.Thresholds.IsValidIndex(1) && !InData.Thresholds.IsValidIndex(2))
 			{
-				TierSlash2->SetText(FText::FromString("/"));
-			}
-			else
-			{
+				TierSlash1->SetText(FText::FromString("/"));
 				TierSlash2->SetText(FText::GetEmpty());
+				TierSlash3->SetText(FText::GetEmpty());
 			}
-			
+			else if (InData.Thresholds.IsValidIndex(0) && InData.Thresholds.IsValidIndex(1) && InData.Thresholds.IsValidIndex(2) && !InData.Thresholds.IsValidIndex(3))
+			{
+				TierSlash1->SetText(FText::FromString("/"));
+				TierSlash2->SetText(FText::FromString("/"));
+				TierSlash3->SetText(FText::GetEmpty());
+			}
+			else if (InData.Thresholds.IsValidIndex(0) && InData.Thresholds.IsValidIndex(1) && InData.Thresholds.IsValidIndex(2) && InData.Thresholds.IsValidIndex(3))
+			{
+				TierSlash1->SetText(FText::FromString("/"));
+				TierSlash2->SetText(FText::FromString("/"));
+				TierSlash3->SetText(FText::FromString("/"));
+			}
 		}
 	}
 
@@ -86,6 +96,29 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 			const FSlateBrush& Brush = UIInfo.TierSet.TierBorders.IsValidIndex(TierIdx) ? UIInfo.TierSet.TierBorders[TierIdx+1] : UIInfo.TierSet.TierBorders[0];
 
 			TierIcon->SetBrush(Brush);
+		}
+	}
+
+	if (SynergyIcon && SynergyInfoWidget && SynergyUIData)
+	{
+		FPCSynergyUIRow UIInfoRow;
+		if (SynergyUIData->Resolve(InData.SynergyTag, UIInfoRow))
+		{
+			if (!CachedInfoWidget)
+			{
+				CachedInfoWidget = CreateWidget<UUserWidget>(GetWorld(), SynergyInfoWidget);
+			}
+
+			if (auto* TT = Cast<UPCSynergyInfoWidget>(CachedInfoWidget))
+			{
+				TT->SetSynergyInfo(UIInfoRow, InData);
+			}
+
+			SynergyIcon->SetToolTip(CachedInfoWidget);
+		}
+		else
+		{
+			SynergyIcon->SetToolTip(nullptr);
 		}
 	}
 }

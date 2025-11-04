@@ -43,6 +43,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	}
 	
 	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
+		
 	if (StartPoint == FIntPoint::NoneValue)
 	{
 		BB->ClearValue(ApproachLocationKey.SelectedKeyName);
@@ -63,7 +64,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(StartPoint.Y % 2 == 0))
 	{
 		FIntPoint NextPoint = StartPoint + Dir;
-
+		
 		// 이동할 좌표가 유효한 좌표이고 이동 가능한 좌표라면 이동 방향에 추가
 		if (Board->IsInRange(NextPoint.Y, NextPoint.X) && Board->IsTileFree(NextPoint.Y, NextPoint.X))
 		{
@@ -82,8 +83,10 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(HerePoint.Y % 2 == 0))
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
+			
 			if (Board->IsInRange(NextPoint.Y, NextPoint.X) && !Visited.Contains(NextPoint))
 			{
+				
 				const APCBaseUnitCharacter* NextUnit = Board->GetUnitAt(NextPoint.Y, NextPoint.X);
 				
 				// 다음에 탐색할 지점에 유닛이 있고, 적 유닛일 경우
@@ -92,7 +95,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 					const FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
 
-					UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, MovePoint : X = %d, Y = %d"),*OwnerUnit->GetName(), MovePoint.Y, MovePoint.X)
+					//UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, MovePoint : X = %d, Y = %d"),*OwnerUnit->GetName(), MovePoint.X, MovePoint.Y)
 					UE_LOG(LogTemp, Warning, TEXT("Unit Name : %s, MoveLocation : X = %f, Y = %f, Z = %f"),*OwnerUnit->GetName(),MoveLocation.X, MoveLocation.Y, MoveLocation.Z)
 					
 					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))

@@ -218,6 +218,8 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
+
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
