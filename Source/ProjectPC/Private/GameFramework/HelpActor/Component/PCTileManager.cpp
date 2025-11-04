@@ -4,8 +4,6 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "Windows/WindowsApplication.h"
-
 
 // Sets default values for this component's properties
 UPCTileManager::UPCTileManager()
@@ -106,6 +104,16 @@ APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
 	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
+}
+
+// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+void UPCTileManager::GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const
+{
+	for (const FTile& Tile : Field)
+	{
+		if (Tile.Unit)
+			FieldUnits.Add(Tile.Unit);
+	}
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const

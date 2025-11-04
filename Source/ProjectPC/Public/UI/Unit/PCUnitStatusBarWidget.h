@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
+#include "PCUnitHealthProgressBar.h"
 #include "Blueprint/UserWidget.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "PCUnitStatusBarWidget.generated.h"
@@ -35,13 +36,14 @@ public:
 		FGameplayAttribute InMaxManaAttr = FGameplayAttribute());
 
 	// ASC 없이 고정값으로 갱신
-	void InitConstantValue(float CurrentHP, float MaxHP, float CurrentMP = 0.f, float MaxMP = 0.f,
+	void InitConstantValue(FLinearColor HPBarColor, float CurrentHP, float MaxHP, float CurrentMP = 0.f, float MaxMP = 0.f,
 		const TArray<FGameplayTag>& ItemTags = TArray<FGameplayTag>());
 	
 	void ClearDelegate();
 	void InitEquipItemImages();
 	
 	FORCEINLINE void SetOwnerUnit(APCBaseUnitCharacter* InUnit) { Unit = InUnit; }
+	FORCEINLINE FLinearColor GetHPBarColor() const;
 	
 protected:
 	virtual void NativeDestruct() override;

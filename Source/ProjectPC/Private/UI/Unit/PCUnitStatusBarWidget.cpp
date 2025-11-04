@@ -9,6 +9,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/Image.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/Unit/PCUnitHealthProgressBar.h"
 
 
@@ -28,7 +29,6 @@ void UPCUnitStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilityS
 
 	if (!Unit.IsValid() || !ASC.IsValid())
 	{
-		ApplyToUI();
 		return;
 	}
 
@@ -55,18 +55,15 @@ void UPCUnitStatusBarWidget::InitWithASC(APCBaseUnitCharacter* InUnit, UAbilityS
 		MaxManaHandle = ASC->GetGameplayAttributeValueChangeDelegate(MaxManaAttr)
 			.AddUObject(this, &ThisClass::OnMaxManaChanged);
 	}
-
-	if (Unit.IsValid())
+	
+	if (UPCUnitEquipmentComponent* EquipmentComponent = Unit->GetEquipmentComponent())
 	{
-		if (UPCUnitEquipmentComponent* EquipmentComponent = Unit->GetEquipmentComponent())
-		{
-			EquipItemChangedHandle = EquipmentComponent->OnEquipItemChanged
-				.AddUObject(this, &UPCUnitStatusBarWidget::OnEquipItemChanged);
-		}
+		EquipItemChangedHandle = EquipmentComponent->OnEquipItemChanged
+			.AddUObject(this, &UPCUnitStatusBarWidget::OnEquipItemChanged);
 	}
 }
 
-void UPCUnitStatusBarWidget::InitConstantValue(float CurrentHP, float MaxHP,
+void UPCUnitStatusBarWidget::InitConstantValue(FLinearColor HPBarColor, float CurrentHP, float MaxHP,
 	float CurrentMP, float MaxMP, const TArray<FGameplayTag>& ItemTags)
 {
 	InitEquipItemImages();
@@ -82,6 +79,7 @@ void UPCUnitStatusBarWidget::InitConstantValue(float CurrentHP, float MaxHP,
 		CachedMaxMP = MaxMP;
 	}
 
+	HealthBar->SetFillColorAndOpacity(HPBarColor);
 	UpdateHealthBar();
 	UpdateManaBar();
 	UpdateEquipItemImages(ItemTags);
@@ -98,6 +96,11 @@ void UPCUnitStatusBarWidget::InitEquipItemImages()
 		EquipItemImages.Add(ItemImage_1);
 		EquipItemImages.Add(ItemImage_2);
 	}
+}
+
+FLinearColor UPCUnitStatusBarWidget::GetHPBarColor() const
+{
+	return HealthBar->GetFillColorAndOpacity();
 }
 
 void UPCUnitStatusBarWidget::NativeDestruct()
@@ -162,11 +165,22 @@ void UPCUnitStatusBarWidget::OnEquipItemChanged() const
 
 void UPCUnitStatusBarWidget::ApplyToUI() const
 {
-	UpdateHealthBar();
-	UpdateManaBar();
-
 	if (!Unit.IsValid())
 		return;
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	const APCPlayerState* LocalPS = PC ? Cast<APCPlayerState>(PC->PlayerState.Get()) : nullptr;
+	if (!LocalPS || Unit->GetTeamIndex() == LocalPS->SeatIndex)
+	{
+		HealthBar->SetFillColorAndOpacity(FLinearColor::Green);
+	}
+	else
+	{
+		HealthBar->SetFillColorAndOpacity(FLinearColor::Red);
+	}
+	
+	UpdateHealthBar();
+	UpdateManaBar();
 	
 	TArray<FGameplayTag> ItemTags = Unit->GetEquipItemTags();
 	UpdateEquipItemImages(ItemTags);

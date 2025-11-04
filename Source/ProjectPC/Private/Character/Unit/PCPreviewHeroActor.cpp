@@ -53,6 +53,7 @@ void APCPreviewHeroActor::InitializeFromSourceHero(APCHeroUnitCharacter* InSourc
 
 	if (USkeletalMeshComponent* SrcMesh = InSourceHero->GetMesh())
 	{
+		MeshComponent->SetRelativeScale3D(SrcMesh->GetRelativeScale3D());
 		MeshComponent->SetSkeletalMesh(SrcMesh->GetSkeletalMeshAsset());
 		MeshComponent->SetAnimInstanceClass(SourcePreviewAnimBP);
 	}

@@ -34,6 +34,7 @@ public:
 	bool TryEquipItem(const FGameplayTag& ItemTag);
 	void UnionEquipmentComponent(UPCUnitEquipmentComponent* InEquipmentComp);
 	void ReturnAllItemToPlayerInventory(const bool bIsDestroyedHero = false);
+	void ReturnItemToPlayerInventory(const FGameplayTag& ItemTag) const;
 	
 	FORCEINLINE const TArray<FGameplayTag>& GetSlotItemTags() const { return SlotItemTags; }
 
@@ -41,13 +42,13 @@ public:
 	
 private:
 	UPROPERTY(Transient)
-	TObjectPtr<UAbilitySystemComponent> OwnerASC = nullptr;
+	TWeakObjectPtr<UAbilitySystemComponent> OwnerASC = nullptr;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UPCPlayerInventory> OwnerPlayerInventory = nullptr;
+	TWeakObjectPtr<UPCPlayerInventory> OwnerPlayerInventory = nullptr;
 	
 	UPROPERTY(Transient)
-	TObjectPtr<UPCItemManagerSubsystem> ItemManagerSubsystem;
+	TWeakObjectPtr<UPCItemManagerSubsystem> ItemManagerSubsystem = nullptr;
 	
 	TArray<TArray<FActiveGameplayEffectHandle>> SlotActiveEffects;
 
@@ -61,7 +62,6 @@ private:
 
 	void SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex);
 	void RemoveItemSlot(const int32 SlotIndex);
-	void ReturnItemToPlayerInventory(const FGameplayTag& ItemTag) const;
 	void ApplyItemEffects(const FGameplayTag& ItemTag, const int32 SlotIndex);
 	void RemoveSlotActiveEffects(const int32 SlotIndex);
 	const FPCEffectSpecList* ResolveItemEffectSpecList(const FGameplayTag& ItemTag) const;
