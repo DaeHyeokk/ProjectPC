@@ -130,7 +130,6 @@ void APCCombatPlayerController::BeginPlay()
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
 		LoadMainWidget();
-		
 	}
 }
 
@@ -183,7 +182,6 @@ void APCCombatPlayerController::BeginPlayingState()
 		}, 0.1f, true, 0.f);
 	}
 
-	
 	StartClientBootStrap();
 }
 
@@ -1045,7 +1043,6 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	
 	CachedPreviewUnit->ActionDrag(false);
 	CachedPreviewUnit = nullptr;
-	
 }
 
 void APCCombatPlayerController::CancelDragServer_Implementation()

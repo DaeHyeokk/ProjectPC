@@ -40,6 +40,12 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UGameplayTask_WaitDelay> WaitDelayTask = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="FX")
+	TObjectPtr<UParticleSystem> ActiveParticleEffect = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category="FX")
+	FName AttachedSocketName = TEXT("Impact");
 	
 private:
 	FTimerHandle PulseTimer;

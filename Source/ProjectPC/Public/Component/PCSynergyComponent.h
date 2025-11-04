@@ -94,6 +94,7 @@ private:
 	void UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero);
 	void RecountSynergyCountMapForUnitTag(const FGameplayTag& UnitTag);
 	void ApplySynergyEffects(const FGameplayTag& SynergyTag);
+	void PlaySynergyActiveParticle(FGameplayTag SynergyTag);
 	
 	void GetHeroSynergyTags(const APCHeroUnitCharacter* Hero, FGameplayTagContainer& OutSynergyTags) const;
 	void GatherRegisteredHeroes(TArray<APCHeroUnitCharacter*>& OutHeroes);

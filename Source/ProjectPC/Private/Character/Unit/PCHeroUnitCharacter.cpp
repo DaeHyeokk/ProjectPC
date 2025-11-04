@@ -38,6 +38,7 @@ void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APCHeroUnitCharacter, HeroLevel);
+	DOREPLIFETIME(APCHeroUnitCharacter, bIsDragging);
 }
 
 UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent() const
@@ -70,11 +71,6 @@ void APCHeroUnitCharacter::LevelUp()
 
 	FGameplayCueParameters Params;
 	Params.TargetAttachComponent = GetMesh();
-
-	FHitResult HitResult;
-	HitResult.BoneName = TEXT("Root");
-	Params.EffectContext.AddHitResult(HitResult);
-	
 	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
@@ -198,15 +194,28 @@ void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
 
 void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 {
-	// 클라에서만 실행 (Listen Server 포함)
-	if (GetNetMode() == NM_DedicatedServer)
+	// 서버에서만 실행
+	if (!HasAuthority())
 		return;
-	
-	if (GetMesh())
+
+	bIsDragging = IsStart;
+}
+
+void APCHeroUnitCharacter::OnRep_IsDragging() const
+{
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
 	{
-		if (IsStart)
+		SetMeshVisibility(bIsDragging);
+	}
+}
+
+void APCHeroUnitCharacter::SetMeshVisibility(bool bHide) const
+{
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
+	{
+		if (bHide)
 		{
-			GetMesh()->SetVisibility(false, false);
+			SkMesh->SetVisibility(false, false);
 			if (UUserWidget* Widget = StatusBarComp->GetWidget())
 			{
 				Widget->SetRenderOpacity(0.f);
@@ -214,7 +223,7 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 		}
 		else
 		{
-			GetMesh()->SetVisibility(true, false);
+			SkMesh->SetVisibility(true, false);
 			if (UUserWidget* Widget = StatusBarComp->GetWidget())
 			{
 				Widget->SetRenderOpacity(1.f);
@@ -223,7 +232,7 @@ void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 	}
 }
 
-void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount)
+void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const
 {
 	// 벤치에 있는 경우 해당 이벤트 무시
 	if (!bIsOnField)
