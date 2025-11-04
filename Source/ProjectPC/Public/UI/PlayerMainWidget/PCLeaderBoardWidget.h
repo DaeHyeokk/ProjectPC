@@ -20,13 +20,15 @@ UCLASS()
 class PROJECTPC_API UPCLeaderBoardWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void NativeDestruct() override;
 	
 private:
 	UPROPERTY()
 	APCCombatGameState* CachedGameState;
 
 	UPROPERTY()
-	// TMap<FString, TObjectPtr<UPCPlayerRowWidget>> PlayerMap;
 	TMap<FString, UPCPlayerRowWidget*> PlayerMap;
 
 public:

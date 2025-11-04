@@ -11,15 +11,36 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
 
+void UPCPlayerOverheadWidget::NativeDestruct()
+{
+	if (CachedPlayerState)
+	{
+		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+		{
+			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
+				.RemoveAll(this);
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+				.RemoveAll(this);
+			}
+		}
+
+		CachedPlayerState = nullptr;
+	}
+	
+	Super::NativeDestruct();
+}
+
 void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
 	// 플레이어 어트리뷰트 (HP, Level) 구독
-	if (auto ASC = NewPlayerState->GetAbilitySystemComponent())
+	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
-		if (auto AttributeSet = NewPlayerState->GetAttributeSet())
+		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
 		{
 			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
 			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerLevelChanged);

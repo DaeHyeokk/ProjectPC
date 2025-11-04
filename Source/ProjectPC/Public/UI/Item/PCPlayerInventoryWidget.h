@@ -22,6 +22,8 @@ class PROJECTPC_API UPCPlayerInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 protected:
+	virtual void NativeDestruct() override;
+	
 	UPROPERTY()
 	TArray<TObjectPtr<UPCItemSlotWidget>> ItemSlots;
 

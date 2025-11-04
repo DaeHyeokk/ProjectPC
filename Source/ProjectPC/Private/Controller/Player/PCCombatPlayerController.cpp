@@ -795,7 +795,6 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 		// 뷰포트에 항상 붙여둔다 (단 1회)
 		PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
-		
 	}
 	else
 	{
