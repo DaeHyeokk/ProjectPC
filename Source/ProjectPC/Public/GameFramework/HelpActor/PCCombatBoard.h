@@ -7,6 +7,9 @@
 #include "GameFramework/HelpActor/PCTileType.h"
 #include "PCCombatBoard.generated.h"
 
+class UAbilitySystemComponent;
+struct FOnAttributeChangeData;
+class UPCGoldDisplayComponent;
 class APCBaseUnitCharacter;
 class APCHeroUnitCharacter;
 class UPCTileManager;
@@ -17,6 +20,8 @@ class UHierarchicalInstancedStaticMeshComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
+
+
 // 타일 마커를 모아둔 정보 (월드 변환 등)
 USTRUCT()
 struct FTileInfo
@@ -26,6 +31,17 @@ struct FTileInfo
 	UPROPERTY()
 	FTransform WorldTransform;
 };
+
+// 골드 표시용 바인딩 정보
+USTRUCT()
+struct FSeatGoldBinding
+{
+	GENERATED_BODY()
+	int32 Seat = INDEX_NONE;
+	TWeakObjectPtr<UAbilitySystemComponent> ASC;
+	FDelegateHandle Handle;
+};
+
 
 UCLASS()
 class PROJECTPC_API APCCombatBoard : public AActor
@@ -103,6 +119,26 @@ public:
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
 
+	// GoldDisplayComponent
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GoldDisplay")
+	TObjectPtr<UPCGoldDisplayComponent> GoldDisplay;
+
+	// 좌석 골드 바인딩 / 해제
+	void BindMyGoldBySeat(int32 MySeatIndex);
+	void BindEnemyGoldBySeat(int32 EnemySeatIndex);
+	void UnbindMyGold();
+	void UnbindEnemyGold();
+
+private:
+
+	FSeatGoldBinding MyBinding;
+	FSeatGoldBinding EnemyBinding;
+
+	// 풀백
+	void OnMyGoldChange(const FOnAttributeChangeData& Data);
+	void OnEnemyGoldChanged(const FOnAttributeChangeData& Data);
+
+	APCPlayerState* FindPSBySeat(int32 SeatIndex) const;
 	
 
 protected:

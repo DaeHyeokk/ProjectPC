@@ -1013,6 +1013,11 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 	HomeBoardSeatIndex = InHomeBoardIdx;
 	SetBoardSpringArmPresets();
 	bBoardPresetInitialized = true;
+
+	if (APCCombatBoard* CombatBoard = FindBoardBySeatIndex(InHomeBoardIdx))
+	{
+		CombatBoard->BindMyGoldBySeat(InHomeBoardIdx);
+	}
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,

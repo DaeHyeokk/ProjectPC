@@ -3,9 +3,14 @@
 
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 
+#include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/HelpActor/Component/PCGoldDisplayComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -30,6 +35,10 @@ APCCombatBoard::APCCombatBoard()
 
 	// Tile Manger
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
+
+	// Gold Display
+	GoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("GoldDisplay"));
+	GoldDisplay->SetupAttachment(SceneRoot);
 }
 
 void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -148,6 +157,109 @@ void APCCombatBoard::ApplyClientMirrorView()
 	SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
 	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
+
+APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
+{
+	if (SeatIndex == INDEX_NONE) return nullptr;
+	if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState() : nullptr)
+	{
+		for (APlayerState* PS : GS->PlayerArray)
+			if (auto* PCPS = Cast<APCPlayerState>(PS))
+				if (PCPS->SeatIndex == SeatIndex) return PCPS;
+	}
+	return nullptr;
+}
+
+
+void APCCombatBoard::BindMyGoldBySeat(int32 MySeatIndex)
+{
+	UnbindMyGold();
+	if (!GoldDisplay) return;
+
+	if (APCPlayerState* PS = FindPSBySeat(MySeatIndex))
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			const FGameplayAttribute Attr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+			MyBinding.Seat = MySeatIndex;
+			MyBinding.ASC = ASC;
+
+			const int32 CureGold = ASC->GetNumericAttribute(Attr);
+			GoldDisplay->UpdateFromMyGold(CureGold);
+
+			MyBinding.Handle = ASC->GetGameplayAttributeValueChangeDelegate(Attr).AddUObject(this, &APCCombatBoard::OnMyGoldChange);
+		}
+	}
+}
+
+void APCCombatBoard::BindEnemyGoldBySeat(int32 EnemySeatIndex)
+{
+	UnbindEnemyGold();
+	if (!GoldDisplay) return;
+
+	if (APCPlayerState* PS = FindPSBySeat(EnemySeatIndex))
+	{
+		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
+		{
+			const FGameplayAttribute Attr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+			EnemyBinding.Seat = EnemySeatIndex;
+			EnemyBinding.ASC  = ASC;
+
+			const int32 CurGold = (int32)ASC->GetNumericAttribute(Attr);
+			GoldDisplay->UpdateFromEnemyGold(CurGold);
+
+			EnemyBinding.Handle = ASC->GetGameplayAttributeValueChangeDelegate(Attr)
+				.AddUObject(this, &APCCombatBoard::OnEnemyGoldChanged);
+		}
+	}
+}
+
+void APCCombatBoard::UnbindMyGold()
+{
+	if (UAbilitySystemComponent* ASC = MyBinding.ASC.Get())
+	{
+		if (MyBinding.Handle.IsValid())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(
+				UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+			).Remove(MyBinding.Handle);
+		}
+	}
+	MyBinding = FSeatGoldBinding{};
+	// 필요하면 초기화
+	if (GoldDisplay) GoldDisplay->UpdateFromMyGold(0);
+}
+
+void APCCombatBoard::UnbindEnemyGold()
+{
+	if (UAbilitySystemComponent* ASC = EnemyBinding.ASC.Get())
+	{
+		if (EnemyBinding.Handle.IsValid())
+		{
+			ASC->GetGameplayAttributeValueChangeDelegate(
+				UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+			).Remove(EnemyBinding.Handle);
+		}
+	}
+	EnemyBinding = FSeatGoldBinding{};
+	// 적 골드는 종료 시 숨김
+	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(0);
+}
+
+void APCCombatBoard::OnMyGoldChange(const FOnAttributeChangeData& Data)
+{
+	if (GoldDisplay)
+		GoldDisplay->UpdateFromMyGold(Data.NewValue);
+}
+
+void APCCombatBoard::OnEnemyGoldChanged(const FOnAttributeChangeData& Data)
+{
+	if (GoldDisplay)
+		GoldDisplay->UpdateFromMyGold(Data.NewValue);
+}
+
 
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
 {
