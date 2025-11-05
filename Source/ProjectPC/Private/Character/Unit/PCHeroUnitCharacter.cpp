@@ -138,7 +138,7 @@ void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	if (HasAuthority())
+	if (HasAuthority() && bIsOnField)
 	{
 		bIsCombatWin = false;
 		
@@ -174,7 +174,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 				FGameplayTagContainer(UnitGameplayTags::Unit_State_Combat_Stun));
 		}
 		
-		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.2f);
+		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.f);
 		
 		// 블랙보드 키값 초기화
 		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
@@ -214,7 +214,7 @@ void APCHeroUnitCharacter::OnRep_IsDragging() const
 {
 	if (USkeletalMeshComponent* SkMesh = GetMesh())
 	{
-		SetMeshVisibility(bIsDragging);
+		SetMeshVisibility(!bIsDragging);
 	}
 }
 
@@ -255,7 +255,7 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 		RestoreFromCombatEnd();
 		if (bIsOnField)
 		{
-			SetMeshVisibility(false);
+			SetMeshVisibility(true);
 		}
 	}
 }

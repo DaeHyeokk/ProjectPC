@@ -34,7 +34,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = true;
 
-	GetCharacterMovement()->SetIsReplicated(false);
+	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = 250.f;
@@ -296,27 +296,27 @@ void APCBaseUnitCharacter::SetAnimSetData() const
 	}
 }
 
-void APCBaseUnitCharacter::SetMeshVisibility(bool bHide) const
+void APCBaseUnitCharacter::SetMeshVisibility(bool bVisibility) const
 {
 	if (GetNetMode() == NM_DedicatedServer)
 		return;
 	
 	if (USkeletalMeshComponent* SkMesh = GetMesh())
 	{
-		if (bHide)
-		{
-			SkMesh->SetVisibility(false, false);
-			if (UUserWidget* Widget = StatusBarComp->GetWidget())
-			{
-				Widget->SetRenderOpacity(0.f);
-			}
-		}
-		else
+		if (bVisibility)
 		{
 			SkMesh->SetVisibility(true, false);
 			if (UUserWidget* Widget = StatusBarComp->GetWidget())
 			{
 				Widget->SetRenderOpacity(1.f);
+			}
+		}
+		else
+		{
+			SkMesh->SetVisibility(false, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(0.f);
 			}
 		}
 	}
@@ -342,7 +342,9 @@ void APCBaseUnitCharacter::Die()
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 
-				ASC->CancelAllAbilities();
+				FGameplayTagContainer CancelTags;
+				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+				ASC->CancelAbilities(&CancelTags);
 				OnUnitDied.Broadcast(this);
 			}
 		}
@@ -399,7 +401,7 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 	if (bIsOnField && NewStateTag.MatchesTag(CombatResultTag))
 	{
-		SetMeshVisibility(true);
+		SetMeshVisibility(false);
 	}
 }
 

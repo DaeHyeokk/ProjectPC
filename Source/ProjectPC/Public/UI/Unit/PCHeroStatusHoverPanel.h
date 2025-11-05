@@ -8,6 +8,8 @@
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
 #include "PCHeroStatusHoverPanel.generated.h"
 
+class APCBaseUnitCharacter;
+class APCHeroUnitCharacter;
 class UImage;
 class UPCUnitSlotWidget;
 class UPCUnitEquipmentComponent;
@@ -131,6 +133,8 @@ protected:
 	TMap<FGameplayAttribute, FDelegateHandle> AttrChangedHandleMap;
 	FDelegateHandle EquipItemChangedHandle;
 	FDelegateHandle HeroLevelChangedHandle;
+	FDelegateHandle HeroDestroyedHandle;
+	FDelegateHandle UnitDiedHandle;
 	
 	void BuildRoutes();
 
@@ -143,6 +147,9 @@ protected:
 	void OnAttrChanged(const FOnAttributeChangeData& Data);
 	void OnEquipItemChanged() const;
 	void OnHeroLevelChanged() const;
+	void OnHeroDestroyed(APCHeroUnitCharacter* Hero);
+	UFUNCTION()
+	void OnUnitDied(APCBaseUnitCharacter* Unit);
 	
 	void UpdateHP() const;
 	void UpdateMP() const;

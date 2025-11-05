@@ -63,6 +63,8 @@ private:
 public:
 	void InitializeUnitSpawnConfig(const FSpawnSubsystemConfig& SpawnConfig);
 	void EnsureConfigFromGameState();
+
+	void PreloadAllHeroUnit(const FVector& SpawnLocation);
 	
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCBaseUnitCharacter* SpawnUnitByTag(

@@ -27,4 +27,6 @@ public:
 			return Found->Get();
 		return nullptr;
 	}
+
+	void GatherAllRegisteredHeroTags(FGameplayTagContainer& OutTags) const;
 };
