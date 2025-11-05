@@ -106,53 +106,35 @@ void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
 	OnRep_StageRunTime();
 }
 
-UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) const
+void APCCombatGameState::MulticastUpdateGoldDisplay_Implementation(int32 SeatIndex, int32 NewGold)
 {
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
-
-	APCCombatManager* CombatManager = nullptr;
-	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	if (APCCombatBoard* MyBoard = GetBoardBySeat(SeatIndex))
 	{
-		CombatManager = *It;
-		break;
-	}
-	if (!CombatManager) return nullptr;
-
-	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
-	if (PairIdx == INDEX_NONE)
-	{
-		return nullptr;
+		MyBoard->ApplyMyGoldVisual(NewGold);
 	}
 
-	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
-		return HostBoard->TileManager;
-	
-	return nullptr;
+	if (APCPlayerState* PS = FindPCPlayerStateBySeat(SeatIndex))
+	{
+		const int32 HostSeat = PS->GetCurrentSeatIndex();
+		if (HostSeat != INDEX_NONE && HostSeat != SeatIndex)
+		{
+			if (APCCombatBoard* MyBoard = GetBoardBySeat(HostSeat))
+			{
+				MyBoard->ApplyEnemyGoldVisual(NewGold);
+			}
+		}
+	}
 }
 
-APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
+APCPlayerState* APCCombatGameState::FindPCPlayerStateBySeat(int32 SeatIndex) const
 {
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
-
-	APCCombatManager* CombatManager = nullptr;
-	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	for (APlayerState* PS : PlayerArray)
 	{
-		CombatManager = *It;
-		break;
+		if (auto* P = Cast<APCPlayerState>(PS))
+		{
+			if (P->SeatIndex == SeatIndex) return P;
+		}
 	}
-	if (!CombatManager) return nullptr;
-
-	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
-	if (PairIdx == INDEX_NONE)
-	{
-		return nullptr;
-	}
-
-	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
-		return HostBoard;
-	
 	return nullptr;
 }
 

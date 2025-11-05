@@ -158,6 +158,84 @@ void APCCombatBoard::ApplyClientMirrorView()
 	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
 
+void APCCombatBoard::BindMyGoldToASC(UAbilitySystemComponent* InASC)
+{
+	UnbindMyGold();
+	if (!HasAuthority() || !InASC) return;
+
+	MyASC = InASC;
+	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+	const int32 CurGold = InASC->GetNumericAttribute(GoldAttr);
+	if (GoldDisplay)
+	{
+		GoldDisplay->UpdateFromMyGold(CurGold);
+	}
+
+	MyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr).AddUObject(this, &APCCombatBoard::OnMyGoldChange);
+}
+
+void APCCombatBoard::BindEnemyGOldToASC(UAbilitySystemComponent* InASC)
+{
+	UnbindEnemyGold();
+	if (!HasAuthority() || !InASC) return;
+
+	EnemyASC = InASC;
+	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+	const int32 Cur = (int32)InASC->GetNumericAttribute(GoldAttr);
+	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(Cur);
+
+	EnemyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr)
+		.AddUObject(this, &APCCombatBoard::OnEnemyGoldChanged);
+}
+
+void APCCombatBoard::UnbindMyGold()
+{
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = MyASC.Get())
+		{
+			if (MyGoldDH.IsValid())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(
+					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+				).Remove(MyGoldDH);
+			}
+		}
+	}
+	MyGoldDH.Reset();
+	MyASC.Reset();
+}
+
+void APCCombatBoard::UnbindEnemyGold()
+{
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = EnemyASC.Get())
+		{
+			if (EnemyGoldDH.IsValid())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(
+					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+				).Remove(EnemyGoldDH);
+			}
+		}
+	}
+	EnemyGoldDH.Reset();
+	EnemyASC.Reset();
+}
+
+void APCCombatBoard::ApplyMyGoldVisual(int32 NewGold)
+{
+	if (GoldDisplay) GoldDisplay->UpdateFromMyGold(NewGold);
+}
+
+void APCCombatBoard::ApplyEnemyGoldVisual(int32 NewGold)
+{
+	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(NewGold);
+}
+
 APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
 {
 	if (SeatIndex == INDEX_NONE) return nullptr;
@@ -171,82 +249,7 @@ APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
 }
 
 
-void APCCombatBoard::BindMyGoldBySeat(int32 MySeatIndex)
-{
-	UnbindMyGold();
-	if (!GoldDisplay) return;
 
-	if (APCPlayerState* PS = FindPSBySeat(MySeatIndex))
-	{
-		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-		{
-			const FGameplayAttribute Attr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
-
-			MyBinding.Seat = MySeatIndex;
-			MyBinding.ASC = ASC;
-
-			const int32 CureGold = ASC->GetNumericAttribute(Attr);
-			GoldDisplay->UpdateFromMyGold(CureGold);
-
-			MyBinding.Handle = ASC->GetGameplayAttributeValueChangeDelegate(Attr).AddUObject(this, &APCCombatBoard::OnMyGoldChange);
-		}
-	}
-}
-
-void APCCombatBoard::BindEnemyGoldBySeat(int32 EnemySeatIndex)
-{
-	UnbindEnemyGold();
-	if (!GoldDisplay) return;
-
-	if (APCPlayerState* PS = FindPSBySeat(EnemySeatIndex))
-	{
-		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
-		{
-			const FGameplayAttribute Attr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
-
-			EnemyBinding.Seat = EnemySeatIndex;
-			EnemyBinding.ASC  = ASC;
-
-			const int32 CurGold = (int32)ASC->GetNumericAttribute(Attr);
-			GoldDisplay->UpdateFromEnemyGold(CurGold);
-
-			EnemyBinding.Handle = ASC->GetGameplayAttributeValueChangeDelegate(Attr)
-				.AddUObject(this, &APCCombatBoard::OnEnemyGoldChanged);
-		}
-	}
-}
-
-void APCCombatBoard::UnbindMyGold()
-{
-	if (UAbilitySystemComponent* ASC = MyBinding.ASC.Get())
-	{
-		if (MyBinding.Handle.IsValid())
-		{
-			ASC->GetGameplayAttributeValueChangeDelegate(
-				UPCPlayerAttributeSet::GetPlayerGoldAttribute()
-			).Remove(MyBinding.Handle);
-		}
-	}
-	MyBinding = FSeatGoldBinding{};
-	// 필요하면 초기화
-	if (GoldDisplay) GoldDisplay->UpdateFromMyGold(0);
-}
-
-void APCCombatBoard::UnbindEnemyGold()
-{
-	if (UAbilitySystemComponent* ASC = EnemyBinding.ASC.Get())
-	{
-		if (EnemyBinding.Handle.IsValid())
-		{
-			ASC->GetGameplayAttributeValueChangeDelegate(
-				UPCPlayerAttributeSet::GetPlayerGoldAttribute()
-			).Remove(EnemyBinding.Handle);
-		}
-	}
-	EnemyBinding = FSeatGoldBinding{};
-	// 적 골드는 종료 시 숨김
-	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(0);
-}
 
 void APCCombatBoard::OnMyGoldChange(const FOnAttributeChangeData& Data)
 {

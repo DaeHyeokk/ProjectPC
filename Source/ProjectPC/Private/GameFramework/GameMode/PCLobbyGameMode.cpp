@@ -83,13 +83,13 @@ void APCLobbyGameMode::TryAutoStart()
 
 void APCLobbyGameMode::ForceStartByLeader()
 {
-	// for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	// {
-	// 	if (auto* LobbyController = Cast<APCLobbyPlayerController>(*It))
-	// 	{
-	// 		LobbyController->ShowFadeWidget();
-	// 	}
-	// }
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* LobbyController = Cast<APCLobbyPlayerController>(*It))
+		{
+			LobbyController->ShowFadeWidget();
+		}
+	}
 
 	DoTravel();
 }

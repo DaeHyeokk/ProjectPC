@@ -130,17 +130,9 @@ void APCCombatPlayerController::BeginPlay()
 		const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
-		// if (!IsLocalController()) return;
-		//
-		// // if (!LoadingFakeWidgetClass) return;
-		// //
-		// // if (LoadingFakeWidget)
-		// // {
-		// // 	LoadingFakeWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
-		// // 	LoadingFakeWidget->AddToViewport(50);
-		// // 	LoadingFakeWidget->SetVisibility(ESlateVisibility::Visible);
-		// // }
-		// //
+		if (!IsLocalController()) return;
+		
+		ShowLoadingUI();
 	}
 }
 
@@ -1013,11 +1005,7 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 	HomeBoardSeatIndex = InHomeBoardIdx;
 	SetBoardSpringArmPresets();
 	bBoardPresetInitialized = true;
-
-	if (APCCombatBoard* CombatBoard = FindBoardBySeatIndex(InHomeBoardIdx))
-	{
-		CombatBoard->BindMyGoldBySeat(InHomeBoardIdx);
-	}
+	
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
@@ -1428,12 +1416,6 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 	if (!GS || !PS) return nullptr;
 
 	const FGameplayTag Cur = GS->GetGameStateTag();
-
-	if (IsBattleTag(Cur))
-	{
-		if (UPCTileManager* BattleTM = GS->GetBattleTileManagerForSeat(PS->SeatIndex))
-			return BattleTM;
-	}
 
 	if (APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex))
 		return Board->TileManager;

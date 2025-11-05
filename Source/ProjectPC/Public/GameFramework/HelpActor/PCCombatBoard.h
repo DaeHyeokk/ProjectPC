@@ -32,16 +32,6 @@ struct FTileInfo
 	FTransform WorldTransform;
 };
 
-// 골드 표시용 바인딩 정보
-USTRUCT()
-struct FSeatGoldBinding
-{
-	GENERATED_BODY()
-	int32 Seat = INDEX_NONE;
-	TWeakObjectPtr<UAbilitySystemComponent> ASC;
-	FDelegateHandle Handle;
-};
-
 
 UCLASS()
 class PROJECTPC_API APCCombatBoard : public AActor
@@ -124,15 +114,22 @@ public:
 	TObjectPtr<UPCGoldDisplayComponent> GoldDisplay;
 
 	// 좌석 골드 바인딩 / 해제
-	void BindMyGoldBySeat(int32 MySeatIndex);
-	void BindEnemyGoldBySeat(int32 EnemySeatIndex);
+	void BindMyGoldToASC(UAbilitySystemComponent* InASC);
+	void BindEnemyGOldToASC(UAbilitySystemComponent* InASC);
+	
 	void UnbindMyGold();
 	void UnbindEnemyGold();
 
+	// 멀티케스트에서 호출될 표시 함수
+	void ApplyMyGoldVisual(int32 NewGold);
+	void ApplyEnemyGoldVisual(int32 NewGold);
+	
 private:
 
-	FSeatGoldBinding MyBinding;
-	FSeatGoldBinding EnemyBinding;
+	TWeakObjectPtr<UAbilitySystemComponent> MyASC;
+	TWeakObjectPtr<UAbilitySystemComponent> EnemyASC;
+	FDelegateHandle MyGoldDH;
+	FDelegateHandle EnemyGoldDH;
 
 	// 풀백
 	void OnMyGoldChange(const FOnAttributeChangeData& Data);

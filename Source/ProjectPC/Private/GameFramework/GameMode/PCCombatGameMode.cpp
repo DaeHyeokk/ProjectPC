@@ -18,6 +18,7 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "Shop/PCShopManager.h"
 
 
@@ -854,6 +855,8 @@ void APCCombatGameMode::PollLoading()
 		CollectPlayerBoards();           // Seat->PlayerBoard 캐시
 	}
 
+	
+
 	// 3) 보드 / 타일 / 플레이어보드 확인
 	bool bBoardsOK = true;
 	if (GS)
@@ -907,6 +910,12 @@ void APCCombatGameMode::PollLoading()
 		bAttributesBound = true;
 		GS->SetLoadingState(true, 0.80f, TEXT("Seeding LeaderBoard..."));
 		return;
+	}
+
+	if (UPCUnitSpawnSubsystem* SpawnSubsys = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>())
+	{
+		FVector Loc = FVector(25000.f, 10000.f,50.f);
+		SpawnSubsys->PreloadAllHeroUnit(Loc);
 	}
 
 	// 5) 클라 UI 동기화 확인
