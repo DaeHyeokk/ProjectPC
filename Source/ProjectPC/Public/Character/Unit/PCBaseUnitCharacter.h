@@ -130,6 +130,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CombatWin(APCPlayerState* TargetPS);
 
+	UFUNCTION(BlueprintCallable)
+	void CombatDraw(APCPlayerState* TargetPS);
+
+	
+
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsCombatWin() const { return bIsCombatWin; }
 	

@@ -10,9 +10,8 @@ namespace GameStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat, "Game.State.Combat")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Carousel, "Game.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation, "Game.State.Combat.Preparation")
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation_Creep, "Game.State.Combat.Preparation.Creep")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active, "Game.State.Combat.Active")
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active_Creep, "Game.State.Combat.Active.Creep")	
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Result, "Game.State.Combat.Result")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_End, "Game.State.Combat.End")	
 }
 

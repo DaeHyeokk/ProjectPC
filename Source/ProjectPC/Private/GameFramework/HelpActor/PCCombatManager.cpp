@@ -1471,7 +1471,7 @@ void APCCombatManager::ResolvePairDraw(int32 PairIndex)
 	{
 		if (Unit)
 		{
-			Unit->CombatWin(TargetGuestPS);
+			Unit->CombatDraw(TargetGuestPS);
 		}
 	}
 
@@ -1480,7 +1480,7 @@ void APCCombatManager::ResolvePairDraw(int32 PairIndex)
 	{
 		if (Unit)
 		{
-			Unit->CombatWin(TargetHostPS);
+			Unit->CombatDraw(TargetHostPS);
 		}
 	}
 	

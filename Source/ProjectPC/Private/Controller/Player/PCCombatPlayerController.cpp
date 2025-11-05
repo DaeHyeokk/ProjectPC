@@ -130,17 +130,17 @@ void APCCombatPlayerController::BeginPlay()
 		const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
-		if (!IsLocalController()) return;
-		
-		// if (!LoadingFakeWidgetClass) return;
+		// if (!IsLocalController()) return;
 		//
-		// if (LoadingFakeWidget)
-		// {
-		// 	LoadingFakeWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
-		// 	LoadingFakeWidget->AddToViewport(50);
-		// 	LoadingFakeWidget->SetVisibility(ESlateVisibility::Visible);
-		// }
-		//
+		// // if (!LoadingFakeWidgetClass) return;
+		// //
+		// // if (LoadingFakeWidget)
+		// // {
+		// // 	LoadingFakeWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
+		// // 	LoadingFakeWidget->AddToViewport(50);
+		// // 	LoadingFakeWidget->SetVisibility(ESlateVisibility::Visible);
+		// // }
+		// //
 	}
 }
 

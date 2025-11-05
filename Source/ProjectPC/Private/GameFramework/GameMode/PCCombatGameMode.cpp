@@ -428,6 +428,11 @@ void APCCombatGameMode::Step_PvP()
 
 void APCCombatGameMode::Step_PvPResult()
 {
+	if (APCCombatGameState* PCGameState = GetCombatGameState())
+	{
+		PCGameState->SetGameStateTag(GameStateTags::Game_State_Combat_Active);
+	}
+	
 	if (!CombatManager) return;
 	CombatManager->HandleBattleFinished();
 }

@@ -349,6 +349,24 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	}
 }
 
+void APCBaseUnitCharacter::CombatDraw(APCPlayerState* TargetPS)
+{
+	if (!HasAuthority() || !bIsOnField || bIsDead)
+		return;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		APawn* TargetPawn = TargetPS ? TargetPS->GetPawn() : nullptr;
+		
+		FGameplayEventData EventData;
+		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
+		EventData.Instigator = this;
+		EventData.Target = TargetPawn;
+
+		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+	}
+}
+
 void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))

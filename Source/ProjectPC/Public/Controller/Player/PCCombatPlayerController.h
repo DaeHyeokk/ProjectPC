@@ -375,11 +375,6 @@ public:
 		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active);
 	}
 
-	static bool IsBattleCreep(const FGameplayTag& Tag)
-	{
-		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
-	}
-
 
 protected:
 	// 서버 상태
