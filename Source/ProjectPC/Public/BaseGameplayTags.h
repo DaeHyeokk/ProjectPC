@@ -237,6 +237,7 @@ namespace GameplayCueTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_BuyUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ShopRefresh)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ItemCapsuleOpen)
 }
 
 namespace PlayerGameplayTags

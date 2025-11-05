@@ -237,6 +237,7 @@ namespace GameplayCueTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_BuyUnit, "GameplayCue.Player.BuyUnit")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_SellUnit, "GameplayCue.Player.SellUnit")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_ShopRefresh, "GameplayCue.Player.ShopRefresh")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_ItemCapsuleOpen, "GameplayCue.Player.ItemCapsuleOpen")
 }
 
 namespace PlayerGameplayTags
