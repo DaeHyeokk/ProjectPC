@@ -232,6 +232,12 @@ namespace GameplayCueTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_PlayEffectAtSocket, "GameplayCue.VFX.Unit.PlayEffectAtSocket")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Haste, "GameplayCue.VFX.Unit.Haste")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_UI_Unit_CombatText, "GameplayCue.UI.Unit.CombatText")
+
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_LevelUp, "GameplayCue.Player.LevelUp")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_BuyXP, "GameplayCue.Player.BuyXP")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_BuyUnit, "GameplayCue.Player.BuyUnit")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_SellUnit, "GameplayCue.Player.SellUnit")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_ShopRefresh, "GameplayCue.Player.ShopRefresh")
 }
 
 namespace PlayerGameplayTags
@@ -256,7 +262,6 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_BuyUnit, "Player.GA.Shop.BuyUnit")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_SellUnit, "Player.GA.Shop.SellUnit")
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopRefresh, "Player.GA.Shop.ShopRefresh")
-	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_ShopLock, "Player.GA.Shop.ShopLock")
 
 	// ==== Player Action Ability Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_Action_Attack_Basic, "Player.Action.Attack.Basic")

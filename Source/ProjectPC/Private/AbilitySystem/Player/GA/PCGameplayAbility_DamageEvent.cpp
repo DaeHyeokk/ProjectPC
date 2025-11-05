@@ -40,13 +40,13 @@ bool UPCGameplayAbility_DamageEvent::CanActivateAbility(const FGameplayAbilitySp
 		return false;
 	}
 
-	// 서버가 아니면 Activate 막음
-	if (!ActorInfo->IsNetAuthority())
+	// 서버 권위면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority())
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
