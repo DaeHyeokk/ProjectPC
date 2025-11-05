@@ -92,6 +92,8 @@ protected:
 	void InitAbilitySystem();
 	void SetAnimSetData() const;
 
+	void SetMeshVisibility(bool bHide) const;
+	
 	// 전투 시스템 관련 //
 public:
 	// Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
@@ -133,13 +135,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CombatDraw(APCPlayerState* TargetPS);
 
-	
-
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	bool IsCombatWin() const { return bIsCombatWin; }
 	
 protected:
-	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) { };
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag);
 	FDelegateHandle GameStateChangedHandle;
 	
 	UPROPERTY()

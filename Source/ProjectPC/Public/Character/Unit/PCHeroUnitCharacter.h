@@ -63,10 +63,16 @@ protected:
 	UFUNCTION()
 	virtual void OnRep_HeroLevel();
 
-	// 전투 관련 //
-	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
-	
 private:
+	UPROPERTY(ReplicatedUsing=OnRep_IsDragging)
+	bool bIsDragging;
+
+	UFUNCTION()
+	void OnRep_IsDragging() const;
+	
+	// 전투 관련 //
+private:
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
 	void RestoreFromCombatEnd();
 	
 public:
@@ -74,15 +80,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
-
-private:
-	UPROPERTY(ReplicatedUsing=OnRep_IsDragging)
-	bool bIsDragging;
-
-	UFUNCTION()
-	void OnRep_IsDragging() const;
-
-	void SetMeshVisibility(bool bHide) const;
 	
 	// 시너지 관련 //
 public:

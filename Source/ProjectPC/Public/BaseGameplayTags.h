@@ -90,6 +90,7 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_MontagePlay)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)

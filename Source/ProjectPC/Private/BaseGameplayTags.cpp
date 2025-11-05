@@ -89,6 +89,7 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Action Ability Tags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability, "Unit.Ability")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_MontagePlay, "Unit.Ability.MontagePlay")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack, "Unit.Ability.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Basic, "Unit.Ability.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Ultimate, "Unit.Ability.Attack.Ultimate")

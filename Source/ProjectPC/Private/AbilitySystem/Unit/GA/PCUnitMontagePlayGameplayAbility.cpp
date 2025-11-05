@@ -10,10 +10,9 @@
 
 UPCUnitMontagePlayGameplayAbility::UPCUnitMontagePlayGameplayAbility()
 {
-	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
 	
-	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
-	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
 }
 
 void UPCUnitMontagePlayGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
