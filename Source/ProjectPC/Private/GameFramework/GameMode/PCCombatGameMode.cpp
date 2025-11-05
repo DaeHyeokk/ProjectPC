@@ -334,6 +334,15 @@ void APCCombatGameMode::Step_Travel()
 				CarouselRing->Server_StartCarousel(0.f,15.f);
 				CarouselRing->SpawnPickups(Stage);
 			}
+
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				if (APCCombatPlayerController* PCCombatPlayerController = Cast<APCCombatPlayerController>(*It))
+				{
+					PCCombatPlayerController->Client_HideShopWidget();
+				}
+			}
+
 			
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();

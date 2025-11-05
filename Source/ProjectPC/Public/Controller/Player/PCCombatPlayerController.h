@@ -282,6 +282,12 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LoadingFakeWidgetClass = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingFakeWidget = nullptr;
 	
 #pragma endregion UI
 

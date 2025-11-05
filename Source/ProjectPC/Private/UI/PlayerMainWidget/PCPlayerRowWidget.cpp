@@ -26,13 +26,6 @@ bool UPCPlayerRowWidget::Initialize()
 	return true;
 }
 
-void UPCPlayerRowWidget::NativeDestruct()
-{
-	UnBindFromPlayerState();
-	
-	Super::NativeDestruct();
-}
-
 void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
