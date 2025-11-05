@@ -154,6 +154,9 @@ void UPCShopWidget::SetupPlayerInfo()
 	PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());
 	GoldBalance->SetText(FText::AsNumber(PlayerGold));
 	
+	SetBtnXPEnable(PlayerGold >= 4);
+	SetBtnRerollEnable(PlayerGold >= 2);
+	
 	// 코스트 확률 정보 Text 세팅
 	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(PlayerLevel);
 	TArray<UTextBlock*> CostTextBlocks = { Cost1, Cost2, Cost3, Cost4, Cost5 };
@@ -222,16 +225,14 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 		CostTextBlocks[i]->SetText(FText::FromString(Text));
 	}
 
+	// 플레이어 최대 레벨 도달 시, 경험치 구매 비활성화
 	if (PlayerLevel == 10)
 	{
 		FString XPText = FString::Printf(TEXT("최대"));
 		XP->SetText(FText::FromString(XPText));
+		
 		XPBar->SetPercent(0.f);
-
-		if (Btn_BuyXP)
-		{
-			Btn_BuyXP->SetIsEnabled(false);
-		}
+		SetBtnXPEnable(false);
 
 		return;
 	}
@@ -249,21 +250,18 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 {
 	if (!XP || !XPBar) return;
-	
+
+	// 플레이어 최대 레벨 도달 시, 경험치 구매 비활성화
 	if (PlayerLevel == 10)
 	{
 		FString XPText = FString::Printf(TEXT("최대"));
 		XP->SetText(FText::FromString(XPText));
+		
 		XPBar->SetPercent(0.f);
-
-		if (Btn_BuyXP)
-		{
-			Btn_BuyXP->SetIsEnabled(false);
-		}
+		SetBtnXPEnable(false);
 
 		return;
 	}
-	
 	
 	PlayerXP = static_cast<int32>(Data.NewValue);
 	
@@ -281,6 +279,9 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 	if (!GoldBalance || !ShopBox) return;
 	
 	GoldBalance->SetText(FText::AsNumber(static_cast<int32>(Data.NewValue)));
+
+	SetBtnXPEnable(Data.NewValue >= 4.f && PlayerLevel != 10);
+	SetBtnRerollEnable(Data.NewValue >= 2.f);
 	
 	// 골드가 바뀔 때마다 상점 슬롯도 업데이트 (바뀐 골드로 구매 불가능한 유닛 판별)
 	for (int32 i = 0; i < ShopBox->GetChildrenCount(); ++i)
@@ -308,6 +309,22 @@ void UPCShopWidget::OnPlayerWinningStreakChanged(int32 NewWinningStreak)
 		// 연패
 		Img_WinningStreak->SetBrushFromTexture(Losing);
 		WinningStreak->SetText(FText::AsNumber(-NewWinningStreak));
+	}
+}
+
+void UPCShopWidget::SetBtnXPEnable(bool IsEnable)
+{
+	if (Btn_BuyXP)
+	{
+		Btn_BuyXP->SetIsEnabled(IsEnable);
+	}
+}
+
+void UPCShopWidget::SetBtnRerollEnable(bool IsEnable)
+{
+	if (Btn_Reroll)
+	{
+		Btn_Reroll->SetIsEnabled(IsEnable);
 	}
 }
 

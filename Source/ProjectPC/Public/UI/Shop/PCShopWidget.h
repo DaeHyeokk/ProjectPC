@@ -134,6 +134,9 @@ private:
 	void OnPlayerGoldChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerWinningStreakChanged(int32 NewWinningStreak);
 
+	void SetBtnXPEnable(bool IsEnable);
+	void SetBtnRerollEnable(bool IsEnable);
+
 public:
 	void SetSlotHidden(int32 SlotIndex);
 	void ShowPlayerShopBox() const;
