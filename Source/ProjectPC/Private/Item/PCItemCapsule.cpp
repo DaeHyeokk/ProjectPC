@@ -3,6 +3,7 @@
 
 #include "Item/PCItemCapsule.h"
 
+#include "AbilitySystemComponent.h"
 #include "BaseGameplayTags.h"
 #include "Character/Player/PCPlayerCharacter.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
@@ -55,7 +56,6 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 				// 골드 5원 획득 후, 아이템 캡슐 소멸
 				TargetPlayer->AddValueToPlayerStat(RewardTag, 5);
 				Destroy();
-				return;
 			}
 			else
 			{
@@ -63,9 +63,15 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 				{
 					// 아이템 획득에 성공했으면, 아이템 캡슐 소멸
 					Destroy();
-					return;
 				}
 			}
+
+			if (auto ASC = TargetPlayer->GetAbilitySystemComponent())
+			{
+				ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ItemCapsuleOpen);
+			}
+			
+			return;
 		}
 	}
 
