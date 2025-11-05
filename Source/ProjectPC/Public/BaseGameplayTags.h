@@ -231,6 +231,12 @@ namespace GameplayCueTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_PlayEffectAtSocket)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Haste)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UI_Unit_CombatText)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_BuyXP)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_BuyUnit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_SellUnit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ShopRefresh)
 }
 
 namespace PlayerGameplayTags
@@ -255,7 +261,6 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopRefresh)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopLock)
 
 	// ==== Player Action Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Action_Attack_Basic)

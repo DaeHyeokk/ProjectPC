@@ -37,14 +37,14 @@ bool UPCGameplayAbility_BuyUnit::CanActivateAbility(const FGameplayAbilitySpecHa
 	{
 		return false;
 	}
-	
-	// 서버가 아니거나, CostGE 클래스가 nullptr이면 Activate 막음
-	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
+
+	// 서버 권위, CostGE 클래스가 유효하면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority() && CostGameplayEffectClass)
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 bool UPCGameplayAbility_BuyUnit::CheckCost(const FGameplayAbilitySpecHandle Handle,
@@ -69,8 +69,11 @@ void UPCGameplayAbility_BuyUnit::ApplyCost(const FGameplayAbilitySpecHandle Hand
 			// 여러개 동시 구매 시
 			CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -(UnitCost * BuyCount));
 		}
-		
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+		}
 	}
 }
 
@@ -100,30 +103,35 @@ void UPCGameplayAbility_BuyUnit::ActivateAbility(const FGameplayAbilitySpecHandl
 	UnitTag = PS->GetShopSlots()[SlotIndex].UnitTag;
 	UnitCost = static_cast<float>(PS->GetShopSlots()[SlotIndex].UnitCost);
 
-	const auto CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
-	if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost * BuyCount)
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
-
-	if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
-	{
-		if (BuyCount == 0)
+		const auto CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>();
+		if (!CostAttributeSet || CostAttributeSet->GetPlayerGold() < UnitCost * BuyCount)
 		{
-			GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag);
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
 		}
-		else
+
+		if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 		{
-			// 여러개 구매 -> 벤치가 꽉찬 상태이므로, 새로운 유닛 스폰 대신 즉시 레벨업 실행
-			GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
+			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+			return;
 		}
+
+		if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			if (BuyCount == 0)
+			{
+				GS->GetShopManager()->BuyUnit(PS, SlotIndex, UnitTag);
+			}
+			else
+			{
+				// 여러개 구매 -> 벤치가 꽉찬 상태이므로, 새로운 유닛 스폰 대신 즉시 레벨업 실행
+				GS->GetShopManager()->UnitLevelUp(PS, UnitTag, BuyCount);
+			}
+		}
+
+		ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_BuyUnit);
 	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
