@@ -92,11 +92,9 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 					FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
 
-					//UE_LOG(LogTemp, Warning, TEXT("UnitName : %s, MovePoint : X = %d, Y = %d"),*OwnerUnit->GetName(), MovePoint.X, MovePoint.Y)
-					UE_LOG(LogTemp, Warning, TEXT("Unit Name : %s, MoveLocation : X = %f, Y = %f, Z = %f"),*OwnerUnit->GetName(),MoveLocation.X, MoveLocation.Y, MoveLocation.Z)
-					
-					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))
+					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Occupy))
 					{
+						Board->SetTileState(StartPoint.Y, StartPoint.X, OwnerUnit, ETileAction::Release);
 						BB->SetValueAsVector(ApproachLocationKey.SelectedKeyName, MoveLocation);
 						UnitAIC->SetCachedPoint(MovePoint, StartPoint);
 						return EBTNodeResult::Succeeded;

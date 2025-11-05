@@ -91,7 +91,7 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 
 void APCHeroUnitCharacter::UpdateMeshScale() const
 {
-	if (!GetMesh())
+	if (HasAuthority() || !GetMesh())
 		return;
 	
 	FVector MeshScale = FVector::OneVector;
@@ -106,6 +106,15 @@ void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
+	{
+		MeshComp->HideBoneByName(TEXT("sheild_main"), PBO_None); // Steel 방패 제거 
+		MeshComp->HideBoneByName(TEXT("arm_chain_long_r_01"), PBO_None); // Riktor 왼쪽 체인 비정상적인 메쉬 제거
+		MeshComp->HideBoneByName(TEXT("wing_l_01"), PBO_None); // Serath 날개 제거
+		MeshComp->HideBoneByName(TEXT("wing_r_01"), PBO_None);
+		MeshComp->HideBoneByName(TEXT("ghostbeast_root"), PBO_None); // Khaimera Ghost Beast? 소켓 제거 
+	}
+	
 	if (HasAuthority())
 	{
 		if (auto* ASC = GetAbilitySystemComponent())
@@ -209,29 +218,6 @@ void APCHeroUnitCharacter::OnRep_IsDragging() const
 	}
 }
 
-void APCHeroUnitCharacter::SetMeshVisibility(bool bHide) const
-{
-	if (USkeletalMeshComponent* SkMesh = GetMesh())
-	{
-		if (bHide)
-		{
-			SkMesh->SetVisibility(false, false);
-			if (UUserWidget* Widget = StatusBarComp->GetWidget())
-			{
-				Widget->SetRenderOpacity(0.f);
-			}
-		}
-		else
-		{
-			SkMesh->SetVisibility(true, false);
-			if (UUserWidget* Widget = StatusBarComp->GetWidget())
-			{
-				Widget->SetRenderOpacity(1.f);
-			}
-		}
-	}
-}
-
 void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 NewCount) const
 {
 	// 벤치에 있는 경우 해당 이벤트 무시
@@ -254,6 +240,8 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 
 void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
+	Super::OnGameStateChanged(NewStateTag);
+	
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
 	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
@@ -262,15 +250,13 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	{
 		
 	}
-	else if (NewStateTag == CombatEndTag)
+	else if (NewStateTag.MatchesTag(CombatEndTag))
 	{
-		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-		{
-			FGameplayEventData EmptyData;
-			ASC->HandleGameplayEvent(CombatEndTag, &EmptyData);
-		}
-		
 		RestoreFromCombatEnd();
+		if (bIsOnField)
+		{
+			SetMeshVisibility(false);
+		}
 	}
 }
 

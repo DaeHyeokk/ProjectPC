@@ -296,6 +296,32 @@ void APCBaseUnitCharacter::SetAnimSetData() const
 	}
 }
 
+void APCBaseUnitCharacter::SetMeshVisibility(bool bHide) const
+{
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+	
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
+	{
+		if (bHide)
+		{
+			SkMesh->SetVisibility(false, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(0.f);
+			}
+		}
+		else
+		{
+			SkMesh->SetVisibility(true, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(1.f);
+			}
+		}
+	}
+}
+
 void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 {
 	if (bIsOnField != IsOnField)
@@ -333,7 +359,7 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
 
-	SetActorRotation(FRotator(0.f,-180.f,0));
+	SetActorRotation(FRotator(0.f,180.f,0));
 	bIsCombatWin = true;
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
@@ -349,6 +375,34 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	}
 }
 
+void APCBaseUnitCharacter::CombatDraw(APCPlayerState* TargetPS)
+{
+	if (!HasAuthority() || !bIsOnField || bIsDead)
+		return;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		APawn* TargetPawn = TargetPS ? TargetPS->GetPawn() : nullptr;
+		
+		FGameplayEventData EventData;
+		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
+		EventData.Instigator = this;
+		EventData.Target = TargetPawn;
+
+		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+	}
+}
+
+void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
+{
+	const FGameplayTag& CombatResultTag = GameStateTags::Game_State_Combat_Result;
+
+	if (bIsOnField && NewStateTag.MatchesTag(CombatResultTag))
+	{
+		SetMeshVisibility(true);
+	}
+}
+
 void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
@@ -358,5 +412,15 @@ void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCoun
 	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
 	{
 		bIsStunned = (NewCount > 0);
+
+		if (bIsStunned)
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer CancelTags;
+				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+				ASC->CancelAbilities(&CancelTags);
+			}
+		}
 	}
 }

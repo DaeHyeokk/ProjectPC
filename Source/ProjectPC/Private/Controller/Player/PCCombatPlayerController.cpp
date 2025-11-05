@@ -1038,18 +1038,22 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	{
 		DragComponent->HideGhost();
 	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
-	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
 }
 
 void APCCombatPlayerController::CancelDragServer_Implementation()
 {
 	bIsCancel = true;
-	CurrentDragUnit = nullptr;
-	CurrentDragId = 0;
+
+	if (CurrentDragUnit.IsValid())
+	{
+		if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(CurrentDragUnit.Get()))
+		{
+			HeroUnit->ActionDrag(false);
+		}
+
+		CurrentDragUnit = nullptr;
+		CurrentDragId = 0;
+	}
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
