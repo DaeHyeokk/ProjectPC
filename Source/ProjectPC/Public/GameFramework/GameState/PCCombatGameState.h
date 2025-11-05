@@ -222,10 +222,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
 	
-	// 추후에 삭제
-	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
-	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
+	// GoldDisplay Multicast
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastUpdateGoldDisplay(int32 SeatIndex, int32 NewGold);
 
+private:
+	APCPlayerState* FindPCPlayerStateBySeat(int32 SeatIndex) const;
+	
 #pragma endregion GameLogic
 
 #pragma region Loading

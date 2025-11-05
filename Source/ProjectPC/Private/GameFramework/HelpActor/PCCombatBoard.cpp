@@ -3,9 +3,14 @@
 
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 
+#include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/HelpActor/Component/PCGoldDisplayComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -30,6 +35,10 @@ APCCombatBoard::APCCombatBoard()
 
 	// Tile Manger
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
+
+	// Gold Display
+	GoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("GoldDisplay"));
+	GoldDisplay->SetupAttachment(SceneRoot);
 }
 
 void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -148,6 +157,112 @@ void APCCombatBoard::ApplyClientMirrorView()
 	SpringArm->SetRelativeLocation(BattleCameraChangeLocation);
 	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
+
+void APCCombatBoard::BindMyGoldToASC(UAbilitySystemComponent* InASC)
+{
+	UnbindMyGold();
+	if (!HasAuthority() || !InASC) return;
+
+	MyASC = InASC;
+	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+	const int32 CurGold = InASC->GetNumericAttribute(GoldAttr);
+	if (GoldDisplay)
+	{
+		GoldDisplay->UpdateFromMyGold(CurGold);
+	}
+
+	MyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr).AddUObject(this, &APCCombatBoard::OnMyGoldChange);
+}
+
+void APCCombatBoard::BindEnemyGOldToASC(UAbilitySystemComponent* InASC)
+{
+	UnbindEnemyGold();
+	if (!HasAuthority() || !InASC) return;
+
+	EnemyASC = InASC;
+	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+
+	const int32 Cur = (int32)InASC->GetNumericAttribute(GoldAttr);
+	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(Cur);
+
+	EnemyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr)
+		.AddUObject(this, &APCCombatBoard::OnEnemyGoldChanged);
+}
+
+void APCCombatBoard::UnbindMyGold()
+{
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = MyASC.Get())
+		{
+			if (MyGoldDH.IsValid())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(
+					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+				).Remove(MyGoldDH);
+			}
+		}
+	}
+	MyGoldDH.Reset();
+	MyASC.Reset();
+}
+
+void APCCombatBoard::UnbindEnemyGold()
+{
+	if (HasAuthority())
+	{
+		if (UAbilitySystemComponent* ASC = EnemyASC.Get())
+		{
+			if (EnemyGoldDH.IsValid())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(
+					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
+				).Remove(EnemyGoldDH);
+			}
+		}
+	}
+	EnemyGoldDH.Reset();
+	EnemyASC.Reset();
+}
+
+void APCCombatBoard::ApplyMyGoldVisual(int32 NewGold)
+{
+	if (GoldDisplay) GoldDisplay->UpdateFromMyGold(NewGold);
+}
+
+void APCCombatBoard::ApplyEnemyGoldVisual(int32 NewGold)
+{
+	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(NewGold);
+}
+
+APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
+{
+	if (SeatIndex == INDEX_NONE) return nullptr;
+	if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState() : nullptr)
+	{
+		for (APlayerState* PS : GS->PlayerArray)
+			if (auto* PCPS = Cast<APCPlayerState>(PS))
+				if (PCPS->SeatIndex == SeatIndex) return PCPS;
+	}
+	return nullptr;
+}
+
+
+
+
+void APCCombatBoard::OnMyGoldChange(const FOnAttributeChangeData& Data)
+{
+	if (GoldDisplay)
+		GoldDisplay->UpdateFromMyGold(Data.NewValue);
+}
+
+void APCCombatBoard::OnEnemyGoldChanged(const FOnAttributeChangeData& Data)
+{
+	if (GoldDisplay)
+		GoldDisplay->UpdateFromMyGold(Data.NewValue);
+}
+
 
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
 {

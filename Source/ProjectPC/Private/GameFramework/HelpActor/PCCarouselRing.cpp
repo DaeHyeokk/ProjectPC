@@ -342,13 +342,13 @@ void APCCarouselRing::OnConstruction(const FTransform& transform)
 
 	if (!bDrawDebug) return;
 
-	// 바깥/안쪽 링 디버그 원
-	const FVector COuter = GetRingCenterWorld(PlayerRingRoot);
-	const FVector CInner = GetRingCenterWorld(UnitRingRoot);
-
-	DrawDebugCircle(GetWorld(), COuter, PlayerRingRadius, 64, DebugColorOuter, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
-	DrawDebugCircle(GetWorld(), CInner, UnitRingRadius, 64, DebugColorInner, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
-	
+	// // 바깥/안쪽 링 디버그 원
+	// const FVector COuter = GetRingCenterWorld(PlayerRingRoot);
+	// const FVector CInner = GetRingCenterWorld(UnitRingRoot);
+	//
+	// DrawDebugCircle(GetWorld(), COuter, PlayerRingRadius, 64, DebugColorOuter, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
+	// DrawDebugCircle(GetWorld(), CInner, UnitRingRadius, 64, DebugColorInner, false, 0.f, 0, 2.f, FVector(1,0,0), FVector(0,1,0), false);
+	//
 }
 #endif
 
