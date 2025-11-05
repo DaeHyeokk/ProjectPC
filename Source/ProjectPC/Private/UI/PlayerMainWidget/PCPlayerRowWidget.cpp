@@ -147,7 +147,7 @@ void UPCPlayerRowWidget::UpdatePlayerHP(const FOnAttributeChangeData& Data)
 
 void UPCPlayerRowWidget::SetWinningStreak(int32 NewWinningStreak)
 {
-	WinningStreak = NewWinningStreak;	
+	WinningStreak = NewWinningStreak;
 }
 
 void UPCPlayerRowWidget::ExpandRenderSize()

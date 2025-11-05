@@ -40,7 +40,12 @@ private:
 	UFUNCTION()
 	void OnRep_PlayerHP(const FGameplayAttributeData& OldValue);
 
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+	
+private:
 	void CheckLevelUp();
 	void CheckPlayerDie();
 	
@@ -49,6 +54,4 @@ public:
 	ATTRIBUTE_ACCESSORS(UPCPlayerAttributeSet, PlayerXP)
 	ATTRIBUTE_ACCESSORS(UPCPlayerAttributeSet, PlayerGold)
 	ATTRIBUTE_ACCESSORS(UPCPlayerAttributeSet, PlayerHP)
-
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

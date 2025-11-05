@@ -248,6 +248,7 @@ namespace PlayerGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Normal, "Player.State.Normal")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Carousel, "Player.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Player_State_Dead, "Player.State.Dead")
+	UE_DEFINE_GAMEPLAY_TAG(Player_State_MaxLevel, "Player.State.MaxLevel")
 
 	// ==== Player Shop Ability Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Player_GA_Shop_BuyXP, "Player.GA.Shop.BuyXP")

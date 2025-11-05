@@ -37,8 +37,6 @@
 #include "UI/Unit/PCHeroStatusHoverPanel.h"
 
 
-class UPCLoadingOverlaySubsystem;
-
 APCCombatPlayerController::APCCombatPlayerController()
 {
 	// 마우스 관련 초기화
@@ -1662,8 +1660,9 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
 
-	// 정찰 대상이 죽었으면 정찰 불가능
-	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead)
+	// 정찰 대상이 죽었거나 Carousel에 있으면 정찰 불가능
+	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead
+		|| OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Carousel)
 		return;
 
 	// 정찰 대상이 본인이면 정찰 종료
@@ -1695,8 +1694,6 @@ void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlaye
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
 	
-	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
-	
 	// 정찰 중인 플레이어 Row 위젯 강조
 	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
 	{
@@ -1724,7 +1721,10 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	
 	// 정찰 대상이 현재 보고있는 보드 위에 있으면 캐릭터 이동 X
 	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 		return;
+	}
 
 	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
 	if (!CombatBoard) return;

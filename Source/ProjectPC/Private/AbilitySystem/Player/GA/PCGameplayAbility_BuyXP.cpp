@@ -17,6 +17,7 @@ UPCGameplayAbility_BuyXP::UPCGameplayAbility_BuyXP()
 
 	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Dead);
 	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_Carousel);
+	ActivationBlockedTags.AddTag(PlayerGameplayTags::Player_State_MaxLevel);
 }
 
 bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -42,12 +43,6 @@ bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle
 {
 	if (const auto AttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
 	{
-		// 10레벨이면 레벨업 불가
-		if (static_cast<int32>(AttributeSet->GetPlayerLevel()) == 10)
-		{
-			return false;
-		}
-		
 		return AttributeSet->GetPlayerGold() >= CostValue;
 	}
 	
