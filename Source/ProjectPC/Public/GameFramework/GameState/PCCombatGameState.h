@@ -52,6 +52,9 @@ struct FSpawnSubsystemConfig
 	UPROPERTY(EditAnywhere, Category="Spawner|CarouselHero")
 	TSoftClassPtr<class APCCarouselHeroCharacter> DefaultCarouselHeroClass;
 
+	UPROPERTY(EditAnywhere, Category="Spawner|PreloadActor")
+	TSoftClassPtr<class APCPreloadHeroActor> DefaultPreloadActorClass;
+
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
 };
