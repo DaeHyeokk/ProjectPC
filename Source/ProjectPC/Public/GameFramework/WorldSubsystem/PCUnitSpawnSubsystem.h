@@ -65,7 +65,7 @@ public:
 	void InitializeUnitSpawnConfig(const FSpawnSubsystemConfig& SpawnConfig);
 	void EnsureConfigFromGameState();
 
-	void PreloadAllHeroUnit(const FVector& SpawnLocation);
+	void PreloadAllHeroUnit(const FVector& SpawnLocation) const;
 
 private:
 	UPROPERTY()

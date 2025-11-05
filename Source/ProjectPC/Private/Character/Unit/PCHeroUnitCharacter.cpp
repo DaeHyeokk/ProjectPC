@@ -282,8 +282,15 @@ void APCHeroUnitCharacter::Combine(const APCHeroUnitCharacter* LevelUpHero)
 		{
 			TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
 		}
-	}
 
+		if (UAbilitySystemComponent* PlayerASC = OwnerPS->GetAbilitySystemComponent())
+		{
+			FGameplayCueParameters Params;
+			Params.Location = GetActorLocation() + FVector(0.f,0.f,80.f);
+			PlayerASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_Combine, Params);
+		}
+	}
+	
 	Destroy();
 }
 

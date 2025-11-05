@@ -44,7 +44,7 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 	}
 }
 
-void UPCUnitSpawnSubsystem::PreloadAllHeroUnit(const FVector& SpawnLocation)
+void UPCUnitSpawnSubsystem::PreloadAllHeroUnit(const FVector& SpawnLocation) const
 {
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client || !Registry)
 		return;
