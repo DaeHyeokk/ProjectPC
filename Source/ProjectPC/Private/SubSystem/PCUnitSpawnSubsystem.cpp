@@ -42,8 +42,31 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 	}
 }
 
+void UPCUnitSpawnSubsystem::PreloadAllHeroUnit(const FVector& SpawnLocation)
+{
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client || !Registry)
+		return;
+	
+	FGameplayTagContainer AllHeroTags;
+	Registry->GatherAllRegisteredHeroTags(AllHeroTags);
+	
+	for (const FGameplayTag& HeroTag : AllHeroTags)
+	{
+		for (int32 Level = 1; Level <=3; ++Level)
+		{
+			if (APCBaseUnitCharacter* Unit = SpawnUnitByTag(HeroTag, 255, Level))
+			{
+				Unit->SetActorLocation(SpawnLocation);
+				Unit->SetActorHiddenInGame(true);
+				Unit->SetActorEnableCollision(false);
+				Unit->SetLifeSpan(1.5f);
+			}
+		}
+	}
+}
+
 APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const int32 TeamIndex,
-	const int32 UnitLevel, APCPlayerState* InOwnerPS, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
+                                                            const int32 UnitLevel, APCPlayerState* InOwnerPS, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
 {
 	// 유닛 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)

@@ -81,7 +81,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
 	
-	// 시너지 관련 //
+	// 시너지, UI 관련 //
 public:
 	FOnHeroDestroyed OnHeroDestroyed;
 	FOnHeroSynergyTagChanged OnHeroSynergyTagChanged;
