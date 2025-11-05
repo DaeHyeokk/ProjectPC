@@ -22,7 +22,7 @@ protected:
 	
 public:
 	virtual void InitGAS();
-
+	
 protected:
 	virtual void ApplyInitBaseStat(const APCBaseUnitCharacter* Unit, const UPCDataAsset_BaseUnitData* UnitData);
 	virtual void GrantStartupAbilities(UPCDataAsset_BaseUnitData* UnitData);

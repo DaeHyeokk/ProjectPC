@@ -12,6 +12,7 @@
  * 
  */
 
+class APCPreloadHeroActor;
 class APCCarouselHeroCharacter;
 class APCPlayerState;
 class APCCombatBoard;
@@ -63,6 +64,22 @@ private:
 public:
 	void InitializeUnitSpawnConfig(const FSpawnSubsystemConfig& SpawnConfig);
 	void EnsureConfigFromGameState();
+
+	void PreloadAllHeroUnit(const FVector& SpawnLocation) const;
+
+private:
+	UPROPERTY()
+	TSubclassOf<APCPreviewHeroActor> DefaultPreloadActorClass;
+
+public:
+	APCPreloadHeroActor* SpawnPreloadActorByTag(
+	const FGameplayTag UnitTag,
+	const int32 UnitLevel,
+	ESpawnActorCollisionHandlingMethod HandlingMethod =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn) const;
+
+	void ApplyDefinitionData(const APCPreloadHeroActor* PreloadActor, int32 UnitLevel, const UPCDataAsset_UnitDefinition* Definition) const;
+
 	
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCBaseUnitCharacter* SpawnUnitByTag(
@@ -122,5 +139,4 @@ public:
 	// 전투중 스폰 델리게이트
 public:
 	FOnUnitSpawnedNative OnUnitSpawned;
-	
 };

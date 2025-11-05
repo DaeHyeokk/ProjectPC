@@ -3,6 +3,7 @@
 
 #include "Controller/Player/PCLobbyPlayerController.h"
 
+#include "MoviePlayer.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
@@ -13,6 +14,22 @@
 #include "UI/StartMenu/RegisterWidget.h"
 #include "UI/StartMenu/StartMenuWidget.h"
 
+static void ShowLoadingScreen()
+{
+	FLoadingScreenAttributes Attr;
+	Attr.bAutoCompleteWhenLoadingCompletes = false;
+	Attr.MinimumLoadingScreenDisplayTime = 0.f;
+	Attr.WidgetLoadingScreen = SNew(SOverlay)
+	+ SOverlay::Slot()
+	[
+		SNew(SBorder)
+		.Padding(0)
+		.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+		.BorderBackgroundColor(FLinearColor::Black)
+	];
+	GetMoviePlayer()->SetupLoadingScreen(Attr);
+	GetMoviePlayer()->PlayMovie();
+}
 
 void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString& DisplayName)
 {
@@ -108,6 +125,17 @@ void APCLobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		LobbyMenuWidget->RemoveFromParent();
 		LobbyMenuWidget = nullptr;
 	}
+}
+
+void APCLobbyPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType,
+	bool bIsSeamlessTravel)
+{
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
+
+	// 로컬 클라에서만 실행 (데디 서버엔 뷰포트 없음)
+	if (!IsLocalController()) return;
+
+	ShowLoadingScreen();
 }
 
 void APCLobbyPlayerController::RequestConnectToServer()
@@ -221,6 +249,7 @@ void APCLobbyPlayerController::ApplyUIOnly(UUserWidget* FocusWidget)
 	
 }
 
+
 void APCLobbyPlayerController::ShowStartWidget()
 {
 	if (!StartMenuWidgetClass) return;
@@ -233,6 +262,15 @@ void APCLobbyPlayerController::ShowStartWidget()
 		StartMenuWidget->AddToViewport();
 	StartMenuWidget->SetVisibility(ESlateVisibility::Visible);
 	ApplyUIOnly(StartMenuWidget);
+
+	if (!BlackWidgetClass) return;
+	if (!BlackWidget)
+	{
+		BlackWidget = CreateWidget<UUserWidget>(this, BlackWidgetClass);
+		BlackWidget->AddToViewport(100);
+		BlackWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+	
 }
 
 void APCLobbyPlayerController::HideStartWidget()
@@ -264,6 +302,14 @@ void APCLobbyPlayerController::HideLobbyMenuWidget()
 		LobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
+void APCLobbyPlayerController::ShowFadeWidget_Implementation()
+{
+	if (!IsLocalController()) return;
+	if (!BlackWidget) return;
+
+	BlackWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
 bool APCLobbyPlayerController::IsOnStartLobbyMap() const
 {
 	const FString Full = UGameplayStatics::GetCurrentLevelName(GetWorld(), true);
@@ -276,3 +322,4 @@ bool APCLobbyPlayerController::IsConnectedToServer() const
 	const ENetMode NetMode = GetNetMode();
 	return (NetMode == NM_Client || NetMode == NM_ListenServer);
 }
+

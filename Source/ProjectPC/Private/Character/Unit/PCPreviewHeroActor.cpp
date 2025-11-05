@@ -56,6 +56,12 @@ void APCPreviewHeroActor::InitializeFromSourceHero(APCHeroUnitCharacter* InSourc
 		MeshComponent->SetRelativeScale3D(SrcMesh->GetRelativeScale3D());
 		MeshComponent->SetSkeletalMesh(SrcMesh->GetSkeletalMeshAsset());
 		MeshComponent->SetAnimInstanceClass(SourcePreviewAnimBP);
+
+		MeshComponent->HideBoneByName(TEXT("sheild_main"), PBO_None); // Steel 방패 제거 
+		MeshComponent->HideBoneByName(TEXT("arm_chain_long_r_01"), PBO_None); // Riktor 오른쪽 체인 비정상적인 메쉬 제거
+		MeshComponent->HideBoneByName(TEXT("wing_l_01"), PBO_None); // Serath 날개 제거
+		MeshComponent->HideBoneByName(TEXT("wing_r_01"), PBO_None);
+		MeshComponent->HideBoneByName(TEXT("ghostbeast_root"), PBO_None); // Khaimera Ghost Beast 소켓 제거
 	}
 
 	if (!StatusBarComp || !InSourceHero || !SourceStatusBarClass)

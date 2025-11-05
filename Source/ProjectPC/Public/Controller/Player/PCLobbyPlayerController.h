@@ -17,17 +17,24 @@ class PROJECTPC_API APCLobbyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
+private:
 
 	virtual void BeginPlay() override;
 	virtual void BeginPlayingState() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
 
+public:
+
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UStartMenuWidget> StartMenuWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<ULobbyMenuWidget> LobbyMenuWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UUserWidget> BlackWidgetClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	FName StartLobbyMapName;
@@ -75,6 +82,10 @@ public:
 
 	void ApplyUIOnly(UUserWidget* FocusWidget);
 
+	UFUNCTION(Client, Reliable)
+	void ShowFadeWidget();
+
+
 
 private:
 	UPROPERTY()
@@ -83,13 +94,19 @@ private:
 	UPROPERTY()
 	ULobbyMenuWidget* LobbyMenuWidget = nullptr;
 
+	UPROPERTY()
+	UUserWidget* BlackWidget = nullptr;
+
 	void ShowStartWidget();
 	void HideStartWidget();
 	void ShowLobbyMenuWidget();
 	void HideLobbyMenuWidget();
 
+	
 	bool IsOnStartLobbyMap() const;
 	bool IsConnectedToServer() const;
 
 	bool bPendingLobbyUI = false;
+
+	
 };

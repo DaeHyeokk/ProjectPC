@@ -563,6 +563,7 @@ void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
 
 	if (!Host)
 		return;
+	
 
 	const int32 HostSeat = Host->BoardSeatIndex;
 	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
@@ -611,6 +612,9 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 	APCCombatBoard* Host = Pair.Host.Get();
 	APCCombatBoard* Guest = Pair.Guest.Get();
 	if (!Host) return;
+
+	// 골드
+	Host->UnbindEnemyGold();
 
 	const int32 HostSeat  = Host->BoardSeatIndex;
 	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
@@ -1471,7 +1475,7 @@ void APCCombatManager::ResolvePairDraw(int32 PairIndex)
 	{
 		if (Unit)
 		{
-			Unit->CombatWin(TargetGuestPS);
+			Unit->CombatDraw(TargetGuestPS);
 		}
 	}
 
@@ -1480,7 +1484,7 @@ void APCCombatManager::ResolvePairDraw(int32 PairIndex)
 	{
 		if (Unit)
 		{
-			Unit->CombatWin(TargetHostPS);
+			Unit->CombatDraw(TargetHostPS);
 		}
 	}
 	

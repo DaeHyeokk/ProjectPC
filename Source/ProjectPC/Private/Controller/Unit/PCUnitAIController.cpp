@@ -70,23 +70,24 @@ void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 {
 	Super::OnMoveCompleted(RequestID, Result);
 	
-	if (Result.Code == EPathFollowingResult::Success)
+	// if (Result.Code == EPathFollowingResult::Success)
+	// {
+	// 	if (OwnerUnit.IsValid())
+	// 	{
+	// 		if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
+	// 		{
+	// 			OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Release);
+	// 			OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
+	// 		}
+	// 	}
+	// }
+	if (Result.Code != EPathFollowingResult::Success)
 	{
 		if (OwnerUnit.IsValid())
 		{
 			if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
 			{
-				OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Release);
-				OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
-			}
-		}
-	}
-	else
-	{
-		if (OwnerUnit.IsValid())
-		{
-			if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
-			{
+				OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Occupy);
 				OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Release);
 			}
 		}
@@ -180,6 +181,10 @@ void APCUnitAIController::HandleUnitStateTagChanged(FGameplayTag ChangedTag, int
 		{
 			BB->SetValueAsBool(TEXT("IsJumping"), bActive);
 		}
+		else if (ChangedTag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Attacking))
+		{
+			BB->SetValueAsBool(TEXT("IsAttacking"), bActive);
+		}
 	}
 }
 
@@ -210,6 +215,9 @@ void APCUnitAIController::BindUnitASCDelegates()
 		.AddUObject(this, &ThisClass::HandleUnitStateTagChanged);
 
 		OnJumpingTagHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Jumping)
+		.AddUObject(this, &ThisClass::HandleUnitStateTagChanged);
+
+		OnAttackingTagHandle = ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Attacking)
 		.AddUObject(this, &ThisClass::HandleUnitStateTagChanged);
 		
 		HandleUnitStateTagChanged(UnitGameplayTags::Unit_State_Combat_Dead,
@@ -249,6 +257,11 @@ void APCUnitAIController::UnBindUnitASCDelegates()
 		{
 			ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Jumping).Remove(OnJumpingTagHandle);
 			OnJumpingTagHandle.Reset();
+		}
+		if (OnAttackingTagHandle.IsValid())
+		{
+			ASC->RegisterGameplayTagEvent(UnitGameplayTags::Unit_State_Combat_Attacking).Remove(OnAttackingTagHandle);
+			OnAttackingTagHandle.Reset();
 		}
 		if (OnAssassinTagHandle.IsValid())
 		{

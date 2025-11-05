@@ -14,7 +14,7 @@ void UPCSynergyInfoWidget::SetSynergyInfo(const FPCSynergyUIRow& UI, const FSyne
 	if (SynergyIcon)
 	{
 		SynergyIcon->SetBrush(UI.Icon);
-		SynergyIcon->SetColorAndOpacity(FLinearColor::White);
+		SynergyIcon->SetBrushTintColor(FSlateColor(FLinearColor::White));
 	}
 
 	if (SynergyName)

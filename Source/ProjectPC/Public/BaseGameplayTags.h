@@ -11,9 +11,8 @@ namespace GameStateTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_NonCombat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Result)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_End)
 }
 
@@ -91,6 +90,7 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_MontagePlay)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
@@ -227,6 +227,7 @@ namespace GameplayEffectTags
 namespace GameplayCueTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Combine)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_EquipItem)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_PlayEffectAtSocket)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Haste)

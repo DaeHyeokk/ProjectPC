@@ -9,6 +9,7 @@
 #include "Character/Unit/PCAppearanceChangedHeroCharacter.h"
 #include "Character/Unit/PCAppearanceFixedHeroCharacter.h"
 #include "Character/Unit/PCCarouselHeroCharacter.h"
+#include "Character/Unit/PCPreloadHeroActor.h"
 #include "Character/Unit/PCPreviewHeroActor.h"
 #include "Component/PCUnitEquipmentComponent.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
@@ -28,6 +29,7 @@ void UPCUnitSpawnSubsystem::InitializeUnitSpawnConfig(const FSpawnSubsystemConfi
 	DefaultAIControllerClass = SpawnConfig.DefaultAIControllerClass.LoadSynchronous();
 	DefaultPreviewHeroClass = SpawnConfig.DefaultPreviewHeroClass.LoadSynchronous();
 	DefaultCarouselHeroClass = SpawnConfig.DefaultCarouselHeroClass.LoadSynchronous();
+	DefaultPreloadActorClass = SpawnConfig.DefaultPreloadActorClass.LoadSynchronous();
 	DefaultOutlineMaterial = SpawnConfig.DefaultOutlineMaterial.LoadSynchronous();
 }
 
@@ -42,8 +44,67 @@ void UPCUnitSpawnSubsystem::EnsureConfigFromGameState()
 	}
 }
 
+void UPCUnitSpawnSubsystem::PreloadAllHeroUnit(const FVector& SpawnLocation) const
+{
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client || !Registry)
+		return;
+	
+	FGameplayTagContainer AllHeroTags;
+	Registry->GatherAllRegisteredHeroTags(AllHeroTags);
+	
+	for (const FGameplayTag& HeroTag : AllHeroTags)
+	{
+		for (int32 Level = 1; Level <=3; ++Level)
+		{
+			if (APCPreloadHeroActor* PreloadActor = SpawnPreloadActorByTag(HeroTag, Level))
+			{
+				PreloadActor->SetActorLocation(SpawnLocation);
+				PreloadActor->SetActorHiddenInGame(true);
+				PreloadActor->SetActorEnableCollision(false);
+				PreloadActor->SetLifeSpan(3.f);
+			}
+		}
+	}
+}
+
+APCPreloadHeroActor* UPCUnitSpawnSubsystem::SpawnPreloadActorByTag(const FGameplayTag UnitTag, const int32 UnitLevel,
+	ESpawnActorCollisionHandlingMethod HandlingMethod) const
+{
+	// 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
+	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)
+		return nullptr;
+
+	const UPCDataAsset_UnitDefinition* Definition = ResolveDefinition(UnitTag);
+	if (!Definition)
+		return nullptr;
+
+	FTransform SpawnTransform = FTransform::Identity;
+	SpawnTransform.SetLocation(FVector({0.f,0.f,9999.f}));
+	
+	APCPreloadHeroActor* PreloadActor = GetWorld()->SpawnActorDeferred<APCPreloadHeroActor>(
+		DefaultPreloadActorClass,
+		SpawnTransform,
+		nullptr,
+		nullptr,
+		HandlingMethod);
+	
+	if (!PreloadActor)
+		return nullptr;
+
+	PreloadActor->SetUnitLevel(UnitLevel);
+	PreloadActor->SetUnitTag(UnitTag);
+	ApplyDefinitionData(PreloadActor, UnitLevel, Definition);
+	
+	UGameplayStatics::FinishSpawningActor(PreloadActor, SpawnTransform);
+	
+	PreloadActor->SetNetDormancy(DORM_Awake);
+	PreloadActor->ForceNetUpdate();
+	
+	return PreloadActor;
+}
+
 APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag UnitTag, const int32 TeamIndex,
-	const int32 UnitLevel, APCPlayerState* InOwnerPS, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
+                                                            const int32 UnitLevel, APCPlayerState* InOwnerPS, AActor* InOwner, APawn* InInstigator, ESpawnActorCollisionHandlingMethod HandlingMethod)
 {
 	// 유닛 스폰은 서버에서만, Listen Server 환경 고려 NM_Client로 판별
 	if (!GetWorld() || GetWorld()->GetNetMode() == NM_Client)
@@ -234,8 +295,41 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionData(APCCarouselHeroCharacter* Carous
 	}
 }
 
-void UPCUnitSpawnSubsystem::ApplyDefinitionDataForCarouselServerOnly(APCCarouselHeroCharacter* Carousel,
+void UPCUnitSpawnSubsystem::ApplyDefinitionData(const APCPreloadHeroActor* PreloadActor, int32 UnitLevel,
 	const UPCDataAsset_UnitDefinition* Definition) const
+{
+	if (!PreloadActor || !Definition)
+		return;
+
+	if (USkeletalMeshComponent* SKComp = PreloadActor->GetMesh())
+	{
+		switch (UnitLevel)
+		{
+		case 1:
+			if (Definition->Mesh)
+				SKComp->SetSkeletalMesh(Definition->Mesh, true);
+			break;
+
+		case 2:
+			if (Definition->Mesh_Level2)
+				SKComp->SetSkeletalMesh(Definition->Mesh_Level2, true);
+			break;
+
+		case 3:
+			if (Definition->Mesh_Level3)
+				SKComp->SetSkeletalMesh(Definition->Mesh_Level3, true);
+			break;
+			
+		default:
+			break;
+		}
+		
+		SKComp->SetVisibility(true, true);
+	}
+}
+
+void UPCUnitSpawnSubsystem::ApplyDefinitionDataForCarouselServerOnly(APCCarouselHeroCharacter* Carousel,
+                                                                     const UPCDataAsset_UnitDefinition* Definition) const
 {
 	if (!Carousel || !Definition || GetWorld()->GetNetMode() == NM_Client)
 		return;

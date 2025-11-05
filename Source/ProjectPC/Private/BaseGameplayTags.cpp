@@ -10,9 +10,8 @@ namespace GameStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat, "Game.State.Combat")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Carousel, "Game.State.Carousel")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation, "Game.State.Combat.Preparation")
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Preparation_Creep, "Game.State.Combat.Preparation.Creep")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active, "Game.State.Combat.Active")
-	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Active_Creep, "Game.State.Combat.Active.Creep")	
+	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_Result, "Game.State.Combat.Result")
 	UE_DEFINE_GAMEPLAY_TAG(Game_State_Combat_End, "Game.State.Combat.End")	
 }
 
@@ -90,6 +89,7 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Action Ability Tags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability, "Unit.Ability")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_MontagePlay, "Unit.Ability.MontagePlay")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack, "Unit.Ability.Attack")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Basic, "Unit.Ability.Attack.Basic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability_Attack_Ultimate, "Unit.Ability.Attack.Ultimate")
@@ -227,6 +227,7 @@ namespace GameplayEffectTags
 namespace GameplayCueTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_LevelUp, "GameplayCue.VFX.Unit.LevelUp")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Combine, "GameplayCue.VFX.Unit.Combine")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_EquipItem, "GameplayCue.VFX.Unit.EquipItem")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_PlayEffectAtSocket, "GameplayCue.VFX.Unit.PlayEffectAtSocket")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Haste, "GameplayCue.VFX.Unit.Haste")

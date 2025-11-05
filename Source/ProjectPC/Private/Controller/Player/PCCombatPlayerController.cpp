@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
+#include "MoviePlayer.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
@@ -129,7 +130,9 @@ void APCCombatPlayerController::BeginPlay()
 		const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
 		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
 
-		LoadMainWidget();
+		if (!IsLocalController()) return;
+		
+		ShowLoadingUI();
 	}
 }
 
@@ -188,7 +191,8 @@ void APCCombatPlayerController::BeginPlayingState()
 void APCCombatPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	
+
+	LoadMainWidget();	
 	TryInitHUDWithPlayerState();
 
 	bPSReady = (GetPlayerState<APCPlayerState>() != nullptr);
@@ -797,6 +801,17 @@ void APCCombatPlayerController::ShowPlayerMainUI()
 void APCCombatPlayerController::ShowLoadingUI()
 {
 	if (!IsLocalController()) return;
+
+	// if (LoadingFakeWidget && LoadingFakeWidget->IsInViewport())
+	// {
+	// 	LoadingFakeWidget->SetVisibility(ESlateVisibility::Hidden);
+	// 	LoadingFakeWidget->RemoveFromParent();
+	// }
+
+	if (GetMoviePlayer()->IsMovieCurrentlyPlaying())
+	{
+		GetMoviePlayer()->StopMovie();
+	}
 	
 	if (!LoadingWidget && LoadingWidgetClass)
 	{
@@ -871,8 +886,7 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("[PlayerID] PlayerID is %s"), *PCPlayerState->LocalUserId)
-		
-	UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+	
 	UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
 	UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
 	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
@@ -883,13 +897,13 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		return;
 	}
 	
-	if (!ShopWidgetRef)
+	if (!ShopWidget)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
 		return;
 	}
-	ShopWidgetRef->BindToPlayerState(PCPlayerState);
-	ShopWidgetRef->InitWithPC(this);
+	ShopWidget->BindToPlayerState(PCPlayerState);
+	ShopWidget->InitWithPC(this);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
 
 	if (!InventoryWidget)
@@ -991,6 +1005,7 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 	HomeBoardSeatIndex = InHomeBoardIdx;
 	SetBoardSpringArmPresets();
 	bBoardPresetInitialized = true;
+	
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
@@ -1038,18 +1053,22 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	{
 		DragComponent->HideGhost();
 	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
 	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
 }
 
 void APCCombatPlayerController::CancelDragServer_Implementation()
 {
 	bIsCancel = true;
-	CurrentDragUnit = nullptr;
-	CurrentDragId = 0;
+	
+	if (CurrentDragUnit.IsValid())
+	{
+		if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(CurrentDragUnit.Get()))
+		{
+			HeroUnit->ActionDrag(false);
+		}
+		CurrentDragUnit = nullptr;
+		CurrentDragId = 0;
+	}
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
@@ -1363,16 +1382,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	{
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
-
-	// if (PreviewUnit)
-	// {
-	// 	PreviewUnit->ActionDrag(false);
-	// }
-	//
-	// if (!CachedPreviewUnit.IsValid()) return;
-	//
-	// CachedPreviewUnit->ActionDrag(false);
-	// CachedPreviewUnit = nullptr;
+	
 }
 
 bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit) const
@@ -1406,12 +1416,6 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 	if (!GS || !PS) return nullptr;
 
 	const FGameplayTag Cur = GS->GetGameStateTag();
-
-	if (IsBattleTag(Cur))
-	{
-		if (UPCTileManager* BattleTM = GS->GetBattleTileManagerForSeat(PS->SeatIndex))
-			return BattleTM;
-	}
 
 	if (APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex))
 		return Board->TileManager;

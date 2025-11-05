@@ -3,8 +3,7 @@
 
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
 
-#include "NetworkMessage.h"
-#include "Engine/LevelScriptBlueprint.h"
+#include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 
@@ -12,9 +11,9 @@
 void APCLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-
-	if (!GetWorldTimerManager().IsTimerActive(CheckTimer))
-		GetWorldTimerManager().SetTimer(CheckTimer, this, &APCLobbyGameMode::TryAutoStart, 1.0f, true);
+	//
+	// if (!GetWorldTimerManager().IsTimerActive(CheckTimer))
+	// 	GetWorldTimerManager().SetTimer(CheckTimer, this, &APCLobbyGameMode::TryAutoStart, 1.0f, true);
 
 	if (auto* LobbyGameState = GetGameState<APCLobbyGameState>())
 		LobbyGameState->RecountReady();
@@ -68,11 +67,30 @@ void APCLobbyGameMode::HandlePlayerEnteredLobby(AController* Controller)
 void APCLobbyGameMode::TryAutoStart()
 {
 	if (AreAllReady())
+	{
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (auto* LobbyController = Cast<APCLobbyPlayerController>(*It))
+			{
+				LobbyController->ShowFadeWidget();
+			}
+		}
+
 		DoTravel();
+	}
+		
 }
 
 void APCLobbyGameMode::ForceStartByLeader()
 {
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (auto* LobbyController = Cast<APCLobbyPlayerController>(*It))
+		{
+			LobbyController->ShowFadeWidget();
+		}
+	}
+
 	DoTravel();
 }
 

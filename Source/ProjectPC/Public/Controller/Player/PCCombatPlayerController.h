@@ -282,6 +282,12 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LoadingFakeWidgetClass = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingFakeWidget = nullptr;
 	
 #pragma endregion UI
 
@@ -367,11 +373,6 @@ public:
 	static bool IsBattleTag(const FGameplayTag& Tag)
 	{
 		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active);
-	}
-
-	static bool IsBattleCreep(const FGameplayTag& Tag)
-	{
-		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
 	}
 
 

@@ -61,5 +61,6 @@ private:
 	FDelegateHandle OnStunTagHandle;
 	FDelegateHandle OnDeadTagHandle;
 	FDelegateHandle OnJumpingTagHandle;
+	FDelegateHandle OnAttackingTagHandle;
 	FDelegateHandle OnAssassinTagHandle;
 };
