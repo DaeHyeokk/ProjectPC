@@ -1704,7 +1704,10 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	
 	// 정찰 대상이 현재 보고있는 보드 위에 있으면 캐릭터 이동 X
 	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 		return;
+	}
 
 	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
 	if (!CombatBoard) return;
