@@ -292,6 +292,7 @@ void APCCombatGameMode::Step_Setup()
 				else
 				{
 					PCPlayerState->ApplyRoundReward();
+					PCPlayerState->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerGold, 7);
 				}
 			}			
 		}
@@ -530,8 +531,7 @@ void APCCombatGameMode::PlayerStartUnitSpawn()
 			{
 				if (APCPlayerState* PCPlayerState = PCCombatPlayerController->GetPlayerState<APCPlayerState>())
 				{
-					// PCPlayerState->UnitSpawn(SpawnTag[SpawnIndex]);
-					PCPlayerState->UnitSpawn(UnitGameplayTags::Unit_Type_Hero_Gadget);
+					PCPlayerState->UnitSpawn(SpawnTag[SpawnIndex]);
 					++SpawnIndex;
 				}
 			}

@@ -922,9 +922,9 @@ FGameplayTag APCCombatManager::GetCreepTagForStageRound(int32 StageOne, int32 Ro
 	case 1:
 		switch (RoundOne)
 		{
-	case 2: return Unit_Type_Creep_Range;  
-	case 3: return Unit_Type_Creep_Range;   
-	case 4: return Unit_Type_Creep_Range;    
+	case 2: return Unit_Type_Creep_Melee;  
+	case 3: return Unit_Type_Creep_Melee;   
+	case 4: return Unit_Type_Creep_Melee;    
 	default: break;
 		}
 		break;
