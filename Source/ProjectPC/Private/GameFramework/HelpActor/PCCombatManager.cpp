@@ -1549,8 +1549,8 @@ int32 APCCombatManager::GetStageBaseDamageDefault(int32 StageIdx) const
 {
 	switch (StageIdx)
 	{
-	case 1:  return 0;
-	case 2:  return 2;
+	case 1:  return 150;
+	case 2:  return 150;
 	case 3:  return 5;
 	case 4:  return 8;
 	case 5:  return 10;

@@ -70,13 +70,8 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 			{
 				ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ItemCapsuleOpen);
 			}
-			
-			return;
 		}
 	}
-
-	// 인벤토리가 꽉 찼으면 다시 콜리전 킴
-	SetActorEnableCollision(true);
 }
 
 void APCItemCapsule::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -93,7 +88,6 @@ void APCItemCapsule::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			if (TeamIndex == PS->SeatIndex)
 			{
-				SetActorEnableCollision(false);
 				AddRewardToPlayer(PS);
 			}
 		}
