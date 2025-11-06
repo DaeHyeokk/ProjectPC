@@ -427,4 +427,18 @@ public:
 	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol, bool IsPlayerTravel);
 
 #pragma endregion Patrol
+
+#pragma region Sound
+
+private:
+
+	UPROPERTY()
+	UAudioComponent* BGMComponent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundWave* GameBGM;
+	
+	void PlayBGM();
+	
+#pragma endregion
 };

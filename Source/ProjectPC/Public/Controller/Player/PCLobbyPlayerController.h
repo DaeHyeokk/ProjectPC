@@ -85,7 +85,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ShowFadeWidget();
 
-
+	void PlayStartBGM();
+	void PlayLobbyBGM();
+	
 
 private:
 	UPROPERTY()
@@ -107,6 +109,17 @@ private:
 	bool IsConnectedToServer() const;
 
 	bool bPendingLobbyUI = false;
+
+	// sound
+
+	UPROPERTY()
+	UAudioComponent* AudioComponent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundWave* StartBGM;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundWave* LobbyBGM;
 
 	
 };

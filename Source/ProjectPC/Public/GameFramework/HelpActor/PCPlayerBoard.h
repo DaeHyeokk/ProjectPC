@@ -359,6 +359,14 @@ protected:
 	// 가장 낮은 인덱스의 유닛이 들어있는 벤치 슬롯 찾기
 	int32 GetFirstOccupiedBenchIndex() const;
 	
+	// //보드 사운드 관련
+	//
+	// UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	// TObjectPtr<USoundWave> PlaceSound;
+	//
+	// UFUNCTION(Client, Unreliable)
+	// void PlayPlaceSound(FVector Loc);
+
 	
 };
 	
