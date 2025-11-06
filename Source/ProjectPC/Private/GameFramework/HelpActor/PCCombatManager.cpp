@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EngineUtils.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameStateBase.h"
@@ -601,6 +602,36 @@ void APCCombatManager::TravelPlayersForPair(int32 PairIndex, float Blend)
 	{
 		GuestState->SetCurrentSeatIndex(HostSeat);
 	}
+
+	if (IsAuthority())
+	{
+		if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+		{
+			int32 GuestGold = 0;
+			if (APCPlayerState* GuestPS = FindPlayerStateBySeat(GuestSeat))
+			{
+				if (UAbilitySystemComponent* GuestASC = GuestPS->GetAbilitySystemComponent())
+				{
+					const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+					GuestGold = GuestASC->GetNumericAttribute(GoldAttr);
+
+					GoldDisplayHandle = GuestASC->GetGameplayAttributeValueChangeDelegate(GoldAttr)
+					.AddLambda([this, HostSeat](const FOnAttributeChangeData& Data)
+					{
+						if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+						{
+							GS->MulticastSetEnemyGoldOnHost(HostSeat, Data.NewValue);
+						}
+					});
+				}
+			}
+
+			// 호스트 보드의 Enemy 슬롯 업데이트
+			GS->MulticastSetEnemyGoldOnHost(HostSeat, GuestGold);
+
+			UE_LOG(LogTemp, Warning, TEXT("HostSeat : %d, GuestSeat : %d, GuestGold : %d"), HostSeat, GuestSeat, GuestGold)
+		}
+	}
 }
 
 void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
@@ -612,10 +643,7 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 	APCCombatBoard* Host = Pair.Host.Get();
 	APCCombatBoard* Guest = Pair.Guest.Get();
 	if (!Host) return;
-
-	// 골드
-	Host->UnbindEnemyGold();
-
+	
 	const int32 HostSeat  = Host->BoardSeatIndex;
 	const int32 GuestSeat = Guest ? Guest->BoardSeatIndex : INDEX_NONE;
 
@@ -645,6 +673,21 @@ void APCCombatManager::ReturnPlayersForPair(int32 PairIndex, float Blend)
 			FocusCameraToBoard(GuestPlayerState->SeatIndex, GuestSeat, false, 0);
 			GuestPlayerState->SetCurrentSeatIndex(GuestSeat);
 		}
+	}
+
+	if (APCPlayerState* GuestPS = FindPlayerStateBySeat(GuestSeat))
+	{
+		if (UAbilitySystemComponent* GuestASC = GuestPS->GetAbilitySystemComponent())
+		{
+			const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+			GuestASC->GetGameplayAttributeValueChangeDelegate(GoldAttr).Remove(GoldDisplayHandle);
+			GoldDisplayHandle.Reset();
+		}
+	}
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->MulticastClearEnemyGoldOnHost(HostSeat);
 	}
 }
 
@@ -1432,8 +1475,6 @@ void APCCombatManager::NotifyAllBattleFinished()
 			GM->ForceShortenCurrentStep(3.f);
 		}
 	}
-
-	GetWorld()->GetTimerManager().ClearTimer(BattleTimerHandle);
 }
 
 void APCCombatManager::HandleBattleFinished()

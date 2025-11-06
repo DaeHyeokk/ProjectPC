@@ -30,11 +30,17 @@ public:
 	FVector StartOffset = FVector(-390,-890,-60);
 
 	UPROPERTY(EditAnywhere, Category = "GoldDisplay")
-	FVector EnemyStartOffset = FVector(-390,890,-60);
+	FVector EnemyStartOffset = FVector(410,890,-60);
+
+	UPROPERTY(EditAnywhere, Category = "GoldDisplay")
+	FRotator EnemyRotator = FRotator(0,-180,0);
 
 	// 매쉬간 간격
 	UPROPERTY(EditAnywhere, Category = "GoldDisplay")
 	FVector Spacing = FVector(200,0,0);
+
+	UPROPERTY(EditAnywhere, Category = "GoldDisplay")
+	FVector EnemySpacing = FVector(-200,0,0);
 
 	// 매쉬 최대 생성 개수
 	UPROPERTY(EditAnywhere, Category = "GoldDisplay")

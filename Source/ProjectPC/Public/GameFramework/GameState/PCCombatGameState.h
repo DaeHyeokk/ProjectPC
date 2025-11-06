@@ -226,6 +226,12 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastUpdateGoldDisplay(int32 SeatIndex, int32 NewGold);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSetEnemyGoldOnHost(int32 HostSeat, int32 EnemyGold);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastClearEnemyGoldOnHost(int32 HostSeat);
+
 private:
 	APCPlayerState* FindPCPlayerStateBySeat(int32 SeatIndex) const;
 	

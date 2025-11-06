@@ -9,6 +9,7 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
+#include "GameFramework/HelpActor/Component/PCGoldDisplayComponent.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCItemSpawnSubsystem.h"
@@ -112,17 +113,22 @@ void APCCombatGameState::MulticastUpdateGoldDisplay_Implementation(int32 SeatInd
 	{
 		MyBoard->ApplyMyGoldVisual(NewGold);
 	}
+}
 
-	if (APCPlayerState* PS = FindPCPlayerStateBySeat(SeatIndex))
+void APCCombatGameState::MulticastSetEnemyGoldOnHost_Implementation(int32 HostSeat, int32 EnemyGold)
+{
+	if (APCCombatBoard* HostBoard = GetBoardBySeat(HostSeat))
 	{
-		const int32 HostSeat = PS->GetCurrentSeatIndex();
-		if (HostSeat != INDEX_NONE && HostSeat != SeatIndex)
-		{
-			if (APCCombatBoard* MyBoard = GetBoardBySeat(HostSeat))
-			{
-				MyBoard->ApplyEnemyGoldVisual(NewGold);
-			}
-		}
+		HostBoard->ApplyEnemyGoldVisual(EnemyGold); // Enemy만 갱신
+	}
+
+}
+
+void APCCombatGameState::MulticastClearEnemyGoldOnHost_Implementation(int32 HostSeat)
+{
+	if (APCCombatBoard* HostBoard = GetBoardBySeat(HostSeat))
+	{
+		if (HostBoard->EnemyGoldDisplay) HostBoard->EnemyGoldDisplay->ReSetEnemyDisplay(); // Enemy만 정리
 	}
 }
 
