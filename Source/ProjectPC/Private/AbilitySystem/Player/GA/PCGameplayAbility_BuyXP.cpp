@@ -29,21 +29,24 @@ bool UPCGameplayAbility_BuyXP::CanActivateAbility(const FGameplayAbilitySpecHand
 		return false;
 	}
 
-	// 서버가 아니거나, CostGE 클래스가 nullptr이면 Activate 막음
-	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
+	// 서버 권위, CostGE 클래스가 유효하면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority() && CostGameplayEffectClass)
 	{
-		return false;
+		return true;
 	}
-
-	return true;
+	
+	return false;
 }
 
 bool UPCGameplayAbility_BuyXP::CheckCost(const FGameplayAbilitySpecHandle Handle,
                                          const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	if (const auto AttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
 	{
-		return AttributeSet->GetPlayerGold() >= CostValue;
+		if (const auto AttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+		{
+			return AttributeSet->GetPlayerGold() >= CostValue;
+		}
 	}
 	
 	return false;
@@ -56,7 +59,11 @@ void UPCGameplayAbility_BuyXP::ApplyCost(const FGameplayAbilitySpecHandle Handle
 	if (CostSpecHandle.IsValid())
 	{
 		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -CostValue);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+		
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+		}
 	}
 }
 
@@ -76,7 +83,12 @@ void UPCGameplayAbility_BuyXP::ActivateAbility(const FGameplayAbilitySpecHandle 
 	if (XPSpecHandle.IsValid())
 	{
 		XPSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerXP, GE_Value);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*XPSpecHandle.Data.Get());
+
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*XPSpecHandle.Data.Get());
+			ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_BuyXP);
+		}
 	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

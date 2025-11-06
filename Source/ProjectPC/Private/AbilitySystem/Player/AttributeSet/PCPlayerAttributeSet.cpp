@@ -98,6 +98,8 @@ void UPCPlayerAttributeSet::CheckLevelUp()
 		{
 			ASC->AddLooseGameplayTag(PlayerGameplayTags::Player_State_MaxLevel);
 		}
+
+		ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_LevelUp);
 	}
 }
 

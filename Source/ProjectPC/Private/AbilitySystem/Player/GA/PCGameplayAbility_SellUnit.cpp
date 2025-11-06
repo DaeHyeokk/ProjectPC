@@ -37,13 +37,13 @@ bool UPCGameplayAbility_SellUnit::CanActivateAbility(const FGameplayAbilitySpecH
 		return false;
 	}
 
-	// 서버가 아니면 Activate 막음
-	if (!ActorInfo->IsNetAuthority())
+	// 서버 권위면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority())
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -102,7 +102,12 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	if (GoldSpecHandle.IsValid())
 	{
 		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+			ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_SellUnit);
+		}
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
