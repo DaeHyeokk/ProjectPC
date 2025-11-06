@@ -230,7 +230,7 @@ namespace GameplayCueTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Combine)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_EquipItem)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_PlayEffectAtSocket)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Haste)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_SFX_Unit_LevelStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UI_Unit_CombatText)
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_LevelUp)

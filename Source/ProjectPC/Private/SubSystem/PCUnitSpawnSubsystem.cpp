@@ -272,8 +272,18 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Uni
 	}
 }
 
+USoundCue* UPCUnitSpawnSubsystem::GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const
+{
+	if (const UPCDataAsset_UnitDefinition* Definition = ResolveDefinition(UnitTag))
+	{
+		return Definition->LevelStartSoundCue;
+	}
+
+	return nullptr;
+}
+
 void UPCUnitSpawnSubsystem::ApplyDefinitionData(APCCarouselHeroCharacter* CarouselHero,
-	const UPCDataAsset_UnitDefinition* Definition) const
+                                                const UPCDataAsset_UnitDefinition* Definition) const
 {
 	if (!CarouselHero || !Definition)
 		return;

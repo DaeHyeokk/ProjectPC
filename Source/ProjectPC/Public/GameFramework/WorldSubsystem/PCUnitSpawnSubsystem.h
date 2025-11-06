@@ -97,6 +97,7 @@ public:
 	
 	const UPCDataAsset_UnitDefinition* ResolveDefinition(const FGameplayTag& UnitTag) const;
 	void ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
+	USoundCue* GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const;
 	
 private:
 	TSubclassOf<APCBaseUnitCharacter> ResolveSpawnUnitClass(const UPCDataAsset_UnitDefinition* Definition) const;

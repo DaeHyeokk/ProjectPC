@@ -203,11 +203,6 @@ void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void APCBaseUnitCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-}
-
 void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

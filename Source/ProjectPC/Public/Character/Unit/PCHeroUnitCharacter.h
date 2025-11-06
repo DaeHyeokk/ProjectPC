@@ -63,7 +63,12 @@ protected:
 	UFUNCTION()
 	virtual void OnRep_HeroLevel();
 
+	bool bDidCombine = false;
+	bool bDidPlaySpawnSound = false;
+	
 private:
+	void PlayLevelUpParticle() const;
+	
 	UPROPERTY(ReplicatedUsing=OnRep_IsDragging)
 	bool bIsDragging;
 

@@ -52,4 +52,8 @@ public:
 	// Creep이 아닌 Hero 타입으로 지정할 경우 보여지는 속성 (Carousel Hero에 사용하는 AnimBP)
 	UPROPERTY(EditDefaultsOnly, Category="Carousel AnimBP", meta=(EditCondition="ClassType!=EUnitClassType::Creep"))
 	TSubclassOf<UAnimInstance> CarouselHeroAnimBP;
+
+	// Creep이 아닌 Hero 타입으로 지정할 경우 보여지는 속성 (Carousel Hero에 사용하는 AnimBP)
+	UPROPERTY(EditDefaultsOnly, Category="Level Start Sound", meta=(EditCondition="ClassType!=EUnitClassType::Creep"))
+	TObjectPtr<USoundCue> LevelStartSoundCue;
 };
