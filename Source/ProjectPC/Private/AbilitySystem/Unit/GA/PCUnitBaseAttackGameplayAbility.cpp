@@ -123,6 +123,7 @@ void UPCUnitBaseAttackGameplayAbility::OnAttackSucceed(FGameplayEventData Payloa
 	if (CurrentTarget.IsValid())
 	{
 		ApplyReceivedEventEffectSpec(ASC, AttackSucceedTag, CurrentTarget.Get());
+		PlayAttackSound();
 	}
 }
 
@@ -135,7 +136,17 @@ void UPCUnitBaseAttackGameplayAbility::OnSpawnProjectileSucceed(FGameplayEventDa
 			if (APCBaseProjectile* Projectile = P->Projectile.Get())
 			{
 				Projectile->SetEffectSpecs(AbilityConfig.ProjectilePayloadEffectSpecs.EffectSpecs);
+				PlayAttackSound();
 			}
 		}
 	}
+}
+
+void UPCUnitBaseAttackGameplayAbility::PlayAttackSound() const
+{
+	UAbilitySystemComponent* ASC = Unit ? Unit->GetAbilitySystemComponent() : nullptr;
+	if (!ASC)
+		return;
+
+	ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_SFX_Unit_AttackSound);
 }

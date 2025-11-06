@@ -67,7 +67,13 @@ void UPCSynergySlotWidget::SetData(const FSynergyData& InData)
 			SetNumOrEmpty(TierThresholds3, InData.Thresholds.IsValidIndex(2) ? InData.Thresholds[2] : -1);
 			SetNumOrEmpty(TierThresholds4, InData.Thresholds.IsValidIndex(3) ? InData.Thresholds[3] : -1);
 
-			if (InData.Thresholds.IsValidIndex(0) && InData.Thresholds.IsValidIndex(1) && !InData.Thresholds.IsValidIndex(2))
+			if (InData.Thresholds.IsValidIndex(0) && !InData.Thresholds.IsValidIndex(1))
+			{
+				TierSlash1->SetText(FText::GetEmpty());
+				TierSlash2->SetText(FText::GetEmpty());
+				TierSlash3->SetText(FText::GetEmpty());
+			}
+			else if (InData.Thresholds.IsValidIndex(0) && InData.Thresholds.IsValidIndex(1) && !InData.Thresholds.IsValidIndex(2))
 			{
 				TierSlash1->SetText(FText::FromString("/"));
 				TierSlash2->SetText(FText::GetEmpty());

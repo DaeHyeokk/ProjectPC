@@ -121,7 +121,7 @@ void UPCSynergyBase::PlayActiveParticleAtUnit(const FSynergyApplyParams& Params)
 			CueParams.Location = Hero->GetActorLocation();
 			CueParams.SourceObject = SynergyData->GetActiveParticle();
 		
-			ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_PlayEffectAtSocket, CueParams);
+			ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_SynergyActive, CueParams);
 		}
 	}
 }
