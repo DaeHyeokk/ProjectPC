@@ -111,30 +111,17 @@ public:
 
 	// GoldDisplayComponent
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GoldDisplay")
-	TObjectPtr<UPCGoldDisplayComponent> GoldDisplay;
+	TObjectPtr<UPCGoldDisplayComponent> MyGoldDisplay;
 
-	// 좌석 골드 바인딩 / 해제
-	void BindMyGoldToASC(UAbilitySystemComponent* InASC);
-	void BindEnemyGOldToASC(UAbilitySystemComponent* InASC);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GoldDisplay")
+	TObjectPtr<UPCGoldDisplayComponent> EnemyGoldDisplay;
 	
-	void UnbindMyGold();
-	void UnbindEnemyGold();
-
 	// 멀티케스트에서 호출될 표시 함수
 	void ApplyMyGoldVisual(int32 NewGold);
 	void ApplyEnemyGoldVisual(int32 NewGold);
 	
 private:
-
-	TWeakObjectPtr<UAbilitySystemComponent> MyASC;
-	TWeakObjectPtr<UAbilitySystemComponent> EnemyASC;
-	FDelegateHandle MyGoldDH;
-	FDelegateHandle EnemyGoldDH;
-
-	// 풀백
-	void OnMyGoldChange(const FOnAttributeChangeData& Data);
-	void OnEnemyGoldChanged(const FOnAttributeChangeData& Data);
-
+		
 	APCPlayerState* FindPSBySeat(int32 SeatIndex) const;
 	
 

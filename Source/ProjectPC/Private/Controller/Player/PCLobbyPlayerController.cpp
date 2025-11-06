@@ -4,6 +4,7 @@
 #include "Controller/Player/PCLobbyPlayerController.h"
 
 #include "MoviePlayer.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
@@ -97,6 +98,7 @@ void APCLobbyPlayerController::BeginPlay()
 	Super::BeginPlay();
 	RefreshUIForMap();
 	SetShowMouseCursor(true);
+	PlayStartBGM();
 	
 }
 
@@ -321,5 +323,32 @@ bool APCLobbyPlayerController::IsConnectedToServer() const
 {
 	const ENetMode NetMode = GetNetMode();
 	return (NetMode == NM_Client || NetMode == NM_ListenServer);
+}
+
+void APCLobbyPlayerController::PlayStartBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (!AudioComponent && StartBGM)
+	{
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, StartBGM);
+	}
+}
+
+void APCLobbyPlayerController::PlayLobbyBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (AudioComponent && LobbyBGM)
+	{
+		// 현재 BGM이 있다면 끄고 교체
+		AudioComponent->FadeOut(0.5f, 0.f); // 더 자연스럽게 끄기
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, LobbyBGM);
+	}
+	else if (!AudioComponent && LobbyBGM)
+	{
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, LobbyBGM); // ✅ 수정됨
+	}
+	
 }
 

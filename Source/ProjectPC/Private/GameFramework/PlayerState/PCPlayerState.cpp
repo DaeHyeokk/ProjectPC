@@ -53,6 +53,13 @@ void APCPlayerState::BeginPlay()
 		PlayerAbilitySystemComponent->AddLooseGameplayTag(PlayerGameplayTags::Player_State_Normal);
 		CurrentStateTag = PlayerGameplayTags::Player_State_Normal;
 	}
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
+		GoldChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(GoldAttr)
+			.AddUObject(this, &APCPlayerState::OnGoldChanged);
+	}
 }
 
 void APCPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -139,6 +146,16 @@ void APCPlayerState::UnitSpawn(FGameplayTag UnitTag)
 	APCBaseUnitCharacter* Unit = SpawnSubsystem->SpawnUnitByTag(UnitTag, SeatIndex, 1, this);
 	int32 LowBenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
 	PlayerBoard->PlaceUnitOnBench(LowBenchIndex,Unit);
+}
+
+void APCPlayerState::OnGoldChanged(const FOnAttributeChangeData& Data)
+{
+	const int32 NewGold = Data.NewValue;
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->MulticastUpdateGoldDisplay(SeatIndex, NewGold);
+	}
 }
 
 UAbilitySystemComponent* APCPlayerState::GetAbilitySystemComponent() const

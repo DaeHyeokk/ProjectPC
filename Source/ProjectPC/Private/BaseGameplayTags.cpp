@@ -229,8 +229,10 @@ namespace GameplayCueTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_LevelUp, "GameplayCue.VFX.Unit.LevelUp")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Combine, "GameplayCue.VFX.Unit.Combine")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_EquipItem, "GameplayCue.VFX.Unit.EquipItem")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_SynergyActive, "GameplayCue.VFX.Unit.SynergyActive")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_PlayEffectAtSocket, "GameplayCue.VFX.Unit.PlayEffectAtSocket")
-	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_VFX_Unit_Haste, "GameplayCue.VFX.Unit.Haste")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_SFX_Unit_AttackSound, "GameplayCue.SFX.Unit.AttackSound")
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_SFX_Unit_LevelStart, "GameplayCue.SFX.Unit.LevelStart")
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_UI_Unit_CombatText, "GameplayCue.UI.Unit.CombatText")
 
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Player_LevelUp, "GameplayCue.Player.LevelUp")

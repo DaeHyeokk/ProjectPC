@@ -9,6 +9,7 @@
 #include "GameplayTagContainer.h"
 #include "PCPlayerState.generated.h"
 
+struct FOnAttributeChangeData;
 DECLARE_MULTICAST_DELEGATE(FUnitDataInBoardUpdated);
 DECLARE_MULTICAST_DELEGATE(FOnShopSlotsUpdated);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnWinningStreakUpdated, int32);
@@ -85,6 +86,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UnitSpawn")
 	void UnitSpawn(FGameplayTag UnitTag);
+
+	FDelegateHandle GoldChangedHandle;
+
+	void OnGoldChanged(const FOnAttributeChangeData& Data);
 	
 #pragma endregion Board
 

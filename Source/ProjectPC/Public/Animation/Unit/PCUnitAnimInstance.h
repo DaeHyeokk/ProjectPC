@@ -111,4 +111,6 @@ private:
 	TObjectPtr<UAnimSequence> CombatWinEmote;
 	
 	void ResolveAssets(const UPCDataAsset_UnitAnimSet* AnimSet);
+
+	bool bDidPlayLevelStartMontage = false;
 };

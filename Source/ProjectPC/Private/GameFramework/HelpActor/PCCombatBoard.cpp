@@ -29,7 +29,7 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm->TargetArmLength = 1000.f;
 	
 
-	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
+	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));		
 	BoardCamera->SetupAttachment(SpringArm);
 	BoardCamera->FieldOfView = 60.f;
 
@@ -37,8 +37,11 @@ APCCombatBoard::APCCombatBoard()
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
 
 	// Gold Display
-	GoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("GoldDisplay"));
-	GoldDisplay->SetupAttachment(SceneRoot);
+	MyGoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("MyGoldDisplay"));
+	MyGoldDisplay->SetupAttachment(SceneRoot);
+
+	EnemyGoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("EnemyGoldDisplay"));
+	EnemyGoldDisplay->SetupAttachment(SceneRoot);
 }
 
 void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -158,82 +161,15 @@ void APCCombatBoard::ApplyClientMirrorView()
 	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
 
-void APCCombatBoard::BindMyGoldToASC(UAbilitySystemComponent* InASC)
-{
-	UnbindMyGold();
-	if (!HasAuthority() || !InASC) return;
-
-	MyASC = InASC;
-	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
-
-	const int32 CurGold = InASC->GetNumericAttribute(GoldAttr);
-	if (GoldDisplay)
-	{
-		GoldDisplay->UpdateFromMyGold(CurGold);
-	}
-
-	MyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr).AddUObject(this, &APCCombatBoard::OnMyGoldChange);
-}
-
-void APCCombatBoard::BindEnemyGOldToASC(UAbilitySystemComponent* InASC)
-{
-	UnbindEnemyGold();
-	if (!HasAuthority() || !InASC) return;
-
-	EnemyASC = InASC;
-	const FGameplayAttribute GoldAttr = UPCPlayerAttributeSet::GetPlayerGoldAttribute();
-
-	const int32 Cur = (int32)InASC->GetNumericAttribute(GoldAttr);
-	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(Cur);
-
-	EnemyGoldDH = InASC->GetGameplayAttributeValueChangeDelegate(GoldAttr)
-		.AddUObject(this, &APCCombatBoard::OnEnemyGoldChanged);
-}
-
-void APCCombatBoard::UnbindMyGold()
-{
-	if (HasAuthority())
-	{
-		if (UAbilitySystemComponent* ASC = MyASC.Get())
-		{
-			if (MyGoldDH.IsValid())
-			{
-				ASC->GetGameplayAttributeValueChangeDelegate(
-					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
-				).Remove(MyGoldDH);
-			}
-		}
-	}
-	MyGoldDH.Reset();
-	MyASC.Reset();
-}
-
-void APCCombatBoard::UnbindEnemyGold()
-{
-	if (HasAuthority())
-	{
-		if (UAbilitySystemComponent* ASC = EnemyASC.Get())
-		{
-			if (EnemyGoldDH.IsValid())
-			{
-				ASC->GetGameplayAttributeValueChangeDelegate(
-					UPCPlayerAttributeSet::GetPlayerGoldAttribute()
-				).Remove(EnemyGoldDH);
-			}
-		}
-	}
-	EnemyGoldDH.Reset();
-	EnemyASC.Reset();
-}
 
 void APCCombatBoard::ApplyMyGoldVisual(int32 NewGold)
 {
-	if (GoldDisplay) GoldDisplay->UpdateFromMyGold(NewGold);
+	if (MyGoldDisplay) MyGoldDisplay->UpdateFromMyGold(NewGold);
 }
 
 void APCCombatBoard::ApplyEnemyGoldVisual(int32 NewGold)
 {
-	if (GoldDisplay) GoldDisplay->UpdateFromEnemyGold(NewGold);
+	if (EnemyGoldDisplay) EnemyGoldDisplay->UpdateFromEnemyGold(NewGold);
 }
 
 APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
@@ -248,20 +184,6 @@ APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
 	return nullptr;
 }
 
-
-
-
-void APCCombatBoard::OnMyGoldChange(const FOnAttributeChangeData& Data)
-{
-	if (GoldDisplay)
-		GoldDisplay->UpdateFromMyGold(Data.NewValue);
-}
-
-void APCCombatBoard::OnEnemyGoldChanged(const FOnAttributeChangeData& Data)
-{
-	if (GoldDisplay)
-		GoldDisplay->UpdateFromMyGold(Data.NewValue);
-}
 
 
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const

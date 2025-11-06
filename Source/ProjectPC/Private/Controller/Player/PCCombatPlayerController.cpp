@@ -119,6 +119,7 @@ void APCCombatPlayerController::BeginPlay()
 
 	if (IsLocalController())
 	{
+		PlayBGM();		
 		ApplyGameInputMode();
 
 		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
@@ -794,7 +795,7 @@ void APCCombatPlayerController::ShowPlayerMainUI()
 
 	if (PlayerMainWidget)
 	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 }
 
@@ -1731,3 +1732,15 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	
 	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 }
+
+void APCCombatPlayerController::PlayBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (!BGMComponent && GameBGM)
+	{
+		BGMComponent = UGameplayStatics::SpawnSound2D(this, GameBGM);
+	}
+}
+
+

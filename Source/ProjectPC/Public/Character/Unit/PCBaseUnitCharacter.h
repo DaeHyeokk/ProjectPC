@@ -44,6 +44,7 @@ public:
 	void SetOutlineEnabled(bool bEnable) const;
 	
 	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
+	UFUNCTION(BlueprintPure)
 	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
 
 	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
@@ -55,7 +56,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);

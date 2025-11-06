@@ -12,9 +12,10 @@
 void UPCUnitAnimInstance::PlayLevelStartMontage()
 {
 	UAnimMontage* LevelStart = CurrentAnimSet ? CurrentAnimSet->GetMontageByTag(UnitGameplayTags::Unit_Montage_LevelStart) : nullptr;
-	if (!LevelStart)
+	if (bDidPlayLevelStartMontage || !LevelStart)
 		return;
-
+	
+	bDidPlayLevelStartMontage = true;
 	Montage_Play(LevelStart, 1.f);
 }
 

@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Component/PCSynergyComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
@@ -16,6 +17,7 @@
 #include "EntitySystem/MovieSceneEntitySystemRunner.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/Board/PCBoardWidget.h"
 
 
@@ -440,6 +442,7 @@ bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 		}
 	}
 
+	//PlayPlaceSound(TWorld);
 	RecountAndPushToWidget_Server();
 	return true;
 }
@@ -469,6 +472,7 @@ bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacte
 		}
 	}
 
+	//PlayPlaceSound(World);
 	return true;
 }
 
@@ -949,3 +953,15 @@ int32 APCPlayerBoard::GetFirstOccupiedBenchIndex() const
 
 	return INDEX_NONE;
 }
+
+// void APCPlayerBoard::PlayPlaceSound_Implementation(FVector Loc)
+// {
+// 	if (PlaceSound.Get())
+// 	{
+// 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), PlaceSound, Loc);
+// 	}
+// }
+
+
+
+

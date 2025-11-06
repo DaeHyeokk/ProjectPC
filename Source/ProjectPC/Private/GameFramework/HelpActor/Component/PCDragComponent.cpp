@@ -3,9 +3,9 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Character/Unit/PCPreviewHeroActor.h"
 #include "Controller/Player/PCCombatPlayerController.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 
 UPCDragComponent::UPCDragComponent()
 {
@@ -124,6 +124,7 @@ void UPCDragComponent::OnServerDragEndResult(bool bSuccess, const FVector& Final
     }
     
     HideGhost();
+    PlayPlaceSound();
     
     State = EDragState::Idle;
     SetComponentTickEnabled(false);
@@ -146,6 +147,7 @@ bool UPCDragComponent::CursorHitWorld(APCCombatPlayerController* PC, FVector& Ou
     OutWorld = FVector::ZeroVector;
     return false;
 }
+
 
 void UPCDragComponent::BeginPlay()
 {
@@ -196,4 +198,13 @@ void UPCDragComponent::HideGhost()
   }
 
     Preview = nullptr;
+}
+
+
+void UPCDragComponent::PlayPlaceSound()
+{	
+    if (PlaceSound)
+    {
+        UGameplayStatics::PlaySound2D(GetWorld(), PlaceSound);
+    }
 }

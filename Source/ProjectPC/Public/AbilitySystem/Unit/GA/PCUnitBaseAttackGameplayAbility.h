@@ -39,6 +39,8 @@ protected:
 	UFUNCTION()
 	virtual void OnSpawnProjectileSucceed(FGameplayEventData Payload);
 
+	void PlayAttackSound() const;
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<const AActor> CurrentTarget;
 

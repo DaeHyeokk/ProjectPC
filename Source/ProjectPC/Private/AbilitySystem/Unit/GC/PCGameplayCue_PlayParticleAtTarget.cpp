@@ -55,10 +55,12 @@ static bool SpawnParticle_Internal(AActor* MyTarget, const FGameplayCueParameter
 
 bool UPCGameplayCue_PlayParticleAtTarget::OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
+	Super::OnExecute_Implementation(MyTarget, Parameters);
 	return SpawnParticle_Internal(MyTarget, Parameters, DefaultFX, DefaultSocketName);
 }
 
 bool UPCGameplayCue_PlayParticleAtTarget::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const
 {
+	Super::OnActive_Implementation(MyTarget, Parameters);
 	return SpawnParticle_Internal(MyTarget, Parameters, DefaultFX, DefaultSocketName);
 }

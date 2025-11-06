@@ -78,6 +78,7 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	{
 		LobbyPlayerController->RequestConnectToServer();
 		LobbyPlayerController->ServerSetIdentity();
+		LobbyPlayerController->PlayLobbyBGM();
 	}
 	
 }

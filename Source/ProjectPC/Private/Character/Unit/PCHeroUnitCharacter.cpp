@@ -13,8 +13,10 @@
 #include "Component/PCUnitEquipmentComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
+#include "Sound/SoundCue.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -68,10 +70,6 @@ void APCHeroUnitCharacter::LevelUp()
 	// LevelUp은 서버권한
 	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
-
-	FGameplayCueParameters Params;
-	Params.TargetAttachComponent = GetMesh();
-	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
@@ -79,6 +77,16 @@ void APCHeroUnitCharacter::LevelUp()
 	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
 		OnRep_HeroLevel();
+
+	// 한 프레임 내에서 뒤이어 Combine()이 호출 될 수도 있으니 레벨업 이펙트 생성을 다음 프레임으로 보류
+	GetWorldTimerManager().SetTimerForNextTick([this]()
+	{
+		if (!bDidCombine)
+		{
+			PlayLevelUpParticle();
+			bDidCombine = false;
+		}
+	});
 }
 
 void APCHeroUnitCharacter::UpdateStatusBarUI() const
@@ -121,6 +129,23 @@ void APCHeroUnitCharacter::BeginPlay()
 		{
 			SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy, EGameplayTagEventType::AnyCountChange)
 			.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+		}
+
+		if (!bDidPlaySpawnSound)
+		{
+			UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>() : nullptr;
+			if (SpawnSubsystem && OwnerPS && OwnerPS->GetAbilitySystemComponent())
+			{
+				bDidPlaySpawnSound = true;
+				
+				if (USoundCue* LevelStartSound = SpawnSubsystem->GetLevelStartSoundCueByUnitTag(UnitTag))
+				{
+					FGameplayCueParameters Params;
+					Params.SourceObject = LevelStartSound;
+		
+					OwnerPS->GetAbilitySystemComponent()->ExecuteGameplayCue(GameplayCueTags::GameplayCue_SFX_Unit_LevelStart, Params);
+				}
+			}
 		}
 	}
 }
@@ -238,6 +263,13 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 	OnHeroLevelUp.Broadcast();
 }
 
+void APCHeroUnitCharacter::PlayLevelUpParticle() const
+{
+	FGameplayCueParameters Params;
+	Params.TargetAttachComponent = GetMesh();
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
+}
+
 void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	Super::OnGameStateChanged(NewStateTag);
@@ -282,14 +314,16 @@ void APCHeroUnitCharacter::Combine(const APCHeroUnitCharacter* LevelUpHero)
 		{
 			TargetEquipmentComp->UnionEquipmentComponent(EquipmentComp);
 		}
-
-		if (UAbilitySystemComponent* PlayerASC = OwnerPS->GetAbilitySystemComponent())
-		{
-			FGameplayCueParameters Params;
-			Params.Location = GetActorLocation() + FVector(0.f,0.f,80.f);
-			PlayerASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_Combine, Params);
-		}
 	}
+
+	if (UAbilitySystemComponent* OwnerASC = OwnerPS ? OwnerPS->GetAbilitySystemComponent() : nullptr)
+	{
+		FGameplayCueParameters Params;
+		Params.Location = GetActorLocation() + FVector(0.f,0.f,80.f);
+		OwnerASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_Combine, Params);
+	}
+	
+	bDidCombine = true;
 	
 	Destroy();
 }

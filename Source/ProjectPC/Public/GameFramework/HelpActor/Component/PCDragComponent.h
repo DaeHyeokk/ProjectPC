@@ -26,6 +26,11 @@ class PROJECTPC_API UPCDragComponent : public UActorComponent
 
 public:
     UPCDragComponent();
+
+    // Sound
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound", meta=(AllowPrivateAccess="true"))
+    USoundBase* PlaceSound = nullptr; 
     
     // 컨트롤러의 입력 바인딩에서 호출
     bool OnMouse_Pressed(class APCCombatPlayerController* PC);
@@ -41,6 +46,7 @@ public:
     bool IsDraggingOrPending();
 
     void HideGhost();
+
     
 private:
     // 상태
@@ -67,6 +73,9 @@ private:
 
     // 커서 히트
     bool CursorHitWorld(APCCombatPlayerController* PC, FVector& OutWorld) const;
+
+    // Sound
+    void PlayPlaceSound();
 
 
 protected:
