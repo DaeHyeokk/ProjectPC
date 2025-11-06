@@ -794,7 +794,7 @@ void APCCombatPlayerController::ShowPlayerMainUI()
 
 	if (PlayerMainWidget)
 	{
-		PlayerMainWidget->SetVisibility(ESlateVisibility::Visible);
+		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 }
 

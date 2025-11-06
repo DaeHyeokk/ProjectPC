@@ -30,12 +30,8 @@ void UPCGoldDisplayComponent::ReSetMyDisplay()
 
 void UPCGoldDisplayComponent::ReSetEnemyDisplay()
 {
-	for (UStaticMeshComponent* C : EnemyMeshPool)
-	{
-		if (C)
-			C->DestroyComponent();
-	}
-
+	EnsureEnemyPool(0);
+	EnemyLayOutVisible(0);
 	EnemyMeshPool.Reset();
 }
 
@@ -115,9 +111,9 @@ void UPCGoldDisplayComponent::EnemyLayOutVisible(int32 VisibleCount)
 
 		if (bInVisible)
 		{
-			const FVector RelLoc = EnemyStartOffset + (Spacing * i);
+			const FVector RelLoc = EnemyStartOffset + (EnemySpacing * i);
 			C->SetRelativeLocation(RelLoc);
-			C->SetRelativeRotation(FRotator::ZeroRotator);
+			C->SetRelativeRotation(EnemyRotator);
 			C->SetRelativeScale3D(MeshScale);
 		}
 	}

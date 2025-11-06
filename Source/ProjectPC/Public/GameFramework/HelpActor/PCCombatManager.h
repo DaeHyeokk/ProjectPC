@@ -264,12 +264,10 @@ public:
 
 
 protected:
+	
 
-	// 전투 제한시간
-	UPROPERTY(EditAnywhere, Category = "Combat|TimeOut")
-	float MaxBattleDuration = 35.f;
-
-	FTimerHandle BattleTimerHandle;
+	// 골드 디스플레이 델리게이트
+	FDelegateHandle GoldDisplayHandle;
 
 	// 전투 진행도 체크 함수
 	void NotifyAllBattleFinished();
