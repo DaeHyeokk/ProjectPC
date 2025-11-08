@@ -28,6 +28,8 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bReplicates = true;
 	SetReplicates(true);
 	
+	SetIsSpatiallyLoaded(false);
+	
 	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
@@ -212,6 +214,12 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
 }
 
+void APCBaseUnitCharacter::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+	SetIsSpatiallyLoaded(false);
+}
+
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 {
 	// 하위 클래스에서 오버라이드 해서 구현
@@ -340,7 +348,6 @@ void APCBaseUnitCharacter::Die()
 				FGameplayTagContainer CancelTags;
 				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
 				ASC->CancelAbilities(&CancelTags);
-				OnUnitDied.Broadcast(this);
 			}
 		}
 	}
@@ -394,9 +401,17 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	const FGameplayTag& CombatResultTag = GameStateTags::Game_State_Combat_Result;
 
-	if (bIsOnField && NewStateTag.MatchesTag(CombatResultTag))
+	if (bIsOnField && NewStateTag.MatchesTagExact(CombatResultTag))
 	{
 		SetMeshVisibility(false);
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			ASC->CurrentMontageStop(0.f);
+			
+			FGameplayTagContainer CancelTags;
+			CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+			ASC->CancelAbilities(&CancelTags);
+		}
 	}
 }
 
@@ -405,6 +420,7 @@ void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCoun
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
 	{
 		bIsDead = (NewCount > 0);
+		OnUnitDied.Broadcast(this);
 	}
 	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
 	{

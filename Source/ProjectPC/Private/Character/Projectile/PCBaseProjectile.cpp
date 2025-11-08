@@ -4,6 +4,7 @@
 #include "Character/Projectile/PCBaseProjectile.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "BaseGameplayTags.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Components/ArrowComponent.h"
@@ -88,6 +89,11 @@ void APCBaseProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 					if (auto OtherPS = OtherActorPawn->GetPlayerState<APCPlayerState>())
 					{
 						OtherPS->AddValueToPlayerStat(PlayerGameplayTags::Player_Stat_PlayerHP, PlayerDamage);
+
+						if (auto ASC = OtherPS->GetAbilitySystemComponent())
+						{
+							ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_Attack);
+						}
 					}
 				}
 			}

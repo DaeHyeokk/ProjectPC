@@ -27,8 +27,7 @@ void APCItemCapsule::SetOwnerPlayer(int32 NewTeamIndex)
 void APCItemCapsule::SetRandomRewardTag()
 {
 	// RewardTag를 재료 아이템 or 골드로 설정
-		// 테스트 중에는 아이템 확률 100퍼
-	if (FMath::RandHelper(10) >= 0)
+	if (FMath::RandHelper(10) >= 3)
 	{
 		if (const auto ItemManager = GetWorld()->GetSubsystem<UPCItemManagerSubsystem>())
 		{

@@ -97,12 +97,11 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 					{
 						// 상점 업데이트 호출
 						GS->GetShopManager()->UpdateShopSlots(PS);
+						ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ShopRefresh);
 					}
 				}
 			}
 		}
-
-		ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ShopRefresh);
 	}
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

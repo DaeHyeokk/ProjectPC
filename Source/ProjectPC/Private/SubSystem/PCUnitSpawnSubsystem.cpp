@@ -128,7 +128,7 @@ APCBaseUnitCharacter* UPCUnitSpawnSubsystem::SpawnUnitByTag(const FGameplayTag U
 	
 	if (!Unit)
 		return nullptr;
-	
+
 	Unit->SetOwnerPlayerState(InOwnerPS);
 	Unit->SetTeamIndex(TeamIndex);
 	Unit->SetUnitTag(UnitTag);
@@ -272,7 +272,7 @@ void UPCUnitSpawnSubsystem::ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Uni
 	}
 }
 
-USoundCue* UPCUnitSpawnSubsystem::GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const
+USoundBase* UPCUnitSpawnSubsystem::GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const
 {
 	if (const UPCDataAsset_UnitDefinition* Definition = ResolveDefinition(UnitTag))
 	{

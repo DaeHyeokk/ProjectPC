@@ -139,6 +139,7 @@ namespace UnitGameplayTags
 
 	// ==== Unit Buff Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Darkness_TrueDamage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Mage_DoubleManaGain)
 }
 
 namespace SynergyGameplayTags
@@ -241,6 +242,7 @@ namespace GameplayCueTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ShopRefresh)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ItemCapsuleOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_Attack)
 }
 
 namespace PlayerGameplayTags

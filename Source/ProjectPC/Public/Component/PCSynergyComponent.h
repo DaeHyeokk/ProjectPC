@@ -13,8 +13,6 @@ class UPCSynergyBase;
 class UPCDataAsset_SynergyDefinitionSet;
 class APCHeroUnitCharacter;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSynergyCountsChanged, const TArray<FSynergyData>&);
-
 USTRUCT()
 struct FSynergyData
 {
@@ -44,6 +42,8 @@ struct FHeroSynergyTally
 	void Reset() { SynergyCountMap.Reset(); }
 	bool IsEmpty() const { return SynergyCountMap.IsEmpty(); }
 };
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSynergyCountsChanged, const TArray<FSynergyData>&);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCSynergyComponent : public UActorComponent
