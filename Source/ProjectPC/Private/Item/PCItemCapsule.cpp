@@ -69,8 +69,6 @@ void APCItemCapsule::AddRewardToPlayer(APCPlayerState* TargetPlayer)
 			{
 				ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ItemCapsuleOpen);
 			}
-			
-			return;
 		}
 	}
 }

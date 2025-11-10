@@ -1641,7 +1641,7 @@ void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
 {
 	if (IsLocalController())
 	{
-		PlayerEndPatrol(true);
+		PlayerEndPatrol();
 	}
 }
 
@@ -1657,16 +1657,16 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 	// 정찰 대상이 본인이면 정찰 종료
 	if (GetPlayerState<APCPlayerState>() == OnPatrolPlayerState)
 	{
-		PlayerEndPatrol(false);
+		PlayerEndPatrol();
 		return;
 	}
 
 	HideShopWidget();
 	PatrolWidgetChange(OnPatrolPlayerState, false);
-	PatrolTransformChange(OnPatrolPlayerState, false, false);
+	PatrolTransformChange(OnPatrolPlayerState, false);
 }
 
-void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
+void APCCombatPlayerController::PlayerEndPatrol()
 {
 	if (!IsLocalController()) return;
 	
@@ -1676,7 +1676,7 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
 	ShowShopWidget();
 	PatrolWidgetChange(PS, true);
-	PatrolTransformChange(PS, true, IsPlayerTravel);
+	PatrolTransformChange(PS, true);
 }
 
 void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
@@ -1702,7 +1702,7 @@ void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlaye
 	}
 }
 
-void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol,  bool IsPlayerTravel)
+void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol)
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
 	
@@ -1726,7 +1726,7 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	{
 		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
 	}
-	else if (!IsPlayerTravel)
+	else
 	{
 		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
 	}
