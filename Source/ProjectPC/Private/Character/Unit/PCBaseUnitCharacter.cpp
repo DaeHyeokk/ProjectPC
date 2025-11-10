@@ -28,7 +28,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bReplicates = true;
 	SetReplicates(true);
 	
-	SetIsSpatiallyLoaded(false);
+	//	SetIsSpatiallyLoaded(false);
 	
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -212,12 +212,6 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
-}
-
-void APCBaseUnitCharacter::PreInitializeComponents()
-{
-	Super::PreInitializeComponents();
-	SetIsSpatiallyLoaded(false);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
