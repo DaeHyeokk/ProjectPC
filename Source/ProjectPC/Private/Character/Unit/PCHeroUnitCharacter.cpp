@@ -84,7 +84,6 @@ void APCHeroUnitCharacter::LevelUp()
 		if (!bDidCombine)
 		{
 			PlayLevelUpParticle();
-			bDidCombine = false;
 		}
 	});
 }
@@ -282,9 +281,9 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	}
 	else if (NewStateTag.MatchesTag(CombatEndTag))
 	{
-		RestoreFromCombatEnd();
 		if (bIsOnField)
 		{
+			RestoreFromCombatEnd();
 			SetMeshVisibility(true);
 		}
 	}

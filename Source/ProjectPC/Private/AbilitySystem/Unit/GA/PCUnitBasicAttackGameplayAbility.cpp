@@ -20,9 +20,8 @@ void UPCUnitBasicAttackGameplayAbility::ApplyCooldown(const FGameplayAbilitySpec
 {
 	if (!CooldownGameplayEffectClass || !Unit || !ActorInfo || !ActorInfo->AbilitySystemComponent.IsValid())
 		return;
-
-	UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent();
-	if (CooldownGameplayEffectClass && ASC)
+	
+	if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
 	{
 		const UPCUnitAttributeSet* UnitAttrSet = ASC->GetSet<UPCUnitAttributeSet>();
 		const float AttackSpeed = UnitAttrSet->GetEffectiveAttackSpeed();
@@ -91,6 +90,5 @@ float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate()
 			}
 		}
 	}
-
 	return PlayRate;
 }
