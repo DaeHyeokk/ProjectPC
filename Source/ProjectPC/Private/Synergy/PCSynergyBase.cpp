@@ -5,10 +5,12 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "DataAsset/Synergy/PCDataAsset_SynergyData.h"
+#include "Particles/ParticleSystem.h"
 
 
 void UPCSynergyBase::GrantGE(const FSynergyApplyParams& Params)
@@ -87,6 +89,41 @@ void UPCSynergyBase::ResetAll()
 	RevokeAllGrantGAs();
 	RevokeAllGrantGEs();
 	CachedTierIndex = -1;
+}
+
+void UPCSynergyBase::PlayActiveParticleAtUnit(const FSynergyApplyParams& Params) const
+{
+	if (!SynergyData || !SynergyData->IsValidData())
+		return;
+	if (!Params.Instigator || !Params.Instigator->HasAuthority())
+		return;
+
+	const int32 DefaultTier = SynergyData->ComputeActiveTierIndex(Params.Count);
+	const int32 TierIdx = ComputeActiveTierIndex(Params, DefaultTier);
+
+	// 시너지가 활성화 되지 않았다면 이펙트 재생 X
+	if (TierIdx == -1)
+		return;
+
+	const TArray<APCHeroUnitCharacter*>& Units = Params.Units;
+	for (APCHeroUnitCharacter* Hero : Units)
+	{
+		if (!Hero)
+			continue;
+
+		UAbilitySystemComponent* ASC = Hero->GetAbilitySystemComponent();
+		if (!ASC)
+			return;
+		
+		if (ASC->HasMatchingGameplayTag(SynergyData->GetSynergyTag()))
+		{
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hero->GetActorLocation();
+			CueParams.SourceObject = SynergyData->GetActiveParticle();
+		
+			ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_SynergyActive, CueParams);
+		}
+	}
 }
 
 void UPCSynergyBase::SelectRecipients(const FSynergyApplyParams& Params, const FSynergyTier& Tier,

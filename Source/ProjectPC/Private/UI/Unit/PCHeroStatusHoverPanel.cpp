@@ -5,6 +5,7 @@
 
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Character/Unit/PCCommonUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"
@@ -142,6 +143,8 @@ void UPCHeroStatusHoverPanel::BindAll()
 		}
 
 		HeroLevelChangedHandle = Hero->OnHeroLevelUp.AddUObject(this, &ThisClass::OnHeroLevelChanged);
+		HeroDestroyedHandle = Hero->OnHeroDestroyed.AddUObject(this, &ThisClass::OnHeroDestroyed);
+		Hero->OnUnitDied.AddDynamic(this, &ThisClass::OnUnitDied);
 	}
 }
 
@@ -162,7 +165,11 @@ void UPCHeroStatusHoverPanel::UnbindAll()
 		{
 			if (UPCUnitEquipmentComponent* EquipmentComp = Hero->GetEquipmentComponent())
 			{
-				EquipmentComp->OnEquipItemChanged.Remove(EquipItemChangedHandle);
+				if (EquipItemChangedHandle.IsValid())
+				{
+					EquipmentComp->OnEquipItemChanged.Remove(EquipItemChangedHandle);
+					EquipItemChangedHandle.Reset();
+				}
 			}
 
 			if (HeroLevelChangedHandle.IsValid())
@@ -170,8 +177,15 @@ void UPCHeroStatusHoverPanel::UnbindAll()
 				Hero->OnHeroLevelUp.Remove(HeroLevelChangedHandle);
 				HeroLevelChangedHandle.Reset();
 			}
+
+			if (HeroDestroyedHandle.IsValid())
+			{
+				Hero->OnHeroDestroyed.Remove(HeroDestroyedHandle);
+				HeroDestroyedHandle.Reset();
+			}
+			
+			Hero->OnUnitDied.RemoveDynamic(this, &ThisClass::OnUnitDied);
 		}
-		EquipItemChangedHandle.Reset();
 	}
 	
 	AttrChangedHandleMap.Reset();
@@ -269,6 +283,16 @@ void UPCHeroStatusHoverPanel::OnEquipItemChanged() const
 void UPCHeroStatusHoverPanel::OnHeroLevelChanged() const
 {
 	UpdateLevel();
+}
+
+void UPCHeroStatusHoverPanel::OnHeroDestroyed(APCHeroUnitCharacter* Hero)
+{
+	HidePanel();
+}
+
+void UPCHeroStatusHoverPanel::OnUnitDied(APCBaseUnitCharacter* Unit)
+{
+	HidePanel();
 }
 
 void UPCHeroStatusHoverPanel::UpdateHP() const
@@ -398,7 +422,7 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 		{
 			auto UnitData = GS->GetShopManager()->GetShopUnitDataByTag(CurHero->GetUnitTag());
 	
-			if (UnitData.UnitName != "Dummy")
+			if (UnitData.UnitName != NAME_None)
 			{
 				UnitSlotWidget->Setup(UnitData, false);
 			}

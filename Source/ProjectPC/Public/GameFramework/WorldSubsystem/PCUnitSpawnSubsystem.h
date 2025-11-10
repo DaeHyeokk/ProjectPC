@@ -12,6 +12,7 @@
  * 
  */
 
+class APCPreloadHeroActor;
 class APCCarouselHeroCharacter;
 class APCPlayerState;
 class APCCombatBoard;
@@ -26,6 +27,7 @@ class APCAppearanceFixedHeroCharacter;
 class APCAppearanceChangedHeroCharacter;
 class APCCreepUnitCharacter;
 class UPCDataAsset_UnitDefinitionReg;
+class USoundBase;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnUnitSpawnedNative, APCBaseUnitCharacter*, int32 );
 
@@ -63,6 +65,22 @@ private:
 public:
 	void InitializeUnitSpawnConfig(const FSpawnSubsystemConfig& SpawnConfig);
 	void EnsureConfigFromGameState();
+
+	void PreloadAllHeroUnit(const FVector& SpawnLocation) const;
+
+private:
+	UPROPERTY()
+	TSubclassOf<APCPreviewHeroActor> DefaultPreloadActorClass;
+
+public:
+	APCPreloadHeroActor* SpawnPreloadActorByTag(
+	const FGameplayTag UnitTag,
+	const int32 UnitLevel,
+	ESpawnActorCollisionHandlingMethod HandlingMethod =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn) const;
+
+	void ApplyDefinitionData(const APCPreloadHeroActor* PreloadActor, int32 UnitLevel, const UPCDataAsset_UnitDefinition* Definition) const;
+
 	
 	UFUNCTION(BlueprintCallable, Category="Spawner")
 	APCBaseUnitCharacter* SpawnUnitByTag(
@@ -75,8 +93,12 @@ public:
 		ESpawnActorCollisionHandlingMethod HandlingMethod =
 			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
 
+	UFUNCTION(BlueprintCallable, Category="Spawner")
+	APCBaseUnitCharacter* SpawnCloneUnitBySourceUnit(const APCBaseUnitCharacter* SourceUnit);
+	
 	const UPCDataAsset_UnitDefinition* ResolveDefinition(const FGameplayTag& UnitTag) const;
 	void ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
+	USoundBase* GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const;
 	
 private:
 	TSubclassOf<APCBaseUnitCharacter> ResolveSpawnUnitClass(const UPCDataAsset_UnitDefinition* Definition) const;
@@ -119,5 +141,4 @@ public:
 	// 전투중 스폰 델리게이트
 public:
 	FOnUnitSpawnedNative OnUnitSpawned;
-	
 };

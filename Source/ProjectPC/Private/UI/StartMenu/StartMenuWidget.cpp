@@ -7,6 +7,8 @@
 #include "Components/Button.h"
 #include "Controller/Player/PCLobbyPlayerController.h"
 #include "GameFramework/GameInstanceSubsystem/ProfileSubsystem.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
+#include "UI/StartMenu/PCNoticeWidget.h"
 #include "UI/StartMenu/RegisterWidget.h"
 
 
@@ -41,11 +43,12 @@ void UStartMenuWidget::OnClicked_Register()
 void UStartMenuWidget::OnClicked_JoinLobby()
 {
 	UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>();
+	
 	if (!Profile) return;
 
 	if (!Profile->HasDisplayName())
 	{
-		if (Tb_Status) Tb_Status->SetText(FText::FromString(TEXT("Please enter your ID or register first.")));
+		ShowNotice(FText::FromString(TEXT("아이디를 등록해주세요.")));
 		OpenRegister(true);
 		return;
 	}
@@ -53,44 +56,31 @@ void UStartMenuWidget::OnClicked_JoinLobby()
 	FString CandidateID;
 	if (EB_DisplayName)
 		CandidateID = EB_DisplayName->GetText().ToString().TrimStartAndEnd();
-
+	
 	if (CandidateID.IsEmpty())
 	{
-		CandidateID = Profile->GetUserID().TrimStartAndEnd();
-	}
-	if (CandidateID.IsEmpty())
-	{
-		if (Tb_Status)
-			Tb_Status->SetText(FText::FromString(TEXT("Please enter your ID or Register first")));
+		ShowNotice(FText::FromString(TEXT("아이디를 입력해주세요.")));
 		if (EB_DisplayName)
 			EB_DisplayName->SetKeyboardFocus();
 		return;
 	}
 
-	FString Err;
-	if (!ValidateID(CandidateID, Err))
+	if (CandidateID != Profile->GetUserID())
 	{
-		if (Tb_Status)
-			Tb_Status->SetText(FText::FromString(Err));
+		ShowNotice(FText::FromString(TEXT("등록되지 않은 아이디입니다.")));
 		if (EB_DisplayName)
 			EB_DisplayName->SetKeyboardFocus();
 		return;
 	}
-
-	if (!Profile->HasDisplayName() || Profile->GetUserID() != CandidateID)
-	{
-		Profile->SetUserID(CandidateID);
-	}
+	
 	
 	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
-		const ENetMode NetMode = LobbyPlayerController->GetNetMode();
-		if (NetMode == NM_Client || NetMode == NM_ListenServer)
-		{
-			LobbyPlayerController->ServerSubmitIdentity(CandidateID);
-		}
 		LobbyPlayerController->RequestConnectToServer();
+		LobbyPlayerController->ServerSetIdentity();
+		LobbyPlayerController->PlayLobbyBGM();
 	}
+	
 }
 
 void UStartMenuWidget::RefreshButtons()
@@ -120,8 +110,6 @@ void UStartMenuWidget::OpenRegister(bool bFocusName)
 			if (RegisterWidget)
 			{
 				RegisterWidget->AddToViewport(100);
-				RegisterWidget->OnRegistered.AddDynamic(this, &UStartMenuWidget::RefreshButtons);
-				RegisterWidget->SetSubmitToServerOnClose(false);
 			}
 		}
 
@@ -157,23 +145,15 @@ void UStartMenuWidget::ConnectToServer()
 	}
 }
 
-bool UStartMenuWidget::ValidateID(const FString& In, FString& OutErr) const
+void UStartMenuWidget::ShowNotice(const FText& Message)
 {
-	const FString S = In.TrimStartAndEnd();
-	if (S.Len() < 3 || S.Len() > 16)
+	if (APlayerController* InPlayerController = GetOwningPlayer())
 	{
-		OutErr = TEXT("ID must be 3 ~ 16 Characters.");
-		return false;
-	}
-
-	for (TCHAR c : S)
-	{
-		if (!(FChar::IsAlnum(c) || c == TEXT('-')))
+		if (APCLobbyPlayerController* LobbyPlayerController = Cast<APCLobbyPlayerController>(InPlayerController))
 		{
-			OutErr = TEXT("Only Letters, numbers, and Underscore are Allowed.");
-			return false;
+			LobbyPlayerController->ShowNotice(Message);
 		}
 	}
-
-	return true;
 }
+
+

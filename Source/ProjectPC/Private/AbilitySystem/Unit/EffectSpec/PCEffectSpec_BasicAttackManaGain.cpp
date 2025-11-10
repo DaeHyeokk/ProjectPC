@@ -38,8 +38,8 @@ FActiveGameplayEffectHandle UPCEffectSpec_BasicAttackManaGain::ApplyEffectImpl(U
 	int32 UnitLevel = Unit ? Unit->GetUnitLevel() : 1;
 	float ManaGainValue = (UnitLevel <= 1) ? static_cast<float>(FMath::RandRange(6, 10)) : 10.f;
 
-	// 마법사 시너지면 마나회복량 2배
-	if (SourceASC->HasMatchingGameplayTag(SynergyGameplayTags::Synergy_Job_Mage))
+	// 마법사 시너지 버프가 활성화 됐을 경우 마나회복량 2배
+	if (SourceASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_Buff_Synergy_Mage_DoubleManaGain))
 	{
 		ManaGainValue *= 2.f;
 	}

@@ -12,6 +12,7 @@
 #include "BaseGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Character/Player/PCPlayerCharacter.h"
+#include "Character/Projectile/PCBaseProjectile.h"
 #include "GameFramework/WorldSubsystem/PCProjectilePoolSubsystem.h"
 
 
@@ -38,13 +39,14 @@ bool UPCGameplayAbility_DamageEvent::CanActivateAbility(const FGameplayAbilitySp
 	{
 		return false;
 	}
-	
-	if (!ActorInfo->IsNetAuthority())
+
+	// 서버 권위면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority())
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -59,8 +61,9 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
-	Damage = TriggerEventData->EventMagnitude;
-	TargetPS = const_cast<AActor*>(TriggerEventData->Target.Get());
+	// GA 이벤트 호출 시, 받은 TriggerEventData를 통해 필요한 데이터 분해 
+	float Damage = TriggerEventData->EventMagnitude;
+	TWeakObjectPtr<AActor> TargetPS = const_cast<AActor*>(TriggerEventData->Target.Get());
 	auto InstigatorPS = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 
 	if (!InstigatorPS || !TargetPS.Get())
@@ -74,7 +77,8 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 
 	FGameplayTag CharacterTag;
 	FGameplayTag AttackTypeTag;
-	
+
+	// 발사체 활성화를 위한 캐릭터 Tag, 공격타입 Tag 얻기
 	if (auto InstigatorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InstigatorPS))
 	{
 		InstigatorPawn = Cast<APawn>(InstigatorASC->GetAvatarActor());
@@ -106,6 +110,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
+	// 애님 몽타주 실행 (비동기 로드)
 	if (PlayerAttackAnimData)
 	{
 		if (auto AttackMontageSoftPtr = PlayerAttackAnimData->GetAttackMontage(CharacterTag, AttackTypeTag))
@@ -137,6 +142,7 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		}
 	}
 
+	// 발사체 활성화
 	if (auto* ProjectilePoolSubsystem = GetWorld()->GetSubsystem<UPCProjectilePoolSubsystem>())
 	{
 		FVector InstLoc = InstigatorPawn->GetActorLocation();
@@ -144,35 +150,14 @@ void UPCGameplayAbility_DamageEvent::ActivateAbility(const FGameplayAbilitySpecH
 		FVector Direction = (TargetLoc - InstLoc).GetSafeNormal();
 
 		FTransform SpawnTransform(Direction.Rotation(), InstLoc);
-		ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, CharacterTag, AttackTypeTag, InstigatorPawn, TargetPawn, true);
+		auto Projectile = ProjectilePoolSubsystem->SpawnProjectile(SpawnTransform, CharacterTag, InstigatorPawn, TargetPawn);
+		Projectile->SetDamage(-Damage);
 	}
-	
-	auto WaitHit = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, PlayerGameplayTags::Player_Event_ProjectileHit);
-	WaitHit->EventReceived.AddDynamic(this, &UPCGameplayAbility_DamageEvent::OnProjectileHitEvent);
-	WaitHit->ReadyForActivation();
 }
 
 void UPCGameplayAbility_DamageEvent::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
-	TargetPS = nullptr;
-	Damage = 0.f;
-	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-void UPCGameplayAbility_DamageEvent::OnProjectileHitEvent(FGameplayEventData EventData)
-{
-	if (auto TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetPS.Get()))
-	{
-		FGameplayEffectSpecHandle HPSpecHandle = MakeOutgoingGameplayEffectSpec(GE_PlayerHPChange, GetAbilityLevel());
-		if (HPSpecHandle.IsValid())
-		{
-			HPSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerHP, -Damage);
-			TargetASC->ApplyGameplayEffectSpecToSelf(*HPSpecHandle.Data.Get());
-		}
-	}
-
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

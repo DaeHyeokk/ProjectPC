@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "PCLeaderBoardWidget.generated.h"
 
 struct FPlayerStandingRow;
 
-class UPCPlayerRowWidget;
 class APCCombatGameState;
+class UPCPlayerRowWidget;
 class UVerticalBox;
 
 /**
@@ -19,6 +20,9 @@ UCLASS()
 class PROJECTPC_API UPCLeaderBoardWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void NativeDestruct() override;
 	
 private:
 	UPROPERTY()
@@ -32,11 +36,12 @@ public:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UVerticalBox* PlayerBox;
+	TObjectPtr<UVerticalBox> PlayerBox;
 
-public:
 	UPROPERTY(EditDefaultsOnly, Category = "PlayerRowWidgetClass")
 	TSubclassOf<UUserWidget> PlayerRowWidgetClass;
 
-	void SetupLeaderBoard(const TMap<FString, FPlayerStandingRow>& NewMap);
+public:
+	void SetupLeaderBoard(const TArray<FString>& NewPlayerRanking) const;
+	void ExpandPlayerRowWidget(FString PlayerName);
 };

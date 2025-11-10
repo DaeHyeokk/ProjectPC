@@ -3,10 +3,7 @@
 
 #include "AI/Task/BTTask_FindApproachLocation.h"
 
-#include "AbilitySystemComponent.h"
 #include "AIController.h"
-#include "BaseGameplayTags.h"
-#include "Algo/RandomShuffle.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Controller/Unit/PCUnitAIController.h"
@@ -43,6 +40,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	}
 	
 	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
+		
 	if (StartPoint == FIntPoint::NoneValue)
 	{
 		BB->ClearValue(ApproachLocationKey.SelectedKeyName);
@@ -63,7 +61,7 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 	for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(StartPoint.Y % 2 == 0))
 	{
 		FIntPoint NextPoint = StartPoint + Dir;
-
+		
 		// 이동할 좌표가 유효한 좌표이고 이동 가능한 좌표라면 이동 방향에 추가
 		if (Board->IsInRange(NextPoint.Y, NextPoint.X) && Board->IsTileFree(NextPoint.Y, NextPoint.X))
 		{
@@ -82,20 +80,23 @@ EBTNodeResult::Type UBTTask_FindApproachLocation::ExecuteTask(UBehaviorTreeCompo
 		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(HerePoint.Y % 2 == 0))
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
+			
 			if (Board->IsInRange(NextPoint.Y, NextPoint.X) && !Visited.Contains(NextPoint))
 			{
+				
 				const APCBaseUnitCharacter* NextUnit = Board->GetUnitAt(NextPoint.Y, NextPoint.X);
 				
 				// 다음에 탐색할 지점에 유닛이 있고, 적 유닛일 경우
 				if (NextUnit && PCUnitCombatUtils::IsHostile(OwnerUnit, NextUnit))
 				{
-					const FIntPoint MovePoint = HereData.FirstMovePosition;
+					FIntPoint MovePoint = HereData.FirstMovePosition;
 					const FVector MoveLocation = Board->GetTileWorldLocation(MovePoint.Y, MovePoint.X);
-					
-					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Reserve))
+
+					if (Board->SetTileState(MovePoint.Y, MovePoint.X, OwnerUnit, ETileAction::Occupy))
 					{
+						Board->SetTileState(StartPoint.Y, StartPoint.X, OwnerUnit, ETileAction::Release);
 						BB->SetValueAsVector(ApproachLocationKey.SelectedKeyName, MoveLocation);
-						UnitAIC->SetMovePoint(MovePoint);
+						UnitAIC->SetCachedPoint(MovePoint, StartPoint);
 						return EBTNodeResult::Succeeded;
 					}
 				}

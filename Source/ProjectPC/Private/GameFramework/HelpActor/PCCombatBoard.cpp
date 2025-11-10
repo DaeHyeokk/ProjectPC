@@ -3,9 +3,14 @@
 
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 
+#include "AbilitySystem/Player/PCPlayerAbilitySystemComponent.h"
+#include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/HelpActor/Component/PCGoldDisplayComponent.h"
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
+#include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -24,12 +29,19 @@ APCCombatBoard::APCCombatBoard()
 	SpringArm->TargetArmLength = 1000.f;
 	
 
-	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));
+	BoardCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BoardCamera"));		
 	BoardCamera->SetupAttachment(SpringArm);
 	BoardCamera->FieldOfView = 60.f;
 
 	// Tile Manger
 	TileManager = CreateDefaultSubobject<UPCTileManager>(TEXT("TileManager"));
+
+	// Gold Display
+	MyGoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("MyGoldDisplay"));
+	MyGoldDisplay->SetupAttachment(SceneRoot);
+
+	EnemyGoldDisplay = CreateDefaultSubobject<UPCGoldDisplayComponent>(TEXT("EnemyGoldDisplay"));
+	EnemyGoldDisplay->SetupAttachment(SceneRoot);
 }
 
 void APCCombatBoard::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -55,6 +67,7 @@ void APCCombatBoard::BeginPlay()
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
+		// TileManager->DebugDrawTiles(1e6f, true);
 	}
 }
 
@@ -148,9 +161,43 @@ void APCCombatBoard::ApplyClientMirrorView()
 	SpringArm->SetRelativeRotation(BattleCameraChangeRotation);
 }
 
+
+void APCCombatBoard::ApplyMyGoldVisual(int32 NewGold)
+{
+	if (MyGoldDisplay) MyGoldDisplay->UpdateFromMyGold(NewGold);
+}
+
+void APCCombatBoard::ApplyEnemyGoldVisual(int32 NewGold)
+{
+	if (EnemyGoldDisplay) EnemyGoldDisplay->UpdateFromEnemyGold(NewGold);
+}
+
+APCPlayerState* APCCombatBoard::FindPSBySeat(int32 SeatIndex) const
+{
+	if (SeatIndex == INDEX_NONE) return nullptr;
+	if (AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState() : nullptr)
+	{
+		for (APlayerState* PS : GS->PlayerArray)
+			if (auto* PCPS = Cast<APCPlayerState>(PS))
+				if (PCPS->SeatIndex == SeatIndex) return PCPS;
+	}
+	return nullptr;
+}
+
+
+
 APCBaseUnitCharacter* APCCombatBoard::GetUnitAt(int32 Y, int32 X) const
 {
 	return TileManager ? TileManager->GetFieldUnit(Y, X) : nullptr;
+}
+
+// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+void APCCombatBoard::GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const
+{
+	if (TileManager)
+	{
+		TileManager->GetAllFieldUnits(FieldUnits);
+	}
 }
 
 FVector APCCombatBoard::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const

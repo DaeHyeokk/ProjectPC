@@ -6,11 +6,13 @@
 #include "Blueprint/UserWidget.h"
 #include "PCPlayerMainWidget.generated.h"
 
+class UPCLeaderBoardWidget;
 class UPCSynergyPanelWidget;
 class UPCSynergyComponent;
 class UPCPlayerInventoryWidget;
 class UPCShopWidget;
 class UPCHeroStatusHoverPanel;
+class UPCGameStateWidget;
 class APCCombatGameState;
 class APCPlayerState;
 /**
@@ -37,25 +39,29 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UPCSynergyPanelWidget* GetSynergyWidget() const { return W_SynergyWidget;}
 
+	UFUNCTION(BlueprintCallable)
+	UPCLeaderBoardWidget* GetLeaderBoardWidget() const { return W_LeaderBoardWidget;}
+
 	void SetShopWidgetVisible(bool bVisible);
 	
 protected:
+	virtual void NativeConstruct() override;
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCGameStateWidget> W_GameStateWidget;
+	TObjectPtr<UPCGameStateWidget> W_GameStateWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCLeaderBoardWidget> W_LeaderBoardWidget;
+	TObjectPtr<UPCLeaderBoardWidget> W_LeaderBoardWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCHeroStatusHoverPanel> W_HeroStatus;
+	TObjectPtr<UPCHeroStatusHoverPanel> W_HeroStatus;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCShopWidget> W_ShopWidget;
+	TObjectPtr<UPCShopWidget> W_ShopWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCPlayerInventoryWidget> W_InventoryWidget;
+	TObjectPtr<UPCPlayerInventoryWidget> W_InventoryWidget;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<class UPCSynergyPanelWidget> W_SynergyWidget;
+	TObjectPtr<UPCSynergyPanelWidget> W_SynergyWidget;
 	
 };

@@ -32,7 +32,40 @@ bool UPCShopWidget::Initialize()
 	if (!Btn_ShopLock) return false;
 	Btn_ShopLock->OnClicked.AddDynamic(this, &UPCShopWidget::OnClickedShopLock);
 
+	for (int32 i = 0; i < 5; ++i)
+	{
+		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
+		if (!UnitSlotWidget) continue;
+
+		UnitSlotWidgets.Add(UnitSlotWidget);
+	}
+
 	return true;
+}
+
+void UPCShopWidget::NativeDestruct()
+{
+	// 델리게이트 언바인딩
+	if (CachedPlayerState)
+	{
+		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+		{
+			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+			{
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
+					.RemoveAll(this);
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerXPAttribute())
+					.RemoveAll(this);
+				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerGoldAttribute())
+					.RemoveAll(this);
+			}
+		}
+
+		CachedPlayerState->OnShopSlotsUpdated.RemoveAll(this);
+		CachedPlayerState->OnWinningStreakUpdated.RemoveAll(this);
+	}
+
+	Super::NativeDestruct();
 }
 
 void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
@@ -40,12 +73,14 @@ void UPCShopWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
 
+	// 플레이어 상점 슬롯 변화, 연승 기록 구독
 	CachedPlayerState->OnShopSlotsUpdated.AddUObject(this, &UPCShopWidget::SetupShopSlots);
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCShopWidget::OnPlayerWinningStreakChanged);
 	
 	SetupShopSlots();
 	SetupPlayerInfo();
 
+	// 플레이어 어트리뷰트 (Level, XP, Gold) 구독
 	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
 		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
@@ -65,75 +100,26 @@ void UPCShopWidget::InitWithPC(APCCombatPlayerController* InPC)
 	CachedController = InPC;
 }
 
-void UPCShopWidget::OpenMenu()
-{
-	AddToViewport(100);
-	SetVisibility(ESlateVisibility::Hidden);
-}
-
-void UPCShopWidget::CloseMenu()
-{
-	RemoveFromParent();
-}
-
 void UPCShopWidget::SetupShopSlots()
 {
-	// if (!ShopBox) return;
-	// if (!CachedPlayerState) return;
-	//
-	// ShopBox->ClearChildren();
-	//
-	// const auto& ShopSlots = CachedPlayerState->GetShopSlots();
-	//
-	// // GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
-	// int32 Index = 0;
-	// for (const FPCShopUnitData& UnitData : ShopSlots)
-	// {
-	// 	auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-	// 	if (!UnitSlotWidget) continue;
-	// 	
-	// 	UnitSlotWidget->Setup(UnitData, true, Index);
-	// 	ShopBox->AddChild(UnitSlotWidget);
-	//
-	// 	++Index;
-	// }
-
-	if (!ShopBox)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] ShopBox is NULL"));
+	if (!ShopBox || !CachedPlayerState)
 		return;
-	}
-
-	if (!CachedPlayerState)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] CachedPlayerState is NULL"));
-		return;
-	}
 
 	ShopBox->ClearChildren();
-	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Cleared children."));
 
 	const auto& ShopSlots = CachedPlayerState->GetShopSlots();
-	UE_LOG(LogTemp, Log, TEXT("[ShopWidget] ShopSlots count = %d"), ShopSlots.Num());
 
 	// GameState에서 받아온 슬롯 정보로 UnitSlotWidget Child 생성
 	int32 Index = 0;
 	for (const FPCShopUnitData& UnitData : ShopSlots)
 	{
-		auto UnitSlotWidget = CreateWidget<UPCUnitSlotWidget>(GetWorld(), UnitSlotWidgetClass);
-		if (!UnitSlotWidget)
+		if (UnitSlotWidgets.IsValidIndex(Index) && UnitSlotWidgets[Index])
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[ShopWidget] Failed to create UnitSlotWidget at Index=%d"), Index);
-			continue;
+			UnitSlotWidgets[Index]->Setup(UnitData, true, Index);
+			UnitSlotWidgets[Index]->SetSlotHidden(false);
+			ShopBox->AddChild(UnitSlotWidgets[Index]);
+			++Index;
 		}
-
-		UnitSlotWidget->Setup(UnitData, true, Index);
-		ShopBox->AddChild(UnitSlotWidget);
-
-		UE_LOG(LogTemp, Log, TEXT("[ShopWidget] Added UnitSlotWidget Index=%d, UnitTag=%s"), 
-			Index, *UnitData.UnitTag.ToString());
-
-		++Index;
 	}
 }
 
@@ -159,7 +145,7 @@ void UPCShopWidget::SetupPlayerInfo()
 	auto XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
 	
-	if(!PlayerMaxXP == 0)
+	if(PlayerMaxXP > 0)
 	{
 		XPBar->SetPercent(static_cast<float>(PlayerXP) / static_cast<float>(PlayerMaxXP));
 	}
@@ -167,6 +153,9 @@ void UPCShopWidget::SetupPlayerInfo()
 	// 플레이어 정보 (골드) 세팅
 	PlayerGold = static_cast<int32>(AttributeSet->GetPlayerGold());
 	GoldBalance->SetText(FText::AsNumber(PlayerGold));
+	
+	SetBtnXPEnable(PlayerGold >= 4);
+	SetBtnRerollEnable(PlayerGold >= 2);
 	
 	// 코스트 확률 정보 Text 세팅
 	auto CostProbabilities = GS->GetShopManager()->GetCostProbabilities(PlayerLevel);
@@ -185,7 +174,6 @@ void UPCShopWidget::OnClickedBuyXP()
 	{
 		CachedController->ShopRequest_BuyXP();
 	}
-	
 }
 
 void UPCShopWidget::OnClickedReroll()
@@ -194,7 +182,6 @@ void UPCShopWidget::OnClickedReroll()
 	{
 		CachedController->ShopRequest_ShopRefresh(2);
 	}
-	
 }
 
 void UPCShopWidget::OnClickedShopLock()
@@ -206,11 +193,13 @@ void UPCShopWidget::OnClickedShopLock()
 
 	if (CurrentResource && CurrentResource == ShopLock)
 	{
+		// 상점 잠금 해제
 		Img_ShopLock->SetBrushFromTexture(ShopUnlock);
 		CachedController->ShopRequest_ShopLock(false);
 	}
 	else
 	{
+		// 상점 잠금
 		Img_ShopLock->SetBrushFromTexture(ShopLock);
 		CachedController->ShopRequest_ShopLock(true);
 	}
@@ -236,6 +225,18 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 		CostTextBlocks[i]->SetText(FText::FromString(Text));
 	}
 
+	// 플레이어 최대 레벨 도달 시, 경험치 구매 비활성화
+	if (PlayerLevel == 10)
+	{
+		FString XPText = FString::Printf(TEXT("최대"));
+		XP->SetText(FText::FromString(XPText));
+		
+		XPBar->SetPercent(0.f);
+		SetBtnXPEnable(false);
+
+		return;
+	}
+
 	PlayerMaxXP = GS->GetMaxXP(PlayerLevel);
 	FString XPText = FString::Printf(TEXT("%d/%d"), PlayerXP, PlayerMaxXP);
 	XP->SetText(FText::FromString(XPText));
@@ -249,6 +250,18 @@ void UPCShopWidget::OnPlayerLevelChanged(const FOnAttributeChangeData& Data)
 void UPCShopWidget::OnPlayerXPChanged(const FOnAttributeChangeData& Data)
 {
 	if (!XP || !XPBar) return;
+
+	// 플레이어 최대 레벨 도달 시, 경험치 구매 비활성화
+	if (PlayerLevel == 10)
+	{
+		FString XPText = FString::Printf(TEXT("최대"));
+		XP->SetText(FText::FromString(XPText));
+		
+		XPBar->SetPercent(0.f);
+		SetBtnXPEnable(false);
+
+		return;
+	}
 	
 	PlayerXP = static_cast<int32>(Data.NewValue);
 	
@@ -266,40 +279,60 @@ void UPCShopWidget::OnPlayerGoldChanged(const FOnAttributeChangeData& Data)
 	if (!GoldBalance || !ShopBox) return;
 	
 	GoldBalance->SetText(FText::AsNumber(static_cast<int32>(Data.NewValue)));
+
+	SetBtnXPEnable(Data.NewValue >= 4.f && PlayerLevel != 10);
+	SetBtnRerollEnable(Data.NewValue >= 2.f);
 	
 	// 골드가 바뀔 때마다 상점 슬롯도 업데이트 (바뀐 골드로 구매 불가능한 유닛 판별)
 	for (int32 i = 0; i < ShopBox->GetChildrenCount(); ++i)
 	{
-		if (auto UnitSlotWidget = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(i)))
+		if (UnitSlotWidgets.IsValidIndex(i) && UnitSlotWidgets[i])
 		{
-			UnitSlotWidget->SetupButton();
+			UnitSlotWidgets[i]->SetupButton();
 		}
 	}
 }
 
-void UPCShopWidget::OnPlayerWinningStreakChanged()
+void UPCShopWidget::OnPlayerWinningStreakChanged(int32 NewWinningStreak)
 {
 	if (!WinningStreak || !Img_WinningStreak || !Winning || !Losing) return;
 	if (!CachedPlayerState) return;
 
-	auto WinningCount = CachedPlayerState->GetPlayerWinningStreak();
-	if (WinningCount > 0)
+	if (NewWinningStreak > 0)
 	{
+		// 연승
 		Img_WinningStreak->SetBrushFromTexture(Winning);
-		WinningStreak->SetText(FText::AsNumber(WinningCount));
+		WinningStreak->SetText(FText::AsNumber(NewWinningStreak));
 	}
 	else
 	{
+		// 연패
 		Img_WinningStreak->SetBrushFromTexture(Losing);
-		WinningStreak->SetText(FText::AsNumber(-WinningCount));
+		WinningStreak->SetText(FText::AsNumber(-NewWinningStreak));
+	}
+}
+
+void UPCShopWidget::SetBtnXPEnable(bool IsEnable)
+{
+	if (Btn_BuyXP)
+	{
+		Btn_BuyXP->SetIsEnabled(IsEnable);
+	}
+}
+
+void UPCShopWidget::SetBtnRerollEnable(bool IsEnable)
+{
+	if (Btn_Reroll)
+	{
+		Btn_Reroll->SetIsEnabled(IsEnable);
 	}
 }
 
 void UPCShopWidget::SetSlotHidden(int32 SlotIndex)
 {
-	if (auto SelectedSlot = Cast<UPCUnitSlotWidget>(ShopBox->GetChildAt(SlotIndex)))
+	if (UnitSlotWidgets.IsValidIndex(SlotIndex) && UnitSlotWidgets[SlotIndex])
 	{
-		SelectedSlot->SetSlotHidden(true);
+		UnitSlotWidgets[SlotIndex]->SetSlotHidden(true);
 	}
 }
 

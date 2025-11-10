@@ -43,25 +43,48 @@ void URegisterWidget::OnClicked_Submit()
 			}
 		}
 	}
-	
-	if(bSubmitToServerOnClose)
+
+	if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
 	{
-		if (APCLobbyPlayerController* LobbyPlayerController = GetOwningPlayer<APCLobbyPlayerController>())
+		FString Err;
+		if (!ValidateID(Name, Err))
 		{
-			const ENetMode NetMode = LobbyPlayerController->GetNetMode();
-			if (NetMode == NM_Client || NetMode == NM_ListenServer)
-			{
-				LobbyPlayerController->ServerSubmitIdentity(Name);
-			}
+			LobbyPlayerController->ShowNotice(FText::FromString(Err));
+			if (EB_DisplayName)
+				EB_DisplayName->SetKeyboardFocus();
+			return;
+		}
+		
+		const ENetMode NetMode = LobbyPlayerController->GetNetMode();
+		if (NetMode == NM_Client || NetMode == NM_ListenServer)
+		{
+			LobbyPlayerController->ServerSubmitIdentity(Name);
 		}
 	}
-	
-	//OnRegistered.Broadcast();
-	SetVisibility(ESlateVisibility::Hidden);
-	
 }
 
 void URegisterWidget::OnClicked_Cancel()
 {
 	SetVisibility(ESlateVisibility::Hidden);
+}
+
+bool URegisterWidget::ValidateID(const FString& ID, FString& OutErr) const
+{
+	const FString S = ID.TrimStartAndEnd();
+	if (S.Len() < 3 || S.Len() > 16)
+	{
+		OutErr = TEXT("ID must be 3 ~ 16 Characters.");
+		return false;
+	}
+
+	for (TCHAR c : S)
+	{
+		if (!(FChar::IsAlnum(c) || c == TEXT('-')) || c == TEXT('_'))
+		{
+			OutErr = TEXT("Only Letters, numbers, and Underscore are Allowed.");
+			return false;
+		}
+	}
+
+	return true;
 }

@@ -46,14 +46,20 @@ public:
 	void InitializeItemManager(UDataTable* ItemDataTable, UDataTable* ItemCombineDataTable);
 
 	const FPCItemData* GetItemData(FGameplayTag ItemTag) const;
-	FGameplayTag CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
+	const FPCEffectSpecList* GetItemEffectSpecList(FGameplayTag ItemTag) const;
 	TMap<FGameplayTag, FGameplayTag> GetItemRecipe(FGameplayTag BaseItemTag) const;
 
-	const FPCEffectSpecList* GetItemEffectSpecList(FGameplayTag ItemTag) const;
-	
-	// Carousel
 	FGameplayTag GetRandomBaseItem() const;
 	FGameplayTag GetRandomAdvancedItem() const;
+	
+	FGameplayTag CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const;
+
+protected:
+	UPROPERTY()
+	TMap<FGameplayTag, TObjectPtr<UTexture2D>> ItemTextureMap;
+
+public:
+	UTexture2D* GetItemTexture(const FGameplayTag& ItemTag);
 
 #pragma region TemplateFunc
 
@@ -85,11 +91,4 @@ private:
 	}
 	
 #pragma endregion TemplateFunc
-
-protected:
-	UPROPERTY()
-	TMap<FGameplayTag, TObjectPtr<UTexture2D>> ItemTextureMap;
-
-public:
-	UTexture2D* GetItemTexture(const FGameplayTag& ItemTag);
 };

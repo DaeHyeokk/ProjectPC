@@ -84,6 +84,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Synergy|Payload")
 	TArray<FSynergyGrantGA> GrantGAs;
 	
+	UPROPERTY(EditDefaultsOnly, Category="Synergy|Effect")
+	TObjectPtr<UParticleSystem> ActiveParticle = nullptr;
+	
 public:
 	int32 ComputeActiveTierIndex(int32 CurrentCount) const;
 
@@ -96,6 +99,8 @@ public:
 	const FSynergyTier* GetTier(int32 TierIndex) const;
 	const TArray<FSynergyTier>& GetAllTiers() const { return Tiers; }
 
+	UParticleSystem* GetActiveParticle() const { return ActiveParticle; }
+	
 	bool IsValidData() const
 	{
 		return SynergyTag.IsValid() && Tiers.Num() > 0;

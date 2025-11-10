@@ -10,10 +10,10 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "BaseGameplayTags.h"
+#include "MoviePlayer.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Player/PCPlayerCharacter.h"
@@ -29,6 +29,8 @@
 #include "Shop/PCShopManager.h"
 #include "UI/GameResult/PCGameResultWidget.h"
 #include "UI/Item/PCPlayerInventoryWidget.h"
+#include "UI/Loading/PCLoadingWidget.h"
+#include "UI/PlayerMainWidget/PCLeaderBoardWidget.h"
 #include "UI/PlayerMainWidget/PCPlayerMainWidget.h"
 #include "UI/Shop/PCShopWidget.h"
 #include "UI/Synerge/PCSynergyPanelWidget.h"
@@ -73,26 +75,6 @@ void APCCombatPlayerController::Client_RequestIdentity_Implementation()
 	}
 }
 
-// void APCCombatPlayerController::Client_RequestIdentity()
-// {
-// 	// 플레이어 아이디 셋팅
-// 	if (UProfileSubsystem* Profile = GetGameInstance()->GetSubsystem<UProfileSubsystem>())
-// 	{
-// 		const FString Name = Profile->GetUserID();
-// 		const FGuid Uuid = Profile->GetSessionID();
-//
-// 		UE_LOG(LogTemp, Warning, TEXT("[Profile] ProfileName : %s " ), *Name)
-// 		if (!Name.IsEmpty())
-// 		{
-// 			if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
-// 			{
-// 				PCPlayerState->LocalUserId = Name;
-// 			}
-// 			ServerSubmitIdentity(Name, Uuid);
-// 		}
-// 	}
-// }
-
 void APCCombatPlayerController::ServerSubmitIdentity_Implementation(const FString& InDisplayName, const FGuid& InSessionID)
 {
 	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
@@ -116,8 +98,6 @@ void APCCombatPlayerController::SetupInputComponent()
 	{
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Started, this, &APCCombatPlayerController::OnInputStarted);
 		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Triggered, this, &APCCombatPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(PlayerInputData->SetDestination, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnSetDestinationReleased);
 
 		EnhancedInputComponent->BindAction(PlayerInputData->BuyXP, ETriggerEvent::Started, this, &APCCombatPlayerController::OnBuyXPStarted);
 		EnhancedInputComponent->BindAction(PlayerInputData->ShopRefresh, ETriggerEvent::Started, this, &APCCombatPlayerController::OnShopRefreshStarted);
@@ -136,37 +116,32 @@ void APCCombatPlayerController::SetupInputComponent()
 void APCCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-		
-	ApplyGameInputMode();
 
-	if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
+	if (IsLocalController())
 	{
-		PCGameState->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::TryInitWidgetWithGameState);
-		PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
-	}
-	else
-	{
-		// 안전책: 월드 틱 이후 GameState를 다시 확인
-		GetWorldTimerManager().SetTimerForNextTick([this]()
+		PlayBGM();		
+		ApplyGameInputMode();
+
+		if (APCCombatGameState* PCGameState = GetWorld()->GetGameState<APCCombatGameState>())
 		{
-			if (APCCombatGameState* GS2 = GetWorld()->GetGameState<APCCombatGameState>())
-			{
-				GS2->OnLeaderBoardReady.AddUObject(this, &APCCombatPlayerController::LoadMainWidget);
-			}
-		});
+			PCGameState->OnGameStateTagChanged.AddUObject(this, &APCCombatPlayerController::CancelDrag);
+		}
+
+		// 마우스 호버 풀링함수
+		const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
+		GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
+
+		if (!IsLocalController()) return;
+		
+		ShowLoadingUI();
 	}
-
-	// 마우스 호버 풀링함수
-	const float Interval = (HoverPollHz > 0.f) ? 1.f / HoverPollHz : 0.066f;
-	GetWorldTimerManager().SetTimer(ThHoverPoll, this, &ThisClass::PollHover, Interval, true, 0.1f);
-
-	LoadMainWidget();
-	
 }
 
 void APCCombatPlayerController::BeginPlayingState()
 {
 	Super::BeginPlayingState();
+
+	if (!IsLocalController()) return;
 	
 	// 1) 입력 모드 게임용으로 재설정
 	ApplyGameInputMode();
@@ -190,12 +165,45 @@ void APCCombatPlayerController::BeginPlayingState()
 			/*From*/1.f, /*To*/0.f, /*Duration*/0.001f,
 			FLinearColor::Black, /*bFadeAudio*/false, /*bHold*/false);
 	}
+
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->OnLoadingChanged.AddUObject(this, &ThisClass::OnGameLoadingChanged);
+		OnGameLoadingChanged();
+
+		FTimerHandle Th;
+		GetWorldTimerManager().SetTimer(Th, [this]()
+		{
+			if (APCCombatGameState* LGS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				static bool bPrevArmed = false;
+				if (LGS->bStepArmed && !bPrevArmed)
+				{
+					bPrevArmed = true;
+					HandlePreStartArmed();
+				}
+			}
+		}, 0.1f, true, 0.f);
+	}
+
+	StartClientBootStrap();
 }
 
+void APCCombatPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	LoadMainWidget();	
+	TryInitHUDWithPlayerState();
+
+	bPSReady = (GetPlayerState<APCPlayerState>() != nullptr);
+	bGSBound = true;
+}
 
 void APCCombatPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
+	bPawnReady = (P != nullptr);
 }
 
 void APCCombatPlayerController::OnInputStarted()
@@ -222,94 +230,61 @@ void APCCombatPlayerController::OnInputStarted()
 	}
 
 	HeroStatusWidget->HidePanel();
-	
 }
 
 void APCCombatPlayerController::OnSetDestinationTriggered()
 {
-	if (const UWorld* World = GetWorld())
-	{
-		FollowTime += World->GetDeltaSeconds();
-	}
-
 	FHitResult Hit;
 	if (bool bHitSucceeded = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
 	{
 		CachedDestination = Hit.Location;
 	}
 
+	if (!GetWorld()->GetTimerManager().IsTimerActive(MoveTimerHandle))
+	{
+		GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, &APCCombatPlayerController::UpdateMovement, 0.01f, true);
+	}
+}
+
+void APCCombatPlayerController::UpdateMovement()
+{
 	if (APawn* ControlledPawn = GetPawn())
 	{
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector Direction = CachedDestination - CurrentLocation;
-			     
-		FRotator TargetRotation = Direction.Rotation();
-		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-			     
-		ControlledPawn->SetActorRotation(NewRotation);
-
-		Server_SetRotation(CachedDestination);
-		
-		if (FollowTime > PlayerInputData->ShortPressThreshold)
+		FVector Direction = CachedDestination - ControlledPawn->GetActorLocation();
+		if (Direction.SizeSquared() < FMath::Square(100.f))
 		{
-			StopMovement();
-			Server_StopMovement();
+			GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+			return;
 		}
+
+		FVector MoveDirection = Direction.GetSafeNormal();
+		ControlledPawn->AddMovementInput(MoveDirection, 1.f);
 		
-		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-		ControlledPawn->AddMovementInput(WorldDirection, 1.f, false);
+		FRotator NewRotation = FRotator(0.f, MoveDirection.Rotation().Yaw, 0.f);
+		ControlledPawn->SetActorRotation(NewRotation);
+		Server_SetActorRotation(NewRotation);
 	}
 }
 
-void APCCombatPlayerController::OnSetDestinationReleased()
-{
-	if (FollowTime <= PlayerInputData->ShortPressThreshold && IsLocalController())
-	{
-		// StopMovement();
-		// Server_StopMovement();
-		Server_MovetoLocation(CachedDestination);
-	}
-	
-	FollowTime = 0.f;
-}
-
-void APCCombatPlayerController::Server_StopMovement_Implementation()
+void APCCombatPlayerController::Server_SetActorRotation_Implementation(FRotator NewRotation)
 {
 	if (APawn* ControlledPawn = GetPawn())
 	{
-		StopMovement();
-	}
-}
-
-void APCCombatPlayerController::Server_SetRotation_Implementation(const FVector& Destination)
-{
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector Direction = Destination - CurrentLocation;
-			     
-		FRotator TargetRotation = Direction.Rotation();
-		FRotator NewRotation = FRotator(0.0f, TargetRotation.Yaw, 0.0f);
-			     
 		ControlledPawn->SetActorRotation(NewRotation);
 	}
 }
 
-void APCCombatPlayerController::Server_MovetoLocation_Implementation(const FVector& Destination)
+void APCCombatPlayerController::Server_SetActorTransform_Implementation(FTransform NewTransform)
 {
 	if (APawn* ControlledPawn = GetPawn())
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
-		Client_MovetoLocation(Destination);
+		ControlledPawn->SetActorTransform(NewTransform);
 	}
 }
 
-void APCCombatPlayerController::Client_MovetoLocation_Implementation(const FVector& Destination)
+void APCCombatPlayerController::Client_StopMoving_Implementation()
 {
-	if (APawn* ControlledPawn = GetPawn())
-	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Destination);
-	}
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
 }
 
 void APCCombatPlayerController::OnBuyXPStarted()
@@ -326,45 +301,6 @@ void APCCombatPlayerController::OnSellUnitStarted()
 {
 	ShopRequest_SellUnit();
 }
-
-void APCCombatPlayerController::LoadShopWidget()
-{
-	if (IsLocalController())
-	{
-		if (!ShopWidgetClass) return;
-		
-		ShopWidget = CreateWidget<UPCShopWidget>(this, ShopWidgetClass);
-		if (!ShopWidget) return;
-
-		ShopRequest_ShopRefresh(0);
-
-		if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
-		{
-			ShopWidget->BindToPlayerState(PCPlayerState);
-			ShopWidget->OpenMenu();
-		}
-		else
-		{
-			// 안전책: 월드 틱 이후 GameState를 다시 확인
-			GetWorldTimerManager().SetTimerForNextTick([this]()
-			{
-				if (APCPlayerState* PCPS2 = GetPlayerState<APCPlayerState>())
-				{
-					ShopWidget->BindToPlayerState(PCPS2);
-					ShopWidget->OpenMenu();
-				}
-			});
-		}
-	}
-}
-
-// void APCCombatPlayerController::LoadMainWidget_Implementation()
-// {
-// 	if (IsLocalController())
-// 	{
-// 		EnsureMainHUDCreated();
-// 	}	
-// }
 
 void APCCombatPlayerController::LoadMainWidget()
 {
@@ -458,6 +394,7 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
+	//GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Symbol_Bruiser);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
@@ -661,11 +598,10 @@ void APCCombatPlayerController::ClientCameraSetCarousel_Implementation(APCCarous
 
 	CurrentCameraType = ECameraFocusType::Carousel;
 	CurrentCarouselSeatIndex = SeatIndex;
-	CurrentBoardSeatIndex = -1;
+	FocusedBoardSeatIndex = -1;
 
 	CarouselRing->ApplyCentralViewForSeat(this, SeatIndex, 0.f);
 	SwitchCameraWhileBlack(CarouselRing, BlendTime, 0.08f,0.15f,0.5f);
-	
 }
 
 void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
@@ -675,7 +611,6 @@ void APCCombatPlayerController::Client_ShopRequestFinished_Implementation()
 
 void APCCombatPlayerController::SetBoardSpringArmPresets()
 {
-	
 	UWorld* World = GetWorld();
 	if (!World) return;
 	for (TActorIterator<APCCombatBoard> It(World); It; ++It)
@@ -703,6 +638,7 @@ APCCombatBoard* APCCombatPlayerController::FindBoardBySeatIndex(int32 BoardSeatI
 		if (It->BoardSeatIndex == BoardSeatIndex)
 			return *It;
 	}
+	
 	return nullptr;
 }
 
@@ -761,13 +697,15 @@ void APCCombatPlayerController::ClearAllCameraTimers()
 
 void APCCombatPlayerController::EnsureScreenFade()
 {
+	if (!IsLocalController()) return;
+	
 	if (ScreenFadeWidget || !ScreenFadeClass)
 		return;
 	ScreenFadeWidget = CreateWidget<UUserWidget>(this, ScreenFadeClass);
 	if (ScreenFadeWidget)
 	{
-		ScreenFadeWidget->AddToViewport(10000);
-		ScreenFadeWidget->SetVisibility(ESlateVisibility::Hidden);
+		ScreenFadeWidget->AddToViewport(100);
+		ScreenFadeWidget->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -775,8 +713,136 @@ void APCCombatPlayerController::SetScreenFadeVisible(bool bVisible, float Opacit
 {
 	if (!ScreenFadeWidget)
 		return;
-	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Hidden);
+	ScreenFadeWidget->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	ScreenFadeWidget->SetRenderOpacity(bVisible ? Opacity : 0.f);
+}
+
+void APCCombatPlayerController::StartClientBootStrap()
+{
+	GetWorldTimerManager().SetTimer(ThBootstrapPing, this, &ThisClass::TickClientBootStrap, 0.25f, true, 0.0f);
+}
+
+void APCCombatPlayerController::TickClientBootStrap()
+{
+	APCPlayerState* PS = GetPlayerState<APCPlayerState>();
+	if (!PS || PS->LocalUserId.IsEmpty()) return;
+
+	const uint8 M = ComputeBootStrapMask();
+	Server_ReportBootStrap(PS->LocalUserId, M);	
+}
+
+void APCCombatPlayerController::Server_ReportBootStrap_Implementation(const FString& LocalUserId, uint8 Mask)
+{
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		GS->Server_UpdateBootstrap(LocalUserId,Mask);
+	}
+}
+
+void APCCombatPlayerController::OnGameLoadingChanged()
+{
+	if (!IsLocalController()) return;
+	
+	if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+	{
+		if (GS->bLoading)
+		{
+			ShowLoadingUI();
+			UpdateLoadingUI(GS->LoadingProgress, GS->LoadingDetail);
+		}
+		else
+		{
+			HideLoadingUI();
+		}
+	}
+}
+
+void APCCombatPlayerController::HandlePreStartArmed()
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->PlayFadeOut();
+	}
+
+	SetScreenFadeVisible(false, 0.f);
+
+	FTimerHandle ThAck;
+	GetWorldTimerManager().SetTimer(ThAck, [this]()
+	{
+		if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+		{
+			if (APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>())
+			{
+				GS->Server_ReportUILoadingClosed(PS->LocalUserId);
+			}
+		}
+	},1.f, false);
+}
+
+
+uint8 APCCombatPlayerController::ComputeBootStrapMask() const
+{
+	uint8 M = 0;
+	if (bPSReady)   M |= 0x01;
+	if (bPawnReady) M |= 0x02;
+	if (bUIReady)   M |= 0x04;
+	if (bGSBound)   M |= 0x08;
+	return M;
+}
+
+void APCCombatPlayerController::ShowPlayerMainUI()
+{
+	if (!IsLocalController()) return;
+
+	if (PlayerMainWidget)
+	{
+		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
+}
+
+void APCCombatPlayerController::ShowLoadingUI()
+{
+	if (!IsLocalController()) return;
+
+	// if (LoadingFakeWidget && LoadingFakeWidget->IsInViewport())
+	// {
+	// 	LoadingFakeWidget->SetVisibility(ESlateVisibility::Hidden);
+	// 	LoadingFakeWidget->RemoveFromParent();
+	// }
+
+	if (GetMoviePlayer()->IsMovieCurrentlyPlaying())
+	{
+		GetMoviePlayer()->StopMovie();
+	}
+	
+	if (!LoadingWidget && LoadingWidgetClass)
+	{
+		LoadingWidget = CreateWidget<UPCLoadingWidget>(this, LoadingWidgetClass);
+		if (LoadingWidget)
+		{
+			LoadingWidget->AddToViewport(2000);
+		}
+	}
+	if (LoadingWidget)
+	{
+		LoadingWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void APCCombatPlayerController::UpdateLoadingUI(float Pct01, const FString& Line)
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->SetProgress(Pct01, FText::FromString(Line));
+	}
+}
+
+void APCCombatPlayerController::HideLoadingUI()
+{
+	if (LoadingWidget)
+	{
+		LoadingWidget->RemoveFromParent();
+	}
 }
 
 void APCCombatPlayerController::EnsureMainHUDCreated()
@@ -787,88 +853,32 @@ void APCCombatPlayerController::EnsureMainHUDCreated()
 	// 이미 있으면 보장만
 	if (!IsValid(PlayerMainWidget))
 	{
+		EnsureScreenFade();
+		SetScreenFadeVisible(true,1);
 		PlayerMainWidget = CreateWidget<UPCPlayerMainWidget>(this, PlayerMainWidgetClass);
 		if (!PlayerMainWidget) { UE_LOG(LogTemp, Warning, TEXT("CreateWidget failed")); return; }
 
 		// 뷰포트에 항상 붙여둔다 (단 1회)
 		PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
-		
 	}
 	else
 	{
-		// 재보장: 뷰포트에 없으면 붙이고, 바인딩 최신화
+		// 재보장
 		if (!PlayerMainWidget->IsInViewport())
 			PlayerMainWidget->AddToViewport();
 		ShopWidget = PlayerMainWidget->GetShopWidget();
 	}
 }
 
-// void APCCombatPlayerController::TryInitHUDWithPlayerState_Implementation()
-// {
-// 	if (PlayerMainWidget)
-// 	{
-// 		PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-// 		APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
-//
-// 		if (!PCPlayerState)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerState is NULL"));
-// 			return;
-// 		}
-// 		
-// 		UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
-// 		UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
-// 		UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
-// 		UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
-//
-// 		if (!SynergyComp)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyComponent is NULL (PlayerState=%s)"), *PCPlayerState->GetName());
-// 			return;
-// 		}
-// 	
-// 		if (!ShopWidgetRef)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
-// 			return;
-// 		}
-// 		ShopWidgetRef->BindToPlayerState(PCPlayerState);
-// 		ShopWidgetRef->InitWithPC(this);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
-//
-// 		if (!InventoryWidget)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
-// 			return;
-// 		}
-// 		InventoryWidget->BindToPlayerState(PCPlayerState);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
-//
-// 		if (!SynergyWidget)
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("[UIBind] SynergyWidget is NULL"));
-// 			return;
-// 		}
-// 		SynergyWidget->SynergyComponentBinding(SynergyComp);
-// 		UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
-// 	}
-// 	else
-// 	{
-// 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
-// 	}
-// }
-
-
 void APCCombatPlayerController::TryInitHUDWithPlayerState()
 {
-	if (!IsLocalController() && PlayerMainWidget) 
+	if (!IsLocalController() || !PlayerMainWidget) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] PlayerMainWidget is NULL"));
 		return;
 	}
 	
-	PlayerMainWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>();
 
 	if (!PCPlayerState)
@@ -878,8 +888,7 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("[PlayerID] PlayerID is %s"), *PCPlayerState->LocalUserId)
-		
-	UPCShopWidget* ShopWidgetRef = PlayerMainWidget->GetShopWidget();
+	
 	UPCPlayerInventoryWidget* InventoryWidget = PlayerMainWidget->GetInventoryWidget();
 	UPCSynergyPanelWidget* SynergyWidget = PlayerMainWidget->GetSynergyWidget();
 	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
@@ -890,13 +899,13 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		return;
 	}
 	
-	if (!ShopWidgetRef)
+	if (!ShopWidget)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] ShopWidget is NULL"));
 		return;
 	}
-	ShopWidgetRef->BindToPlayerState(PCPlayerState);
-	ShopWidgetRef->InitWithPC(this);
+	ShopWidget->BindToPlayerState(PCPlayerState);
+	ShopWidget->InitWithPC(this);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] ShopWidget bound OK"));
 
 	if (!InventoryWidget)
@@ -904,7 +913,7 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 		UE_LOG(LogTemp, Warning, TEXT("[UIBind] InventoryWidget is NULL"));
 		return;
 	}
-	InventoryWidget->BindToPlayerState(PCPlayerState);
+	InventoryWidget->BindToPlayerState(PCPlayerState, true);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] InventoryWidget bound OK"));
 
 	if (!SynergyWidget)
@@ -915,11 +924,12 @@ void APCCombatPlayerController::TryInitHUDWithPlayerState()
 	SynergyWidget->SynergyComponentBinding(SynergyComp);
 	UE_LOG(LogTemp, Log, TEXT("[UIBind] SynergyWidget bound OK"));
 
+	bUIReady = true;
 }
 
-void APCCombatPlayerController::TryInitWidgetWithGameState()
+void APCCombatPlayerController::TryInitWidgetWithGameState_Implementation()
 {
-	if (!IsLocalController() && PlayerMainWidget) return;
+	if (!IsLocalController() || !PlayerMainWidget) return;
 
 	if (APCCombatGameState* CombatGameState = GetWorld()->GetGameState<APCCombatGameState>())
 	{
@@ -927,16 +937,7 @@ void APCCombatPlayerController::TryInitWidgetWithGameState()
 	}
 }
 
-void APCCombatPlayerController::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
-	TryInitHUDWithPlayerState();
-	//Client_RequestIdentity();
-
-	
-}
-
-void APCCombatPlayerController::ShowWidget()
+void APCCombatPlayerController::ShowShopWidget()
 {
 	if (!IsLocalController() || !IsValid(PlayerMainWidget))
 		return;
@@ -952,12 +953,24 @@ void APCCombatPlayerController::ShowWidget()
 	ShopWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
-void APCCombatPlayerController::HideWidget()
+void APCCombatPlayerController::HideShopWidget()
 {
 	if (!IsLocalController() || !IsValid(PlayerMainWidget))
 		return;
 
 	PlayerMainWidget->SetShopWidgetVisible(false);
+}
+
+void APCCombatPlayerController::Client_ShowPlayerMainWidget_Implementation()
+{
+	ShowPlayerMainUI();
+}
+
+void APCCombatPlayerController::Client_PlaceFX_Implementation(UNiagaraSystem* System, FVector Location,
+	FRotator Rotation)
+{
+	if (!System) return;
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),System, Location, Rotation, FVector(0.8f), true, true, ENCPoolMethod::AutoRelease);
 }
 
 void APCCombatPlayerController::ApplyGameInputMode()
@@ -975,14 +988,14 @@ void APCCombatPlayerController::ApplyGameInputMode()
 }
 
 
-void APCCombatPlayerController::Client_ShowWidget_Implementation()
+void APCCombatPlayerController::Client_ShowShopWidget_Implementation()
 {
-	ShowWidget();
+	ShowShopWidget();
 }
 
-void APCCombatPlayerController::Client_HideWidget_Implementation()
+void APCCombatPlayerController::Client_HideShopWidget_Implementation()
 {
-	HideWidget();
+	HideShopWidget();
 }
 
 void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InHomeBoardIdx)
@@ -994,12 +1007,13 @@ void APCCombatPlayerController::ClientSetHomeBoardIndex_Implementation(int32 InH
 	HomeBoardSeatIndex = InHomeBoardIdx;
 	SetBoardSpringArmPresets();
 	bBoardPresetInitialized = true;
+	
 }
 
 void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32 BoardSeatIndex,
-	bool bBattle, float Blend)
+	float Blend)
 {
-	if (CurrentCameraType == ECameraFocusType::Board && CurrentBoardSeatIndex == BoardSeatIndex)
+	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
 		return;
 
 	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
@@ -1007,15 +1021,16 @@ void APCCombatPlayerController::ClientFocusBoardBySeatIndex_Implementation(int32
 		return;
 
 	CurrentCameraType     = ECameraFocusType::Board;
-	CurrentBoardSeatIndex = BoardSeatIndex;
+	FocusedBoardSeatIndex = BoardSeatIndex;
 	CurrentCarouselSeatIndex = -1;
 
 	SwitchCameraWhileBlack(CombatBoard, Blend,0.08f, 0.15f, 0.5f);
 }
 
-
 void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 {
+	CancelDragServer();
+	
 	if (!IsLocalController())
 		return;
 
@@ -1040,11 +1055,22 @@ void APCCombatPlayerController::CancelDrag(const FGameplayTag& GameStateTag)
 	{
 		DragComponent->HideGhost();
 	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
 	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
+}
+
+void APCCombatPlayerController::CancelDragServer_Implementation()
+{
+	bIsCancel = true;
+	
+	if (CurrentDragUnit.IsValid())
+	{
+		if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(CurrentDragUnit.Get()))
+		{
+			HeroUnit->ActionDrag(false);
+		}
+		CurrentDragUnit = nullptr;
+		CurrentDragId = 0;
+	}
 }
 
 void APCCombatPlayerController::OnMouse_Pressed()
@@ -1054,7 +1080,6 @@ void APCCombatPlayerController::OnMouse_Pressed()
 		if (DragComponent)
 			DragComponent->OnMouse_Pressed(this);
 	}
-	
 }
 
 void APCCombatPlayerController::OnMouse_Released()
@@ -1078,6 +1103,8 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 {
 	auto* GS = GetWorld()->GetGameState<APCCombatGameState>();
 	const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+
+	bIsCancel = false;
 
 	APCPlayerBoard* PB = GetPlayerBoard();
 	if (!IsValid(PB))
@@ -1124,7 +1151,8 @@ void APCCombatPlayerController::Server_StartDragFromWorld_Implementation(FVector
 	if (APCHeroUnitCharacter* PreviewUnit = Cast<APCHeroUnitCharacter>(Unit))
 	{		
 		Client_DragConfirm(true, DragId, Snap, PreviewUnit);
-		Client_CurrentDragUnit(Unit);
+		Client_CurrentDragUnit(PreviewUnit);
+		PreviewUnit->ActionDrag(true);
 	}
 	else
 	{
@@ -1136,6 +1164,17 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 {
 	APCCombatGameState* GS = GetWorld()->GetGameState<APCCombatGameState>();
     const bool bInBattle = GS && IsBattleTag(GS->GetGameStateTag());
+
+	if (bIsCancel)
+		return;
+
+	if (CurrentDragUnit.Get())
+	{
+		if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(CurrentDragUnit))
+		{
+			HeroUnit->ActionDrag(false);
+		}
+	}
 
     // 드래그 유효성
     if (DragId != CurrentDragId || !CurrentDragUnit.IsValid())
@@ -1193,6 +1232,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
     // 출발지 정보
     const FIntPoint SrcGrid  = PB->GetFieldUnitGridPoint(Unit);
+	const int32 SrcIndex = PB->GetFieldUnitIndex(Unit);
     const bool      bSrcField= (SrcGrid != FIntPoint::NoneValue);
     const int32     SrcBench = bSrcField ? INDEX_NONE : PB->GetBenchUnitIndex(Unit);
 
@@ -1212,7 +1252,7 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
     	
     	if (bSrcField)
     	{
-    		PB->RemoveFromField(SrcGrid.X, SrcGrid.Y);
+    		PB->RemoveFromField(SrcIndex);
     	}
     	else if (SrcBench != INDEX_NONE)
     	{
@@ -1241,7 +1281,6 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
 
         if (bPlaced)
         {
-            Multicast_LerpMove(Unit, Snap, LerpDuration);
             Client_DragEndResult(true, Snap, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else
@@ -1263,24 +1302,8 @@ void APCCombatPlayerController::Server_EndDrag_Implementation(FVector World, int
             bDstField ? PB->GetFieldWorldPos(Y, X)
                       : PB->GetBenchWorldPos(BenchIdx);
 
-        // 스왑 수행
-        const FIntPoint SrcGridForOther = PB->GetFieldUnitGridPoint(Unit);
-        const int32     SrcBenchForOther= PB->GetBenchUnitIndex(Unit);
-
         if (PB->Swap(Unit, DstUnit))
         {
-            // 상대 유닛의 목적지 = Unit의 원래 자리
-            FVector OtherDest = FVector::ZeroVector;
-            if (SrcGridForOther != FIntPoint::NoneValue)
-                OtherDest = PB->GetFieldWorldPos(SrcGridForOther.X, SrcGridForOther.Y);
-            else if (SrcBenchForOther != INDEX_NONE)
-                OtherDest = PB->GetBenchWorldPos(SrcBenchForOther);
-
-            // 비주얼 이동
-            Multicast_LerpMove(Unit,    UnitDest,  LerpDuration);
-            if (!OtherDest.IsNearlyZero())
-                Multicast_LerpMove(DstUnit, OtherDest, LerpDuration);
-
             Client_DragEndResult(true, UnitDest, DragId, Cast<APCHeroUnitCharacter>(Unit));
         }
         else
@@ -1311,7 +1334,7 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 	
 	if (bOk && PreviewHero)
 	{
-		PreviewHero->ActionDrag(bOk);
+		//PreviewHero->ActionDrag(bOk);
 		
 		if (APCPlayerBoard* PlayerBoard = GetLocalPlayerBoard())
 		{
@@ -1327,8 +1350,6 @@ void APCCombatPlayerController::Client_DragConfirm_Implementation(bool bOk, int3
 			CachedPreviewUnit = PreviewHero;
 		}
 	}
-	
-	
 }
 
 void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit)
@@ -1363,16 +1384,7 @@ void APCCombatPlayerController::Client_DragEndResult_Implementation(bool bSucces
 	{
 		DragComponent->OnServerDragEndResult(bSuccess, FinalSnap, DragId, PreviewUnit);
 	}
-
-	if (PreviewUnit)
-	{
-		PreviewUnit->ActionDrag(false);
-	}
-
-	if (!CachedPreviewUnit.IsValid()) return;
 	
-	CachedPreviewUnit->ActionDrag(false);
-	CachedPreviewUnit = nullptr;
 }
 
 bool APCCombatPlayerController::CanControlUnit(const APCBaseUnitCharacter* Unit) const
@@ -1398,7 +1410,6 @@ void APCCombatPlayerController::Multicast_LerpMove_Implementation(APCBaseUnitCha
 	}
 }
 
-
 UPCTileManager* APCCombatPlayerController::GetTileManager() const
 {
 	auto* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>(): nullptr;
@@ -1407,12 +1418,6 @@ UPCTileManager* APCCombatPlayerController::GetTileManager() const
 	if (!GS || !PS) return nullptr;
 
 	const FGameplayTag Cur = GS->GetGameStateTag();
-
-	if (IsBattleTag(Cur))
-	{
-		if (UPCTileManager* BattleTM = GS->GetBattleTileManagerForSeat(PS->SeatIndex))
-			return BattleTM;
-	}
 
 	if (APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex))
 		return Board->TileManager;
@@ -1605,7 +1610,6 @@ void APCCombatPlayerController::Client_TileHoverUnit_Implementation(APCBaseUnitC
 		CachedHoverUnit = nullptr;
 		ClearHoverHighLight();
 	}
-	
 }
 
 void APCCombatPlayerController::Client_LoadGameResultWidget_Implementation(int32 Ranking)
@@ -1632,3 +1636,112 @@ void APCCombatPlayerController::OnResultMenuToggled()
 		GameResultWidget->OpenMenu();
 	}
 }
+
+void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
+{
+	if (IsLocalController())
+	{
+		PlayerEndPatrol();
+	}
+}
+
+void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState)
+{
+	if (!OnPatrolPlayerState || !IsLocalController()) return;
+
+	// 정찰 대상이 죽었거나 Carousel에 있으면 정찰 불가능
+	if (OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Dead
+		|| OnPatrolPlayerState->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Carousel)
+		return;
+
+	// 정찰 대상이 본인이면 정찰 종료
+	if (GetPlayerState<APCPlayerState>() == OnPatrolPlayerState)
+	{
+		PlayerEndPatrol();
+		return;
+	}
+
+	HideShopWidget();
+	PatrolWidgetChange(OnPatrolPlayerState, false);
+	PatrolTransformChange(OnPatrolPlayerState, false);
+}
+
+void APCCombatPlayerController::PlayerEndPatrol()
+{
+	if (!IsLocalController()) return;
+	
+	auto PS = GetPlayerState<APCPlayerState>();
+	if (!PS) return;
+	
+	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
+	ShowShopWidget();
+	PatrolWidgetChange(PS, true);
+	PatrolTransformChange(PS, true);
+}
+
+void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
+{
+	if (!OnPatrolPlayerState || !IsLocalController()) return;
+	
+	// 정찰 중인 플레이어 Row 위젯 강조
+	if (auto LeaderBoardWidget = PlayerMainWidget->GetLeaderBoardWidget())
+	{
+		LeaderBoardWidget->ExpandPlayerRowWidget(OnPatrolPlayerState->LocalUserId);
+	}
+
+	// 정찰 중인 플레이어 인벤토리 확인
+	if (auto InventoryWidget = PlayerMainWidget->GetInventoryWidget())
+	{
+		InventoryWidget->BindToPlayerState(OnPatrolPlayerState, IsOwner);
+	}
+
+	// 정찰 중인 플레이어 시너지 확인
+	if (auto SynergyWidget = PlayerMainWidget->GetSynergyWidget())
+	{
+		SynergyWidget->SynergyComponentBinding(OnPatrolPlayerState->GetSynergyComponent());
+	}
+}
+
+void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol)
+{
+	if (!OnPatrolPlayerState || !IsLocalController()) return;
+	
+	auto BoardSeatIndex = OnPatrolPlayerState->GetCurrentSeatIndex();
+	
+	// 정찰 대상이 현재 보고있는 보드 위에 있으면 캐릭터 이동 X
+	if (CurrentCameraType == ECameraFocusType::Board && FocusedBoardSeatIndex == BoardSeatIndex)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+		return;
+	}
+
+	APCCombatBoard* CombatBoard = FindBoardBySeatIndex(BoardSeatIndex);
+	if (!CombatBoard) return;
+	
+	FocusedBoardSeatIndex = BoardSeatIndex;
+	SetViewTarget(CombatBoard);
+	
+	// GameMode가 위치 조정하는 경우가 아닐 때만 이동
+	if (!IsPlayerEndPatrol)
+	{
+		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
+	}
+	else
+	{
+		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
+	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+}
+
+void APCCombatPlayerController::PlayBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (!BGMComponent && GameBGM)
+	{
+		BGMComponent = UGameplayStatics::SpawnSound2D(this, GameBGM);
+	}
+}
+
+

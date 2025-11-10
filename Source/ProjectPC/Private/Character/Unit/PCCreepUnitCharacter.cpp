@@ -75,10 +75,14 @@ void APCCreepUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 void APCCreepUnitCharacter::Die()
 {
-	if (auto ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
+	if (!bIsDead)
 	{
-		ItemSpawnSubsystem->SpawnItemCapsule(GetActorTransform(), GetTeamIndex() - 50);
+		if (auto ItemSpawnSubsystem = GetWorld()->GetSubsystem<UPCItemSpawnSubsystem>())
+		{
+			ItemSpawnSubsystem->SpawnItemCapsule(GetActorTransform(), GetTeamIndex() - 50);
+		}
 	}
+	
 	
 	Super::Die();
 }

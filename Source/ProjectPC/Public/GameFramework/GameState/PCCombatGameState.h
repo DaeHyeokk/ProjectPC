@@ -11,13 +11,13 @@
 #include "GameFramework/PlayerState/PCLevelMaxXPData.h"
 #include "PCCombatGameState.generated.h"
 
-class APCItemCapsule;
-class UAbilitySystemComponent;
-class APCUnitCombatTextActor;
-class UPCTileManager;
 class APCCombatBoard;
-class UPCShopManager;
+class APCItemCapsule;
 class APCPlayerState;
+class APCUnitCombatTextActor;
+class UAbilitySystemComponent;
+class UPCTileManager;
+class UPCShopManager;
 
 USTRUCT(BlueprintType)
 struct FSpawnSubsystemConfig
@@ -52,9 +52,42 @@ struct FSpawnSubsystemConfig
 	UPROPERTY(EditAnywhere, Category="Spawner|CarouselHero")
 	TSoftClassPtr<class APCCarouselHeroCharacter> DefaultCarouselHeroClass;
 
+	UPROPERTY(EditAnywhere, Category="Spawner|PreloadActor")
+	TSoftClassPtr<class APCPreloadHeroActor> DefaultPreloadActorClass;
+
 	UPROPERTY(EditAnywhere, Category="Spawner|OutlineMaterial")
 	TSoftObjectPtr<UMaterialInterface> DefaultOutlineMaterial;
 };
+
+// 로딩 상태 변경 델리게이트
+DECLARE_MULTICAST_DELEGATE(FOnLoadingChanged);
+
+// 개별 클라 부트스트랩 플래그(서버 전용, 비복제)
+USTRUCT()
+struct FBootstrapFlags
+{
+	GENERATED_BODY()
+	// bitmask: 1=PS, 2=Pawn, 4=UI, 8=GS
+	UPROPERTY() uint8 Mask = 0;
+	UPROPERTY() double LastUpdate = 0.0;
+
+	bool HasPS()   const { return (Mask & 0x01) != 0; }
+	bool HasPawn() const { return (Mask & 0x02) != 0; }
+	bool HasUI()   const { return (Mask & 0x04) != 0; }
+	bool HasGS()   const { return (Mask & 0x08) != 0; }
+	bool All()     const { return (Mask & 0x0F) == 0x0F; }
+};
+
+// === UI 닫힘 ACK 집계(서버 전용) ===
+USTRUCT()
+struct FUILoadingFlags
+{
+	GENERATED_BODY()
+	UPROPERTY() bool bClosed = false;
+	UPROPERTY() double LastUpdate = 0.0;
+};
+
+
 
 USTRUCT(BlueprintType)
 struct FStageRuntimeState
@@ -95,6 +128,10 @@ struct FPlayerStandingRow
 	/** 플레이어ID 식별자 */
 	UPROPERTY(BlueprintReadOnly)
 	FString LocalUserId;
+
+	// 카메라 전환용 SeatIndex
+	UPROPERTY(BlueprintReadOnly)
+	int32 PlayerSeatIndex = -1;
 	
 	/** 최신 HP (실시간) */
 	UPROPERTY(BlueprintReadOnly)
@@ -141,10 +178,12 @@ DECLARE_MULTICAST_DELEGATE(FOnRoundsLayoutChanged);
 // Leaderboard 맵 델리게이트
 using FLeaderBoardMap = TMap<FString, FPlayerStandingRow>;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardMapUpdatedNative, const FLeaderBoardMap&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLeaderboardPlayerRankingChanged, const TArray<FString>&);
 DECLARE_MULTICAST_DELEGATE(FOnLeaderBoardReadyNative);
 
 // Carousel 전용 델리게이트
 DECLARE_MULTICAST_DELEGATE(FOnCarouselGetScheduleChanged);
+
 /**
  * 
  */
@@ -155,17 +194,14 @@ class PROJECTPC_API APCCombatGameState : public AGameStateBase, public IGameplay
 
 public:
 	APCCombatGameState();
-	
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 #pragma region GameLogic
-	
-	// 전체 게임 로직 관련 코드
-public:
 
+public:
 	// SeatIndex -> Board
 	UPROPERTY(Replicated)
 	TArray<APCCombatBoard*> SeatToBoard;
@@ -185,19 +221,79 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage")
 	const FStageRuntimeState& GetStageRunTime() const { return StageRuntimeState;}
-
-	UPCTileManager* GetBattleTileManagerForSeat(int32 SeatIdx) const;
-	APCCombatBoard* GetBattleBoardForSeat(int32 SeatIdx) const;
-
 	
+	// GoldDisplay Multicast
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastUpdateGoldDisplay(int32 SeatIndex, int32 NewGold);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSetEnemyGoldOnHost(int32 HostSeat, int32 EnemyGold);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastClearEnemyGoldOnHost(int32 HostSeat);
+
+private:
+	APCPlayerState* FindPCPlayerStateBySeat(int32 SeatIndex) const;
+	
 #pragma endregion GameLogic
 
+#pragma region Loading
+
+public:
+	// 점유 로딩 상태
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	bool bLoading = false;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	float LoadingProgress = 0.f;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Loading)
+	FString LoadingDetail;
+
+	// 시작 예고 신호
+	UPROPERTY(Replicated)
+	bool bStepArmed = false;
+
+	// 서버 월드시간
+	UPROPERTY(Replicated)
+	double StepArmTimeWS = 0.0;
+
+	void ArmStepStart(double InServerWorldStartTime);
+
+	
+	void SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail);
+
+	UFUNCTION()
+	void OnRep_Loading();
+
+	FOnLoadingChanged OnLoadingChanged;
+
+	// 클라 ACK 집계 (서버전용)
+	// 로컬 유저 ID로 클라 UI 동기화 체크
+	TMap<FString, FBootstrapFlags> BootstrapById;
+
+	// 동시시작용 Map
+	TMap<FString, FUILoadingFlags> UILoadingById;
+
+	UFUNCTION(Server, Reliable)
+	void Server_ReportUILoadingClosed(const FString& LocalUserId);
+
+	bool AreAllLoadingUIClosed(int32& OutReady, int32& OutTotal) const;
+
+	// 서버 : 수신 갱신
+	void Server_UpdateBootstrap(const FString& LocalUserId, uint8 Mask);
+
+	// 서버 : 모든 플레이어(관전자 제외) UI 준비 여부
+	bool AreAllClientsBootstrapped(int32& OutReady, int32& OutTotal) const;
+
+	// 유틸 : 현재 집계 비율 ( 0 ~ 1 )
+	float ClientBootstrapRatio() const;
+	
+#pragma endregion Loading
+	
 #pragma region UI
 
 public:
-
 	// UI에서 바인딩할 값들
 	UFUNCTION(BlueprintPure)
 	float GetStageRemainingSeconds() const;
@@ -236,11 +332,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Stage|LayOut")
 	int32 StagesStartFlatIndex(int32 StageIdx) const;
-
 	
 	UPROPERTY(ReplicatedUsing=OnRep_RoundsLayout, BlueprintReadOnly, Category = "Stage|Layout")
 	TArray<FGameplayTag> RoundPvETagFlat;
-		
 	
 	FOnStageRuntimeChanged OnStageRuntimeChanged;
 	FOnGameStateTagChanged OnGameStateTagChanged;
@@ -274,9 +368,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool WasRoundDraw(int32 StageIdx, int32 RoundIdx) const;
 	
-	
 protected:
-	
 	UFUNCTION()
 	void OnRep_StageRunTime();
 
@@ -292,37 +384,7 @@ protected:
 
 	int32 TotalRoundsFloat() const;
 
-	
 #pragma endregion UI
-	
-#pragma region Shop
-	
-protected:
-	UPROPERTY(VisibleDefaultsOnly, Category = "ShopManager")
-	UPCShopManager* ShopManager;
-
-public:
-	// GameState 생성자에서 생성하므로, ShopManager가 nullptr인 경우 바로 크래시
-	// => 즉 GetShopManager()가 nullptr을 반환할 일은 없음
-	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
-
-#pragma endregion Shop
-
-#pragma region Attribute
-	
-protected:
-	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
-	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
-	UDataTable* LevelMaxXPDataTable;
-
-private:
-	// 실제로 DataTable에서 가져온 정보를 저장할 배열
-	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
-
-public:
-	int32 GetMaxXP(int32 PlayerLevel) const;
-
-#pragma endregion Attribute
 
 #pragma region Unit
 	
@@ -367,50 +429,13 @@ public:
 	void Test_StartCombat() { SetGameStateTag(GameStateTags::Game_State_Combat_Active); }
 
 #pragma endregion Combat
-	
-#pragma region ObjectPool
-
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
-	UPCDataAsset_ProjectilePoolData* ProjectilePoolData;
-
-	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
-	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
-	
-#pragma endregion ObjectPool
-	
-#pragma region TemplateFunc
-	
-private:
-	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
-	template<typename T>
-	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
-	{
-		if (DataTable == nullptr) return;
-		OutDataList.Reset();
-
-		TArray<T*> RowPtrs;
-		DataTable->GetAllRows(Context, RowPtrs);
-
-		// DataTable의 Row수만큼 메모리 미리 확보
-		OutDataList.Reserve(RowPtrs.Num());
-		for (const auto Row : RowPtrs)
-		{
-			if (Row)
-			{
-				OutDataList.Add(*Row);
-			}
-		}
-	}
-
-#pragma endregion TemplateFunc
 
 #pragma region Ranking
 
 public:
-
 	FOnLeaderboardMapUpdatedNative OnLeaderboardMapUpdated;
 	FOnLeaderBoardReadyNative OnLeaderBoardReady;
+	FOnLeaderboardPlayerRankingChanged OnPlayerRankingChanged;
 	
 	// UI에 뿌릴 최종 배열
 	UPROPERTY(ReplicatedUsing=OnRep_LeaderBoard, BlueprintReadOnly, Category = "Ranking")
@@ -456,13 +481,19 @@ protected:
 	void OnEliminated_Server(APCPlayerState* PCPlayerState);
 
 	// 리더보드 재구성, 마지막 1인 1등 처리
-	
 	void TryFinalizeLastSurvivor();
+
+	// 로컬 UserID로 플레이어스테이트 찾기
+	UFUNCTION()
+	APCPlayerState* FindPlayerStateByUserId(const FString& LocalUserId) const;
+
+	// 순위대로 PS 뽑기
+	UFUNCTION(BlueprintCallable, Category = "Leaderboard")
+	void GetPlayerStatesOrdered();
 
 	// 위젯 갱신
 	UFUNCTION()
 	void OnRep_Leaderboard();
-
 	
 	FLeaderBoardMap CachedLeaderBoardMap;
 
@@ -473,6 +504,12 @@ protected:
 
 	void BroadCastLeaderboardMap();
 
+	// TArray<APCPlayerState*> FindPlayerStates;
+
+	TArray<FString> PlayerRanking;
+
+public:
+	const TArray<FString>& GetPlayerRanking() { return PlayerRanking; };
 
 private:
 
@@ -502,16 +539,56 @@ public:
 	
 #pragma endregion Ranking
 
+#pragma region Shop
+	
+protected:
+	UPROPERTY(VisibleDefaultsOnly, Category = "ShopManager")
+	UPCShopManager* ShopManager;
+
+public:
+	// GameState 생성자에서 생성하므로, ShopManager가 nullptr인 경우 바로 크래시
+	// => 즉 GetShopManager()가 nullptr을 반환할 일은 없음
+	FORCEINLINE UPCShopManager* GetShopManager() const { return ShopManager; }
+
+#pragma endregion Shop
+
+#pragma region PlayerAttribute
+	
+protected:
+	// 플레이어 레벨 별 MaxXP 정보가 담긴 DataTable
+	UPROPERTY(EditAnywhere, Category = "DataTable|Player")
+	TObjectPtr<UDataTable> LevelMaxXPDataTable;
+
+private:
+	// 실제로 DataTable에서 가져온 정보를 저장할 배열
+	TArray<FPCLevelMaxXPData> LevelMaxXPDataList;
+
+public:
+	int32 GetMaxXP(int32 PlayerLevel) const;
+
+#pragma endregion PlayerAttribute
+
+#pragma region ObjectPool
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "ObjectPool")
+	TObjectPtr<UPCDataAsset_ProjectilePoolData> ProjectilePoolData;
+
+	UPROPERTY(EditDefaultsOnly, Category="ObjectPool")
+	TSoftClassPtr<APCUnitCombatTextActor> CombatTextClass;
+	
+#pragma endregion ObjectPool
+
 #pragma region Item
 
 protected:
 	// 아이템 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemDataTable;
+	TObjectPtr<UDataTable> ItemDataTable;
 
 	// 아이템 조합 데이터가 저장된 DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Item")
-	UDataTable* ItemCombineDataTable;
+	TObjectPtr<UDataTable> ItemCombineDataTable;
 
 	// 아이템 캡슐 블루프린트 클래스
 	UPROPERTY(EditAnywhere, Category = "ItemCapsuleClass")
@@ -519,5 +596,29 @@ protected:
 	
 #pragma endregion Item
 
+#pragma region TemplateFunc
+	
+private:
+	// DataTable을 읽어 아웃파라미터로 TArray에 값을 넘기는 템플릿 함수
+	template<typename T>
+	void LoadDataTable(UDataTable* DataTable, TArray<T>& OutDataList, const FString& Context)
+	{
+		if (DataTable == nullptr) return;
+		OutDataList.Reset();
 
+		TArray<T*> RowPtrs;
+		DataTable->GetAllRows(Context, RowPtrs);
+
+		// DataTable의 Row수만큼 메모리 미리 확보
+		OutDataList.Reserve(RowPtrs.Num());
+		for (const auto Row : RowPtrs)
+		{
+			if (Row)
+			{
+				OutDataList.Add(*Row);
+			}
+		}
+	}
+
+#pragma endregion TemplateFunc
 };

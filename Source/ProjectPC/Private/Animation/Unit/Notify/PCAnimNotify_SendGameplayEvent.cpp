@@ -3,6 +3,8 @@
 
 #include "Animation/Unit/Notify/PCAnimNotify_SendGameplayEvent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbilityTypes.h"
 
 
@@ -23,6 +25,9 @@ void UPCAnimNotify_SendGameplayEvent::Notify(USkeletalMeshComponent* MeshComp, U
 	Payload.Instigator     = Owner;
 	Payload.Target         = Owner;
 
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, EventTag, Payload);
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Owner))
+	{
+		ASC->HandleGameplayEvent(EventTag, &Payload);
+	}
 }
 	

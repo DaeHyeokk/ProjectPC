@@ -64,6 +64,7 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 	const int8 Range = static_cast<int8>(AttrSet->GetAttackRange());
 	
 	const FIntPoint StartPoint = Board->GetFieldUnitPoint(OwnerUnit);
+	
 	if (StartPoint == FIntPoint::NoneValue)
 	{
 		ClearTargetActorKey(BB);
@@ -90,6 +91,7 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 
 		const FIntPoint HerePoint = HereData.GridPoint;
 		const int8 HereDist = HereData.Dist;
+		
 		APCBaseUnitCharacter* HereUnit = Board->GetUnitAt(HerePoint.Y, HerePoint.X);
 
 		// 현재 유닛이 유효하고, 자기 자신이 아니며, 사거리 내에 있고, 적일 경우
@@ -109,6 +111,7 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 		for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(HerePoint.Y % 2 == 0))
 		{
 			const FIntPoint NextPoint = HerePoint + Dir;
+			
 			
 			// 다음 탐색 좌표가 보드 내에 존재하는 좌표이고 아직 방문하지 않은 좌표라면 탐색
 			if (Board->IsInRange(NextPoint.Y, NextPoint.X) && !Visited.Contains(NextPoint))

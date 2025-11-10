@@ -10,10 +10,9 @@
 
 UPCUnitMontagePlayGameplayAbility::UPCUnitMontagePlayGameplayAbility()
 {
-	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
+	AbilityTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
 	
-	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
-	CancelAbilitiesWithTag.AddTag(UnitGameplayTags::Unit_State_Combat_Dead);
+	ActivationBlockedTags.AddTag(UnitGameplayTags::Unit_State_Combat_Stun);
 }
 
 void UPCUnitMontagePlayGameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo,
@@ -22,21 +21,27 @@ void UPCUnitMontagePlayGameplayAbility::OnAvatarSet(const FGameplayAbilityActorI
 	Super::OnAvatarSet(ActorInfo, Spec);
 	
 	if (Unit)
-		SetMontageConfig();
+		SetMontage();
 }
 
-void UPCUnitMontagePlayGameplayAbility::SetMontageConfig()
+void UPCUnitMontagePlayGameplayAbility::SetMontage()
 {
 	if (const UPCDataAsset_UnitAnimSet* UnitAnimSet = Unit ? Unit->GetUnitAnimSetDataAsset() : nullptr)
 	{
 		const FGameplayTag MontageTag = GetMontageTag();
-		MontageConfig = UnitAnimSet->GetMontageConfigByTag(MontageTag);
+		Montage = UnitAnimSet->GetMontageByTag(MontageTag);
 	}
 }
 
-void UPCUnitMontagePlayGameplayAbility::StartPlayMontageAndWaitTask(UAnimMontage* Montage, const bool bStopWhenAbilityEnds)
+void UPCUnitMontagePlayGameplayAbility::StartPlayMontageAndWaitTask(const bool bStopWhenAbilityEnds)
 {
-	const float MontagePlayRate = GetMontagePlayRate(Montage);
+	if (!Montage)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, true);
+		return;
+	}
+	
+	const float MontagePlayRate = GetMontagePlayRate();
 			
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this, NAME_None, Montage, MontagePlayRate, NAME_None, bStopWhenAbilityEnds);

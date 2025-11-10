@@ -16,6 +16,17 @@ struct PROJECTPC_API FPCShopUnitData : public FTableRowBase
 	GENERATED_BODY()
 	
 public:
+	FPCShopUnitData()
+	{
+		UnitName = NAME_None;
+		UnitCost = 1;
+		UnitCount = 22;
+		UnitTag = FGameplayTag();
+		UnitSpeciesTag = FGameplayTag();
+		UnitJobTag = FGameplayTag();
+		UnitTexture = nullptr;
+	}
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName UnitName;
 

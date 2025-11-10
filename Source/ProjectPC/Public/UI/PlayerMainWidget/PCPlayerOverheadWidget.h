@@ -37,13 +37,13 @@ private:
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerName;
+	TObjectPtr<UTextBlock> PlayerName;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerLevel;
+	TObjectPtr<UTextBlock> PlayerLevel;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UProgressBar* HPBar;
+	TObjectPtr<UProgressBar> HPBar;
 
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
@@ -52,8 +52,4 @@ public:
 private:
 	void OnPlayerLevelChanged(const FOnAttributeChangeData& Data);
 	void OnPlayerHPChanged(const FOnAttributeChangeData& Data);
-
-	FTimerHandle ThCheckUserId;
-
-	void CheckAndUpdateUserId();
 };

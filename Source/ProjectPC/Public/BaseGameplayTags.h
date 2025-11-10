@@ -11,40 +11,65 @@ namespace GameStateTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_NonCombat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Preparation_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Active_Creep)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_Result)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Game_State_Combat_End)
 }
 
 namespace UnitGameplayTags
 {
 	// ==== Unit Types ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sparrow)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Raven) // Paragon Sparrow
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Drongo)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_AlienInvader) // Paragon Drongo
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Greystone)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Yin)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Phase)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kitty)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kitty) // Paragon Phase
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gideon)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Mephisto)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Undertow)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Mephisto) // Paragon Gideon
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Undertow) // Paragon Gideon
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Wukong)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FutureKing) // Paragon Wukong
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Infernal) // Paragon Wukong
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Terra)
-	
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shogun) // Paragon Murdock
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_MatteBlack) // Paragon Murdock
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Twinblast)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ShadowOps) // Paragon Twinblast
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Revenant)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_TwinBlast)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Murdock)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Zinx)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_GRIMexe)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_IggyScorch)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Gadget)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Shinbi)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Muriel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_FengMao)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Khaimera)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Bengal)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kwang)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_ZombieKwang)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Serath)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sevarog)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Aurora)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_UndeadQueen)	// Paragon Aurora
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Countess)	// Paragon Countess
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Serika)	// Paragon Countess
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Kallari)	// Paragon Kallari
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Riktor)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Sektor)	// Paragon Riktor
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Steel)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Rampage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Narbash)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Hero_Boris)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_MinionLv1)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_Melee)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_Range)
 
 	// ==== Unit Attack Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
@@ -56,23 +81,6 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoVamp)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoManaGain)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoSendDamageAppliedEvent)
-	
-	// ==== Unit Stat Tags ====
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MaxHealth)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_CurrentHealth)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_BaseDamage)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackRange)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_AttackSpeed)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_PhysicalDefense)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Shared_MagicDefense)
-	//
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MaxMana)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CurrentMana)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_PhysicalDamageMultiplier)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_MagicDamageMultiplier)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_CritChance)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_LifeSteal)
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Stat_Hero_SpellVamp)
 
 	// ==== Unit Combat Text Type Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_CombatText_Damage_Physical)
@@ -82,9 +90,11 @@ namespace UnitGameplayTags
 	
 	// ==== Unit Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_MontagePlay)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Attack_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Movement_Jump)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_PeriodPulse)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_ManaRegen)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Ability_Synergy_Cyborg)
@@ -102,6 +112,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Dead)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Stun)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Jumping)
 
 	// ==== Unit Cooldown Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
@@ -111,6 +122,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Basic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Attack_Ultimate)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Death)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Montage_Combat_Win)
 
 	// ==== Unit GameplayEvent Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_SpawnProjectileSucceed)
@@ -121,9 +133,13 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_HitSucceed_BonusDamage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_DamageApplied)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_OnHit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_Win)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Combat_End)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Event_Jump_Start)
 
 	// ==== Unit Buff Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Darkness_TrueDamage)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Buff_Synergy_Mage_DoubleManaGain)
 }
 
 namespace SynergyGameplayTags
@@ -179,6 +195,7 @@ namespace GameplayEffectTags
 	// ==== Duration GE ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_GrantTag_Duration)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Duration_AttackSpeedIncreaseMultiplier)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Damage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Heal)
@@ -212,8 +229,21 @@ namespace GameplayEffectTags
 namespace GameplayCueTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_LevelUp)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Haste)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_Combine)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_EquipItem)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_SynergyActive)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_VFX_Unit_PlayEffectAtSocket)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_SFX_Unit_AttackSound)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_SFX_Unit_LevelStart)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UI_Unit_CombatText)
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_LevelUp)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_BuyXP)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_BuyUnit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_SellUnit)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ShopRefresh)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_ItemCapsuleOpen)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Player_Attack)
 }
 
 namespace PlayerGameplayTags
@@ -231,13 +261,13 @@ namespace PlayerGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Normal)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Carousel)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_Dead)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_State_MaxLevel)
 	
 	// ==== Player Shop Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyXP)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_BuyUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_SellUnit)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopRefresh)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_GA_Shop_ShopLock)
 
 	// ==== Player Action Ability Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_Action_Attack_Basic)

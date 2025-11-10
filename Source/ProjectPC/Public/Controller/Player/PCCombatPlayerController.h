@@ -9,23 +9,23 @@
 #include "PCCombatPlayerController.generated.h"
 
 
+class APCBaseUnitCharacter;
+class APCCombatBoard;
+class APCCarouselRing;
+class APCHeroUnitCharacter;
+class UPCLoadingWidget;
 class UPCPlayerInventoryWidget;
 class UPCGameResultWidget;
 class UPCTileManager;
 class UPCDragComponent;
-class APCBaseUnitCharacter;
 class UPCPlayerMainWidget;
-class APCCombatBoard;
-class APCCarouselRing;
 class UPCDataAsset_PlayerInput;
 class UPCShopWidget;
 class UUserWidget;
-class APCHeroUnitCharacter;
 
 /**
  * 
  */
-
 
 // === 드래그 페이로드(서버 RPC에서만 사용) ===
 USTRUCT()
@@ -67,35 +67,36 @@ protected:
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
 	virtual void BeginPlayingState() override;
+	virtual void OnRep_PlayerState() override;
 	virtual void AcknowledgePossession(APawn* P) override;
+
+#pragma region Input
 	
 private:
-	// Player의 모든 Input에 대한 MappingContext, Action, Effect가 담긴 DataAsset
+	// Player의 모든 Input에 대한 MappingContext, Action이 담긴 DataAsset
 	UPROPERTY(EditDefaultsOnly, Category = "DataAsset", meta = (AllowPrivateAccess = "true"))
-	UPCDataAsset_PlayerInput* PlayerInputData;
+	TObjectPtr<UPCDataAsset_PlayerInput> PlayerInputData;
 	
 	FVector CachedDestination;
 	float FollowTime;
 
-#pragma region Input
-
+	FTimerHandle MoveTimerHandle;
+	
 	// Move
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
-	void OnSetDestinationReleased();
+	void UpdateMovement();
 
 	UFUNCTION(Server, Reliable)
-	void Server_StopMovement();
-
+	void Server_SetActorRotation(FRotator NewRotation);
 	UFUNCTION(Server, Reliable)
-	void Server_SetRotation(const FVector& Destination);
-	
-	UFUNCTION(Server, Reliable)
-	void Server_MovetoLocation(const FVector& Destination);
+	void Server_SetActorTransform(FTransform NewTransform);
 
+public:
 	UFUNCTION(Client, Reliable)
-	void Client_MovetoLocation(const FVector& Destination);
-	
+	void Client_StopMoving();
+
+private:
 	// Shop
 	void OnBuyXPStarted();
 	void OnShopRefreshStarted();
@@ -109,20 +110,10 @@ private:
 	bool bIsShopLocked = false;
 	bool bIsShopRequestInProgress = false;
 	
-protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ShopWidget")
-	TSubclassOf<UUserWidget> ShopWidgetClass;
-
 	UPROPERTY()
-	UPCShopWidget* ShopWidget;
+	TObjectPtr<UPCShopWidget> ShopWidget;
 
 public:
-	FTimerHandle LoadShop;
-
-	void LoadShopWidget();
-	
-	void LoadMainWidget();
-
 	TArray<int32> GetSameShopSlotIndices(int32 SlotIndex);
 
 	void ShopRequest_ShopRefresh(float GoldCost);
@@ -148,20 +139,6 @@ public:
 	void Client_ShopRequestFinished();
 
 #pragma endregion Shop
-
-#pragma region Inventory
-//
-// protected:
-// 	UPROPERTY(EditDefaultsOnly, Category = "InventoryWidget")
-// 	TSubclassOf<UUserWidget> InventoryWidgetClass;
-//
-// 	UPROPERTY()
-// 	UPCPlayerInventoryWidget* InventoryWidget;
-//
-// public:
-// 	void LoadInventoryWidget();
-	
-#pragma endregion Inventory
 
 #pragma region Camera
 	// 게임 카메라 세팅
@@ -189,7 +166,7 @@ public:
 	int32 CurrentCarouselSeatIndex = -1;
 
 	UPROPERTY()
-	int32 CurrentBoardSeatIndex = -1;
+	int32 FocusedBoardSeatIndex = -1;
 	
 	// 자기 보드 인덱스 저장
 	UFUNCTION(Client, Reliable)
@@ -197,7 +174,7 @@ public:
 
 	// 보드 인덱스로 카메라 변경
 	UFUNCTION(Client, Reliable)
-	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, bool bBattle, float Blend = 0.35f);
+	void ClientFocusBoardBySeatIndex(int32 BoardSeatIndex, float Blend = 0.35f);
 		
 	// 서버->클라 캐러셀 카메라 세팅 (회전초밥 등 사용)
 	UFUNCTION(Client, Reliable)
@@ -222,33 +199,82 @@ public:
 	void EnsureScreenFade();
 	void SetScreenFadeVisible(bool bVisible, float Opacity = 1.f);
 
-
 #pragma endregion Camera
 
-#pragma region UI
+#pragma region Loading
 public:
+	// 부트스트랩 플래그
+	bool bPSReady = false;
+	bool bPawnReady = false;
+	bool bUIReady = false;
+	bool bGSBound = false;
 
+	// 로컬 풀링
+	FTimerHandle ThBootstrapPing;
+	void StartClientBootStrap();
+	void TickClientBootStrap();
+	
+	// 게임스테이트 로딩 이벤트 구독
+	UFUNCTION()
+	void OnGameLoadingChanged();
+
+	// 서버로 ACK ( 완료 시그널 전송 )
+	UFUNCTION(Server,Reliable)
+	void Server_ReportBootStrap(const FString& LocalUserId, uint8 Mask);
+
+	// 동시시작 알림
+	UFUNCTION()
+	void HandlePreStartArmed();
+
+private:
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPCLoadingWidget> LoadingWidgetClass;
+
+	UPROPERTY()
+	UPCLoadingWidget* LoadingWidget = nullptr;
+	
+	// 헬퍼
+	uint8 ComputeBootStrapMask() const;
+	void ShowPlayerMainUI();
+	void ShowLoadingUI();
+	void UpdateLoadingUI(float Pct01, const FString& Line);
+	void HideLoadingUI();
+
+	
+#pragma endregion
+
+#pragma region UI
+	
+public:
+	void LoadMainWidget();
+	
 	UFUNCTION(BlueprintCallable)
 	void EnsureMainHUDCreated();
 
 	void TryInitHUDWithPlayerState();
+
+	UFUNCTION(Client, Reliable)
 	void TryInitWidgetWithGameState();
 	
-	virtual void OnRep_PlayerState() override;
-
 	UFUNCTION(BlueprintCallable)
-	void ShowWidget();
-
+	void ShowShopWidget();
 	UFUNCTION(BlueprintCallable)
-	void HideWidget();
+	void HideShopWidget();
+
+	UFUNCTION(Client,Reliable)
+	void Client_ShowPlayerMainWidget();
 
 	UFUNCTION(Client, Reliable)
-	void Client_ShowWidget();
-
+	void Client_ShowShopWidget();
 	UFUNCTION(Client, Reliable)
-	void Client_HideWidget();
+	void Client_HideShopWidget();
 
 	UPCPlayerMainWidget* GetPlayerMainWidget() { return PlayerMainWidget; }
+
+	// VFX
+	UFUNCTION(Client, Reliable)
+	void Client_PlaceFX(UNiagaraSystem* System, FVector Location, FRotator Rotation = FRotator::ZeroRotator);
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -256,13 +282,18 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UPCPlayerMainWidget> PlayerMainWidget = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> LoadingFakeWidgetClass = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LoadingFakeWidget = nullptr;
 	
 #pragma endregion UI
 
 #pragma region Drag&Drop
 
 public:
-
 	void ApplyGameInputMode();
 
 	// === 드래그 RPC ===
@@ -313,7 +344,11 @@ public:
 	UFUNCTION(Client, Unreliable)
 	void Client_DragEndResult(bool bSuccess, FVector FinalSnap, int32 DragId, APCHeroUnitCharacter* PreviewUnit = nullptr);
 
+	bool bIsCancel = false;
 	void CancelDrag(const FGameplayTag& GameStateTag);
+
+	UFUNCTION(Server,Reliable)
+	void CancelDragServer();
 
 	// 기존 바인딩 래퍼 (입력에서 호출)
 	void OnMouse_Pressed();
@@ -338,11 +373,6 @@ public:
 	static bool IsBattleTag(const FGameplayTag& Tag)
 	{
 		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active);
-	}
-
-	static bool IsBattleCreep(const FGameplayTag& Tag)
-	{
-		return Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Preparation_Creep) || Tag.MatchesTagExact(GameStateTags::Game_State_Combat_Active_Creep);
 	}
 
 
@@ -374,7 +404,7 @@ public:
 	TSubclassOf<UUserWidget> GameResultWidgetClass;
 
 	UPROPERTY()
-	UPCGameResultWidget* GameResultWidget;
+	TObjectPtr<UPCGameResultWidget> GameResultWidget;
 
 	UFUNCTION(Client, Reliable)
 	void Client_LoadGameResultWidget(int32 Ranking);
@@ -382,4 +412,33 @@ public:
 	void OnResultMenuToggled();
 
 #pragma endregion GameResult
+
+#pragma region Patrol
+
+public:
+	// 정찰용 시점 변환, 캐릭터 이동, 인벤토리 변경
+	UFUNCTION(Client, Reliable)
+	void Client_RequestPlayerReturn();
+	
+	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
+	void PlayerEndPatrol();
+
+	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner);
+	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol);
+
+#pragma endregion Patrol
+
+#pragma region Sound
+
+private:
+
+	UPROPERTY()
+	UAudioComponent* BGMComponent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundWave* GameBGM;
+	
+	void PlayBGM();
+	
+#pragma endregion
 };

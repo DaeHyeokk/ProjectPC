@@ -13,8 +13,6 @@ class UPCSynergyBase;
 class UPCDataAsset_SynergyDefinitionSet;
 class APCHeroUnitCharacter;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSynergyCountsChanged, const TArray<FSynergyData>&);
-
 USTRUCT()
 struct FSynergyData
 {
@@ -37,9 +35,15 @@ struct FHeroSynergyTally
 	TMap<FGameplayTag, int32> SynergyCountMap;
 
 	void IncreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsUnique);
+	void IncreaseSynergyTags(const FGameplayTagContainer& SynergyTags, FGameplayTagContainer& OutNewSynergyTags);
 	void DecreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsRemoved);
+	FGameplayTagContainer GetActiveSynergyTags();
+	
+	void Reset() { SynergyCountMap.Reset(); }
 	bool IsEmpty() const { return SynergyCountMap.IsEmpty(); }
 };
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSynergyCountsChanged, const TArray<FSynergyData>&);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTPC_API UPCSynergyComponent : public UActorComponent
@@ -73,14 +77,13 @@ private:
 	
 	TMap<FGameplayTag, int32> SynergyCountMap;
 	
-	TMap<FGameplayTag, int32> HeroTagCountMap;
 	TMap<FGameplayTag, FHeroSynergyTally> HeroSynergyMap;
 	TSet<TWeakObjectPtr<APCHeroUnitCharacter>> RegisterHeroSet;
 	
 	UPROPERTY(ReplicatedUsing=OnRep_SynergyCountArray)
 	FSynergyCountArray SynergyCountArray;
 
-	UPROPERTY(Replicated)
+	UPROPERTY()
 	TArray<FSynergyData> SynergyData;
 		
 	UFUNCTION()
@@ -89,7 +92,9 @@ private:
 	void InitializeSynergyHandlersFromDefinitionSet();
 
 	void UpdateSynergyCountMap(const FGameplayTagContainer& SynergyTags, const bool bRegisterHero);
+	void RecountSynergyCountMapForUnitTag(const FGameplayTag& UnitTag);
 	void ApplySynergyEffects(const FGameplayTag& SynergyTag);
+	void PlaySynergyActiveParticle(FGameplayTag SynergyTag);
 	
 	void GetHeroSynergyTags(const APCHeroUnitCharacter* Hero, FGameplayTagContainer& OutSynergyTags) const;
 	void GatherRegisteredHeroes(TArray<APCHeroUnitCharacter*>& OutHeroes);
@@ -103,7 +108,8 @@ private:
 	void OnCombatEndAction();
 	
 	void OnHeroDestroyed(APCHeroUnitCharacter* DestroyedHero);
-	void OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero, const FGameplayTag& SynergyTag, bool bIsAdded);
+	
+	void OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero);
 	
 	// 디버그용
 public:

@@ -28,7 +28,6 @@ void UPCPlayerMainWidget::InitAndBind(APCCombatGameState* PCCombatGameState)
 	if (!W_ShopWidget) return;
 
 	W_ShopWidget->SetVisibility(ESlateVisibility::Hidden);
-		
 }
 
 void UPCPlayerMainWidget::SetShopWidgetVisible(bool bVisible)
@@ -42,4 +41,11 @@ void UPCPlayerMainWidget::SetShopWidgetVisible(bool bVisible)
 	}
 
 	W_ShopWidget->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UPCPlayerMainWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	SetVisibility(ESlateVisibility::Hidden);
 }

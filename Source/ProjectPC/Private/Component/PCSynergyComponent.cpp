@@ -17,8 +17,21 @@ void FHeroSynergyTally::IncreaseSynergyTag(const FGameplayTag& SynergyTag, bool&
 	int32& Count = SynergyCountMap.FindOrAdd(SynergyTag);
 	Count++;
 
-	if (Count >= 1)
+	if (Count == 1)
 		OutIsUnique = true;
+}
+
+void FHeroSynergyTally::IncreaseSynergyTags(const FGameplayTagContainer& SynergyTags,
+	FGameplayTagContainer& OutNewSynergyTags)
+{
+	for (const FGameplayTag& SynergyTag : SynergyTags)
+	{
+		int32& Count = SynergyCountMap.FindOrAdd(SynergyTag);
+		Count++;
+
+		if (Count == 1)
+			OutNewSynergyTags.AddTag(SynergyTag);
+	}
 }
 
 void FHeroSynergyTally::DecreaseSynergyTag(const FGameplayTag& SynergyTag, bool& OutIsRemoved)
@@ -33,6 +46,18 @@ void FHeroSynergyTally::DecreaseSynergyTag(const FGameplayTag& SynergyTag, bool&
 	}
 }
 
+FGameplayTagContainer FHeroSynergyTally::GetActiveSynergyTags()
+{
+	FGameplayTagContainer ActiveSynergyTags;
+	for (const auto& Pair : SynergyCountMap)
+	{
+		if (Pair.Value > 0)
+			ActiveSynergyTags.AddTag(Pair.Key);
+	}
+	
+	return ActiveSynergyTags;
+}
+
 UPCSynergyComponent::UPCSynergyComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -44,7 +69,6 @@ void UPCSynergyComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UPCSynergyComponent, SynergyCountArray);
-	DOREPLIFETIME(UPCSynergyComponent, SynergyData);
 }
 
 void UPCSynergyComponent::BeginPlay()
@@ -124,22 +148,15 @@ void UPCSynergyComponent::RegisterHero(APCHeroUnitCharacter* Hero)
 		RegisterHeroSet.Add(Hero);
 		Hero->OnHeroDestroyed.AddUObject(this, &ThisClass::OnHeroDestroyed);
 		Hero->OnHeroSynergyTagChanged.AddUObject(this, &ThisClass::OnHeroSynergyTagChanged);
-
+		
 		FGameplayTagContainer SynergyTags;
 		GetHeroSynergyTags(Hero, SynergyTags);
 
 		const FGameplayTag HeroTag = Hero->GetUnitTag();
 		FHeroSynergyTally& SynergyTally = HeroSynergyMap.FindOrAdd(HeroTag);
 		FGameplayTagContainer NewSynergyTags;
-		
-		for (const FGameplayTag& SynergyTag : SynergyTags)
-		{
-			bool bIsUnique = false;
-			SynergyTally.IncreaseSynergyTag(SynergyTag, bIsUnique);
-			
-			if (bIsUnique)
-				NewSynergyTags.AddTag(SynergyTag);
-		}
+
+		SynergyTally.IncreaseSynergyTags(SynergyTags, NewSynergyTags);
 		
 		if (!NewSynergyTags.IsEmpty())
 		{
@@ -149,6 +166,11 @@ void UPCSynergyComponent::RegisterHero(APCHeroUnitCharacter* Hero)
 		for (const FGameplayTag& SynergyTag : SynergyTags)
 		{
 			ApplySynergyEffects(SynergyTag);
+			//PlaySynergyActiveParticle(SynergyTag);
+			
+			GetWorld()->GetTimerManager().SetTimerForNextTick(
+				FTimerDelegate::CreateUObject(this, &UPCSynergyComponent::PlaySynergyActiveParticle, SynergyTag)
+				);
 		}
 	}
 }
@@ -252,6 +274,57 @@ void UPCSynergyComponent::UpdateSynergyCountMap(const FGameplayTagContainer& Syn
 	}
 
 	SynergyCountArray.ResetToMap(SynergyCountMap);
+	//DebugPrintSynergyCounts();
+}
+
+void UPCSynergyComponent::RecountSynergyCountMapForUnitTag(const FGameplayTag& UnitTag)
+{
+	TArray<APCHeroUnitCharacter*> Heroes;
+	GatherRegisteredHeroes(Heroes);
+
+	FHeroSynergyTally& SynergyTally = HeroSynergyMap.FindOrAdd(UnitTag);
+	if (!SynergyTally.IsEmpty())
+	{
+		const FGameplayTagContainer ActiveSynergyTags = SynergyTally.GetActiveSynergyTags();
+		for (const FGameplayTag& SynergyTag : ActiveSynergyTags)
+		{
+			int32& SynergyCnt = SynergyCountMap.FindOrAdd(SynergyTag);
+			SynergyCnt--;
+			if (SynergyCnt <= 0)
+			{
+				SynergyCountMap.Remove(SynergyTag);
+			}
+		}
+		SynergyTally.Reset();
+	}
+	
+	FGameplayTagContainer NewSynergyTags;
+	
+	for (const auto& Hero : Heroes)
+	{
+		if (Hero && Hero->GetUnitTag().MatchesTagExact(UnitTag))
+		{
+			FGameplayTagContainer SynergyTags;
+			GetHeroSynergyTags(Hero, SynergyTags);
+
+			SynergyTally.IncreaseSynergyTags(SynergyTags, NewSynergyTags);
+		}
+	}
+	
+	for (const FGameplayTag& SynergyTag : NewSynergyTags)
+	{
+		int32& SynergyCnt = SynergyCountMap.FindOrAdd(SynergyTag);
+		SynergyCnt++;
+
+		ApplySynergyEffects(SynergyTag);
+		
+		GetWorld()->GetTimerManager().SetTimerForNextTick(
+			FTimerDelegate::CreateUObject(this, &UPCSynergyComponent::PlaySynergyActiveParticle, SynergyTag)
+			);
+	}
+
+	SynergyCountArray.ResetToMap(SynergyCountMap);
+	//DebugPrintSynergyCounts();
 }
 
 void UPCSynergyComponent::ApplySynergyEffects(const FGameplayTag& SynergyTag)
@@ -274,6 +347,28 @@ void UPCSynergyComponent::ApplySynergyEffects(const FGameplayTag& SynergyTag)
 	Params.Instigator = Instigator;
 		
 	Synergy->GrantGE(Params);
+}
+
+void UPCSynergyComponent::PlaySynergyActiveParticle(FGameplayTag SynergyTag)
+{
+	UPCSynergyBase* Synergy = *SynergyToTagMap.Find(SynergyTag);
+	
+	if (!Synergy)
+		return;
+	
+	TArray<APCHeroUnitCharacter*> CurrentHeroes;
+	GatherRegisteredHeroes(CurrentHeroes);
+
+	AActor* Instigator = GetOwner();
+	int32 Count = SynergyCountMap.FindRef(SynergyTag);
+	
+	FSynergyApplyParams Params;
+	Params.SynergyTag = SynergyTag;
+	Params.Count = Count;
+	Params.Units = CurrentHeroes;
+	Params.Instigator = Instigator;
+		
+	Synergy->PlayActiveParticleAtUnit(Params);
 }
 
 void UPCSynergyComponent::BindGameStateDelegates()
@@ -316,8 +411,7 @@ void UPCSynergyComponent::OnCombatActiveAction()
 		if (!Handler)
 			continue;
 
-		const int32* Found = SynergyCountMap.Find(SynergyTag);
-		const int32 Count = Found ? *Found : 0;
+		const int32 Count = SynergyCountMap.FindRef(SynergyTag);
 
 		FSynergyApplyParams Params;
 		Params.SynergyTag = SynergyTag;
@@ -349,31 +443,12 @@ void UPCSynergyComponent::OnHeroDestroyed(APCHeroUnitCharacter* DestroyedHero)
 	}
 }
 
-void UPCSynergyComponent::OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero, const FGameplayTag& SynergyTag,
-                                                  bool bIsAdded)
+void UPCSynergyComponent::OnHeroSynergyTagChanged(const APCHeroUnitCharacter* Hero)
 {
 	if (Hero)
 	{
 		const FGameplayTag HeroTag = Hero->GetUnitTag();
-		FHeroSynergyTally& SynergyTally = HeroSynergyMap.FindOrAdd(HeroTag);
-		bool bIsUniqueOrRemoved = false;
-		
-		if (bIsAdded)
-		{
-			SynergyTally.IncreaseSynergyTag(SynergyTag, bIsUniqueOrRemoved);
-			if (bIsUniqueOrRemoved)
-				UpdateSynergyCountMap(FGameplayTagContainer(SynergyTag), true);
-		}
-		else
-		{
-			SynergyTally.DecreaseSynergyTag(SynergyTag, bIsUniqueOrRemoved);
-			if (bIsUniqueOrRemoved)
-			{
-				UpdateSynergyCountMap(FGameplayTagContainer(SynergyTag), true);
-			}
-			if (SynergyTally.IsEmpty())
-				HeroSynergyMap.Remove(HeroTag);
-		}
+		RecountSynergyCountMapForUnitTag(HeroTag);
 	}
 }
 

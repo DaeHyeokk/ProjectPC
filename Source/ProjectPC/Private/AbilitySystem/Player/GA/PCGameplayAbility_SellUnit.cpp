@@ -36,13 +36,14 @@ bool UPCGameplayAbility_SellUnit::CanActivateAbility(const FGameplayAbilitySpecH
 	{
 		return false;
 	}
-	
-	if (!ActorInfo->IsNetAuthority())
+
+	// 서버 권위면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority())
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -57,6 +58,7 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 		return;
 	}
 
+	// GA 이벤트 호출 시, 받은 TriggerEventData를 통해 필요한 데이터 분해 
 	auto* Unit = const_cast<APCHeroUnitCharacter*>(Cast<APCHeroUnitCharacter>(TriggerEventData->OptionalObject));
 	if (!Unit)
 	{
@@ -87,7 +89,8 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 					return;
 				}
-			
+
+				// 보드에서 성공적으로 지워졌으면 상점에 유닛 반환, 인벤토리에 아이템 반환
 				GS->GetShopManager()->SellUnit(UnitTag, UnitLevel);
 				Unit->SellHero();
 			}
@@ -99,7 +102,12 @@ void UPCGameplayAbility_SellUnit::ActivateAbility(const FGameplayAbilitySpecHand
 	if (GoldSpecHandle.IsValid())
 	{
 		GoldSpecHandle.Data->SetSetByCallerMagnitude(PlayerGameplayTags::Player_Stat_PlayerGold, SellingPrice);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*GoldSpecHandle.Data.Get());
+			ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_SellUnit);
+		}
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

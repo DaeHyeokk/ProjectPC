@@ -62,8 +62,7 @@ void UPCBaseUnitGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* 
 	}
 }
 
-TArray<FActiveGameplayEffectHandle> UPCBaseUnitGameplayAbility::ApplyActivatedEffectSpec(UAbilitySystemComponent* ASC,
-	const AActor* Target)
+TArray<FActiveGameplayEffectHandle> UPCBaseUnitGameplayAbility::ApplyActivatedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target)
 {
 	TArray<FActiveGameplayEffectHandle> ApplyEffectHandles;
 	
@@ -144,6 +143,5 @@ TArray<FActiveGameplayEffectHandle> UPCBaseUnitGameplayAbility::ApplyEffectSpec(
 			}
 		}
 	}
-
 	return ApplyEffectHandles;
 }

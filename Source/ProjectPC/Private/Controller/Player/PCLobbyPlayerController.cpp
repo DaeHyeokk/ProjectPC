@@ -3,22 +3,40 @@
 
 #include "Controller/Player/PCLobbyPlayerController.h"
 
+#include "MoviePlayer.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameMode/PCLobbyGameMode.h"
 #include "GameFramework/GameState/PCLobbyGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/Lobby/LobbyMenuWidget.h"
+#include "UI/StartMenu/PCNoticeWidget.h"
+#include "UI/StartMenu/RegisterWidget.h"
 #include "UI/StartMenu/StartMenuWidget.h"
 
+static void ShowLoadingScreen()
+{
+	FLoadingScreenAttributes Attr;
+	Attr.bAutoCompleteWhenLoadingCompletes = false;
+	Attr.MinimumLoadingScreenDisplayTime = 0.f;
+	Attr.WidgetLoadingScreen = SNew(SOverlay)
+	+ SOverlay::Slot()
+	[
+		SNew(SBorder)
+		.Padding(0)
+		.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+		.BorderBackgroundColor(FLinearColor::Black)
+	];
+	GetMoviePlayer()->SetupLoadingScreen(Attr);
+	GetMoviePlayer()->PlayMovie();
+}
 
 void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString& DisplayName)
 {
 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
 	{
-		PS->bIdentified = true;
-		PS->LocalUserId = DisplayName;
-		// (선택) 중복 닉 검사
+		// 중복 닉 검사
 		bool bTaken = false;
 		if (const AGameStateBase* GS = GetWorld()->GetGameState())
 		{
@@ -33,7 +51,15 @@ void APCLobbyPlayerController::ServerSubmitIdentity_Implementation(const FString
 				}
 			}
 		}
-		if (bTaken) { ClientRejectIdentity(TEXT("ID already taken.")); }
+		
+		if (bTaken)
+		{
+			ClientRejectIdentity(TEXT("이미 사용 중인 ID입니다. 다른 ID를 입력하세요"));
+			return;
+		}
+		
+		PS->LocalUserId = DisplayName;
+		ClientAcceptedIdentity();
 	}
 }
 
@@ -72,6 +98,7 @@ void APCLobbyPlayerController::BeginPlay()
 	Super::BeginPlay();
 	RefreshUIForMap();
 	SetShowMouseCursor(true);
+	PlayStartBGM();
 	
 }
 
@@ -100,6 +127,17 @@ void APCLobbyPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		LobbyMenuWidget->RemoveFromParent();
 		LobbyMenuWidget = nullptr;
 	}
+}
+
+void APCLobbyPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType,
+	bool bIsSeamlessTravel)
+{
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
+
+	// 로컬 클라에서만 실행 (데디 서버엔 뷰포트 없음)
+	if (!IsLocalController()) return;
+
+	ShowLoadingScreen();
 }
 
 void APCLobbyPlayerController::RequestConnectToServer()
@@ -131,9 +169,61 @@ void APCLobbyPlayerController::SetLobbyUI()
 	}
 }
 
+void APCLobbyPlayerController::ServerSetIdentity_Implementation()
+{
+	if (APCPlayerState* PCPlayerState = GetPlayerState<APCPlayerState>())
+	{
+		PCPlayerState->bIdentified = true;
+	}
+
+	if (APCLobbyGameState* LobbyGameState = GetWorld()->GetGameState<APCLobbyGameState>())
+	{
+		LobbyGameState->RecountReady();
+	}
+}
+
+void APCLobbyPlayerController::ShowNotice(const FText& Message)
+{	
+	if (!IsLocalController()) return;
+
+	if (!IsValid(NoticeWidget) && NoticeWidgetClass)
+	{
+		NoticeWidget = CreateWidget<UPCNoticeWidget>(this, NoticeWidgetClass);
+	}
+	if (!IsValid(NoticeWidget)) return;
+
+	// 뷰포트에 없으면 다시 붙여줌
+	if (!NoticeWidget->IsInViewport())
+	{
+		NoticeWidget->AddToViewport(200);
+		NoticeWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	NoticeWidget->SetMessage(Message);
+	NoticeWidget->SetVisibility(ESlateVisibility::Visible);
+}
+
+void APCLobbyPlayerController::HideNotice()
+{
+	if (NoticeWidget)
+	{
+		NoticeWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void APCLobbyPlayerController::ClientAcceptedIdentity_Implementation()
+{
+	ShowNotice(FText::FromString(TEXT("등록이 완료되었습니다.")));
+
+	if (!StartMenuWidget) return;
+	URegisterWidget* Register = StartMenuWidget->GetRegisterWidget();
+	if (!Register) return;
+	Register->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void APCLobbyPlayerController::ClientRejectIdentity_Implementation(const FString& Reason)
 {
-	ClientMessage(Reason);
+	ShowNotice(FText::FromString(Reason));
 }
 
 void APCLobbyPlayerController::ServerNotifyLobbyUIShown_Implementation()
@@ -161,6 +251,7 @@ void APCLobbyPlayerController::ApplyUIOnly(UUserWidget* FocusWidget)
 	
 }
 
+
 void APCLobbyPlayerController::ShowStartWidget()
 {
 	if (!StartMenuWidgetClass) return;
@@ -173,6 +264,15 @@ void APCLobbyPlayerController::ShowStartWidget()
 		StartMenuWidget->AddToViewport();
 	StartMenuWidget->SetVisibility(ESlateVisibility::Visible);
 	ApplyUIOnly(StartMenuWidget);
+
+	if (!BlackWidgetClass) return;
+	if (!BlackWidget)
+	{
+		BlackWidget = CreateWidget<UUserWidget>(this, BlackWidgetClass);
+		BlackWidget->AddToViewport(100);
+		BlackWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+	
 }
 
 void APCLobbyPlayerController::HideStartWidget()
@@ -190,6 +290,7 @@ void APCLobbyPlayerController::ShowLobbyMenuWidget()
 	}
 	if (!LobbyMenuWidget->IsInViewport())
 		LobbyMenuWidget->AddToViewport();
+	
 	LobbyMenuWidget->SetVisibility(ESlateVisibility::Visible);
 	ApplyUIOnly(LobbyMenuWidget);
 
@@ -201,6 +302,14 @@ void APCLobbyPlayerController::HideLobbyMenuWidget()
 {
 	if (LobbyMenuWidget)
 		LobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void APCLobbyPlayerController::ShowFadeWidget_Implementation()
+{
+	if (!IsLocalController()) return;
+	if (!BlackWidget) return;
+
+	BlackWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
 bool APCLobbyPlayerController::IsOnStartLobbyMap() const
@@ -215,3 +324,31 @@ bool APCLobbyPlayerController::IsConnectedToServer() const
 	const ENetMode NetMode = GetNetMode();
 	return (NetMode == NM_Client || NetMode == NM_ListenServer);
 }
+
+void APCLobbyPlayerController::PlayStartBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (!AudioComponent && StartBGM)
+	{
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, StartBGM);
+	}
+}
+
+void APCLobbyPlayerController::PlayLobbyBGM()
+{
+	if (!IsLocalController()) return;
+	
+	if (AudioComponent && LobbyBGM)
+	{
+		// 현재 BGM이 있다면 끄고 교체
+		AudioComponent->FadeOut(0.5f, 0.f); // 더 자연스럽게 끄기
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, LobbyBGM);
+	}
+	else if (!AudioComponent && LobbyBGM)
+	{
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, LobbyBGM); // ✅ 수정됨
+	}
+	
+}
+

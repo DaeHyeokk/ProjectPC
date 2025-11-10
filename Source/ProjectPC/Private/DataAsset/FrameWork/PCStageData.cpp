@@ -5,6 +5,26 @@
 
 #include "BaseGameplayTags.h"
 
+static FGameplayTag DetermineMajorFor(const TArray<FRoundStep>& Steps)
+{
+	bool bHasPvE = false, bHasPvP = false, bHasCarousel = false, bHasStart = false;
+	for (const auto& S : Steps)
+	{
+		switch (S.StageType)
+		{
+		case EPCStageType::PvE:      bHasPvE = true; break;
+		case EPCStageType::PvP:      bHasPvP = true; break;
+		case EPCStageType::Carousel: bHasCarousel = true; break;
+		case EPCStageType::Start:    bHasStart = true; break;
+		default: break;
+		}
+	}
+	if (bHasPvE)      return GameRoundTags::GameRound_PvE;
+	if (bHasPvP)      return GameRoundTags::GameRound_PvP;
+	if (bHasCarousel) return GameRoundTags::GameRound_Carousel;
+	if (bHasStart)    return GameRoundTags::GameRound_Start;
+	return FGameplayTag();
+}
 
 float UPCStageData::GetDefaultDuration(EPCStageType Type) const
 {
@@ -98,13 +118,20 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
 					FixedSteps.Add(S);
 				}
 
-				AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx+1, RIdx+1, FixedSteps);
+				// 펼치기
+				const int32 StageOne = SIdx + 1;
+				const int32 RoundOne = RIdx + 1;
+				AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, StageOne, RoundOne, FixedSteps);
+
+				// ★ 대표 Major/PvE 서브태그 기록
+				const FGameplayTag Major = DetermineMajorFor(FixedSteps);
+				TagRound(StageOne, RoundOne, Major);
 			}
 		}
-		return;
 	}
-
-	// === 2) 프리셋 자동 생성: 캐러셀 앞에 무조건 Travel 포함 ===
+	else
+	{
+		// === 2) 프리셋 자동 생성: 캐러셀 앞에 무조건 Travel 포함 ===
     auto S = [&](EPCStageType T, float Sec)->FRoundStep {
         FRoundStep X; X.StageType = T;
         X.DurationOverride = (Sec > 0.f) ? Sec : GetDefaultDuration(T);
@@ -160,6 +187,7 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
                 S(EPCStageType::Setup,   30.f),
                 S(EPCStageType::Travel,   DefaultTravelSeconds),
                 S(EPCStageType::PvP,     30.f),
+            	S(EPCStageType::PvPResult, 2.f),
                 S(EPCStageType::Return,   3.f)
             });
         	TagRound(SIdx, R, GameRoundTags::GameRound_PvP);
@@ -187,7 +215,9 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
             AppendRound(RoundsStep, StageIdx, RoundIdx, StepIdxInRound, SIdx, R, {
                 S(EPCStageType::Setup,  20.f),
                 S(EPCStageType::Travel,  3.f),
-                S(EPCStageType::PvE,    30.f)
+            	S(EPCStageType::CreepSpawn, 3.f),
+                S(EPCStageType::PvE,    30.f),
+            	S(EPCStageType::Return,   2.f)
             });
 
             switch (SIdx)
@@ -222,6 +252,9 @@ void UPCStageData::BuildFlattenedPhase(TArray<FRoundStep>& RoundsStep, TArray<in
     for (int32 SIdx=2; SIdx<=8; ++SIdx)
         AddStage(SIdx);
 
+	}
+
+	
 	TMap<int32, TArray<int32>> RoundByStage;
 	for (const auto& It : MajorMap)
 	{

@@ -12,14 +12,12 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
-#include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
-#include "GameFramework/HelpActor/Component/PCTileManager.h"
 
 
 UPCShopManager::UPCShopManager()
 {
-	DummyData.UnitName = "Dummy";
+	DummyData = FPCShopUnitData();
 }
 
 void UPCShopManager::BeginPlay()
@@ -64,6 +62,19 @@ void UPCShopManager::BeginPlay()
 			GS->OnGameStateTagChanged.AddUObject(this, &UPCShopManager::OnGameStateChanged);
 		}
 	}
+}
+
+void UPCShopManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (GetOwner() && GetOwner()->HasAuthority())
+	{
+		if (auto GS = Cast<APCCombatGameState>(GetOwner()))
+		{
+			GS->OnGameStateTagChanged.RemoveAll(this);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UPCShopManager::OnGameStateChanged(const FGameplayTag& NewTag)
@@ -116,7 +127,7 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 		auto& Candidate =  SelectRandomUnitByCost(SelectedCost);
 
 		// 해당 코스트에 아무 기물도 존재하지 않을 때
-		if (Candidate.UnitName == "Dummy")
+		if (Candidate.UnitName == NAME_None)
 		{
 			--i;
 			UE_LOG(LogTemp, Warning, TEXT("SelectedCost : %d Sold Out"), SelectedCost);
@@ -131,16 +142,14 @@ void UPCShopManager::UpdateShopSlots(APCPlayerState* TargetPlayer)
 
 void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGameplayTag UnitTag)
 {
-	if (!GetOwner()) return;
-	if (!TargetPlayer) return;
+	if (!GetOwner() || !TargetPlayer)
+		return;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return;
 	
-	auto PlayerBoard = TargetPlayer->GetPlayerBoard();
-	
 	auto Unit = GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>()->SpawnUnitByTag(UnitTag, TargetPlayer->SeatIndex, 1, TargetPlayer);
-
+	auto PlayerBoard = TargetPlayer->GetPlayerBoard();
 	auto BenchIndex = PlayerBoard->GetFirstEmptyBenchIndex();
 
 	if (BenchIndex != INDEX_NONE)
@@ -154,13 +163,14 @@ void UPCShopManager::BuyUnit(APCPlayerState* TargetPlayer, int32 SlotIndex, FGam
 
 TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* TargetPlayer, FGameplayTag UnitTag, int32 ShopAddUnitCount) const
 {
+	// 1,2,3성 범위 지정 반복을 위해 미리 Map에 추가
 	TMap<int32, int32> UnitCountByLevelMap;
 	UnitCountByLevelMap.Add({1,0});
 	UnitCountByLevelMap.Add({2,0});
 	UnitCountByLevelMap.Add({3,0});
 
-	if (!GetOwner()) return UnitCountByLevelMap;
-	if (!TargetPlayer) return UnitCountByLevelMap;
+	if (!GetOwner() || !TargetPlayer)
+		return UnitCountByLevelMap;
 
 	auto GS = Cast<APCCombatGameState>(GetOwner());
 	if (!GS) return UnitCountByLevelMap;
@@ -171,6 +181,7 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	TArray<APCBaseUnitCharacter*> UnitList;
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
+	// 전투 중에는 벤치만, 비전투 중에는 벤치 + 필드 모두 레벨업 대상
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
 		UnitList = PlayerBoard->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
@@ -192,7 +203,7 @@ TMap<int32, int32> UPCShopManager::GetLevelUpUnitMap(const APCPlayerState* Targe
 	{
 		UnitCountByLevelMap.FindOrAdd(1) += ShopAddUnitCount;
 	}
-	if (ShopAddUnitCount == 3)
+	else if (ShopAddUnitCount == 3)
 	{
 		UnitCountByLevelMap.FindOrAdd(2) += 1;
 	}
@@ -213,17 +224,20 @@ int32 UPCShopManager::GetRequiredCountWithFullBench(const APCPlayerState* Target
 	{
 		if (Level1Count == 1)
 		{
+			// 현재 1성 유닛이 1개면, 상점에서 2개 구매 시 2성 가능
 			return 2;
 		}
 
 		if (Level1Count == 2)
 		{
+			// 현재 1성 유닛이 2개면, 상점에서 1개 구매 시 2성 가능
 			return 1;
 		}
 	}
 
 	if (Level2Count == 2 && ShopAddUnitCount >= 3)
 	{
+		// 현재 2성 유닛이 2개면, 상점에서 3개 구매 시 3성 가능
 		return 3;
 	}
 
@@ -244,6 +258,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 	TArray<APCBaseUnitCharacter*> UnitList;
 	auto CurrentGameStateTag = GS->GetGameStateTag();
 
+	// 전투 중에는 벤치만, 비전투 중에는 벤치 + 필드 모두 레벨업 대상
 	if (CurrentGameStateTag == GameStateTags::Game_State_NonCombat)
 	{
 		UnitList = PlayerBoard->GetAllUnitByTag(UnitTag, TargetPlayer->SeatIndex);
@@ -253,13 +268,13 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 		UnitList = PlayerBoard->GetBenchUnitByTag(UnitTag, TargetPlayer->SeatIndex);
 	}
 
+	// 상점 유닛까지 포함한 Map
 	auto AddShopUnitCountMap = GetLevelUpUnitMap(TargetPlayer, UnitTag, ShopAddUnitCount);
-	
 	AddShopUnitCountMap.KeySort([](const int32 A, const int32 B){ return A < B; });
 
 	TArray<int32> LevelUp;
 	
-	// 레벨이 낮은 것부터 합치고 UnitCountByLevelMap 업데이트
+	// 레벨이 낮은 것부터 레벨업 판단하고, 실제 레벨업이 일어난 구간을 LevelUp에 저장
 	for (auto& Pair : AddShopUnitCountMap)
 	{
 		auto UnitLevel = Pair.Key;
@@ -287,6 +302,7 @@ void UPCShopManager::UnitLevelUp(const APCPlayerState* TargetPlayer, FGameplayTa
 			}
 		}
 
+		// 첫번째 유닛은 레벨업, 나머지 유닛들은 없애면서 아이템 합치기
 		APCHeroUnitCharacter* LevelUpUnit = HeroUnitList[0];
 		LevelUpUnit->LevelUp();
 
@@ -307,7 +323,6 @@ void UPCShopManager::SellUnit(FGameplayTag UnitTag, int32 UnitLevel)
 	if (!GS) return;
 
 	auto UnitCost = GetUnitCostByTag(UnitTag);
-
 	for (auto& Unit : GetShopUnitDataListByCost(UnitCost))
 	{
 		if (UnitTag == Unit.UnitTag)
@@ -334,7 +349,6 @@ FPCShopUnitData& UPCShopManager::SelectRandomUnitByCost(int32 UnitCost)
 	// 해당 코스트에 아무 기물도 존재하지 않을 때
 	if (TotalUnitCount == 0)
 	{
-		DummyData.UnitName = "Dummy";
 		return DummyData;
 	}
 
@@ -420,8 +434,9 @@ TArray<FGameplayTag> UPCShopManager::GetCarouselRandomUnitTagsByCost(int32 UnitC
 	for (int i = 0; i < CarouselCount; ++i)
 	{
 		auto& Unit = SelectRandomUnitByCost(UnitCost);
+		
 		// 해당 코스트에 아무 기물도 안남았으면 Add 안함
-		if (Unit.UnitName != "Dummy")
+		if (Unit.UnitName != NAME_None)
 		{
 			ReturnTags.Add(Unit.UnitTag);
 		}
@@ -445,24 +460,18 @@ const TMap<TPair<int32, int32>, int32>& UPCShopManager::GetShopUnitSellingPriceD
 	return ShopUnitSellingPriceDataMap;
 }
 
-TArray<float> UPCShopManager::GetCostProbabilities(int32 PlayerLevel)
+int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
 {
-	// 플레이어 레벨에 따라 DataList 탐색
-	const auto& ProbData = ShopUnitProbabilityDataList.FindByPredicate(
-		[PlayerLevel](const FPCShopUnitProbabilityData& Data)
+	// ShopUnitDataList는 현재 기물 수 상황과 별개
+	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
+	{
+		if (UnitData.UnitTag == UnitTag)
 		{
-			return Data.PlayerLevel == PlayerLevel;
-		});
-	
-	TArray<float> CostProbabilities = {
-		ProbData->Probability_Cost1,
-		ProbData->Probability_Cost2,
-		ProbData->Probability_Cost3,
-		ProbData->Probability_Cost4,
-		ProbData->Probability_Cost5
-	};
+			return UnitData.UnitCost;
+		}
+	}
 
-	return CostProbabilities;
+	return 0;
 }
 
 TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataListByCost(int32 UnitCost)
@@ -487,30 +496,6 @@ TArray<FPCShopUnitData>& UPCShopManager::GetShopUnitDataListByCost(int32 UnitCos
 	return ShopUnitDataList;
 }
 
-int32 UPCShopManager::GetUnitCostByTag(FGameplayTag UnitTag)
-{
-	// ShopUnitDataList는 현재 기물 수 상황과 별개
-	for (const FPCShopUnitData& UnitData : ShopUnitDataList)
-	{
-		if (UnitData.UnitTag == UnitTag)
-		{
-			return UnitData.UnitCost;
-		}
-	}
-
-	return 0;
-}
-
-int32 UPCShopManager::GetSellingPrice(int32 UnitCost, int32 UnitLevel)
-{
-	if (const int32* Price = ShopUnitSellingPriceDataMap.Find({UnitCost, UnitLevel}))
-	{
-		return *Price;
-	}
-
-	return 0;
-}
-
 const FPCShopUnitData& UPCShopManager::GetShopUnitDataByTag(FGameplayTag UnitTag)
 {
 	// ShopUnitDataList는 현재 기물 수 상황과 별개
@@ -523,4 +508,43 @@ const FPCShopUnitData& UPCShopManager::GetShopUnitDataByTag(FGameplayTag UnitTag
 	}
 
 	return DummyData;
+}
+
+TArray<float> UPCShopManager::GetCostProbabilities(int32 PlayerLevel)
+{
+	// 플레이어 레벨에 따라 DataList 탐색
+	const auto ProbData = ShopUnitProbabilityDataList.FindByPredicate(
+		[PlayerLevel](const FPCShopUnitProbabilityData& Data)
+		{
+			return Data.PlayerLevel == PlayerLevel;
+		});
+
+	TArray<float> CostProbabilities;
+	
+	if (ProbData)
+	{
+		CostProbabilities = {
+			ProbData->Probability_Cost1,
+			ProbData->Probability_Cost2,
+			ProbData->Probability_Cost3,
+			ProbData->Probability_Cost4,
+			ProbData->Probability_Cost5
+		};
+	}
+	else
+	{
+		CostProbabilities = { 1.f, 0.f, 0.f, 0.f, 0.f};
+	}
+
+	return CostProbabilities;
+}
+
+int32 UPCShopManager::GetSellingPrice(int32 UnitCost, int32 UnitLevel)
+{
+	if (const int32* Price = ShopUnitSellingPriceDataMap.Find({UnitCost, UnitLevel}))
+	{
+		return *Price;
+	}
+
+	return 0;
 }

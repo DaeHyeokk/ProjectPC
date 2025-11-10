@@ -9,6 +9,7 @@
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
 #include "GameFramework/HelpActor/PCCombatManager.h"
+#include "GameFramework/HelpActor/Component/PCGoldDisplayComponent.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "GameFramework/WorldSubsystem/PCItemManagerSubsystem.h"
 #include "GameFramework/WorldSubsystem/PCItemSpawnSubsystem.h"
@@ -78,6 +79,7 @@ void APCCombatGameState::BuildSeatToBoardMap(const TArray<APCCombatBoard*>& Boar
 			MaxSeat = FMath::Max(MaxSeat, CombatBoard->BoardSeatIndex);
 		}
 	}
+	
 	SeatToBoard.SetNum(MaxSeat+1);
 	for (APCCombatBoard* CombatBoard : Boards)
 	{
@@ -105,52 +107,133 @@ void APCCombatGameState::SetStageRunTime(const FStageRuntimeState& NewState)
 	OnRep_StageRunTime();
 }
 
-UPCTileManager* APCCombatGameState::GetBattleTileManagerForSeat(int32 SeatIdx) const
+void APCCombatGameState::MulticastUpdateGoldDisplay_Implementation(int32 SeatIndex, int32 NewGold)
 {
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
-
-	APCCombatManager* CombatManager = nullptr;
-	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+	if (APCCombatBoard* MyBoard = GetBoardBySeat(SeatIndex))
 	{
-		CombatManager = *It;
-		break;
+		MyBoard->ApplyMyGoldVisual(NewGold);
 	}
-	if (!CombatManager) return nullptr;
+}
 
-	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
-	if (PairIdx == INDEX_NONE)
+void APCCombatGameState::MulticastSetEnemyGoldOnHost_Implementation(int32 HostSeat, int32 EnemyGold)
+{
+	if (APCCombatBoard* HostBoard = GetBoardBySeat(HostSeat))
 	{
-		return nullptr;
+		HostBoard->ApplyEnemyGoldVisual(EnemyGold); // Enemy만 갱신
 	}
 
-	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
-		return HostBoard->TileManager;
+}
+
+void APCCombatGameState::MulticastClearEnemyGoldOnHost_Implementation(int32 HostSeat)
+{
+	if (APCCombatBoard* HostBoard = GetBoardBySeat(HostSeat))
+	{
+		if (HostBoard->EnemyGoldDisplay) HostBoard->EnemyGoldDisplay->ReSetEnemyDisplay(); // Enemy만 정리
+	}
+}
+
+APCPlayerState* APCCombatGameState::FindPCPlayerStateBySeat(int32 SeatIndex) const
+{
+	for (APlayerState* PS : PlayerArray)
+	{
+		if (auto* P = Cast<APCPlayerState>(PS))
+		{
+			if (P->SeatIndex == SeatIndex) return P;
+		}
+	}
 	return nullptr;
 }
 
-APCCombatBoard* APCCombatGameState::GetBattleBoardForSeat(int32 SeatIdx) const
+void APCCombatGameState::ArmStepStart(double InServerWorldStartTime)
 {
-	UWorld* World = GetWorld();
-	if (!World) return nullptr;
+	if (!HasAuthority()) return;
+	bStepArmed = true;
+	StepArmTimeWS = InServerWorldStartTime;
+	
+}
 
-	APCCombatManager* CombatManager = nullptr;
-	for (TActorIterator<APCCombatManager> It(World); It; ++It)
+void APCCombatGameState::Server_ReportUILoadingClosed_Implementation(const FString& LocalUserId)
+{
+	if (!HasAuthority() || LocalUserId.IsEmpty()) return;
+	FUILoadingFlags& Flags = UILoadingById.FindOrAdd(LocalUserId);
+	Flags.bClosed = true;
+	Flags.LastUpdate = GetServerWorldTimeSeconds();
+}
+
+bool APCCombatGameState::AreAllLoadingUIClosed(int32& OutReady, int32& OutTotal) const
+{
+	OutReady = 0;
+	OutTotal = 0;
+	for (APlayerState* PSB : PlayerArray)
 	{
-		CombatManager = *It;
-		break;
+		if (const APCPlayerState* PCPS = Cast<APCPlayerState>(PSB))
+		{
+			++OutTotal;
+			const FUILoadingFlags* Flags = UILoadingById.Find(PCPS->LocalUserId);
+			if (Flags && Flags->bClosed)
+			{
+				++OutReady;
+			}
+		}
 	}
-	if (!CombatManager) return nullptr;
+	return (OutTotal > 0) && (OutReady == OutTotal);
+}
 
-	const int32 PairIdx = CombatManager->FindRunningPairIndexBySeat(SeatIdx);
-	if (PairIdx == INDEX_NONE)
+void APCCombatGameState::SetLoadingState(bool bInLoading, float InProgress, const FString& InDetail)
+{
+	if (!HasAuthority()) return;
+	
+	bLoading = bInLoading;
+	LoadingProgress = FMath::Clamp(InProgress, 0.f, 1.0f);
+	LoadingDetail = InDetail;
+	
+	OnRep_Loading();
+}
+
+void APCCombatGameState::OnRep_Loading()
+{
+	OnLoadingChanged.Broadcast();
+}
+
+void APCCombatGameState::Server_UpdateBootstrap(const FString& LocalUserId, uint8 Mask)
+{
+	if (!HasAuthority() || LocalUserId.IsEmpty()) return;
+
+	FBootstrapFlags& Flag = BootstrapById.FindOrAdd(LocalUserId);
+	Flag.Mask = Mask;
+	Flag.LastUpdate = GetServerWorldTimeSeconds();
+}
+
+bool APCCombatGameState::AreAllClientsBootstrapped(int32& OutReady, int32& OutTotal) const
+{
+	OutReady = 0;
+	OutTotal = 0;
+
+	for (APlayerState* PlayerState : PlayerArray)
 	{
-		return nullptr;
-	}
+		const APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState);
+		if (!PCPlayerState) continue;
 
-	if (auto HostBoard = CombatManager->Pairs[PairIdx].Host.Get())
-		return HostBoard;
-	return nullptr;
+		++OutTotal;
+
+		const FBootstrapFlags* Flag = BootstrapById.Find(PCPlayerState->LocalUserId);
+		if (Flag && Flag->All())
+		{
+			++OutReady;
+		}
+	}
+	
+	return (OutTotal > 0) && (OutReady == OutTotal);
+}
+
+float APCCombatGameState::ClientBootstrapRatio() const
+{
+	int32 Ready = 0;
+	int32 Total = 0;
+	
+	AreAllClientsBootstrapped(Ready, Total);
+	
+	return (Total > 0) ? Ready / Total : 0.0f;
 }
 
 float APCCombatGameState::GetStageRemainingSeconds() const
@@ -185,8 +268,6 @@ void APCCombatGameState::SetRoundsPerStage(const TArray<int32>& InCounts)
 		ForceNetUpdate();
 	}
 }
-
-
 
 void APCCombatGameState::SetRoundMajorsFlat(const TArray<FGameplayTag>& InFlatMajors)
 {
@@ -248,9 +329,9 @@ int32 APCCombatGameState::GetMySeatIndex() const
 			return PS->SeatIndex;
 		}
 	}
+	
 	return -1;
 }
-
 
 ERoundResult APCCombatGameState::GetRoundResultForSeat(int32 SeatIdx, int32 StageIdx, int32 RoundIdx) const
 {
@@ -288,6 +369,7 @@ int32 APCCombatGameState::TotalRoundsFloat() const
 	{
 		Sum += FMath::Max(0, V);
 	}
+	
 	return Sum;
 }
 
@@ -329,6 +411,13 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	// 로딩 관련
+	DOREPLIFETIME(APCCombatGameState, bLoading);
+	DOREPLIFETIME(APCCombatGameState, LoadingProgress);
+	DOREPLIFETIME(APCCombatGameState, LoadingDetail);
+	DOREPLIFETIME(APCCombatGameState, bStepArmed);
+	DOREPLIFETIME(APCCombatGameState, StepArmTimeWS);
+
 	DOREPLIFETIME_CONDITION_NOTIFY(APCCombatGameState, GameStateTag, COND_None, REPNOTIFY_OnChanged);
 	DOREPLIFETIME(APCCombatGameState, StageRuntimeState);
 	DOREPLIFETIME(APCCombatGameState, SeatToBoard);
@@ -339,7 +428,6 @@ void APCCombatGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(APCCombatGameState, RoundMajorFlat);
 	DOREPLIFETIME(APCCombatGameState, RoundPvETagFlat);
 	DOREPLIFETIME(APCCombatGameState, SeatRoundResult);
-	
 }
 
 int32 APCCombatGameState::GetMaxXP(int32 PlayerLevel) const
@@ -438,7 +526,7 @@ void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 		++AliveCount;
 	}
 	
-	// AttributeChanageDelegate
+	// AttributeChangeDelegate
 	FDelegateHandle Handle = ASC->GetGameplayAttributeValueChangeDelegate(UPCPlayerAttributeSet::GetPlayerHPAttribute())
 	.AddLambda([this, PCPlayerState](const FOnAttributeChangeData& Data)
 	{
@@ -453,11 +541,7 @@ void APCCombatGameState::BindOnePlayerHpDelegate(APCPlayerState* PCPlayerState)
 		}
 	});
 	
-	HpDelegateHandles.Add(ASC,Handle);
-
-	
-
-	
+	HpDelegateHandles.Add(ASC,Handle);	
 }
 
 int32 APCCombatGameState::AssignFinalRankOnDeathById(const FString& LocalUserId)
@@ -509,6 +593,7 @@ int32 APCCombatGameState::GetFinalRankFor(const FString& LocalUserId) const
 {
 	if (const int32* R = FinalRanks.Find(LocalUserId))
 		return *R;
+	
 	return 0;
 }
 
@@ -535,6 +620,7 @@ void APCCombatGameState::RemovePlayerState(APlayerState* PlayerState)
 
 		RebuildAndReplicatedLeaderboard();
 	}
+	
 	Super::RemovePlayerState(PlayerState);
 }
 
@@ -577,6 +663,7 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 
 			FPlayerStandingRow Row;
 			Row.LocalUserId = Id;
+			Row.PlayerSeatIndex = PCS->SeatIndex;
 			Row.Hp = HpCache.FindRef(Id);
 			Row.bEliminated = EliminatedSet.Contains(Id);
 			Row.FinalRank = FinalRanks.FindRef(Id);
@@ -673,8 +760,9 @@ void APCCombatGameState::RebuildAndReplicatedLeaderboard()
 	}
 
 	Leaderboard = MoveTemp(NewReaderBoard);
-	ForceNetUpdate();
+	GetPlayerStatesOrdered();
 	
+	ForceNetUpdate();
 }
 
 void APCCombatGameState::TryFinalizeLastSurvivor()
@@ -704,15 +792,48 @@ void APCCombatGameState::TryFinalizeLastSurvivor()
 	RebuildAndReplicatedLeaderboard();
 }
 
+APCPlayerState* APCCombatGameState::FindPlayerStateByUserId(const FString& LocalUserId) const
+{
+	if (LocalUserId.IsEmpty()) return nullptr;
+
+	for (APlayerState* PlayerState : PlayerArray)
+	{
+		if (APCPlayerState* PCPlayerState = Cast<APCPlayerState>(PlayerState))
+		{
+			if (PCPlayerState->LocalUserId == LocalUserId)
+			{
+				return PCPlayerState;
+			}
+		}
+	}
+	
+	return nullptr;
+}
+
+void APCCombatGameState::GetPlayerStatesOrdered() 
+{
+	PlayerRanking.Reset();
+
+	if (Leaderboard.Num() <= 0) return;
+	
+	for (int32 i = 0; i < Leaderboard.Num(); ++i)
+	{
+		PlayerRanking.Add(Leaderboard[i].LocalUserId); 
+	}
+}
+
 void APCCombatGameState::OnRep_Leaderboard()
 {
 	BroadCastLeaderboardMap();
-
+	GetPlayerStatesOrdered();
+	
 	if (!bLeaderBoardReady)
 	{
 		bLeaderBoardReady = true;
 		OnLeaderBoardReady.Broadcast();
 	}
+	
+	OnPlayerRankingChanged.Broadcast(PlayerRanking);
 }
 
 UAbilitySystemComponent* APCCombatGameState::ResolveASC(APCPlayerState* PCPlayerState) const
@@ -734,6 +855,7 @@ void APCCombatGameState::BroadCastLeaderboardMap()
 			Map.Add(Row.LocalUserId, Row);
 		}
 	}
+	
 	CachedLeaderboardMap = Map;
 	OnLeaderboardMapUpdated.Broadcast(Map);
 }

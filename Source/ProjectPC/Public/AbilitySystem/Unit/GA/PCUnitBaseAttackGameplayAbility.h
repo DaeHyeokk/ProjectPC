@@ -22,9 +22,6 @@ public:
 	UPCUnitBaseAttackGameplayAbility();
 	
 protected:
-	virtual void OnAvatarSet(
-		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
-	
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -32,19 +29,9 @@ protected:
 		const FGameplayEventData* TriggerEventData) override;
 
 	void SetCurrentTarget(const AActor* Avatar);
-	
-	UPROPERTY(Transient)
-	TWeakObjectPtr<const AActor> CurrentTarget;
 
-	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
-	const FGameplayTag AttackSucceedTag = UnitGameplayTags::Unit_Event_AttackSucceed;
-	
-protected:
 	virtual void StartAttackSucceedWaitTask();
 	virtual void StartProjectileSpawnSucceedWaitTask();
-	
-	UFUNCTION()
-	virtual void AttackCommit();
 	
 	UFUNCTION()
 	virtual void OnAttackSucceed(FGameplayEventData Payload);
@@ -52,13 +39,12 @@ protected:
 	UFUNCTION()
 	virtual void OnSpawnProjectileSucceed(FGameplayEventData Payload);
 
-	void SetAttackSucceedNotifyCount();
-	void SetSpawnProjectileSucceedNotifyCount();
+	void PlayAttackSound() const;
 	
-	bool bUseMultiHit = false;
-	bool bCommittedOnce = false;
-	int32 NotifyCount = 0;
-	int32 ReceivedNotifyCount = 0;
-	
+	UPROPERTY(Transient)
+	TWeakObjectPtr<const AActor> CurrentTarget;
+
+	const FGameplayTag SpawnProjectileSucceedTag = UnitGameplayTags::Unit_Event_SpawnProjectileSucceed;
+	const FGameplayTag AttackSucceedTag = UnitGameplayTags::Unit_Event_AttackSucceed;
 };
 

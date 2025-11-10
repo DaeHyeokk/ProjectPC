@@ -4,8 +4,6 @@
 #include "GameFramework/HelpActor/Component/PCTileManager.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "GameFramework/HelpActor/PCCombatBoard.h"
-#include "Windows/WindowsApplication.h"
-
 
 // Sets default values for this component's properties
 UPCTileManager::UPCTileManager()
@@ -75,8 +73,8 @@ bool UPCTileManager::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Un
 	const FRotator Rot = CalcUnitRotation(Unit, FacingOverride);
 
 	Unit->SetOnCombatBoard(Board);
-	Unit->SetActorLocationAndRotation(Loc, Rot, false, nullptr, ETeleportType::TeleportPhysics);
-	Unit->ChangedOnTile(true);
+	FVector TWorld = FVector(Loc.X, Loc.Y, 50.f);
+	Unit->TeleportTo(TWorld, Rot, false, true);
 	BindToUnit(Unit);
 
 	return true;
@@ -105,6 +103,16 @@ APCBaseUnitCharacter* UPCTileManager::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = Y * Rows + X;
 	return Field.IsValidIndex(i) ? Field[i].Unit : nullptr;
+}
+
+// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+void UPCTileManager::GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const
+{
+	for (const FTile& Tile : Field)
+	{
+		if (Tile.Unit)
+			FieldUnits.Add(Tile.Unit);
+	}
 }
 
 FVector UPCTileManager::GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const
@@ -248,17 +256,15 @@ bool UPCTileManager::SetTileState(int32 Y, int32 X, APCBaseUnitCharacter* InUnit
 
 	case ETileAction::Release:
 		{
-			bool bAny = false;
 			if (Tile.IsOwnedBy(InUnit))
 			{
 				Tile.Unit = nullptr;
-				bAny = true;
 			}
 			if (Tile.IsReservedBy(InUnit))
 			{
 				Tile.ReservedUnit = nullptr;
-				bAny = true;
 			}
+			return true;
 		}
 	}
 	return false;
@@ -303,11 +309,51 @@ bool UPCTileManager::EnsureExclusive(APCBaseUnitCharacter* InUnit)
 	const FIntPoint GridPoint = GetFieldUnitGridPoint(InUnit);
 	if (GridPoint != FIntPoint::NoneValue)
 	{
-		RemoveFromField(GridPoint.X, GridPoint.Y, false);
+		RemoveFromField(GridPoint.Y, GridPoint.X, false);
 		return true;
 	}
 	
 	return false;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetWinnerUnitByTeamIndex(int32 WinnerTeamIndex)
+{
+	TArray<APCBaseUnitCharacter*> WinnerUnit;
+	
+	auto AddIfField = [&](APCBaseUnitCharacter* Unit)
+	{
+		if (!IsValid(Unit)) return;
+
+		if (Unit->GetTeamIndex() == WinnerTeamIndex)
+		{
+			if (!WinnerUnit.Contains(Unit))
+			{
+				WinnerUnit.Add(Unit);
+			}
+		}
+	};
+	
+	for (const auto& T : Field)
+	{
+		AddIfField(T.Unit);
+	}
+
+	return WinnerUnit;
+}
+
+TArray<APCBaseUnitCharacter*> UPCTileManager::GetAllAliveUnit()
+{
+	TArray<APCBaseUnitCharacter*> AliveUnit;
+
+	for (const auto& T : Field)
+	{
+		if (T.Unit != nullptr)
+		{
+			AliveUnit.Add(T.Unit);
+		}
+	}
+
+	return AliveUnit;
 }
 
 void UPCTileManager::CreateField()
@@ -442,6 +488,77 @@ void UPCTileManager::DebugExplainTile(int32 Y, int32 X, const FString& Tag) cons
 		(int32)T.CanBeUsedBy(nullptr)); // 원하면 OwnerUnit 넘겨서 체크
 }
 
+void UPCTileManager::DebugDrawTiles(float Duration, bool bPersistent, bool bShowIndex, bool bShowYX,
+	bool bShowUnit) const
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	// Duration을 크게 주면(예: 1e6f) 사실상 계속 보임. bPersistent=true면 지속 라인 배처에 쌓임.
+	const float Life = (Duration <= 0.f) ? 10.f : Duration;
+
+	for (int32 i = 0; i < Field.Num(); ++i)
+	{
+		if (!Field.IsValidIndex(i)) continue;
+		const FTile& T = Field[i];
+		const FVector P = T.Position;
+		const FIntPoint Intpoint = T.UnitIntPoint;
+
+		TArray<FString> Lines;
+		if (bShowIndex) Lines.Add(FString::Printf(TEXT("#%d"), i));
+		if (bShowYX)
+		{
+			const int32 Y = Intpoint.Y;
+			const int32 X = Intpoint.X;
+			Lines.Add(FString::Printf(TEXT("(X=%d,Y=%d)"), X, Y));
+		}
+	
+		const FString Label = FString::Join(Lines, TEXT(" "));
+
+		// 스피어/텍스트
+		DrawDebugSphere(World, P, 12.f, 12, FColor::Green, bPersistent, Life, 0, 0.8f);
+		DrawDebugString(World, P + FVector(0,-140,40.f), Label, nullptr, FColor::Black, Life, false, 1.0f);
+	}
+}
+
+void UPCTileManager::DebugClearPersistent() const
+{
+	if (UWorld* World = GetWorld())
+	{
+		// ⚠️ 월드의 모든 persistent debug 라인을 지움(다른 디버그도 함께 사라질 수 있음)
+		FlushPersistentDebugLines(World);
+	}
+}
+
+#if WITH_EDITOR
+void UPCTileManager::Editor_DrawTilesPersistent()
+{
+	// 에디터에서도 동작: 맵 열린 상태에서 디테일 버튼 클릭 시 그려지고 유지
+	// DebugDrawTiles(1e6f /*사실상 영구*/, true, true, true, true);
+}
+
+void UPCTileManager::Editor_ClearDebug()
+{
+	DebugClearPersistent();
+}
+#endif
+
+FString UPCTileManager::DescribeTileState(int32 Index)
+{
+	if (!Field.IsValidIndex(Index)) return TEXT("[InvalidIndex]");
+	const FTile& T = Field[Index];
+	const int32 Y = Index / Rows;
+	const int32 X = Index % Rows;
+	FString UnitName     = T.Unit ? T.Unit->GetName() : TEXT("null");
+
+	return FString::Printf(
+		TEXT("i=%d (Y=%d,X=%d) Pos=(%.1f,%.1f,%.1f) Field=%d | Unit=%s | Free=%d"),
+		Index, Y, X,
+		T.Position.X, T.Position.Y, T.Position.Z,
+		T.bIsField, *UnitName, T.IsFree()
+	);
+}
+
 void UPCTileManager::BindToUnit(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return;
@@ -456,7 +573,7 @@ void UPCTileManager::UnbindFromUnit(APCBaseUnitCharacter* Unit)
 	if (!Unit) return;
 	if (!DeathBoundUnits.Contains(Unit)) return;
 
-	Unit->OnUnitDied.RemoveDynamic(this, &UPCTileManager::UPCTileManager::OnBoundUnitDied);
+	Unit->OnUnitDied.RemoveDynamic(this, &UPCTileManager::OnBoundUnitDied);
 	DeathBoundUnits.Remove(Unit);
 }
 

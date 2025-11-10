@@ -35,13 +35,14 @@ bool UPCGameplayAbility_ShopRefresh::CanActivateAbility(const FGameplayAbilitySp
 	{
 		return false;
 	}
-	
-	if (!ActorInfo->IsNetAuthority() || !CostGameplayEffectClass)
+
+	// 서버 권위, CostGE 클래스가 유효하면 Activate
+	if (ActorInfo && ActorInfo->IsNetAuthority() && CostGameplayEffectClass)
 	{
-		return false;
+		return true;
 	}
 	
-	return true;
+	return false;
 }
 
 bool UPCGameplayAbility_ShopRefresh::CheckCost(const FGameplayAbilitySpecHandle Handle,
@@ -57,7 +58,11 @@ void UPCGameplayAbility_ShopRefresh::ApplyCost(const FGameplayAbilitySpecHandle 
 	if (CostSpecHandle.IsValid())
 	{
 		CostSpecHandle.Data->SetSetByCallerMagnitude(CostTag, -CostValue);
-		ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+		
+		if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+		{
+			ActorInfo->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+		}
 	}
 }
 
@@ -72,23 +77,28 @@ void UPCGameplayAbility_ShopRefresh::ActivateAbility(const FGameplayAbilitySpecH
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
-	if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
-	{
-		CostValue = TriggerEventData->EventMagnitude;
-		if (CostAttributeSet->GetPlayerGold() >= CostValue)
-		{
-			if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
-			{
-				EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-				return;
-			}
 
-			if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+	if (ActorInfo && ActorInfo->AbilitySystemComponent.IsValid())
+	{
+		if (const auto* CostAttributeSet = ActorInfo->AbilitySystemComponent->GetSet<UPCPlayerAttributeSet>())
+		{
+			CostValue = TriggerEventData->EventMagnitude;
+			if (CostAttributeSet->GetPlayerGold() >= CostValue)
 			{
-				if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
+				if (!CommitAbility(Handle, ActorInfo, ActivationInfo)) 
 				{
-					GS->GetShopManager()->UpdateShopSlots(PS);
+					EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+					return;
+				}
+
+				if (auto GS = GetWorld()->GetGameState<APCCombatGameState>())
+				{
+					if (auto PS = Cast<APCPlayerState>(ActorInfo->OwnerActor.Get()))
+					{
+						// 상점 업데이트 호출
+						GS->GetShopManager()->UpdateShopSlots(PS);
+						ActorInfo->AbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_ShopRefresh);
+					}
 				}
 			}
 		}

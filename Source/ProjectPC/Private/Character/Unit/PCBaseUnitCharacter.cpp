@@ -28,23 +28,26 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bReplicates = true;
 	SetReplicates(true);
 	
+	SetIsSpatiallyLoaded(false);
+	
 	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = true;
 
-	GetCharacterMovement()->SetIsReplicated(false);
+	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f,640.f, 0.f);
 	GetCharacterMovement()->MaxWalkSpeed = 250.f;
-
+	
 	GetMesh()->SetIsReplicated(true);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f,0.f,-88.0f), FRotator(0.f,-90.f,0.f));
-	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesAndRefreshBonesWhenPlayingMontages;
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	
 	GetCapsuleComponent()->SetCapsuleSize(76.f, 100.f, true);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	
 	StatusBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusBarWidgetComponent"));
 	StatusBarComp->SetIsReplicated(true);
@@ -54,7 +57,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
 	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
-
+	
 	EquipmentComp = CreateDefaultSubobject<UPCUnitEquipmentComponent>(TEXT("EquipmentComponent"));
 	EquipmentComp->SetIsReplicated(true);
 }
@@ -178,11 +181,6 @@ void APCBaseUnitCharacter::BeginPlay()
 		}
 	}
 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
 	if (UPCUnitAnimInstance* UnitAnimInstance = Cast<UPCUnitAnimInstance>(GetMesh()->GetAnimInstance()))
 	{
 		UnitAnimInstance->PlayLevelStartMontage();
@@ -207,17 +205,19 @@ void APCBaseUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void APCBaseUnitCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-}
-
 void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
+}
+
+void APCBaseUnitCharacter::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+	SetIsSpatiallyLoaded(false);
 }
 
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
@@ -299,6 +299,32 @@ void APCBaseUnitCharacter::SetAnimSetData() const
 	}
 }
 
+void APCBaseUnitCharacter::SetMeshVisibility(bool bVisibility) const
+{
+	if (GetNetMode() == NM_DedicatedServer)
+		return;
+	
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
+	{
+		if (bVisibility)
+		{
+			SkMesh->SetVisibility(true, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(1.f);
+			}
+		}
+		else
+		{
+			SkMesh->SetVisibility(false, false);
+			if (UUserWidget* Widget = StatusBarComp->GetWidget())
+			{
+				Widget->SetRenderOpacity(0.f);
+			}
+		}
+	}
+}
+
 void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 {
 	if (bIsOnField != IsOnField)
@@ -310,19 +336,19 @@ void APCBaseUnitCharacter::ChangedOnTile(const bool IsOnField)
 
 void APCBaseUnitCharacter::Die()
 {
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	
 	if (HasAuthority())
 	{
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
-			if (!ASC->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
+			if (!bIsDead)
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
+
+				FGameplayTagContainer CancelTags;
+				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+				ASC->CancelAbilities(&CancelTags);
 			}
-			ASC->CancelAllAbilities();
-			OnUnitDied.Broadcast(this);
 		}
 	}
 }
@@ -332,14 +358,93 @@ void APCBaseUnitCharacter::OnDeathAnimCompleted()
 	SetActorLocation(FVector(99999.f,99999.f,99999.f));
 }
 
+void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
+{
+	if (!HasAuthority() || !bIsOnField || bIsDead)
+		return;
+
+	SetActorRotation(FRotator(0.f,180.f,0.f));
+	bIsCombatWin = true;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		APawn* TargetPawn = TargetPS ? TargetPS->GetPawn() : nullptr;
+		
+		FGameplayEventData EventData;
+		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
+		EventData.Instigator = this;
+		EventData.Target = TargetPawn;
+
+		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+		FGameplayTagContainer CancelTags;
+		CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+		ASC->CancelAbilities(&CancelTags);
+	}
+}
+
+void APCBaseUnitCharacter::CombatDraw(APCPlayerState* TargetPS)
+{
+	if (!HasAuthority() || !bIsOnField || bIsDead)
+		return;
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		APawn* TargetPawn = TargetPS ? TargetPS->GetPawn() : nullptr;
+		
+		FGameplayEventData EventData;
+		EventData.EventTag = UnitGameplayTags::Unit_Event_Combat_Win;
+		EventData.Instigator = this;
+		EventData.Target = TargetPawn;
+
+		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+		FGameplayTagContainer CancelTags;
+		CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+		ASC->CancelAbilities(&CancelTags);
+	}
+}
+
+void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
+{
+	const FGameplayTag& CombatResultTag = GameStateTags::Game_State_Combat_Result;
+
+	if (bIsOnField && NewStateTag.MatchesTagExact(CombatResultTag))
+	{
+		bIsCombatWin = false;
+		SetMeshVisibility(false);
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+		{
+			ASC->CurrentMontageStop(0.f);
+			
+			FGameplayTagContainer CancelTags;
+			CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+			ASC->CancelAbilities(&CancelTags);
+		}
+	}
+}
+
 void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
 	{
 		bIsDead = (NewCount > 0);
+
+		if (bIsDead)
+			OnUnitDied.Broadcast(this);
 	}
 	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
 	{
 		bIsStunned = (NewCount > 0);
+
+		if (bIsStunned)
+		{
+			if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				FGameplayTagContainer CancelTags;
+				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+				ASC->CancelAbilities(&CancelTags);
+			}
+		}
 	}
 }

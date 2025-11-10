@@ -10,6 +10,7 @@
 struct FOnAttributeChangeData;
 
 class APCPlayerState;
+class UButton;
 class UTextBlock;
 class UImage;
 
@@ -22,26 +23,50 @@ class PROJECTPC_API UPCPlayerRowWidget : public UUserWidget
 	GENERATED_BODY()
 	
 protected:
+	virtual bool Initialize() override;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Portrait")
-	UPCDataAsset_PlayerPortrait* PlayerPortrait;
+	TObjectPtr<UPCDataAsset_PlayerPortrait> PlayerPortrait;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerName;
+	TObjectPtr<UTextBlock> PlayerName;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* PlayerHP;
+	TObjectPtr<UTextBlock> PlayerHP;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* CircularHPBar;
+	TObjectPtr<UImage> CircularHPBar;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_Portrait;
+	TObjectPtr<UImage> Img_Portrait;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UButton> Btn_CameraSwitch;
+
+private:
+	UPROPERTY()
+	APCPlayerState* CachedPlayerState;
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	int32 WinningStreak = 0;
 
 public:
-	void SetupPlayerInfo(FString NewPlayerName, float NewPlayerHP, FGameplayTag NewPlayerCharacterTag);
+	void SetupPlayerInfo(APCPlayerState* NewPlayerState);
+	void UnBindFromPlayerState();
 
-	void UpdatePlayerHP(float NewPlayerHP);
-	
+	void UpdatePlayerHP(const FOnAttributeChangeData& Data);
+	void SetWinningStreak(int32 NewWinningStreak);
+	void ExpandRenderSize();
+	void RestoreRenderSize();
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetHP(float HPPercent);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetWinningFlame();
+
+private:
+	UFUNCTION()
+	void PlayerPatrol();
 };

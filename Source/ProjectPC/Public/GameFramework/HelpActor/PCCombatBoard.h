@@ -7,6 +7,9 @@
 #include "GameFramework/HelpActor/PCTileType.h"
 #include "PCCombatBoard.generated.h"
 
+class UAbilitySystemComponent;
+struct FOnAttributeChangeData;
+class UPCGoldDisplayComponent;
 class APCBaseUnitCharacter;
 class APCHeroUnitCharacter;
 class UPCTileManager;
@@ -17,6 +20,8 @@ class UHierarchicalInstancedStaticMeshComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
+
+
 // 타일 마커를 모아둔 정보 (월드 변환 등)
 USTRUCT()
 struct FTileInfo
@@ -26,6 +31,7 @@ struct FTileInfo
 	UPROPERTY()
 	FTransform WorldTransform;
 };
+
 
 UCLASS()
 class PROJECTPC_API APCCombatBoard : public AActor
@@ -103,6 +109,20 @@ public:
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	FRotator BattleCameraChangeRotation = FRotator(-50.f, 180.f,0.f);
 
+	// GoldDisplayComponent
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GoldDisplay")
+	TObjectPtr<UPCGoldDisplayComponent> MyGoldDisplay;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GoldDisplay")
+	TObjectPtr<UPCGoldDisplayComponent> EnemyGoldDisplay;
+	
+	// 멀티케스트에서 호출될 표시 함수
+	void ApplyMyGoldVisual(int32 NewGold);
+	void ApplyEnemyGoldVisual(int32 NewGold);
+	
+private:
+		
+	APCPlayerState* FindPSBySeat(int32 SeatIndex) const;
 	
 
 protected:
@@ -128,6 +148,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	APCBaseUnitCharacter* GetUnitAt(int32 Y, int32 X) const;
 
+	// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+	UFUNCTION(Category="Tile")
+	void GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const;
+	
 	UFUNCTION(BlueprintPure, Category = "Tile")
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* InUnit) const;
 

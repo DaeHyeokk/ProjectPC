@@ -21,7 +21,6 @@ struct FCarouselUnitData
 
 	UPROPERTY()
 	FGameplayTag ItemTag;
-	
 };
 
 UCLASS()
@@ -36,33 +35,48 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-
-public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
 	
-	void SetOverHeadWidget();
-
-protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer CharacterTags;
 
-public:
-	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")
-	UWidgetComponent* OverHeadWidgetComp;
+#pragma region OverHeadWidget
 	
-private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* TopDownCameraComponent;
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")
+	TObjectPtr<UWidgetComponent> OverHeadWidgetComp;
+	
+public:
+	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetOverHeadWidget();
+
+#pragma endregion OverHeadWidget
+
+#pragma region PlayerDead
+
+private:
+	UPROPERTY(Replicated)
+	bool bIsDead;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool IsDead() const { return bIsDead; }
+
+	void PlayerDie();
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnPlayerDeathAnimFinished();
+
+#pragma endregion PlayerDead
 
 #pragma region CarouselSlot
 
 public:
-
 	UFUNCTION(Server, Reliable)
 	void Server_RequestCarouselPick();
 
@@ -81,25 +95,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Carousel")
 	void CarouselUnitToSpawn();
 
-	
 #pragma endregion  CrouselSlot
-	
-#pragma region PlayerDead
-	
-	UPROPERTY(Replicated)
-	bool bIsDead;
-
-public:
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool IsDead() const { return bIsDead; }
-
-	void PlayerDie();
-
-	UFUNCTION(Client, Reliable)
-	void Client_PlayMontage(UAnimMontage* Montage, float InPlayRate);
-	
-	UFUNCTION(BlueprintCallable)
-	void OnPlayerDeathAnimFinished();
-
-#pragma endregion PlayerDead
 };

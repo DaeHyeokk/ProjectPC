@@ -11,11 +11,7 @@ class UPCHeroUnitAttributeSet;
 class UPCHeroUnitAbilitySystemComponent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnHeroDestroyed, APCHeroUnitCharacter*);
-DECLARE_MULTICAST_DELEGATE_ThreeParams(
-	FOnHeroSynergyTagChanged,
-	const APCHeroUnitCharacter*,
-	const FGameplayTag&,
-	bool);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHeroSynergyTagChanged, const APCHeroUnitCharacter*);
 DECLARE_MULTICAST_DELEGATE(FOnHeroLevelUp);
 
 /**
@@ -42,8 +38,6 @@ public:
 	
 	virtual UPCDataAsset_BaseUnitData* GetUnitDataAsset() const override { return HeroUnitDataAsset; }
 	virtual void SetUnitDataAsset(UPCDataAsset_BaseUnitData* InUnitDataAsset) override;
-
-	void UpdateStatusBarUI() const;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -51,6 +45,8 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget) override;
+	void UpdateStatusBarUI() const;
+	void UpdateMeshScale() const;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UPCHeroUnitAbilitySystemComponent> HeroUnitAbilitySystemComponent;
@@ -67,20 +63,30 @@ protected:
 	UFUNCTION()
 	virtual void OnRep_HeroLevel();
 
+	bool bDidCombine = false;
+	bool bDidPlaySpawnSound = false;
+	
+private:
+	void PlayLevelUpParticle() const;
+	
+	UPROPERTY(ReplicatedUsing=OnRep_IsDragging)
+	bool bIsDragging;
+
+	UFUNCTION()
+	void OnRep_IsDragging() const;
+	
 	// 전투 관련 //
+private:
 	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
+	void RestoreFromCombatEnd();
 	
 public:
 	virtual void ChangedOnTile(const bool IsOnField) override;
 	
-private:
-	void RestoreFromCombatEnd();
-	
-public:
 	UFUNCTION(BlueprintCallable, Category="DragAndDrop")
 	void ActionDrag(const bool IsStart);
-
-	// 시너지 관련 //
+	
+	// 시너지, UI 관련 //
 public:
 	FOnHeroDestroyed OnHeroDestroyed;
 	FOnHeroSynergyTagChanged OnHeroSynergyTagChanged;

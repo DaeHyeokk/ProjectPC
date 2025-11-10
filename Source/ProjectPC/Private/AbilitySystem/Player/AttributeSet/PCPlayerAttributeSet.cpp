@@ -30,6 +30,16 @@ void UPCPlayerAttributeSet::OnRep_PlayerHP(const FGameplayAttributeData& OldValu
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UPCPlayerAttributeSet, PlayerHP, OldValue);
 }
 
+void UPCPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerLevel, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerXP, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerGold, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerHP, COND_None, REPNOTIFY_Always);
+}
+
 void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
@@ -43,6 +53,22 @@ void UPCPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 	{
 		CheckPlayerDie();
 	}
+}
+
+bool UPCPlayerAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
+{
+	if (!Super::PreGameplayEffectExecute(Data)) return false;
+
+	if (GetPlayerLevel() >= 10.f)
+	{
+		if (Data.EvaluatedData.Attribute == GetPlayerXPAttribute())
+		{
+			Data.EvaluatedData.Magnitude = 0.f;
+			return false; 
+		}
+	}
+
+	return true;
 }
 
 void UPCPlayerAttributeSet::CheckLevelUp()
@@ -67,6 +93,13 @@ void UPCPlayerAttributeSet::CheckLevelUp()
 	{
 		SetPlayerLevel(PlayerCurrentLevel + 1);
 		SetPlayerXP(PlayerCurrentXP - RequiredXP);
+
+		if (GetPlayerLevel() >= 10.f)
+		{
+			ASC->AddLooseGameplayTag(PlayerGameplayTags::Player_State_MaxLevel);
+		}
+
+		ASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_Player_LevelUp);
 	}
 }
 
@@ -78,7 +111,7 @@ void UPCPlayerAttributeSet::CheckPlayerDie()
 	auto OwningActor = ASC->GetOwnerActor();
 	if (!OwningActor || !OwningActor->HasAuthority()) return;
 	
-	if (GetPlayerHP() <= 0)
+	if (GetPlayerHP() <= 0.f)
 	{
 		if (auto PC = Cast<APCPlayerState>(OwningActor))
 		{
@@ -88,14 +121,4 @@ void UPCPlayerAttributeSet::CheckPlayerDie()
 			}
 		}
 	}
-}
-
-void UPCPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerLevel, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerXP, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerGold, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UPCPlayerAttributeSet, PlayerHP, COND_None, REPNOTIFY_Always);
 }

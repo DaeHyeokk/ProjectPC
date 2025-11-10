@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h" 
 #include "PCPlayerBoard.generated.h"
 
+class UNiagaraSystem;
 class UPCPlayerAttributeSet;
 class UAbilitySystemComponent;
 struct FOnAttributeChangeData;
@@ -185,6 +186,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Query")
     int32 GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const;
 
+	UFUNCTION(BlueprintCallable, Category="PlayerBoard|Query")
+	int32 GetFieldUnitIndex(APCBaseUnitCharacter* Unit) const;
+
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Query")
     FIntPoint GetFieldUnitGridPoint(APCBaseUnitCharacter* Unit) const;
 
@@ -217,7 +221,7 @@ public:
     bool PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
-    bool RemoveFromField(int32 Y, int32 X);
+    bool RemoveFromField(int32 FieldIndex);
 
     UFUNCTION(BlueprintCallable, Category="PlayerBoard|Placement")
     bool RemoveFromBench(int32 LocalBenchIndex);
@@ -332,6 +336,9 @@ protected:
 	UAbilitySystemComponent* ResolveASC() const;
 	const UPCPlayerAttributeSet* ResolveSet() const;
 
+	UPROPERTY(EditDefaultsOnly, Category = "FX")
+	UNiagaraSystem* SpawnEffect;
+
 
 	// Board 자동 배치
 public:
@@ -352,6 +359,14 @@ protected:
 	// 가장 낮은 인덱스의 유닛이 들어있는 벤치 슬롯 찾기
 	int32 GetFirstOccupiedBenchIndex() const;
 	
+	// //보드 사운드 관련
+	//
+	// UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	// TObjectPtr<USoundWave> PlaceSound;
+	//
+	// UFUNCTION(Client, Unreliable)
+	// void PlayPlaceSound(FVector Loc);
+
 	
 };
 	

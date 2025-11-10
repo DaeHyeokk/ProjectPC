@@ -3,9 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "AbilitySystemInterface.h"
-#include "GameplayTagAssetInterface.h"
 #include "GenericTeamAgentInterface.h"
 #include "PCCommonUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_BaseUnitData.h"
@@ -47,6 +44,7 @@ public:
 	void SetOutlineEnabled(bool bEnable) const;
 	
 	void SetOwnerPlayerState(APCPlayerState* InOwnerPS) { OwnerPS = InOwnerPS; }
+	UFUNCTION(BlueprintPure)
 	APCPlayerState* GetOwnerPlayerState() const { return OwnerPS; }
 
 	virtual TArray<FGameplayTag> GetEquipItemTags() const override;
@@ -58,8 +56,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void PossessedBy(AController* NewController) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void PreInitializeComponents() override;
 	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
@@ -95,6 +93,8 @@ protected:
 	void InitAbilitySystem();
 	void SetAnimSetData() const;
 
+	void SetMeshVisibility(bool bHide) const;
+	
 	// 전투 시스템 관련 //
 public:
 	// Team Index, 위치한 CombatBoard 설정은 서버에서만 실행
@@ -130,8 +130,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnDeathAnimCompleted();
 
+	UFUNCTION(BlueprintCallable)
+	void CombatWin(APCPlayerState* TargetPS);
+
+	UFUNCTION(BlueprintCallable)
+	void CombatDraw(APCPlayerState* TargetPS);
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsCombatWin() const { return bIsCombatWin; }
+	
 protected:
-	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) { };
+	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag);
 	FDelegateHandle GameStateChangedHandle;
 	
 	UPROPERTY()
@@ -140,6 +149,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsOnField = false;
 
+	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
+	bool bIsCombatWin = false;
+	
 	UPROPERTY(BlueprintReadOnly, Category="Combat")
 	bool bIsDead = false;
 

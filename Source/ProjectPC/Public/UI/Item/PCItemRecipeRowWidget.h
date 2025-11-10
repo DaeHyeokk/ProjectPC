@@ -23,11 +23,11 @@ public:
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_BaseItemThumbnail;
+	TObjectPtr<UImage> Img_BaseItemThumbnail;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* Img_AdvancedItemThumbnail;
+	TObjectPtr<UImage> Img_AdvancedItemThumbnail;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UTextBlock* Text_AdvancedItemName;
+	TObjectPtr<UTextBlock> Text_AdvancedItemName;
 };

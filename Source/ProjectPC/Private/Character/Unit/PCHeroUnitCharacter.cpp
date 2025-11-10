@@ -9,11 +9,14 @@
 #include "AbilitySystem/Unit/PCHeroUnitAbilitySystemComponent.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
 #include "BaseGameplayTags.h"
+#include "Component/PCSynergyComponent.h"
 #include "Component/PCUnitEquipmentComponent.h"
 #include "Controller/Unit/PCUnitAIController.h"
 #include "DataAsset/Unit/PCDataAsset_HeroUnitData.h"
+#include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
+#include "Sound/SoundBase.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -37,6 +40,7 @@ void APCHeroUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APCHeroUnitCharacter, HeroLevel);
+	DOREPLIFETIME(APCHeroUnitCharacter, bIsDragging);
 }
 
 UPCHeroUnitAbilitySystemComponent* APCHeroUnitCharacter::GetHeroUnitAbilitySystemComponent() const
@@ -66,10 +70,6 @@ void APCHeroUnitCharacter::LevelUp()
 	// LevelUp은 서버권한
 	if (!HasAuthority() || !HeroUnitAbilitySystemComponent)
 		return;
-
-	FGameplayCueParameters Params;
-	Params.TargetAttachComponent = GetMesh();
-	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 	
 	HeroLevel = FMath::Clamp(++HeroLevel, 1, 3);
 	HeroUnitAbilitySystemComponent->UpdateGAS();
@@ -77,6 +77,15 @@ void APCHeroUnitCharacter::LevelUp()
 	// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_HeroLevel 이벤트 못받기 때문)
 	if (GetNetMode() == NM_ListenServer)
 		OnRep_HeroLevel();
+
+	// 한 프레임 내에서 뒤이어 Combine()이 호출 될 수도 있으니 레벨업 이펙트 생성을 다음 프레임으로 보류
+	GetWorldTimerManager().SetTimerForNextTick([this]()
+	{
+		if (!bDidCombine)
+		{
+			PlayLevelUpParticle();
+		}
+	});
 }
 
 void APCHeroUnitCharacter::UpdateStatusBarUI() const
@@ -87,14 +96,56 @@ void APCHeroUnitCharacter::UpdateStatusBarUI() const
 	}
 }
 
+void APCHeroUnitCharacter::UpdateMeshScale() const
+{
+	if (HasAuthority() || !GetMesh())
+		return;
+	
+	FVector MeshScale = FVector::OneVector;
+	float IncreaseSize = FMath::Max(0.f,0.12 * (GetUnitLevel() - 1));
+	FVector IncreaseSizeVector = FVector(IncreaseSize, IncreaseSize, IncreaseSize);
+	MeshScale += IncreaseSizeVector;
+
+	GetMesh()->SetRelativeScale3D(MeshScale);
+}
+
 void APCHeroUnitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (auto* ASC = GetAbilitySystemComponent())
+
+	if (USkeletalMeshComponent* MeshComp = GetMesh())
 	{
-		SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy)
-		.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+		MeshComp->HideBoneByName(TEXT("sheild_main"), PBO_None); // Steel 방패 제거 
+		MeshComp->HideBoneByName(TEXT("arm_chain_long_r_01"), PBO_None); // Riktor 왼쪽 체인 비정상적인 메쉬 제거
+		MeshComp->HideBoneByName(TEXT("wing_l_01"), PBO_None); // Serath 날개 제거
+		MeshComp->HideBoneByName(TEXT("wing_r_01"), PBO_None);
+		MeshComp->HideBoneByName(TEXT("ghostbeast_root"), PBO_None); // Khaimera Ghost Beast? 소켓 제거 
+	}
+	
+	if (HasAuthority())
+	{
+		if (auto* ASC = GetAbilitySystemComponent())
+		{
+			SynergyTagChangedHandle = ASC->RegisterGameplayTagEvent(SynergyGameplayTags::Synergy, EGameplayTagEventType::AnyCountChange)
+			.AddUObject(this, &ThisClass::OnSynergyTagChanged);
+		}
+
+		if (!bDidPlaySpawnSound)
+		{
+			UPCUnitSpawnSubsystem* SpawnSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UPCUnitSpawnSubsystem>() : nullptr;
+			if (SpawnSubsystem && OwnerPS && OwnerPS->GetAbilitySystemComponent())
+			{
+				bDidPlaySpawnSound = true;
+				
+				if (USoundBase* LevelStartSound = SpawnSubsystem->GetLevelStartSoundCueByUnitTag(UnitTag))
+				{
+					FGameplayCueParameters Params;
+					Params.SourceObject = LevelStartSound;
+		
+					OwnerPS->GetAbilitySystemComponent()->ExecuteGameplayCue(GameplayCueTags::GameplayCue_SFX_Unit_LevelStart, Params);
+				}
+			}
+		}
 	}
 }
 
@@ -111,10 +162,10 @@ void APCHeroUnitCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APCHeroUnitCharacter::RestoreFromCombatEnd()
 {
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-	
-	if (HasAuthority())
+	if (HasAuthority() && bIsOnField)
 	{
+		bIsCombatWin = false;
+		
 		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
 			return;
 
@@ -138,7 +189,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 			HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-			//bIsDead = false;
 		}
 
 		// 스턴 상태일 경우 스턴 태그 제거
@@ -146,10 +196,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		{
 			HeroUnitAbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(
 				FGameplayTagContainer(UnitGameplayTags::Unit_State_Combat_Stun));
-			//bIsStunned = false;
 		}
-		
-		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.2f);
 		
 		// 블랙보드 키값 초기화
 		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
@@ -159,30 +206,37 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 	}
 }
 
+void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
+{
+	if (UPCSynergyComponent* SynergyComp = OwnerPS ? OwnerPS->GetSynergyComponent() : nullptr)
+	{
+		if (bIsOnField && !IsOnField)
+		{
+			SynergyComp->UnRegisterHero(this);
+		}
+		else if (!bIsOnField && IsOnField)
+		{
+			SynergyComp->RegisterHero(this);
+		}
+	}
+	
+	Super::ChangedOnTile(IsOnField);
+}
+
 void APCHeroUnitCharacter::ActionDrag(const bool IsStart)
 {
-	// 클라에서만 실행 (Listen Server 포함)
-	if (GetNetMode() == NM_DedicatedServer)
+	// 서버에서만 실행
+	if (!HasAuthority())
 		return;
-	
-	if (GetMesh())
+
+	bIsDragging = IsStart;
+}
+
+void APCHeroUnitCharacter::OnRep_IsDragging() const
+{
+	if (USkeletalMeshComponent* SkMesh = GetMesh())
 	{
-		if (IsStart)
-		{
-			GetMesh()->SetVisibility(false, false);
-			if (UUserWidget* Widget = StatusBarComp->GetWidget())
-			{
-				Widget->SetRenderOpacity(0.f);
-			}
-		}
-		else
-		{
-			GetMesh()->SetVisibility(true, false);
-			if (UUserWidget* Widget = StatusBarComp->GetWidget())
-			{
-				Widget->SetRenderOpacity(1.f);
-			}
-		}
+		SetMeshVisibility(!bIsDragging);
 	}
 }
 
@@ -194,14 +248,7 @@ void APCHeroUnitCharacter::OnSynergyTagChanged(const FGameplayTag Tag, int32 New
 	
 	if (Tag.MatchesTag(SynergyGameplayTags::Synergy))
 	{
-		if (NewCount >= 1)
-		{
-			OnHeroSynergyTagChanged.Broadcast(this, Tag, true);
-		}
-		else
-		{
-			OnHeroSynergyTagChanged.Broadcast(this, Tag, false);
-		}
+		OnHeroSynergyTagChanged.Broadcast(this);
 	}
 }
 
@@ -209,16 +256,21 @@ void APCHeroUnitCharacter::OnRep_HeroLevel()
 {
 	// 클라에서 플레이어에게 보여주는 로직 ex) Status Bar UI 체인지
 	UpdateStatusBarUI();
+	UpdateMeshScale();
 	OnHeroLevelUp.Broadcast();
 }
 
-void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
+void APCHeroUnitCharacter::PlayLevelUpParticle() const
 {
-	Super::ChangedOnTile(IsOnField);
+	FGameplayCueParameters Params;
+	Params.TargetAttachComponent = GetMesh();
+	HeroUnitAbilitySystemComponent->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_LevelUp, Params);
 }
 
 void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
+	Super::OnGameStateChanged(NewStateTag);
+	
 	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
 	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
@@ -227,9 +279,13 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	{
 		
 	}
-	else if (NewStateTag == CombatEndTag)
+	else if (NewStateTag.MatchesTag(CombatEndTag))
 	{
-		RestoreFromCombatEnd();
+		if (bIsOnField)
+		{
+			RestoreFromCombatEnd();
+			SetMeshVisibility(true);
+		}
 	}
 }
 
@@ -257,6 +313,15 @@ void APCHeroUnitCharacter::Combine(const APCHeroUnitCharacter* LevelUpHero)
 		}
 	}
 
+	if (UAbilitySystemComponent* OwnerASC = OwnerPS ? OwnerPS->GetAbilitySystemComponent() : nullptr)
+	{
+		FGameplayCueParameters Params;
+		Params.Location = GetActorLocation() + FVector(0.f,0.f,80.f);
+		OwnerASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_Combine, Params);
+	}
+	
+	bDidCombine = true;
+	
 	Destroy();
 }
 

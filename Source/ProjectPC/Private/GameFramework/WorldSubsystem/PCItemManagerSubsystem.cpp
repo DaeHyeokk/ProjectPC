@@ -30,19 +30,17 @@ const FPCItemData* UPCItemManagerSubsystem::GetItemData(FGameplayTag ItemTag) co
 	return ItemDataMap.Find(ItemTag);
 }
 
-FGameplayTag UPCItemManagerSubsystem::CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const
+const FPCEffectSpecList* UPCItemManagerSubsystem::GetItemEffectSpecList(FGameplayTag ItemTag) const
 {
-	const FGameplayTag ItemTypeTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
-	
-	if (ItemTag1.MatchesTag(ItemTypeTag) && ItemTag2.MatchesTag(ItemTypeTag))
+	if (const FPCItemData* ItemData = GetItemData(ItemTag))
 	{
-		if (const auto AdvancedItemTag = ItemCombineDataMap.Find(FBaseItemPair(ItemTag1, ItemTag2)))
+		if (const UPCDataAsset_ItemEffect* ItemEffectData = ItemData->ItemEffectSpec)
 		{
-			return *AdvancedItemTag;
+			return &ItemEffectData->EffectSpecList;
 		}
 	}
-	
-	return FGameplayTag();
+
+	return nullptr;
 }
 
 TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGameplayTag BaseItemTag) const
@@ -56,6 +54,7 @@ TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGamepla
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
 
+	// 재료 아이템 타입 모두와 조합한 결과를 TMap에 저장하여 리턴
 	for (const FGameplayTag& ItemTag : AllBaseItemTags)
 	{
 		FGameplayTag AdvancedItemTag = CombineItem(BaseItemTag, ItemTag);
@@ -72,19 +71,6 @@ TMap<FGameplayTag, FGameplayTag> UPCItemManagerSubsystem::GetItemRecipe(FGamepla
 	return ItemRecipes;
 }
 
-const FPCEffectSpecList* UPCItemManagerSubsystem::GetItemEffectSpecList(FGameplayTag ItemTag) const
-{
-	if (const FPCItemData* ItemData = GetItemData(ItemTag))
-	{
-		if (const UPCDataAsset_ItemEffect* ItemEffectData = ItemData->ItemEffectSpec)
-		{
-			return &ItemEffectData->EffectSpecList;
-		}
-	}
-
-	return nullptr;
-}
-
 FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
 {
 	FGameplayTag ParentItemTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
@@ -93,9 +79,10 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomBaseItem() const
 	FGameplayTagContainer AllBaseItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
 	AllBaseItemTags.RemoveTag(ParentItemTag);
 
+	// 랜덤 인덱스를 뽑아서 해당 인덱스의 제료 아이템이 유효하면 ItemTag return
 	if (AllBaseItemTags.Num() > 0)
 	{
-		int32 RandomIndex = FMath::RandRange(0, AllBaseItemTags.Num() - 1);
+		int32 RandomIndex = FMath::RandHelper(AllBaseItemTags.Num());
 
 		if (const auto NewItem = GetItemData(AllBaseItemTags.GetByIndex(RandomIndex)))
 		{
@@ -116,10 +103,11 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 	UGameplayTagsManager& TagManager = UGameplayTagsManager::Get();
 	FGameplayTagContainer AllAdvancedItemTags = TagManager.RequestGameplayTagChildren(ParentItemTag);
 	AllAdvancedItemTags.RemoveTag(ParentItemTag);
-	
+
+	// 랜덤 인덱스를 뽑아서 해당 인덱스의 완성 아이템이 유효하면 ItemTag 리턴
 	if (AllAdvancedItemTags.Num() > 0)
 	{
-		int32 RandomIndex = FMath::RandRange(0, AllAdvancedItemTags.Num() - 1);
+		int32 RandomIndex = FMath::RandHelper(AllAdvancedItemTags.Num());
 
 		if (const auto NewItem = GetItemData(AllAdvancedItemTags.GetByIndex(RandomIndex)))
 		{
@@ -127,6 +115,22 @@ FGameplayTag UPCItemManagerSubsystem::GetRandomAdvancedItem() const
 			{
 				return NewItem->ItemTag;
 			}
+		}
+	}
+	
+	return FGameplayTag();
+}
+
+FGameplayTag UPCItemManagerSubsystem::CombineItem(FGameplayTag ItemTag1, FGameplayTag ItemTag2) const
+{
+	const FGameplayTag ItemTypeTag = FGameplayTag::RequestGameplayTag(FName("Item.Type.Base"));
+	
+	if (ItemTag1.MatchesTag(ItemTypeTag) && ItemTag2.MatchesTag(ItemTypeTag))
+	{
+		// ItemCombineDataMap에 <ItemTag1, ItemTag2> 쌍의 Key값이 존재하면 Value 리턴
+		if (const auto AdvancedItemTag = ItemCombineDataMap.Find(FBaseItemPair(ItemTag1, ItemTag2)))
+		{
+			return *AdvancedItemTag;
 		}
 	}
 	

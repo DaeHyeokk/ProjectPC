@@ -4,14 +4,18 @@
 #include "GameFramework/HelpActor/PCPlayerBoard.h"
 
 #include "AbilitySystemComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Net/UnrealNetwork.h"
+
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
 #include "Component/PCSynergyComponent.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Controller/Player/PCCombatPlayerController.h"
 #include "GameFramework/GameState/PCCombatGameState.h"
 #include "GameFramework/PlayerState/PCPlayerState.h"
-#include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/Board/PCBoardWidget.h"
 
 
@@ -73,7 +77,6 @@ void APCPlayerBoard::OnHISM(bool bIsOn, bool bIsBattle)
 		PlayerFieldHISM->SetOverlayMaterial(FieldTileOverlayMaterial);
 		PlayerBenchHISM->SetOverlayMaterial(BenchTileOverlayMaterial);
 	}
-	
 }
 
 void APCPlayerBoard::BuildHISM()
@@ -99,15 +102,14 @@ void APCPlayerBoard::BuildHISM()
 	{
 		FieldLocs.SetNum(PlayerField.Num());
 		for (int32 i=0;i<PlayerField.Num();++i)
-			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);    
+			FieldLocs[i] = ToWorld(SceneRoot,PlayerField[i].Position);
 
 		BenchLocs.SetNum(PlayerBench.Num());
 		for (int32 i=0;i<PlayerBench.Num();++i)
-			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);     
+			BenchLocs[i] = ToWorld(SceneRoot, PlayerBench[i].Position);
 
 		// 서버도 즉시 재구성(클라는 OnRep에서)
 		RebuildHISM_FromArrays();
-		
 	}
 	else
 	{
@@ -224,7 +226,6 @@ bool APCPlayerBoard::IsInRange(int32 Y, int32 X) const
 	return (Y >= 0 && Y < Cols && X >= 0 && X < Rows);
 }
 
-
 APCBaseUnitCharacter* APCPlayerBoard::GetFieldUnit(int32 Y, int32 X) const
 {
 	const int32 i = IndexOf(Y,X);
@@ -249,15 +250,32 @@ int32 APCPlayerBoard::GetBenchUnitIndex(APCBaseUnitCharacter* Unit) const
 	return INDEX_NONE;
 }
 
+int32 APCPlayerBoard::GetFieldUnitIndex(APCBaseUnitCharacter* Unit) const
+{
+	if (!Unit)
+		return INDEX_NONE;
+	for (int32 i = 0; i < PlayerField.Num(); ++i)
+	{
+		if (PlayerField[i].Unit == Unit)
+			return i;
+	}
+
+	return INDEX_NONE;
+}
+
 FIntPoint APCPlayerBoard::GetFieldUnitGridPoint(APCBaseUnitCharacter* Unit) const
 {
 	if (!Unit) return FIntPoint::NoneValue;
-	for (int32 x = 0; x < Rows; ++x)
+
+	for (int32 y = 0; y < Cols; ++y)
 	{
-		for (int32 y = 0; y < Cols; ++y)
+		for (int32 x = 0; x < Rows; ++x)
 		{
-			if (GetFieldUnit(y,x) == Unit)
-				return FIntPoint(y,x);
+			int32 i = IndexOf(y,x);
+			if (PlayerField[i].Unit == Unit)
+			{
+				return PlayerField[i].UnitIntPoint;
+			}
 		}
 	}
 	return FIntPoint::NoneValue;
@@ -339,7 +357,7 @@ TArray<APCBaseUnitCharacter*> APCPlayerBoard::GetBenchUnitByTag(FGameplayTag Uni
 	{
 		if (!IsValid(Unit)) return;
 
-		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag) && Unit->GetTeamIndex() == PlayerIndex)
+		if (Unit->GetUnitTag().IsValid() && Unit->GetUnitTag().MatchesTag(UnitTag) && Unit->GetTeamIndex() == TeamSeat)
 		{
 			if (!BenchUnit.Contains(Unit))
 			{
@@ -347,6 +365,7 @@ TArray<APCBaseUnitCharacter*> APCPlayerBoard::GetBenchUnitByTag(FGameplayTag Uni
 			}
 		}
 	};
+	
 	for (const auto& T : PlayerBench)
 	{
 		AddIfBench(T.Unit);
@@ -374,9 +393,9 @@ TArray<FGameplayTag> APCPlayerBoard::GetAllBenchUnitTag()
 bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return false;
-	if (auto P = GetFieldUnitGridPoint(Unit); P != FIntPoint::NoneValue)
+	if (auto P = GetFieldUnitIndex(Unit); P != INDEX_NONE)
 	{
-		PlayerField[IndexOf(P.X, P.Y)].Unit = nullptr;
+		PlayerField[P].Unit = nullptr;
 		return true;
 	}
 	if (auto bi = GetBenchUnitIndex(Unit); bi != INDEX_NONE)
@@ -385,78 +404,85 @@ bool APCPlayerBoard::EnsureExclusive(APCBaseUnitCharacter* Unit)
 		PlayerBench[bi].Unit = nullptr;
 		return true;
 	}
+	
 	return false;
 }
 
 bool APCPlayerBoard::PlaceUnitOnField(int32 Y, int32 X, APCBaseUnitCharacter* Unit)
 {
+	if (!HasAuthority()) return false;
+	
 	APCPlayerState* PCPlayerState = ResolvePlayerState();
-	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
 	
+	if (!PCPlayerState || !Unit || !IsInRange(Y,X)) return false;
 	
-	if (!PCPlayerState || !SynergyComp || !Unit || !IsInRange(Y,X)) return false;
+	const int32 i = IndexOf(Y,X);
+	const bool bOccupied = PlayerField.IsValidIndex(i) && IsValid(PlayerField[i].Unit);
+	const int32 Future = CountFieldUnits() + (bOccupied ? 0 : 1);
 
-	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
+	if (Future > MaxUnits)
 	{
-		SynergyComp->RegisterHero(HeroUnit);
-	}
-
-	if (HasAuthority())
-	{
-		const int32 i = IndexOf(Y,X);
-		const bool bOccupied = PlayerField.IsValidIndex(i) && IsValid(PlayerField[i].Unit);
-		const int32 Future = CountFieldUnits() + (bOccupied ? 0 : 1);
-		if (Future > MaxUnits)
-		{
-			return false;
-		}
+		return false;
 	}
 	
 	EnsureExclusive(Unit);
-	const int32 i = IndexOf(Y,X);
 	PlayerField[i].Unit = Unit;
-
 	const FVector World = ToWorld(SceneRoot, PlayerField[i].Position);
-	Unit->SetActorLocation(World,false);
-
-	if (HasAuthority())
+	FVector TWorld = FVector(World.X, World.Y, 50.f);
+	Unit->TeleportTo(TWorld, Unit->GetActorRotation(), false, true);
+	Unit->ChangedOnTile(true);
+	
+	if (SpawnEffect) 
 	{
-		RecountAndPushToWidget_Server();
+		if (auto* PC = Cast<APCCombatPlayerController>(PCPlayerState->GetPlayerController()))
+		{
+			PC->Client_PlaceFX(SpawnEffect,World);
+		}
 	}
+
+	//PlayPlaceSound(TWorld);
+	RecountAndPushToWidget_Server();
 	return true;
 }
 
 bool APCPlayerBoard::PlaceUnitOnBench(int32 LocalBenchIndex, APCBaseUnitCharacter* Unit)
 {
+	if (!HasAuthority()) return false;
+	
 	APCPlayerState* PCPlayerState = ResolvePlayerState();
-	UPCSynergyComponent* SynergyComp = PCPlayerState->GetSynergyComponent();
-	
-	
-	if (!PCPlayerState || !SynergyComp || !Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
-
-	if (APCHeroUnitCharacter* HeroUnit = Cast<APCHeroUnitCharacter>(Unit))
-	{
-		SynergyComp->UnRegisterHero(HeroUnit);
-	}
+		
+	if (!PCPlayerState || !Unit || !PlayerBench.IsValidIndex(LocalBenchIndex)) return false;
 	
 	EnsureExclusive(Unit);
 	PlayerBench[LocalBenchIndex].Unit = Unit;
+	Unit->ChangedOnTile(false);
 	
 	const FVector World = ToWorld(SceneRoot, PlayerBench[LocalBenchIndex].Position);
 	const FRotator ActorRot = GetActorRotation();
 	Unit->SetActorLocationAndRotation(FVector(World.X,World.Y,World.Z+50.f),ActorRot,false,nullptr);
+
+	// ✅ 여기서 나이아가라 이펙트 생성
+	if (SpawnEffect) // UNiagaraSystem* 타입 멤버
+	{
+		if (auto* PC = Cast<APCCombatPlayerController>(PCPlayerState->GetPlayerController()))
+		{
+			PC->Client_PlaceFX(SpawnEffect,World);
+		}
+	}
+
+	//PlayPlaceSound(World);
 	return true;
 }
 
-bool APCPlayerBoard::RemoveFromField(int32 Y, int32 X)
+bool APCPlayerBoard::RemoveFromField(int32 FieldIndex)
 {
-	const int32 i = IndexOf(Y,X);
-	if (!PlayerField.IsValidIndex(i)) return false;
-	PlayerField[i].Unit = nullptr;
+	if (!PlayerField.IsValidIndex(FieldIndex)) return false;
+	PlayerField[FieldIndex].Unit = nullptr;
 	if (HasAuthority())
 	{
 		RecountAndPushToWidget_Server();
 	}
+	
 	return true;
 }
 
@@ -470,8 +496,8 @@ bool APCPlayerBoard::RemoveFromBench(int32 LocalBenchIndex)
 bool APCPlayerBoard::RemoveFromBoard(APCBaseUnitCharacter* Unit)
 {
 	if (!Unit) return false;
-	if (auto p = GetFieldUnitGridPoint(Unit); p != FIntPoint::NoneValue)
-		return RemoveFromField(p.X, p.Y); // FIX: (Y,X)
+	if (auto p = GetFieldUnitIndex(Unit); p != INDEX_NONE)
+		return RemoveFromField(p); 
 	if (auto bi = GetBenchUnitIndex(Unit); bi != INDEX_NONE)
 		return RemoveFromBench(bi);
 	
@@ -484,14 +510,16 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 
 	const auto PA = GetFieldUnitGridPoint(A); // (Y,X)
 	const auto PB = GetFieldUnitGridPoint(B); // (Y,X)
+	const int32 PAIndex = GetFieldUnitIndex(A);
+	const int32 PBIndex = GetFieldUnitIndex(B);
 	const int32 BA = GetBenchUnitIndex(A);
 	const int32 BB = GetBenchUnitIndex(B);
 
 	if (PA != FIntPoint::NoneValue && PB != FIntPoint::NoneValue)
 	{
-		PlayerField[IndexOf(PA.X, PA.Y)].Unit = B;
+		PlayerField[PAIndex].Unit = B;
 		PlaceUnitOnField(PA.X, PA.Y, B);
-		PlayerField[IndexOf(PB.X, PB.Y)].Unit = A;
+		PlayerField[PBIndex].Unit = A;
 		PlaceUnitOnField(PB.X, PB.Y, A);
 		return true;
 	}
@@ -507,7 +535,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 
 	if (PA != FIntPoint::NoneValue && BB != INDEX_NONE)
 	{
-		PlayerField[IndexOf(PA.X, PA.Y)].Unit = B; // FIX
+		PlayerField[PAIndex].Unit = B; // FIX
 		PlaceUnitOnField(PA.X, PA.Y, B);
 		PlayerBench[BB].Unit = A;
 		PlaceUnitOnBench(BB,A);
@@ -516,7 +544,7 @@ bool APCPlayerBoard::Swap(APCBaseUnitCharacter* A, APCBaseUnitCharacter* B)
 
 	if (PB != FIntPoint::NoneValue && BA != INDEX_NONE)
 	{
-		PlayerField[IndexOf(PB.X, PB.Y)].Unit = A;
+		PlayerField[PBIndex].Unit = A;
 		PlaceUnitOnField(PB.X, PB.Y, A);
 		PlayerBench[BA].Unit = B;
 		PlaceUnitOnBench(BA,B);
@@ -762,6 +790,7 @@ int32 APCPlayerBoard::CountFieldUnits() const
 			++Count;
 		}
 	}
+	
 	return Count;
 }
 
@@ -770,7 +799,6 @@ void APCPlayerBoard::RecountAndPushToWidget_Server()
 	if (!HasAuthority())
 		return;
 	CurUnits = CountFieldUnits();
-	OnRep_FieldCount();
 }
 
 void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(const FGameplayTag& GameState)
@@ -782,7 +810,6 @@ void APCPlayerBoard::SetCapacityWidgetVisible_Implementation(const FGameplayTag&
 		CapacityWidgetComp->SetVisibility(bVisible);
 		
 	}
-	
 }
 
 void APCPlayerBoard::OnLevelChanged(const FOnAttributeChangeData& Data)
@@ -842,6 +869,7 @@ const UPCPlayerAttributeSet* APCPlayerBoard::ResolveSet() const
 	{
 		return PCPlayerState->GetAttributeSet();
 	}
+	
 	return nullptr;
 }
 
@@ -923,6 +951,15 @@ int32 APCPlayerBoard::GetFirstOccupiedBenchIndex() const
 
 	return INDEX_NONE;
 }
+
+// void APCPlayerBoard::PlayPlaceSound_Implementation(FVector Loc)
+// {
+// 	if (PlaceSound.Get())
+// 	{
+// 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), PlaceSound, Loc);
+// 	}
+// }
+
 
 
 

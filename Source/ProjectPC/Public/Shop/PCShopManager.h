@@ -24,18 +24,19 @@ class PROJECTPC_API UPCShopManager : public UActorComponent
 	
 public:
 	UPCShopManager();
-	
-virtual void BeginPlay() override;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 #pragma region Shop
 
 private:
 	uint8 NumSlots = 5;
-
 	FPCShopUnitData DummyData;
 
 public:
-	// 매 라운드 레벨업 체크
+	// GameState Tag가 바뀔 때마다 유닛 레벨업 체크
 	void OnGameStateChanged(const FGameplayTag& NewTag);
 	
 	// 상점 업데이트
@@ -53,11 +54,9 @@ public:
 	// 유닛 코스트에 따른 랜덤한 유닛 선택
 	FPCShopUnitData& SelectRandomUnitByCost(int32 UnitCost);
 	
-	// 유닛 태그를 통해 상점에 기물 반환
+	// 기물 반환
 	void ReturnUnitToShopByTag(FGameplayTag UnitTag);
-	// Carousel에서 선택받지 못한 유닛 상점에 기물 반환
 	void ReturnUnitsToShopByCarousel(const TArray<FGameplayTag>& UnitTags);
-	// 구매하지 않은 유닛 상점에 기물 반환
 	void ReturnUnitsToShopBySlotUpdate(const TArray<FPCShopUnitData>& OldSlots, const TSet<int32>& PurchasedSlots);
 
 	// Carousel에 차출할 유닛 태그 배열 리턴
@@ -69,17 +68,13 @@ public:
 #pragma region Data
 
 protected:
-	// 유닛 데이터가 저장된 DataTable
+	// DataTable
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitDataTable;
-
-	// 유닛 확률 데이터가 저장된 DataTable
+	TObjectPtr<UDataTable> ShopUnitDataTable;
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitProbabilityDataTable;
-
-	// 유닛 판매 가격 데이터가 저장된 DataTable
+	TObjectPtr<UDataTable> ShopUnitProbabilityDataTable;
 	UPROPERTY(EditAnywhere, Category = "DataTable|Shop")
-	UDataTable* ShopUnitSellingPriceDataTable;
+	TObjectPtr<UDataTable> ShopUnitSellingPriceDataTable;
 
 	// 실제로 DataTable에서 가져온 정보를 저장할 배열
 	TArray<FPCShopUnitData> ShopUnitDataList;
@@ -94,15 +89,18 @@ protected:
 	TArray<FPCShopUnitData> ShopUnitDataList_Cost5;
 
 public:
+	// Getter
 	const TArray<FPCShopUnitData>& GetShopUnitDataList();
 	const TArray<FPCShopUnitProbabilityData>& GetShopUnitProbabilityDataList();
 	const TMap<TPair<int32, int32>, int32>& GetShopUnitSellingPriceDataMap();
 	
-	TArray<float> GetCostProbabilities(int32 PlayerLevel);
-	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	int32 GetUnitCostByTag(FGameplayTag UnitTag);
-	int32 GetSellingPrice(int32 UnitCost, int32 UnitLevel);
+	TArray<FPCShopUnitData>& GetShopUnitDataListByCost(int32 UnitCost);
 	const FPCShopUnitData& GetShopUnitDataByTag(FGameplayTag UnitTag);
+
+	TArray<float> GetCostProbabilities(int32 PlayerLevel);
+
+	int32 GetSellingPrice(int32 UnitCost, int32 UnitLevel);
 	
 #pragma endregion Data
 	

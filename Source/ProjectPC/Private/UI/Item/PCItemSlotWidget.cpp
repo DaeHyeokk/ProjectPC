@@ -15,6 +15,7 @@ bool UPCItemSlotWidget::Initialize()
 {
 	if (!Super::Initialize()) return false;
 
+	// 각 슬롯별 ItemRecipeWidget, ItemInfoWidget는 한 번만 생성
 	ItemRecipeWidget = CreateWidget<UPCItemRecipeWidget>(GetWorld(), ItemRecipeWidgetClass);
 	if (!ItemRecipeWidget) return false;
 	ItemInfoWidget = CreateWidget<UPCItemInfoWidget>(GetWorld(), ItemInfoWidgetClass);
@@ -41,6 +42,7 @@ void UPCItemSlotWidget::SetItem(FGameplayTag NewItemTag)
 		{
 			if (NewItem->IsValid())
 			{
+				// 아이템 이미지 비동기 로드
 				FSoftObjectPath TexturePath = NewItem->ItemTexture.ToSoftObjectPath();
 				FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
 				TWeakObjectPtr<UPCItemSlotWidget> WeakThis = this;
@@ -99,6 +101,7 @@ void UPCItemSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FP
 
 	if (!bIsItemSet || !ItemRecipeWidget || !ItemInfoWidget) return;
 
+	// 마우스가 아이템 슬롯에 호버되면 아이템 정보 위젯 띄움
 	ItemInfoWidget->AddToViewport(9999);
 	ItemInfoWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 
@@ -139,6 +142,7 @@ FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const 
 
 		const float WheelDelta = InMouseEvent.GetWheelDelta();
 
+		// 마우스 휠을 올리면 아이템 정보 위젯 띄움
 		if (WheelDelta > 0.f)
 		{
 			if (ItemRecipeWidget->IsInViewport())
@@ -151,6 +155,7 @@ FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const 
 				ItemInfoWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, YOffset));
 			}
 		}
+		// 마우스 휠을 내리면 아이템 조합 위젯 띄움
 		else
 		{
 			if (ItemInfoWidget->IsInViewport() && bIsBaseItem)
@@ -159,7 +164,7 @@ FReply UPCItemSlotWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const 
 
 				ItemRecipeWidget->AddToViewport(9999);
 				ItemRecipeWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-				ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(400.0f, 520.0f));
+				ItemRecipeWidget->SetDesiredSizeInViewport(FVector2D(320.0f, 520.0f));
 
 				float RecipeYOffset = -50.0f - (SlotIndex * 30.0f);
 				ItemRecipeWidget->SetPositionInViewport(InGeometry.GetAbsolutePosition() + FVector2D(XOffset, RecipeYOffset));
@@ -174,6 +179,7 @@ void UPCItemSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseLeave(InMouseEvent);
 
+	// 마우스가 아이템 슬롯에서 벗어나면 아이템 정보, 조합 위젯 제거
 	if (ItemRecipeWidget)
 	{
 		ItemRecipeWidget->RemoveFromParent();

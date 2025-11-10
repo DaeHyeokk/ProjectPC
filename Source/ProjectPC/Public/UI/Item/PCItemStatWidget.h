@@ -24,11 +24,11 @@ public:
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "StatIcon")
-	UPCDataAsset_UnitStatIcon* DA_StatIcons;
+	TObjectPtr<UPCDataAsset_UnitStatIcon> DA_StatIcons;
 	
 	UPROPERTY(EditDefaultsOnly, meta = (BindWidget))
-	UImage* Img_Stat;
+	TObjectPtr<UImage> Img_Stat;
 
 	UPROPERTY(EditDefaultsOnly, meta = (BindWidget))
-	UTextBlock* Text_StatValue;
+	TObjectPtr<UTextBlock> Text_StatValue;
 };

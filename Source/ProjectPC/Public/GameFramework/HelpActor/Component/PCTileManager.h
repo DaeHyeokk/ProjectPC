@@ -127,6 +127,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Field")
 	APCBaseUnitCharacter* GetFieldUnit(int32 Y, int32 X) const;
 
+	// 광역 궁극기 구현을 위한 헬퍼 함수 // WDH
+	UFUNCTION(Category="Field")
+	void GetAllFieldUnits(TArray<TWeakObjectPtr<APCBaseUnitCharacter>>& FieldUnits) const;
+	
 	UFUNCTION(BlueprintPure, Category = "Field")
 	FVector GetFieldUnitLocation(APCBaseUnitCharacter* Unit) const;
 
@@ -188,6 +192,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Data")
 	TArray<FTile> Field;
 
+	// 전투 승리 유닛 팀인덱스로 찾기
+	TArray<APCBaseUnitCharacter*> GetWinnerUnitByTeamIndex(int32 WinnerTeamIndex);
+
+	// 살아남은 모든 유닛 가져오기
+	TArray<APCBaseUnitCharacter*> GetAllAliveUnit();
+
 private:
 	void CreateField(); // 필드 좌표 생성 (월드기준)
 
@@ -220,6 +230,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Debug")
 	void DebugExplainTile(int32 Y, int32 X, const FString& Tag) const;
+
+
+	// === Debug helpers ===
+	UFUNCTION(BlueprintCallable, Category="Debug")
+	void DebugDrawTiles(float Duration = 10.f, bool bPersistent = true, bool bShowIndex = true, bool bShowYX = true, bool bShowUnit = true) const;
+
+	UFUNCTION(BlueprintCallable, Category="Debug")
+	void DebugClearPersistent() const;
+
+#if WITH_EDITOR
+	// 디테일 패널에서 바로 실행(에디터/비PIE)
+	UFUNCTION(CallInEditor, Category="Debug")
+	void Editor_DrawTilesPersistent();
+
+	UFUNCTION(CallInEditor, Category="Debug")
+	void Editor_ClearDebug();
+#endif
+
+private:
+	FString DescribeTileState(int32 Index);
+	
 
 #pragma region Win&Lose
 

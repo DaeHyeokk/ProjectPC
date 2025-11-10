@@ -4,7 +4,6 @@
 #include "Component/PCUnitEquipmentComponent.h"
 
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemGlobals.h"
 #include "BaseGameplayTags.h"
 #include "AbilitySystem/Unit/EffectSpec/PCEffectSpec.h"
 #include "Character/Unit/PCBaseUnitCharacter.h"
@@ -29,7 +28,7 @@ void UPCUnitEquipmentComponent::BeginPlay()
 
 	if (GetOwner())
 	{
-		OwnerASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+		Owner = Cast<APCBaseUnitCharacter>(GetOwner());
 		
 		if (APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(GetOwner()))
 		{
@@ -52,9 +51,9 @@ void UPCUnitEquipmentComponent::GetLifetimeReplicatedProps(TArray<class FLifetim
 	DOREPLIFETIME(UPCUnitEquipmentComponent, SlotItemTags);
 }
 
-bool UPCUnitEquipmentComponent::TryEquipItem(const FGameplayTag& ItemTag)
+bool UPCUnitEquipmentComponent::TryEquipItem(const FGameplayTag& ItemTag, bool bIsUnion)
 {
-	if (!HasAuthority() || !ItemManagerSubsystem || !ItemTag.IsValid())
+	if (!HasAuthority() || !ItemManagerSubsystem.IsValid() || !ItemTag.IsValid())
 		return false;
 
 	// 베이스 아이템일 경우 조합 가능 여부 확인
@@ -72,7 +71,7 @@ bool UPCUnitEquipmentComponent::TryEquipItem(const FGameplayTag& ItemTag)
 				// 조합 성공 시
 				if (CombineResultItemTag.IsValid())
 				{
-					SetItemToSlot(CombineResultItemTag, i);
+					SetItemToSlot(CombineResultItemTag, i, !bIsUnion);
 					return true;
 				}
 			}
@@ -91,7 +90,7 @@ bool UPCUnitEquipmentComponent::TryEquipItem(const FGameplayTag& ItemTag)
 
 	if (EmptySlotIndex != INDEX_NONE)
 	{
-		SetItemToSlot(ItemTag, EmptySlotIndex);
+		SetItemToSlot(ItemTag, EmptySlotIndex, !bIsUnion);
 		return true;
 	}
 
@@ -111,7 +110,7 @@ void UPCUnitEquipmentComponent::UnionEquipmentComponent(UPCUnitEquipmentComponen
 			break;
 
 		// 아이템 장착에 실패할 경우 플레이어 인벤토리로 넘어감
-		if (!TryEquipItem(SlotItemTag))
+		if (!TryEquipItem(SlotItemTag, true))
 		{
 			ReturnItemToPlayerInventory(SlotItemTag);
 		}
@@ -125,7 +124,7 @@ void UPCUnitEquipmentComponent::OnRep_SlotItemTags() const
 	OnEquipItemChanged.Broadcast();
 }
 
-void UPCUnitEquipmentComponent::SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex)
+void UPCUnitEquipmentComponent::SetItemToSlot(const FGameplayTag& ItemTag, const int32 SlotIndex, const bool bPlayParticle)
 {
 	if (!HasAuthority())
 		return;
@@ -139,6 +138,16 @@ void UPCUnitEquipmentComponent::SetItemToSlot(const FGameplayTag& ItemTag, const
 		
 		SlotItemTags[SlotIndex] = ItemTag;
 		ApplyItemEffects(ItemTag, SlotIndex);
+
+		if (bPlayParticle)
+		{
+			if (UAbilitySystemComponent* OwnerASC = Owner->GetAbilitySystemComponent())
+			{
+				FGameplayCueParameters Params;
+				Params.TargetAttachComponent = Owner->GetMesh();
+				OwnerASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_VFX_Unit_EquipItem, Params);
+			}
+		}
 	}
 }
 
@@ -147,14 +156,15 @@ void UPCUnitEquipmentComponent::RemoveItemSlot(const int32 SlotIndex)
 	if (!HasAuthority() || !SlotItemTags.IsValidIndex(SlotIndex))
 		return;
 
-	if (!SlotActiveEffects[SlotIndex].IsEmpty())
+	if (Owner.IsValid() && !SlotActiveEffects[SlotIndex].IsEmpty())
 	{
 		for (const FActiveGameplayEffectHandle& EffectHandle : SlotActiveEffects[SlotIndex])
 		{
 			if (!EffectHandle.IsValid())
 				continue;
 
-			OwnerASC->RemoveActiveGameplayEffect(EffectHandle);
+			if (UAbilitySystemComponent* OwnerASC = Owner->GetAbilitySystemComponent())
+				OwnerASC->RemoveActiveGameplayEffect(EffectHandle);
 		}
 	}
 
@@ -164,7 +174,7 @@ void UPCUnitEquipmentComponent::RemoveItemSlot(const int32 SlotIndex)
 
 void UPCUnitEquipmentComponent::ReturnAllItemToPlayerInventory(const bool bIsDestroyedHero)
 {
-	if (!HasAuthority() || !OwnerPlayerInventory)
+	if (!HasAuthority() || !OwnerPlayerInventory.IsValid())
 		return;
 
 	for (int32 i=0; i<MaxSlotSize; ++i)
@@ -176,13 +186,13 @@ void UPCUnitEquipmentComponent::ReturnAllItemToPlayerInventory(const bool bIsDes
 		if (!bIsDestroyedHero)
 			RemoveItemSlot(i);
 		
-		ReturnItemToPlayerInventory(SlotItemTag);
+		OwnerPlayerInventory->AddItemToInventory(SlotItemTag);
 	}
 }
 
 void UPCUnitEquipmentComponent::ReturnItemToPlayerInventory(const FGameplayTag& ItemTag) const
 {
-	if (!OwnerPlayerInventory || !ItemTag.IsValid())
+	if (!HasAuthority() || !OwnerPlayerInventory.IsValid() || !ItemTag.IsValid())
 		return;
 
 	OwnerPlayerInventory->AddItemToInventory(ItemTag);
@@ -199,17 +209,19 @@ void UPCUnitEquipmentComponent::ApplyItemEffects(const FGameplayTag& ItemTag, co
 		return;
 
 	TArray<FActiveGameplayEffectHandle> ActiveEffectHandles;
-	
-	for (UPCEffectSpec* EffectSpec : EffectSpecList->EffectSpecs)
+
+	if (UAbilitySystemComponent* OwnerASC = Owner.IsValid() ? Owner->GetAbilitySystemComponent() : nullptr)
 	{
-		if (!EffectSpec)
-			continue;
+		for (UPCEffectSpec* EffectSpec : EffectSpecList->EffectSpecs)
+		{
+			if (!EffectSpec)
+				continue;
 
-		FActiveGameplayEffectHandle Handle = EffectSpec->ApplyEffectSelf(OwnerASC);
-		if (Handle.IsValid())
-			ActiveEffectHandles.Add(Handle);
+			FActiveGameplayEffectHandle Handle = EffectSpec->ApplyEffectSelf(OwnerASC);
+			if (Handle.IsValid())
+				ActiveEffectHandles.Add(Handle);
+		}
 	}
-
 	if (!ActiveEffectHandles.IsEmpty())
 	{
 		SlotActiveEffects[SlotIndex] = ActiveEffectHandles;
@@ -220,28 +232,30 @@ void UPCUnitEquipmentComponent::RemoveSlotActiveEffects(const int32 SlotIndex)
 {
 	if (!HasAuthority() || !SlotActiveEffects.IsValidIndex(SlotIndex))
 		return;
-
-	for (FActiveGameplayEffectHandle& EffectHandle : SlotActiveEffects[SlotIndex])
+	
+	if (UAbilitySystemComponent* OwnerASC = Owner->GetAbilitySystemComponent())
 	{
-		if (!EffectHandle.IsValid())
-			continue;
+		for (FActiveGameplayEffectHandle& EffectHandle : SlotActiveEffects[SlotIndex])
+		{
+			if (!EffectHandle.IsValid())
+				continue;
 		
-		OwnerASC->RemoveActiveGameplayEffect(EffectHandle);
+			OwnerASC->RemoveActiveGameplayEffect(EffectHandle);
+		}
 	}
-
+	
 	SlotActiveEffects[SlotIndex].Reset();
 }
 
 const FPCEffectSpecList* UPCUnitEquipmentComponent::ResolveItemEffectSpecList(const FGameplayTag& ItemTag) const
 {
-	if (!HasAuthority() || !ItemTag.IsValid() || !ItemManagerSubsystem)
+	if (!HasAuthority() || !ItemTag.IsValid() || !ItemManagerSubsystem.IsValid())
 		return nullptr;
 
 	return ItemManagerSubsystem->GetItemEffectSpecList(ItemTag);
 }
 
-
 bool UPCUnitEquipmentComponent::HasAuthority() const
 {
-	return OwnerASC && OwnerASC->IsOwnerActorAuthoritative();
+	return Owner.IsValid() && Owner->HasAuthority();
 }

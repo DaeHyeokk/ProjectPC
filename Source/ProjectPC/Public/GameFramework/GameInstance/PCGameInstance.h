@@ -15,6 +15,4 @@ class PROJECTPC_API UPCGameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 	
-	
-	
 };
