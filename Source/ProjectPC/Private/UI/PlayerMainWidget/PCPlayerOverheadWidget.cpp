@@ -10,28 +10,6 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
-
-void UPCPlayerOverheadWidget::NativeDestruct()
-{
-	if (CachedPlayerState)
-	{
-		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
-		{
-			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
-			{
-				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
-				.RemoveAll(this);
-				ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
-				.RemoveAll(this);
-			}
-		}
-
-		CachedPlayerState = nullptr;
-	}
-	
-	Super::NativeDestruct();
-}
-
 void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;

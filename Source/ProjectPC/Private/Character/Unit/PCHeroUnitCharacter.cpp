@@ -16,7 +16,7 @@
 #include "GameFramework/WorldSubsystem/PCUnitSpawnSubsystem.h"
 #include "UI/Unit/PCHeroStatusBarWidget.h"
 #include "UI/Unit/PCUnitStatusBarWidget.h"
-#include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
 
 
 APCHeroUnitCharacter::APCHeroUnitCharacter(const FObjectInitializer& ObjectInitializer)
@@ -138,7 +138,7 @@ void APCHeroUnitCharacter::BeginPlay()
 			{
 				bDidPlaySpawnSound = true;
 				
-				if (USoundCue* LevelStartSound = SpawnSubsystem->GetLevelStartSoundCueByUnitTag(UnitTag))
+				if (USoundBase* LevelStartSound = SpawnSubsystem->GetLevelStartSoundCueByUnitTag(UnitTag))
 				{
 					FGameplayCueParameters Params;
 					Params.SourceObject = LevelStartSound;
@@ -199,8 +199,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 				FGameplayTagContainer(UnitGameplayTags::Unit_State_Combat_Stun));
 		}
 		
-		HeroUnitAbilitySystemComponent->CurrentMontageStop(0.f);
-		
 		// 블랙보드 키값 초기화
 		if (APCUnitAIController* AIC = Cast<APCUnitAIController>(GetController()))
 		{
@@ -217,7 +215,7 @@ void APCHeroUnitCharacter::ChangedOnTile(const bool IsOnField)
 		{
 			SynergyComp->UnRegisterHero(this);
 		}
-		else if (IsOnField)
+		else if (!bIsOnField && IsOnField)
 		{
 			SynergyComp->RegisterHero(this);
 		}

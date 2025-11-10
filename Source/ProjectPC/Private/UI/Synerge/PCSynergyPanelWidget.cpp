@@ -26,12 +26,12 @@ void UPCSynergyPanelWidget::NativeDestruct()
 void UPCSynergyPanelWidget::SynergyComponentBinding(UPCSynergyComponent* Component)
 {
 	if (!Component) return;
-
-	SynergyComponent = Component;
+	
 	SynergyComponentUnBinding();
+	SynergyComponent = Component;
 	
 	OnChangedHandle = Component->OnSynergyCountsChanged.AddUObject(this, &UPCSynergyPanelWidget::HandlesSynergyChanged);
-	HandlesSynergyChanged((Component->GetSynergySnapShot()));
+	HandlesSynergyChanged(Component->GetSynergySnapShot());
 }
 
 void UPCSynergyPanelWidget::SynergyComponentUnBinding()

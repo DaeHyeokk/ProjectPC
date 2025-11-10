@@ -166,7 +166,8 @@ void UPCSynergyComponent::RegisterHero(APCHeroUnitCharacter* Hero)
 		for (const FGameplayTag& SynergyTag : SynergyTags)
 		{
 			ApplySynergyEffects(SynergyTag);
-
+			//PlaySynergyActiveParticle(SynergyTag);
+			
 			GetWorld()->GetTimerManager().SetTimerForNextTick(
 				FTimerDelegate::CreateUObject(this, &UPCSynergyComponent::PlaySynergyActiveParticle, SynergyTag)
 				);

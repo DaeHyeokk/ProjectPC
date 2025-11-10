@@ -27,6 +27,7 @@ class APCAppearanceFixedHeroCharacter;
 class APCAppearanceChangedHeroCharacter;
 class APCCreepUnitCharacter;
 class UPCDataAsset_UnitDefinitionReg;
+class USoundBase;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnUnitSpawnedNative, APCBaseUnitCharacter*, int32 );
 
@@ -97,7 +98,7 @@ public:
 	
 	const UPCDataAsset_UnitDefinition* ResolveDefinition(const FGameplayTag& UnitTag) const;
 	void ApplyDefinitionDataVisuals(APCBaseUnitCharacter* Unit, const UPCDataAsset_UnitDefinition* Definition) const;
-	USoundCue* GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const;
+	USoundBase* GetLevelStartSoundCueByUnitTag(const FGameplayTag& UnitTag) const;
 	
 private:
 	TSubclassOf<APCBaseUnitCharacter> ResolveSpawnUnitClass(const UPCDataAsset_UnitDefinition* Definition) const;
