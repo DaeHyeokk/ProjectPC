@@ -5,6 +5,7 @@
 
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystem/Unit/AttributeSet/PCHeroUnitAttributeSet.h"
+#include "Character/Unit/PCCarouselHeroCharacter.h"
 #include "Character/Unit/PCCommonUnitCharacter.h"
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "Component/PCUnitEquipmentComponent.h"

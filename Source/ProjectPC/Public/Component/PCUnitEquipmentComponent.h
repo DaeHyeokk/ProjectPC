@@ -66,7 +66,6 @@ private:
 	void ApplyItemEffects(const FGameplayTag& ItemTag, const int32 SlotIndex);
 	void RemoveSlotActiveEffects(const int32 SlotIndex);
 	const FPCEffectSpecList* ResolveItemEffectSpecList(const FGameplayTag& ItemTag) const;
-
-	void PlayItemEquippedParticle() const;
+	
 	bool HasAuthority() const;
 };

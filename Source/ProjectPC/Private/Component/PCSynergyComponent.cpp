@@ -317,6 +317,10 @@ void UPCSynergyComponent::RecountSynergyCountMapForUnitTag(const FGameplayTag& U
 		SynergyCnt++;
 
 		ApplySynergyEffects(SynergyTag);
+		
+		GetWorld()->GetTimerManager().SetTimerForNextTick(
+			FTimerDelegate::CreateUObject(this, &UPCSynergyComponent::PlaySynergyActiveParticle, SynergyTag)
+			);
 	}
 
 	SynergyCountArray.ResetToMap(SynergyCountMap);

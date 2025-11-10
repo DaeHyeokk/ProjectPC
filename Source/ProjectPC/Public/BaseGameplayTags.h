@@ -195,6 +195,7 @@ namespace GameplayEffectTags
 	// ==== Duration GE ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Cooldown_BasicAttack)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_GrantTag_Duration)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Class_Unit_AttributeChange_Add_Duration_AttackSpeedIncreaseMultiplier)
 	
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Damage)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GE_Caller_Heal)
