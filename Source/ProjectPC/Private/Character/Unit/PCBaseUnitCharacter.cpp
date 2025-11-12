@@ -406,7 +406,7 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	if (bIsOnField && NewStateTag.MatchesTagExact(CombatResultTag))
 	{
 		bIsCombatWin = false;
-		SetMeshVisibility(false);
+		//SetMeshVisibility(false);
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
 			ASC->CurrentMontageStop(0.f);
