@@ -1651,7 +1651,7 @@ void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
 	{
 		if (auto PS = GetPlayerState<APCPlayerState>())
 		{
-			if (PS->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Normal)
+			if (PS->GetCurrentStateTag() != PlayerGameplayTags::Player_State_Dead)
 			{
 				PlayerEndPatrol();
 			}

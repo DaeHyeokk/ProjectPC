@@ -20,7 +20,7 @@
 
 APCPlayerCharacter::APCPlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	
 	GetCapsuleComponent()->InitCapsuleSize(60.f, 60.0f);
@@ -104,8 +104,6 @@ void APCPlayerCharacter::OnRep_PlayerState()
 		// 	}
 		// }
 	}
-
-	
 }
 
 void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -113,6 +111,26 @@ void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APCPlayerCharacter, bIsDead);
+}
+
+void APCPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	if (!CachedOverheadWidget.IsValid())
+	{
+		if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+		{	
+			if (OverHeadWidgetComp)
+			{
+				if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+				{
+					OverheadWidget->BindToPlayerState(PS);
+					CachedOverheadWidget = OverheadWidget;
+				}
+			}
+		}
+	}
 }
 
 void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
@@ -136,6 +154,7 @@ void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
 			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
 			{
 				OverheadWidget->BindToPlayerState(PS);
+				CachedOverheadWidget = OverheadWidget;
 			}
 		}
 	}

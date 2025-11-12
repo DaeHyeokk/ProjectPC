@@ -49,6 +49,7 @@ protected:
 	TObjectPtr<UProgressBar> HPBar;
 
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);

@@ -9,19 +9,60 @@
 
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
+#include "Character/Player/PCPlayerCharacter.h"
+#include "Components/WidgetComponent.h"
 
 void UPCPlayerOverheadWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	// if (auto OwnerPawn = Cast<APCPlayerCharacter>(GetOwningPlayerPawn()))
+	// {
+	// 	if (auto PS = OwnerPawn->GetPlayerState<APCPlayerState>())
+	// 	{
+	// 		BindToPlayerState(CachedPlayerState);
+	// 	}
+	// }
 	
-	SetupPlayerInfo();
+	// if (CachedPlayerState)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("OverheadWidget Construct : %s"), *CachedPlayerState->LocalUserId)
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("(OverheadWidget Construct) CachedPlayerState is nullptr"));
+	// }
+
+	if (auto WidgetComp = GetTypedOuter<UWidgetComponent>())
+	{
+		if (auto OwnerChar = Cast<APCPlayerCharacter>(WidgetComp->GetOwner()))
+		{
+			BindToPlayerState(OwnerChar->GetPlayerState<APCPlayerState>());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("(OverheadWidget Construct) Owner is nullptr"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(OverheadWidget Construct) WidgetComp is nullptr"));
+	}
 }
 
-void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
+void UPCPlayerOverheadWidget::NativeDestruct()
 {
-	if (!NewPlayerState) return;
+	
+}
 
-	if (CachedPlayerState) return;
+void UPCPlayerOverheadWidget::BindToPlayerState(APCPlayerState* NewPlayerState)
+{
+	if (!NewPlayerState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(OverheadWidget Construct) NewPlayerState is nullptr"));
+		return;
+	}
+
 	CachedPlayerState = NewPlayerState;
 	
 	// 플레이어 어트리뷰트 (HP, Level) 구독
