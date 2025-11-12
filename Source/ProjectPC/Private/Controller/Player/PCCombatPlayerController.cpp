@@ -1641,7 +1641,13 @@ void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
 {
 	if (IsLocalController())
 	{
-		PlayerEndPatrol();
+		if (auto PS = GetPlayerState<APCPlayerState>())
+		{
+			if (PS->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Normal)
+			{
+				PlayerEndPatrol();
+			}
+		}
 	}
 }
 
