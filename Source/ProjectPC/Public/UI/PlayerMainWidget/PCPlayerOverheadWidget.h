@@ -48,6 +48,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UProgressBar> HPBar;
 
+	virtual void NativeConstruct() override;
+
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);
 	void SetupPlayerInfo();

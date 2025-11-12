@@ -10,6 +10,13 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
+void UPCPlayerOverheadWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	SetupPlayerInfo();
+}
+
 void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
