@@ -102,6 +102,9 @@ private:
 	void OnShopRefreshStarted();
 	void OnSellUnitStarted();
 
+public:
+	void UnBindPlayerInputAction();
+
 #pragma endregion Input
 
 #pragma region Shop

@@ -107,9 +107,6 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Started, this, &APCCombatPlayerController::OnMouse_Pressed);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnMouse_Released);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnMouse_Released);
-
-		// Result Menu Toggle
-		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
 	}
 }
 
@@ -300,6 +297,17 @@ void APCCombatPlayerController::OnShopRefreshStarted()
 void APCCombatPlayerController::OnSellUnitStarted()
 {
 	ShopRequest_SellUnit();
+}
+
+void APCCombatPlayerController::UnBindPlayerInputAction()
+{
+	if (auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		EnhancedInputComponent->ClearActionBindings();
+		
+		// Result Menu Toggle
+		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
+	}
 }
 
 void APCCombatPlayerController::LoadMainWidget()
