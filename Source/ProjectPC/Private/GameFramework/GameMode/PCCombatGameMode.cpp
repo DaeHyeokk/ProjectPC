@@ -346,7 +346,6 @@ void APCCombatGameMode::Step_Travel()
 					PCCombatPlayerController->Client_HideShopWidget();
 				}
 			}
-
 			
 			PlaceAllPlayersOnCarousel();
 			SetCarouselCameraForAllPlayers();
@@ -986,70 +985,6 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 	}, ArmTimeout, false);
 }
 
-bool APCCombatGameMode::IsRoundSystemReady(FString& WhyNot) 
-{
-	 APCCombatGameState* GS = GetCombatGameState();
-    if (!IsValid(GS))
-        { WhyNot=TEXT("GameState null"); return false; }
-
-    // 3-1) 예상 인원 계산
-    const int32 Expected = (ExpectedPlayers > 0) ? ExpectedPlayers
-                      : (GameState ? GameState->PlayerArray.Num() : 0);
-    if (Expected <= 0)
-        { WhyNot = TEXT("ExpectedPlayers <= 0"); return false; }
-
-    // 3-2) 플레이어 수 도달 여부(연결 전)
-    const int32 CurrentNum = GameState->PlayerArray.Num();
-    if (CurrentNum < Expected)
-    {
-        WhyNot = FString::Printf(TEXT("Waiting players: %d/%d connected"), CurrentNum, Expected);
-        return false;
-    }
-
-    // 3-3) **LocalUserId 전원 준비됐는지** (핵심)
-    int32 Ready = 0, Total = 0;
-    AreAllPlayersIdentified(Ready, Total);
-    if (Ready < Expected)
-    {
-        WhyNot = FString::Printf(TEXT("Waiting identities: %d/%d ready"), Ready, Expected);
-        return false;
-    }
-
-    // 3-4) 이후 기존 검사들 유지
-    int32 NumPlayers=0;
-    for (APlayerState* PSB : GS->PlayerArray)
-    {
-        const APCPlayerState* PS = Cast<APCPlayerState>(PSB);
-        if (!PS) continue;
-        ++NumPlayers;
-
-        if (PS->SeatIndex < 0)
-            { WhyNot = FString::Printf(TEXT("SeatIndex<0 PID=%d"), PS->GetPlayerId()); return false; }
-
-        APCCombatBoard* Board = GS->GetBoardBySeat(PS->SeatIndex);
-        if (!IsValid(Board))
-            { WhyNot = FString::Printf(TEXT("No Board for Seat %d"), PS->SeatIndex); return false; }
-        if (!IsValid(Board->TileManager))
-            { WhyNot = FString::Printf(TEXT("No TileManager for Seat %d"), PS->SeatIndex); return false; }
-
-        APCPlayerBoard* PlayerBoard = FindPlayerBoardBySeat(PS->SeatIndex);
-        if (!IsValid(PlayerBoard))
-            { WhyNot = FString::Printf(TEXT("No PlayerBoard for Seat %d"), PS->SeatIndex); return false; }
-    }
-    if (NumPlayers==0) { WhyNot=TEXT("No players"); return false; }
-
-    if (!GetCombatManager())
-        { WhyNot=TEXT("CombatManager null"); return false; }
-
-    if (!StageData)
-        { WhyNot=TEXT("StageData null"); return false; }
-    
-    if (!IsValid(GS->GetShopManager()))
-        { WhyNot = TEXT("Shop Manager null"); return false; }
-    
-    return true;
-}
-
 bool APCCombatGameMode::AreAllPlayersIdentified(int32& OutReady, int32& OutTotal) const
 {
 	OutReady = 0;
@@ -1078,20 +1013,6 @@ bool APCCombatGameMode::AreAllPlayersIdentified(int32& OutReady, int32& OutTotal
 	return (OutTotal > 0) && (OutReady == OutTotal);
 }
 
-void APCCombatGameMode::StartWhenReady()
-{
-	FString Why;
-	if (IsRoundSystemReady(Why))
-	{
-		GetWorldTimerManager().ClearTimer(ThWaitReady);
-		InitializeHomeBoardsForPlayers();
-		BindPlayerBoardsToPlayerStates();
-		BindPlayerAttribute();
-		StartFromBeginning();
-		return;
-	}
-	UE_LOG(LogTemp, Error, TEXT("StartWhenReady wait : %s"), *Why);
-}
 
 void APCCombatGameMode::AssignSeatDeterministicOnce()
 {
