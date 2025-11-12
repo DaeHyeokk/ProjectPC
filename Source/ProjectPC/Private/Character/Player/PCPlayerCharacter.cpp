@@ -55,6 +55,26 @@ APCPlayerCharacter::APCPlayerCharacter()
 void APCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (OverHeadWidgetComp)
+	{
+		if (APCPlayerState* PS = this->GetPlayerState<APCPlayerState>())
+		{
+			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+			{
+				OverheadWidget->BindToPlayerState(PS);
+			}
+		}
+	}
+
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(Server) Player Character BeginPlay : %s"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(Client) Player Character BeginPlay : %s"), *GetName());
+	}
 	
 	SetReplicateMovement(true);
 }
@@ -80,11 +100,19 @@ void APCPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+	if (APCPlayerState* PS = this->GetPlayerState<APCPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
 		{
 			ASC->InitAbilityActorInfo(PS, this);
+		}
+		
+		if (OverHeadWidgetComp)
+		{
+			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+			{
+				OverheadWidget->BindToPlayerState(PS);
+			}
 		}
 	}
 
@@ -110,19 +138,19 @@ void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
 	}
 }
 
-void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
-{
-	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
-	{	
-		if (OverHeadWidgetComp)
-		{
-			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-			{
-				OverheadWidget->BindToPlayerState(PS);
-			}
-		}
-	}
-}
+// void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
+// {
+// 	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+// 	{	
+// 		if (OverHeadWidgetComp)
+// 		{
+// 			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+// 			{
+// 				OverheadWidget->BindToPlayerState(PS);
+// 			}
+// 		}
+// 	}
+// }
 
 void APCPlayerCharacter::PlayerDie()
 {

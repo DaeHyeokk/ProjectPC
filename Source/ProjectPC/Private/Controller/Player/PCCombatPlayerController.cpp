@@ -1721,14 +1721,13 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	FocusedBoardSeatIndex = BoardSeatIndex;
 	SetViewTarget(CombatBoard);
 	
-	// GameMode가 위치 조정하는 경우가 아닐 때만 이동
-	if (!IsPlayerEndPatrol)
+	if (IsPlayerEndPatrol)
 	{
-		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
+		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
 	}
 	else
 	{
-		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
+		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
 	}
 	
 	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
