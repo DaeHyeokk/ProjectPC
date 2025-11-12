@@ -277,11 +277,12 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 	if (NewStateTag == CombatActiveTag)
 	{
-		
+		if (bIsOnField)
+			SetMeshVisibility(true);
 	}
 	else if (NewStateTag.MatchesTag(CombatEndTag))
 	{
-		if (bIsOnField)
+		//if (bIsOnField)
 		{
 			RestoreFromCombatEnd();
 			SetMeshVisibility(true);

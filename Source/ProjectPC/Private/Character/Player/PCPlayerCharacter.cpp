@@ -87,6 +87,8 @@ void APCPlayerCharacter::OnRep_PlayerState()
 			ASC->InitAbilityActorInfo(PS, this);
 		}
 	}
+
+	
 }
 
 void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

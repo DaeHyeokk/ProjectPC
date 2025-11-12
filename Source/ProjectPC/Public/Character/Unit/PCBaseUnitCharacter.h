@@ -92,7 +92,7 @@ protected:
 	void InitAbilitySystem();
 	void SetAnimSetData() const;
 
-	void SetMeshVisibility(bool bHide) const;
+	void SetMeshVisibility(bool bVisibility) const;
 	
 	// 전투 시스템 관련 //
 public:
