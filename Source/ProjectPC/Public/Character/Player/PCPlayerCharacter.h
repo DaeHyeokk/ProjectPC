@@ -49,8 +49,8 @@ protected:
 public:
 	void SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag);
 
-	// UFUNCTION(Client, Reliable)
-	// void Multicast_SetOverHeadWidget();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetOverHeadWidget();
 
 #pragma endregion OverHeadWidget
 
