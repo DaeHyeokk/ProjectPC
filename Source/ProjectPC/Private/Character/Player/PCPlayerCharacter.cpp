@@ -55,18 +55,7 @@ APCPlayerCharacter::APCPlayerCharacter()
 void APCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (OverHeadWidgetComp)
-	{
-		if (APCPlayerState* PS = this->GetPlayerState<APCPlayerState>())
-		{
-			if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
-			{
-				OverheadWidget->BindToPlayerState(PS);
-			}
-		}
-	}
-
+	
 	if (HasAuthority())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("(Server) Player Character BeginPlay : %s"), *GetName());
@@ -153,6 +142,7 @@ void APCPlayerCharacter::SetOverHeadWidgetPosition(FGameplayTag PlayerStateTag)
 void APCPlayerCharacter::PlayerDie()
 {
 	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
 	
 	auto PC = Cast<APCCombatPlayerController>(GetController());
 	if (!PC) return;
@@ -160,11 +150,12 @@ void APCPlayerCharacter::PlayerDie()
 	if (HasAuthority())
 	{
 		bIsDead = true;
-
-		PC->Client_HideShopWidget();
 	}
-	
-	DisableInput(PC);
+	else
+	{
+		PC->HideShopWidget();
+		PC->UnBindPlayerInputAction();
+	}
 }
 
 void APCPlayerCharacter::Client_PlayMontage_Implementation(UAnimMontage* Montage, float InPlayRate)
