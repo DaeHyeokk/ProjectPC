@@ -14,16 +14,19 @@ void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerS
 {
 	if (!NewPlayerState) return;
 	CachedPlayerState = NewPlayerState;
-
+	
 	// 플레이어 어트리뷰트 (HP, Level) 구독
-	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+	if (!OnPlayerLevelChangeHandle.IsValid() || !OnPlayerHPChangeHandle.IsValid())
 	{
-		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 		{
-			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
-			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerLevelChanged);
-			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
-			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerHPChanged);
+			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+			{
+				OnPlayerLevelChangeHandle = ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
+				.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerLevelChanged);
+				OnPlayerHPChangeHandle = ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+				.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerHPChanged);
+			}
 		}
 	}
 

@@ -951,10 +951,10 @@ void APCCombatGameMode::ExitLoadingPhaseAndStart()
 	BindPlayerBoardsToPlayerStates();
 
 	// === OverheadWidget 보정 ===
-	for (TActorIterator<APCPlayerCharacter> It(GetWorld()); It; ++It)
-	{
-		It->Multicast_SetOverHeadWidget();
-	}
+	// for (TActorIterator<APCPlayerCharacter> It(GetWorld()); It; ++It)
+	// {
+	// 	It->Multicast_SetOverHeadWidget();
+	// }
 
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
