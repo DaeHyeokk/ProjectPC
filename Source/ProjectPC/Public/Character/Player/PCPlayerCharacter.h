@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "PCPlayerCharacter.generated.h"
 
+class UPCPlayerOverheadWidget;
 class APCCarouselRing;
 class APCCarouselHeroCharacter;
 class UWidgetComponent;
@@ -36,11 +37,16 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void Tick(float DeltaSeconds) override;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer CharacterTags;
 
 #pragma region OverHeadWidget
+
+private:
+	UPROPERTY()
+	TWeakObjectPtr<UPCPlayerOverheadWidget> CachedOverheadWidget;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "OverHeadUI")

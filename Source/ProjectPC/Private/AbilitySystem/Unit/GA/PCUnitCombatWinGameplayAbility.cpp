@@ -35,4 +35,6 @@ void UPCUnitCombatWinGameplayAbility::ActivateAbility(const FGameplayAbilitySpec
 			Projectile->SetDamage(-1.f);
 		}
 	}
+
+	EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
 }
