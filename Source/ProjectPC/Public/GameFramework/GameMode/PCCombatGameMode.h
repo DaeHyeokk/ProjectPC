@@ -183,9 +183,7 @@ private:
 	
 	bool bSeatsFinalized = false;
 	FTimerHandle ThWaitReady;
-	bool IsRoundSystemReady(FString& WhyNot);
 	bool AreAllPlayersIdentified(int32& OutReady, int32& OutTotal) const;
-	void StartWhenReady();
 	void AssignSeatDeterministicOnce();
 
 	int32 ExpectedPlayers = 0;
