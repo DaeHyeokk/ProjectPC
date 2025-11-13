@@ -107,9 +107,6 @@ void APCCombatPlayerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Started, this, &APCCombatPlayerController::OnMouse_Pressed);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Canceled, this, &APCCombatPlayerController::OnMouse_Released);
 		EnhancedInputComponent->BindAction(PlayerInputData->IA_LeftMouse, ETriggerEvent::Completed, this, &APCCombatPlayerController::OnMouse_Released);
-
-		// Result Menu Toggle
-		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
 	}
 }
 
@@ -302,6 +299,17 @@ void APCCombatPlayerController::OnSellUnitStarted()
 	ShopRequest_SellUnit();
 }
 
+void APCCombatPlayerController::UnBindPlayerInputAction()
+{
+	if (auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		EnhancedInputComponent->ClearActionBindings();
+		
+		// Result Menu Toggle
+		EnhancedInputComponent->BindAction(PlayerInputData->IA_ResultMenuToggle, ETriggerEvent::Started, this, &APCCombatPlayerController::OnResultMenuToggled);
+	}
+}
+
 void APCCombatPlayerController::LoadMainWidget()
 {
 	if (IsLocalController())
@@ -394,6 +402,7 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
+	//GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Symbol_Bruiser);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)
@@ -1640,7 +1649,13 @@ void APCCombatPlayerController::Client_RequestPlayerReturn_Implementation()
 {
 	if (IsLocalController())
 	{
-		PlayerEndPatrol(true);
+		if (auto PS = GetPlayerState<APCPlayerState>())
+		{
+			if (PS->GetCurrentStateTag() == PlayerGameplayTags::Player_State_Normal)
+			{
+				PlayerEndPatrol();
+			}
+		}
 	}
 }
 
@@ -1656,16 +1671,16 @@ void APCCombatPlayerController::PlayerPatrol(APCPlayerState* OnPatrolPlayerState
 	// 정찰 대상이 본인이면 정찰 종료
 	if (GetPlayerState<APCPlayerState>() == OnPatrolPlayerState)
 	{
-		PlayerEndPatrol(false);
+		PlayerEndPatrol();
 		return;
 	}
 
 	HideShopWidget();
 	PatrolWidgetChange(OnPatrolPlayerState, false);
-	PatrolTransformChange(OnPatrolPlayerState, false, false);
+	PatrolTransformChange(OnPatrolPlayerState, false);
 }
 
-void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
+void APCCombatPlayerController::PlayerEndPatrol()
 {
 	if (!IsLocalController()) return;
 	
@@ -1675,7 +1690,7 @@ void APCCombatPlayerController::PlayerEndPatrol(bool IsPlayerTravel)
 	// 카메라 위치, 상점 위젯, 캐릭터 위치 복구
 	ShowShopWidget();
 	PatrolWidgetChange(PS, true);
-	PatrolTransformChange(PS, true, IsPlayerTravel);
+	PatrolTransformChange(PS, true);
 }
 
 void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner)
@@ -1701,7 +1716,7 @@ void APCCombatPlayerController::PatrolWidgetChange(APCPlayerState* OnPatrolPlaye
 	}
 }
 
-void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol,  bool IsPlayerTravel)
+void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol)
 {
 	if (!OnPatrolPlayerState || !IsLocalController()) return;
 	
@@ -1720,14 +1735,13 @@ void APCCombatPlayerController::PatrolTransformChange(APCPlayerState* OnPatrolPl
 	FocusedBoardSeatIndex = BoardSeatIndex;
 	SetViewTarget(CombatBoard);
 	
-	// GameMode가 위치 조정하는 경우가 아닐 때만 이동
-	if (!IsPlayerEndPatrol)
-	{
-		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
-	}
-	else if (!IsPlayerTravel)
+	if (IsPlayerEndPatrol)
 	{
 		Server_SetActorTransform(CombatBoard->GetPlayerSeatTransform());
+	}
+	else
+	{
+		Server_SetActorTransform(CombatBoard->GetEnemySeatTransform());
 	}
 	
 	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);

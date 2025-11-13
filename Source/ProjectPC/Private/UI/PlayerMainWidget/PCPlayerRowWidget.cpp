@@ -54,33 +54,25 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 
 	// 플레이어 연승 기록, 어트리뷰트 (HP) 구독
 	CachedPlayerState->OnWinningStreakUpdated.AddUObject(this, &UPCPlayerRowWidget::SetWinningStreak);
+
+	FGameplayTag CharacterTag;
 	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 	{
 		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
 		{
 			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
 			.AddUObject(this, &UPCPlayerRowWidget::UpdatePlayerHP);
+			
+			// 플레이어 체력바 세팅
+            auto HP = AttributeSet->GetPlayerHP();
+            auto HPPercent = HP / 100.f;
+            SetHP(HPPercent);
+    
+            auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
+            PlayerHP->SetText(FText::FromString(HPText));
 		}
-	}
 
-	// 플레이어 이름 세팅
-	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
-	PlayerName->SetText(FText::FromString(NameText));
-
-	if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
-	{
-		// 플레이어 체력바 세팅
-		auto HP = AttributeSet->GetPlayerHP();
-		auto HPPercent = HP / 100.f;
-		SetHP(HPPercent);
-
-		auto HPText = FString::Printf(TEXT("%d"), static_cast<int32>(HP));
-		PlayerHP->SetText(FText::FromString(HPText));
-	}
-
-	FGameplayTag CharacterTag;
-	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
-	{
+		// 플레이어 캐릭터 태그 가져오기
 		FGameplayTagContainer Tags;
 		ASC->GetOwnedGameplayTags(Tags);
 
@@ -92,6 +84,10 @@ void UPCPlayerRowWidget::SetupPlayerInfo(APCPlayerState* NewPlayerState)
 			}
 		}
 	}
+
+	// 플레이어 이름 세팅
+	auto NameText = FString::Printf(TEXT("%s"), *CachedPlayerState->LocalUserId);
+	PlayerName->SetText(FText::FromString(NameText));
 	
 	// 플레이어 초상화 세팅
 	auto PortraitSoftPtr = PlayerPortrait->GetPlayerPortrait(CharacterTag);

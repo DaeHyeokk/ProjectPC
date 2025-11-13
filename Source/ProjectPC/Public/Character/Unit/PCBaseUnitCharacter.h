@@ -57,7 +57,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void PreInitializeComponents() override;
 	
 	virtual void InitStatusBarWidget(UUserWidget* StatusBarWidget);
 
@@ -93,7 +92,7 @@ protected:
 	void InitAbilitySystem();
 	void SetAnimSetData() const;
 
-	void SetMeshVisibility(bool bHide) const;
+	void SetMeshVisibility(bool bVisibility) const;
 	
 	// 전투 시스템 관련 //
 public:

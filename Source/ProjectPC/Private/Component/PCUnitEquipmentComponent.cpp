@@ -209,20 +209,19 @@ void UPCUnitEquipmentComponent::ApplyItemEffects(const FGameplayTag& ItemTag, co
 		return;
 
 	TArray<FActiveGameplayEffectHandle> ActiveEffectHandles;
-	
-	for (UPCEffectSpec* EffectSpec : EffectSpecList->EffectSpecs)
-	{
-		if (!EffectSpec)
-			continue;
 
-		if (UAbilitySystemComponent* OwnerASC = Owner.IsValid() ? Owner->GetAbilitySystemComponent() : nullptr)
+	if (UAbilitySystemComponent* OwnerASC = Owner.IsValid() ? Owner->GetAbilitySystemComponent() : nullptr)
+	{
+		for (UPCEffectSpec* EffectSpec : EffectSpecList->EffectSpecs)
 		{
+			if (!EffectSpec)
+				continue;
+
 			FActiveGameplayEffectHandle Handle = EffectSpec->ApplyEffectSelf(OwnerASC);
 			if (Handle.IsValid())
 				ActiveEffectHandles.Add(Handle);
 		}
 	}
-
 	if (!ActiveEffectHandles.IsEmpty())
 	{
 		SlotActiveEffects[SlotIndex] = ActiveEffectHandles;

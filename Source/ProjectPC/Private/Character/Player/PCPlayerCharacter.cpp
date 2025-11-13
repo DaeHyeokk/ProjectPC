@@ -56,6 +56,15 @@ void APCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(Server) Player Character BeginPlay : %s"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("(Client) Player Character BeginPlay : %s"), *GetName());
+	}
+	
 	SetReplicateMovement(true);
 }
 
@@ -80,13 +89,23 @@ void APCPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	if (APCPlayerState* PS = GetPlayerState<APCPlayerState>())
+	if (APCPlayerState* PS = this->GetPlayerState<APCPlayerState>())
 	{
 		if (UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent())
 		{
 			ASC->InitAbilityActorInfo(PS, this);
 		}
+		
+		// if (OverHeadWidgetComp)
+		// {
+		// 	if (auto OverheadWidget = Cast<UPCPlayerOverheadWidget>(OverHeadWidgetComp->GetUserWidgetObject()))
+		// 	{
+		// 		OverheadWidget->BindToPlayerState(PS);
+		// 	}
+		// }
 	}
+
+	
 }
 
 void APCPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -125,6 +144,7 @@ void APCPlayerCharacter::Multicast_SetOverHeadWidget_Implementation()
 void APCPlayerCharacter::PlayerDie()
 {
 	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
 	
 	auto PC = Cast<APCCombatPlayerController>(GetController());
 	if (!PC) return;
@@ -132,11 +152,12 @@ void APCPlayerCharacter::PlayerDie()
 	if (HasAuthority())
 	{
 		bIsDead = true;
-
-		PC->Client_HideShopWidget();
 	}
-	
-	DisableInput(PC);
+	else
+	{
+		PC->HideShopWidget();
+		PC->UnBindPlayerInputAction();
+	}
 }
 
 void APCPlayerCharacter::Client_PlayMontage_Implementation(UAnimMontage* Montage, float InPlayRate)

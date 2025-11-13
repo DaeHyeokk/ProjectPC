@@ -24,6 +24,9 @@ private:
 	UPROPERTY()
 	APCPlayerState* CachedPlayerState;
 
+	FDelegateHandle OnPlayerLevelChangeHandle;
+	FDelegateHandle OnPlayerHPChangeHandle;
+
 	const TArray<FLinearColor> PlayerColors = {
 		FLinearColor(0.0f, 0.5f, 1.0f),	// 파랑
 		FLinearColor(0.3f, 1.0f, 0.3f),  // 연두
@@ -44,6 +47,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UProgressBar> HPBar;
+
+	virtual void NativeConstruct() override;
 
 public:
 	void BindToPlayerState(APCPlayerState* NewPlayerState);

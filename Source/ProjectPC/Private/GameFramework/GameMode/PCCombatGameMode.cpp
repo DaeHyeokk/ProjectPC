@@ -281,10 +281,10 @@ void APCCombatGameMode::Step_Setup()
 	{
 		if (auto* PCPlayerController = Cast<APCCombatPlayerController>(*It))
 		{
+			PCPlayerController->Client_RequestPlayerReturn();
+			
 			if (APCPlayerState* PCPlayerState = PCPlayerController->GetPlayerState<APCPlayerState>())
 			{
-				PCPlayerController->Client_RequestPlayerReturn();
-				
 				if (NotReward)
 				{
 					PCPlayerController->Server_ShopRefresh(0);

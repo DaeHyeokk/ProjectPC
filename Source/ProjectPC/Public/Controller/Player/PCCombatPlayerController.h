@@ -102,6 +102,9 @@ private:
 	void OnShopRefreshStarted();
 	void OnSellUnitStarted();
 
+public:
+	void UnBindPlayerInputAction();
+
 #pragma endregion Input
 
 #pragma region Shop
@@ -421,10 +424,10 @@ public:
 	void Client_RequestPlayerReturn();
 	
 	void PlayerPatrol(APCPlayerState* OnPatrolPlayerState);
-	void PlayerEndPatrol(bool IsPlayerTravel);
+	void PlayerEndPatrol();
 
 	void PatrolWidgetChange(APCPlayerState* OnPatrolPlayerState, bool IsOwner);
-	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol, bool IsPlayerTravel);
+	void PatrolTransformChange(APCPlayerState* OnPatrolPlayerState, bool IsPlayerEndPatrol);
 
 #pragma endregion Patrol
 

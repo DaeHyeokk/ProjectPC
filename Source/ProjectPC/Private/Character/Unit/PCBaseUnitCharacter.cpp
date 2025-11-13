@@ -28,7 +28,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	bReplicates = true;
 	SetReplicates(true);
 	
-	SetIsSpatiallyLoaded(false);
+	//	SetIsSpatiallyLoaded(false);
 	
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -57,7 +57,7 @@ APCBaseUnitCharacter::APCBaseUnitCharacter(const FObjectInitializer& ObjectIniti
 	StatusBarComp->SetDrawAtDesiredSize(true);
 	StatusBarComp->SetPivot({0.5f, 1.f});
 	StatusBarComp->SetRelativeLocation(FVector(0.f,0.f,30.f));
-
+	
 	EquipmentComp = CreateDefaultSubobject<UPCUnitEquipmentComponent>(TEXT("EquipmentComponent"));
 	EquipmentComp->SetIsReplicated(true);
 }
@@ -214,12 +214,6 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
 }
 
-void APCBaseUnitCharacter::PreInitializeComponents()
-{
-	Super::PreInitializeComponents();
-	SetIsSpatiallyLoaded(false);
-}
-
 void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
 {
 	// 하위 클래스에서 오버라이드 해서 구현
@@ -363,7 +357,7 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
 
-	SetActorRotation(FRotator(0.f,180.f,0));
+	SetActorRotation(FRotator(0.f,180.f,0.f));
 	bIsCombatWin = true;
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
@@ -376,6 +370,10 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 		EventData.Target = TargetPawn;
 
 		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+		FGameplayTagContainer CancelTags;
+		CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+		ASC->CancelAbilities(&CancelTags);
 	}
 }
 
@@ -394,6 +392,10 @@ void APCBaseUnitCharacter::CombatDraw(APCPlayerState* TargetPS)
 		EventData.Target = TargetPawn;
 
 		ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
+
+		FGameplayTagContainer CancelTags;
+		CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
+		ASC->CancelAbilities(&CancelTags);
 	}
 }
 
@@ -403,7 +405,8 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 
 	if (bIsOnField && NewStateTag.MatchesTagExact(CombatResultTag))
 	{
-		SetMeshVisibility(false);
+		bIsCombatWin = false;
+		//SetMeshVisibility(false);
 		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 		{
 			ASC->CurrentMontageStop(0.f);
@@ -420,7 +423,9 @@ void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCoun
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
 	{
 		bIsDead = (NewCount > 0);
-		OnUnitDied.Broadcast(this);
+
+		if (bIsDead)
+			OnUnitDied.Broadcast(this);
 	}
 	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
 	{

@@ -195,6 +195,7 @@ namespace GameplayEffectTags
 	// ==== Duration GE ====
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Cooldown_BasicAttack, "GE.Class.Cooldown.BasicAttack")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_GrantTag_Duration, "GE.Class.Unit.GrantTag.Duration")
+	UE_DEFINE_GAMEPLAY_TAG(GE_Class_Unit_AttributeChange_Add_Duration_AttackSpeedIncreaseMultiplier,	"GE.Class.Unit.AttributeChange.Add.Duration.AttackSpeedIncreaseMultiplier")
 	
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Damage, "GE.Caller.Damage")
 	UE_DEFINE_GAMEPLAY_TAG(GE_Caller_Heal, "GE.Caller.Heal")

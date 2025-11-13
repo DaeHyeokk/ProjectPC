@@ -10,20 +10,32 @@
 #include "GameFramework/PlayerState/PCPlayerState.h"
 #include "AbilitySystem/Player/AttributeSet/PCPlayerAttributeSet.h"
 
+void UPCPlayerOverheadWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+	SetupPlayerInfo();
+}
+
 void UPCPlayerOverheadWidget::BindToPlayerState(class APCPlayerState* NewPlayerState)
 {
 	if (!NewPlayerState) return;
-	CachedPlayerState = NewPlayerState;
 
+	if (CachedPlayerState) return;
+	CachedPlayerState = NewPlayerState;
+	
 	// 플레이어 어트리뷰트 (HP, Level) 구독
-	if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
+	if (!OnPlayerLevelChangeHandle.IsValid() || !OnPlayerHPChangeHandle.IsValid())
 	{
-		if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+		if (auto ASC = CachedPlayerState->GetAbilitySystemComponent())
 		{
-			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
-			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerLevelChanged);
-			ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
-			.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerHPChanged);
+			if (auto AttributeSet = CachedPlayerState->GetAttributeSet())
+			{
+				OnPlayerLevelChangeHandle = ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerLevelAttribute())
+				.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerLevelChanged);
+				OnPlayerHPChangeHandle = ASC->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetPlayerHPAttribute())
+				.AddUObject(this, &UPCPlayerOverheadWidget::OnPlayerHPChanged);
+			}
 		}
 	}
 
