@@ -30,9 +30,9 @@ void UPCUnitEquipmentComponent::BeginPlay()
 	{
 		Owner = Cast<APCBaseUnitCharacter>(GetOwner());
 		
-		if (APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(GetOwner()))
+		if (Owner.IsValid())
 		{
-			if (APCPlayerState* PS = Unit->GetOwnerPlayerState())
+			if (APCPlayerState* PS = Owner->GetOwnerPlayerState())
 			{
 				OwnerPlayerInventory = PS->GetPlayerInventory();
 			}
