@@ -36,7 +36,9 @@ FActiveGameplayEffectHandle UPCEffectSpec_GrantTag::ApplyEffectImpl(UAbilitySyst
 	
 	FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
 	ApplyDurationOptions(Spec);
-	
+
+	// DynamicGrantTags에 부여할 GrantTag를 추가하는 방식으로
+	// GE를 적용하면 태그가 부여되도록 구현
 	SpecHandle.Data->DynamicGrantedTags.AddTag(GrantTag);
 
 	if (TargetGroup == EEffectTargetGroup::Self)
