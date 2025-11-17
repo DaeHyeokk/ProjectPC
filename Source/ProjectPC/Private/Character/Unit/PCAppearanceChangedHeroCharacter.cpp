@@ -10,8 +10,7 @@ void APCAppearanceChangedHeroCharacter::OnRep_HeroLevel()
 {
 	Super::OnRep_HeroLevel();
 
-	// 유닛이 Spawn 되면 UnitTag 값이 세팅됨 -> 클라에서 OnRep_UnitTag 호출
-	// -> 클라에서 보여줄 유닛 데이터 세팅 (메쉬, AnimBP, StatusBar UI)
+	// 클라에서 보여줄 유닛 메쉬 업데이트
 	if (UWorld* W = GetWorld())
 	{
 		if (auto* SpawnSubSystem = W->GetSubsystem<UPCUnitSpawnSubsystem>())
