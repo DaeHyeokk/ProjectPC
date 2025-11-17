@@ -33,8 +33,7 @@ struct FMagnitudeParam
 	// Scalable
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(EditCondition="Mode==EMagnitudeMode::Scalable", EditConditionHides))
 	FScalableFloat ScalableMagnitude;
-
-	// 평가 함수: 필요하면 레벨
+	
 	float Evaluate(const int32 Level = 1) const
 	{
 		switch (Mode)
@@ -48,11 +47,6 @@ struct FMagnitudeParam
 		default:
 			return 0.f;
 		}
-	}
-
-	bool IsValid() const
-	{
-		return Evaluate() > 0.f;
 	}
 };
 

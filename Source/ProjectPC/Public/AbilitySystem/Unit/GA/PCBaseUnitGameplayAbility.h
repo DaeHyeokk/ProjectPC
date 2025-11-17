@@ -30,9 +30,10 @@ protected:
 	virtual TArray<FActiveGameplayEffectHandle> ApplyActivatedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
 	virtual TArray<FActiveGameplayEffectHandle> ApplyCommittedEffectSpec(UAbilitySystemComponent* ASC, const AActor* Target = nullptr);
 	virtual TArray<FActiveGameplayEffectHandle> ApplyReceivedEventEffectSpec(UAbilitySystemComponent* ASC, const FGameplayTag& ReceivedEventTag, const AActor* Target = nullptr);
-
-	virtual TArray<FActiveGameplayEffectHandle> ApplyEffectSpec(const FPCEffectSpecList* EffectSpecList, UAbilitySystemComponent* ASC, const AActor* Target);
 	
+	virtual TArray<FActiveGameplayEffectHandle> ApplyEffectSpec(const FPCEffectSpecList* EffectSpecList, UAbilitySystemComponent* ASC, const AActor* Target);
+
+protected:
 	UPROPERTY(Transient)
 	TObjectPtr<APCBaseUnitCharacter> Unit;
 

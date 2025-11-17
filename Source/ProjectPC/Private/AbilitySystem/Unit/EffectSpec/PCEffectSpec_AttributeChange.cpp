@@ -11,7 +11,7 @@ FActiveGameplayEffectHandle UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbil
 {
 	FActiveGameplayEffectHandle OutHandle;
 	
-	if (!SourceASC || !Target || !Target->HasAuthority() || !EffectMagnitude.IsValid())
+	if (!SourceASC || !Target || !Target->HasAuthority())
 		return OutHandle;
 	
 	if (!IsTargetEligibleByGroup(SourceASC->GetAvatarActor(), Target))

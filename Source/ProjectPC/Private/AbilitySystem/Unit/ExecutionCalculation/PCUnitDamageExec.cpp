@@ -20,14 +20,14 @@ static FGameplayEffectAttributeCaptureDefinition MakeCapture(const FGameplayAttr
 UPCUnitDamageExec::UPCUnitDamageExec()
 {
 	Captures.PhysicalDefense = MakeCapture(UPCUnitAttributeSet::GetPhysicalDefenseAttribute(),
-	EGameplayEffectAttributeCaptureSource::Target);
+		EGameplayEffectAttributeCaptureSource::Target);
 	Captures.MagicDefense = MakeCapture(UPCUnitAttributeSet::GetMagicDefenseAttribute(),
 		EGameplayEffectAttributeCaptureSource::Target);
-
+	Captures.Evasion = MakeCapture(UPCUnitAttributeSet::GetEvasionChanceAttribute(),
+		EGameplayEffectAttributeCaptureSource::Target);
+	
 	Captures.FlatDamageBlock = MakeCapture(UPCUnitAttributeSet::GetFlatDamageBlockAttribute(),
 		EGameplayEffectAttributeCaptureSource::Target);
-	// Captures.Shield = MakeCapture(UPCUnitAttributeSet::GetShieldAttribute(),
-	// 	EGameplayEffectAttributeCaptureSource::Target);
 	
 	// Hero 전용
 	Captures.PhysDamageMultiplier = MakeCapture(UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute(),
@@ -46,11 +46,11 @@ UPCUnitDamageExec::UPCUnitDamageExec()
 	// 이 Exec이 어떤 속성을 읽는지 시스템에 등록
 	RelevantAttributesToCapture.Add(Captures.PhysicalDefense);
 	RelevantAttributesToCapture.Add(Captures.MagicDefense);
+	RelevantAttributesToCapture.Add(Captures.Evasion);
 
 	RelevantAttributesToCapture.Add(Captures.FlatDamageBlock);
 	RelevantAttributesToCapture.Add(Captures.IncomingPhysicalDamageMultiplier);
 	RelevantAttributesToCapture.Add(Captures.IncomingMagicDamageMultiplier);
-	//RelevantAttributesToCapture.Add(Captures.Shield);
 	
 	RelevantAttributesToCapture.Add(Captures.PhysDamageMultiplier);
 	RelevantAttributesToCapture.Add(Captures.MagicDamageMultiplier);
@@ -77,17 +77,24 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	{
 		return; // 줄 데미지 없음
 	}
-
-	// Damage Type 판정: DynamicAssetTags에서 확인
+	
 	const FGameplayTagContainer& DynTags = Spec.GetDynamicAssetTags();
+	
+	// Attack Type 판정
+	const bool bIsBasic = DynTags.HasTag(UnitGameplayTags::Unit_AttackType_Basic);
+	const bool bIsUltimate = DynTags.HasTag(UnitGameplayTags::Unit_AttackType_Ultimate);
+	const bool bIsBonusDamage = DynTags.HasTag(UnitGameplayTags::Unit_AttackType_BonusDamage);
+
+	// Damage Type 판정
 	const bool bIsPhysical = DynTags.HasTag(UnitGameplayTags::Unit_DamageType_Physical);
 	const bool bIsMagic = DynTags.HasTag(UnitGameplayTags::Unit_DamageType_Magic);
 	const bool bIsTrueDamage = DynTags.HasTag(UnitGameplayTags::Unit_DamageType_TrueDamage);
-
+	
 	// Damage Flag 판정
 	const bool bNoCrit = DynTags.HasTag(UnitGameplayTags::Unit_DamageFlag_NoCrit);
 	const bool bNoVamp = DynTags.HasTag(UnitGameplayTags::Unit_DamageFlag_NoVamp);
 	const bool bNoManaGain = DynTags.HasTag(UnitGameplayTags::Unit_DamageFlag_NoManaGain);
+	const bool bNoSendHitEvent = DynTags.HasTag(UnitGameplayTags::Unit_DamageFlag_NoSendHitEvent);
 	const bool bNoSendDamageAppliedEvent = DynTags.HasTag(UnitGameplayTags::Unit_DamageFlag_NoSendDamageAppliedEvent);
 
 	FAggregatorEvaluateParameters EvalParams;
@@ -101,6 +108,51 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Def, EvalParams, OutVal);
 	};
 
+	float Evasion = 0.f;
+	GetMagnitude(Captures.Evasion, Evasion);
+	Evasion *= 0.01f;
+	if (Evasion > 0.f && FMath::FRand() < Evasion)
+	{
+		// 데미지 입는 대상 회피 성공, 바로 리턴 
+		return;
+	}
+	
+	if (!bNoSendHitEvent)
+	{
+		// 공격 적중에 성공할 경우 이벤트 발생 (데미지 적용 전에 호출하는 이벤트)
+		if (!bNoSendHitEvent)
+		{
+			FGameplayTag HitSucceedEventTag;
+			if (bIsBasic)
+			{
+				HitSucceedEventTag = BasicHitSucceedEventTag;
+			}
+			else if (bIsUltimate)
+			{
+				HitSucceedEventTag = UltimateHitSucceedEventTag;
+			}
+			else if (bIsBonusDamage)
+			{
+				HitSucceedEventTag = BonusDmgHitSucceedEventTag;
+			}
+			
+			if (HitSucceedEventTag.IsValid())
+			{
+				FGameplayEventData HitSucceedData;
+				HitSucceedData.EventTag = HitSucceedEventTag;
+				HitSucceedData.Instigator = SourceASC->GetAvatarActor();
+				HitSucceedData.Target = TargetASC->GetAvatarActor();
+				SourceASC->HandleGameplayEvent(HitSucceedEventTag, &HitSucceedData);
+			}
+		
+			FGameplayEventData OnHitData;
+			OnHitData.EventTag = OnHitEventTag;
+			OnHitData.Instigator = SourceASC->GetAvatarActor();
+			OnHitData.Target = TargetASC->GetAvatarActor();
+			TargetASC->HandleGameplayEvent(OnHitEventTag, &OnHitData);
+		}
+	}
+	
 	// 타입 데미지 배율 (영웅 전용)
 	float TypeMul = 0.f;
 	if (bIsPhysical)
@@ -129,9 +181,6 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 			}
 		}
 	}
-	
-	// 관통 적용 → 유효 저항 // 관통력 적용 임시 공식
-	//const float EffectiveResist = FMath::Max(0.f, Resist - PenFlat) * (1.f - FMath::Clamp(PenPct, 0.f, 1.f));
 
 	float FinalDamage = FMath::Max(0.f, BaseDamage);
 
@@ -143,7 +192,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		else if (bIsMagic)
 			GetMagnitude(Captures.MagicDefense, Defense);
 		
-		// 간단한 경감 공식
+		// 데미지 경감 공식
 		const float Mitigation = 100.f / (100.f + Defense);
 		FinalDamage = FMath::Max(0.f, BaseDamage * Mitigation);
 
@@ -161,29 +210,6 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	FinalMul *= 0.01f;
 	FinalMul = FMath::Max(0.f, FinalMul);
 	FinalDamage *= 1.f + FinalMul;
-	
-	// ===== 보호막 우선 소모 → 남은 피해를 체력에 적용
-	// float CurrShield = 0.f;
-	// GetMag(Captures.Shield, CurrShield);
-	//
-	// const float DamageToShield = FMath::Min(FinalDamage, FMath::Max(0.f, CurrShield));
-	// const float DamageToHealth = FinalDamage - DamageToShield;
-	//
-	// if (DamageToShield > 0.f)
-	// {
-	// 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-	// 		UPCUnitAttributeSet::GetShieldAttribute(),
-	// 		EGameplayModOp::Additive,
-	// 		-DamageToShield));
-	// }
-	//
-	// if (DamageToHealth > KINDA_SMALL_NUMBER)
-	// {
-	// 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-	// 		UPCUnitAttributeSet::GetCurrentHealthAttribute(),
-	// 		EGameplayModOp::Additive,
-	// 		-DamageToHealth));
-	// }
 	
 	// Health에 음수로 적용
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(

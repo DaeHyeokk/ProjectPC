@@ -214,11 +214,6 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
 }
 
-void APCBaseUnitCharacter::InitStatusBarWidget(UUserWidget* StatusBarWidget)
-{
-	// 하위 클래스에서 오버라이드 해서 구현
-}
-
 void APCBaseUnitCharacter::ReAttachStatusBarToSocket() const
 {
 	if (USkeletalMeshComponent* SkeMesh = GetMesh())

@@ -76,8 +76,10 @@ private:
 	void OnRep_IsDragging() const;
 	
 	// 전투 관련 //
-private:
+protected:
 	virtual void OnGameStateChanged(const FGameplayTag& NewStateTag) override;
+
+private:
 	void RestoreFromCombatEnd();
 	
 public:

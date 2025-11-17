@@ -70,7 +70,12 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_Melee, "Unit.Type.Creep.Melee")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Type_Creep_Range, "Unit.Type.Creep.Range")
 
-	// ==== Unit Damage Types
+	// ==== Unit Attack Types ====
+	UE_DEFINE_GAMEPLAY_TAG(Unit_AttackType_Basic, "Unit.AttackType.Basic")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_AttackType_Ultimate, "Unit.AttackType.Ultimate")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_AttackType_BonusDamage, "Unit.AttackType.BonusDamage")
+	
+	// ==== Unit Damage Types ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageType_Physical, "Unit.DamageType.Physical")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageType_Magic, "Unit.DamageType.Magic")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageType_TrueDamage, "Unit.DamageType.TrueDamage")
@@ -80,6 +85,7 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageFlag_NoVamp, "Unit.DamageFlag.NoVamp")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageFlag_NoManaGain, "Unit.DamageFlag.NoManaGain")
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageFlag_NoSendDamageAppliedEvent, "Unit.DamageFlag.NoSendDamageAppliedEvent")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageFlag_NoSendHitEvent, "Unit.DamageFlag.NoSendHitEvent")
 
 	// ==== Unit Combat Text Type Tags ====
 	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Damage_Physical, "Unit.CombatText.Damage.Physical")

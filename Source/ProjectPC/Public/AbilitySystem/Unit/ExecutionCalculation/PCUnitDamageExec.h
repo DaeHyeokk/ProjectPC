@@ -30,12 +30,18 @@ protected:
 	FGameplayTag DamageCallerTag = GameplayEffectTags::GE_Caller_Damage;
 	FGameplayTag HealCallerTag = GameplayEffectTags::GE_Caller_Heal;
 	FGameplayTag HealGEClassTag = GameplayEffectTags::GE_Class_Unit_Heal;
+
+	FGameplayTag BasicHitSucceedEventTag = UnitGameplayTags::Unit_Event_HitSucceed_Basic;
+	FGameplayTag UltimateHitSucceedEventTag = UnitGameplayTags::Unit_Event_HitSucceed_Ultimate;
+	FGameplayTag BonusDmgHitSucceedEventTag = UnitGameplayTags::Unit_Event_HitSucceed_BonusDamage;
+	FGameplayTag OnHitEventTag = UnitGameplayTags::Unit_Event_OnHit;
 	
 	struct FCaptureDefs
 	{
 		// Target Attribute
 		FGameplayEffectAttributeCaptureDefinition PhysicalDefense;
 		FGameplayEffectAttributeCaptureDefinition MagicDefense;
+		FGameplayEffectAttributeCaptureDefinition Evasion;
 
 		// Target Attribute - Synergy
 		FGameplayEffectAttributeCaptureDefinition FlatDamageBlock;

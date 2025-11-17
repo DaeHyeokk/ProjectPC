@@ -72,6 +72,11 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Type_Creep_Range)
 
 	// ==== Unit Attack Types ====
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Basic)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_Ultimate)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_AttackType_BonusDamage)
+	
+	// ==== Unit Damage Types ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Physical)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_Magic)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageType_TrueDamage)
@@ -81,6 +86,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoVamp)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoManaGain)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoSendDamageAppliedEvent)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_DamageFlag_NoSendHitEvent)
 
 	// ==== Unit Combat Text Type Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_CombatText_Damage_Physical)

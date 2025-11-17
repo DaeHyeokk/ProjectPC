@@ -38,9 +38,6 @@ protected:
 	UFUNCTION()
 	virtual void OnPulseTick();
 
-	UPROPERTY(Transient)
-	TObjectPtr<UGameplayTask_WaitDelay> WaitDelayTask = nullptr;
-
 	UPROPERTY(EditDefaultsOnly, Category="FX")
 	TObjectPtr<UParticleSystem> ActiveParticleEffect = nullptr;
 

@@ -31,9 +31,9 @@ public:
 protected:
 	virtual FActiveGameplayEffectHandle ApplyEffectImpl(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel) override;
 
-	UPROPERTY(EditDefaultsOnly, Category="Damage")
-	EAttackType AttackType = EAttackType::None;
-	
+	UPROPERTY(EditDefaultsOnly, Category="Damage", meta=(Categories="Unit.AttackType"))
+	FGameplayTag AttackType = UnitGameplayTags::Unit_AttackType_Basic;
+		
 	UPROPERTY(EditDefaultsOnly, Category="Damage", meta=(Categories="Unit.DamageType"))
 	FGameplayTag DamageType = UnitGameplayTags::Unit_DamageType_Physical;
 
@@ -78,6 +78,7 @@ protected:
 	FGameplayTag NoCritTag = UnitGameplayTags::Unit_DamageFlag_NoCrit;
 	FGameplayTag NoVampTag = UnitGameplayTags::Unit_DamageFlag_NoVamp;
 	FGameplayTag NoManaGainTag = UnitGameplayTags::Unit_DamageFlag_NoManaGain;
+	FGameplayTag NoSendHitEventTag = UnitGameplayTags::Unit_DamageFlag_NoSendHitEvent;
 	FGameplayTag NoSendDamageAppliedEventTag = UnitGameplayTags::Unit_DamageFlag_NoSendDamageAppliedEvent;
 
 public:

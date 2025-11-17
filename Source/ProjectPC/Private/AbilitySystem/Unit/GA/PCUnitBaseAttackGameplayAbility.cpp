@@ -115,9 +115,8 @@ void UPCUnitBaseAttackGameplayAbility::StartProjectileSpawnSucceedWaitTask()
 
 void UPCUnitBaseAttackGameplayAbility::OnAttackSucceed(FGameplayEventData Payload)
 {
-	AActor* Avatar = GetAvatarActorFromActorInfo();
 	UAbilitySystemComponent* ASC = Unit ? Unit->GetAbilitySystemComponent() : nullptr;
-	if (!Avatar || !ASC)
+	if (!ASC)
 		return;
 	
 	if (CurrentTarget.IsValid())

@@ -56,8 +56,6 @@ EBTNodeResult::Type UBTTask_TryJumpAbility::ExecuteTask(UBehaviorTreeComponent& 
 	EventData.TargetData = UAbilitySystemBlueprintLibrary::AbilityTargetDataFromLocations(SourceLoc, TargetLoc);
 
 	ASC->HandleGameplayEvent(EventData.EventTag, &EventData);
-	
-	
 
 	BB->ClearValue(JumpLocationKey.SelectedKeyName);
 	return EBTNodeResult::Succeeded;

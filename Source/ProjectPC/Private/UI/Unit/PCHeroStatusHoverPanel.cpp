@@ -33,8 +33,7 @@ void UPCHeroStatusHoverPanel::InitFromHero(APCCommonUnitCharacter* InHero)
 	UnbindAll();
 
 	CurHero = InHero;
-	ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(InHero);
-	
+	ASC = InHero->GetAbilitySystemComponent();
 	if (ASC.IsValid())
 	{
 		BindAll();
@@ -431,7 +430,7 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 	
 	UpdatePosition();
 	UpdateLevel();
-
+	
 	const auto MaxHPAttr = UPCHeroUnitAttributeSet::GetMaxHealthAttribute();
 	const auto CurHPAttr = UPCHeroUnitAttributeSet::GetCurrentHealthAttribute();
 	const auto MaxMPAttr = UPCHeroUnitAttributeSet::GetMaxManaAttribute();
@@ -472,7 +471,7 @@ void UPCHeroStatusHoverPanel::ApplyAll() const
 	if (MDefText)
 		MDefText->SetText(AsInt(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetMagicDefenseAttribute())));
 
-	// 배수/확률 → % 표시
+	// 배수/확률 % 표시
 	if (PMultiplierText)
 		PMultiplierText->SetText(AsPercent0_FromPctValue(ASC->GetNumericAttribute(UPCHeroUnitAttributeSet::GetPhysicalDamageMultiplierAttribute())));
 	if (MMultiplierText)

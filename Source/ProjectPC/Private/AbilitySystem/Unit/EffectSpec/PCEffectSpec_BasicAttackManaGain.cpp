@@ -36,6 +36,7 @@ FActiveGameplayEffectHandle UPCEffectSpec_BasicAttackManaGain::ApplyEffectImpl(U
 
 	const APCBaseUnitCharacter* Unit = Cast<APCBaseUnitCharacter>(Target);
 	int32 UnitLevel = Unit ? Unit->GetUnitLevel() : 1;
+	// 1레벨 유닛일 경우 6~10 랜덤 회복, 2레벨 이상일 경우 10 고정 회복
 	float ManaGainValue = (UnitLevel <= 1) ? static_cast<float>(FMath::RandRange(6, 10)) : 10.f;
 
 	// 마법사 시너지 버프가 활성화 됐을 경우 마나회복량 2배

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayAbilitySpecHandle.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_TryJumpAbility.generated.h"
 

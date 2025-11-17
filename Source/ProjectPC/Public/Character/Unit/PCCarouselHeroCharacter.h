@@ -26,8 +26,6 @@ public:
 	APCCarouselHeroCharacter();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComp;}
-
-	void InitAttributeSet();
 	
 	const UPCDataAsset_HeroUnitData* GetHeroUnitDataAsset() const { return HeroData; }
 	void SetHeroUnitDataAsset(UPCDataAsset_HeroUnitData* InHeroData);
@@ -37,6 +35,10 @@ public:
 
 	FGameplayTag GetEquipItemTag() const { return ItemTag;}
 
+private:
+	void InitAttributeSet();
+
+public:
 	// 캐러샐 유닛 부착
 
 	UPROPERTY(Replicated)
