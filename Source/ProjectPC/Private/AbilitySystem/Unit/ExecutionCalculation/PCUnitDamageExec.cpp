@@ -117,40 +117,37 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		return;
 	}
 	
+	// 공격 적중에 성공할 경우 이벤트 발생 (데미지 적용 전에 호출하는 이벤트)
 	if (!bNoSendHitEvent)
 	{
-		// 공격 적중에 성공할 경우 이벤트 발생 (데미지 적용 전에 호출하는 이벤트)
-		if (!bNoSendHitEvent)
+		FGameplayTag HitSucceedEventTag;
+		if (bIsBasic)
 		{
-			FGameplayTag HitSucceedEventTag;
-			if (bIsBasic)
-			{
-				HitSucceedEventTag = BasicHitSucceedEventTag;
-			}
-			else if (bIsUltimate)
-			{
-				HitSucceedEventTag = UltimateHitSucceedEventTag;
-			}
-			else if (bIsBonusDamage)
-			{
-				HitSucceedEventTag = BonusDmgHitSucceedEventTag;
-			}
-			
-			if (HitSucceedEventTag.IsValid())
-			{
-				FGameplayEventData HitSucceedData;
-				HitSucceedData.EventTag = HitSucceedEventTag;
-				HitSucceedData.Instigator = SourceASC->GetAvatarActor();
-				HitSucceedData.Target = TargetASC->GetAvatarActor();
-				SourceASC->HandleGameplayEvent(HitSucceedEventTag, &HitSucceedData);
-			}
-		
-			FGameplayEventData OnHitData;
-			OnHitData.EventTag = OnHitEventTag;
-			OnHitData.Instigator = SourceASC->GetAvatarActor();
-			OnHitData.Target = TargetASC->GetAvatarActor();
-			TargetASC->HandleGameplayEvent(OnHitEventTag, &OnHitData);
+			HitSucceedEventTag = BasicHitSucceedEventTag;
 		}
+		else if (bIsUltimate)
+		{
+			HitSucceedEventTag = UltimateHitSucceedEventTag;
+		}
+		else if (bIsBonusDamage)
+		{
+			HitSucceedEventTag = BonusDmgHitSucceedEventTag;
+		}
+			
+		if (HitSucceedEventTag.IsValid())
+		{
+			FGameplayEventData HitSucceedData;
+			HitSucceedData.EventTag = HitSucceedEventTag;
+			HitSucceedData.Instigator = SourceASC->GetAvatarActor();
+			HitSucceedData.Target = TargetASC->GetAvatarActor();
+			SourceASC->HandleGameplayEvent(HitSucceedEventTag, &HitSucceedData);
+		}
+		
+		FGameplayEventData OnHitData;
+		OnHitData.EventTag = OnHitEventTag;
+		OnHitData.Instigator = SourceASC->GetAvatarActor();
+		OnHitData.Target = TargetASC->GetAvatarActor();
+		TargetASC->HandleGameplayEvent(OnHitEventTag, &OnHitData);
 	}
 	
 	// 타입 데미지 배율 (영웅 전용)
