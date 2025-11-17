@@ -34,7 +34,9 @@ FActiveGameplayEffectHandle UPCEffectSpec_AttributeChange::ApplyEffectImpl(UAbil
 
 	FGameplayEffectSpec& Spec = *SpecHandle.Data.Get();
 	ApplyDurationOptions(Spec);
-	
+
+	// Editor에서 설정한 EffectCallerTag, EffectMagnitude 값을 바탕으로
+	// SetSetByCallerMagnitude 값 설정
 	const float Value = EffectMagnitude.Evaluate(Level);
 	SpecHandle.Data->SetSetByCallerMagnitude(EffectCallerTag, Value);
 
