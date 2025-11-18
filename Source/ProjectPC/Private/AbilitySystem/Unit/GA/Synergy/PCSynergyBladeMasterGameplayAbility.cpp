@@ -22,12 +22,18 @@ TArray<FActiveGameplayEffectHandle> UPCSynergyBladeMasterGameplayAbility::ApplyC
 	if (!HasAuthority(&CurrentActivationInfo) || !ASC)
 		return ApplyEffectHandles;
 
-	int BonusAttackCnt = static_cast<int>(BonusAttackCount.GetValueAtLevel(GetAbilityLevel()));
+	int8 BonusAttackCnt = static_cast<int8>(BonusAttackCount.GetValueAtLevel(GetAbilityLevel()));
 	const FPCEffectSpecList* List = &AbilityConfig.OnCommittedEffectSpecs;
 
 	while (BonusAttackCnt--)
 	{
-		ApplyEffectSpec(List, ASC, Target);
+		for (const FActiveGameplayEffectHandle& EffectHandle : ApplyEffectSpec(List, ASC, Target))
+		{
+			if (EffectHandle.IsValid())
+			{
+				ApplyEffectHandles.Add(EffectHandle);
+			}
+		}
 	}
 	
 	return ApplyEffectHandles;

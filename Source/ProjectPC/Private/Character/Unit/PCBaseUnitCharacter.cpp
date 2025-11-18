@@ -332,11 +332,12 @@ void APCBaseUnitCharacter::Die()
 			if (!bIsDead)
 			{
 				ASC->AddLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-				ASC->AddReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 
 				FGameplayTagContainer CancelTags;
 				CancelTags.AddTag(UnitGameplayTags::Unit_Ability_MontagePlay);
 				ASC->CancelAbilities(&CancelTags);
+
+				OnUnitDied.Broadcast(this);
 			}
 		}
 	}
@@ -413,14 +414,21 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 	}
 }
 
+void APCBaseUnitCharacter::OnRep_IsDead()
+{
+	if (bIsDead)
+		OnUnitDied.Broadcast(this);
+}
+
 void APCBaseUnitCharacter::OnUnitStateTagChanged(FGameplayTag Tag, int32 NewCount)
 {
 	if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Dead))
 	{
 		bIsDead = (NewCount > 0);
 
-		if (bIsDead)
-			OnUnitDied.Broadcast(this);
+		// Listen Server인 경우 OnRep 수동 호출 (Listen Server 환경 대응, OnRep_IsDead 이벤트 못받기 때문)
+		if (GetNetMode() == NM_ListenServer)
+			OnRep_IsDead();
 	}
 	else if (Tag.MatchesTagExact(UnitGameplayTags::Unit_State_Combat_Stun))
 	{

@@ -151,7 +151,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category="Combat")
 	bool bIsCombatWin = false;
 	
-	UPROPERTY(BlueprintReadOnly, Category="Combat")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead, Category="Combat")
 	bool bIsDead = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="Combat")
@@ -160,9 +160,12 @@ protected:
 	FDelegateHandle DeadHandle;
 	FDelegateHandle StunHandle;
 
+	UFUNCTION()
+	void OnRep_IsDead();
+	
 	void OnUnitStateTagChanged(const FGameplayTag Tag, int32 NewCount);
 	
 public:
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY()
 	FOnUnitDied OnUnitDied;
 };

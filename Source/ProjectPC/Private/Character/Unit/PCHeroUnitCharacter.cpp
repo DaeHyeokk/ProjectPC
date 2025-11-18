@@ -119,7 +119,7 @@ void APCHeroUnitCharacter::BeginPlay()
 		MeshComp->HideBoneByName(TEXT("arm_chain_long_r_01"), PBO_None); // Riktor 왼쪽 체인 비정상적인 메쉬 제거
 		MeshComp->HideBoneByName(TEXT("wing_l_01"), PBO_None); // Serath 날개 제거
 		MeshComp->HideBoneByName(TEXT("wing_r_01"), PBO_None);
-		MeshComp->HideBoneByName(TEXT("ghostbeast_root"), PBO_None); // Khaimera Ghost Beast? 소켓 제거 
+		MeshComp->HideBoneByName(TEXT("ghostbeast_root"), PBO_None); // Khaimera Ghost Beast 소켓 제거 
 	}
 	
 	if (HasAuthority())
@@ -188,7 +188,6 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		if (HeroUnitAbilitySystemComponent->HasMatchingGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead))
 		{
 			HeroUnitAbilitySystemComponent->RemoveLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
-			HeroUnitAbilitySystemComponent->RemoveReplicatedLooseGameplayTag(UnitGameplayTags::Unit_State_Combat_Dead);
 		}
 
 		// 스턴 상태일 경우 스턴 태그 제거
@@ -271,7 +270,6 @@ void APCHeroUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 {
 	Super::OnGameStateChanged(NewStateTag);
 	
-	const FGameplayTag& CombatPreparationTag = GameStateTags::Game_State_Combat_Preparation;
 	const FGameplayTag& CombatActiveTag = GameStateTags::Game_State_Combat_Active;
 	const FGameplayTag& CombatEndTag = GameStateTags::Game_State_Combat_End;
 
