@@ -27,7 +27,13 @@ TArray<FActiveGameplayEffectHandle> UPCSynergyBladeMasterGameplayAbility::ApplyC
 
 	while (BonusAttackCnt--)
 	{
-		ApplyEffectSpec(List, ASC, Target);
+		for (const FActiveGameplayEffectHandle& EffectHandle : ApplyEffectSpec(List, ASC, Target))
+		{
+			if (EffectHandle.IsValid())
+			{
+				ApplyEffectHandles.Add(EffectHandle);
+			}
+		}
 	}
 	
 	return ApplyEffectHandles;
