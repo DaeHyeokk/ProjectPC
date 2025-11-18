@@ -157,6 +157,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="Combat")
 	bool bIsStunned = false;
 
+	FVector DeadZone = FVector(25000.f, 10000.f,50.f);
+	
 	FDelegateHandle DeadHandle;
 	FDelegateHandle StunHandle;
 
