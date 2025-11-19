@@ -10,6 +10,7 @@
 #include "Character/Unit/PCHeroUnitCharacter.h"
 #include "DataAsset/Unit/PCDataAsset_UnitAbilityConfig.h"
 #include "DataAsset/Synergy/PCDataAsset_SynergyData.h"
+#include "GameFramework/GameState/PCCombatGameState.h"
 #include "Particles/ParticleSystem.h"
 
 
@@ -34,9 +35,16 @@ void UPCSynergyBase::GrantGE(const FSynergyApplyParams& Params)
 	if (!Tier)
 		return;
 
-	// 아군 중 랜덤으로 적용하는 시너지일 경우 전투 시작 타이밍에 부여한다
-	if (IsRandomAmongPolicy(Tier))
-		return;
+	if (APCCombatGameState* GS = GetWorld() ? GetWorld()->GetGameState<APCCombatGameState>() : nullptr)
+	{
+		// 전투중이 아닐 경우 수행
+		if (!GS->GetGameStateTag().MatchesTagExact(GameStateTags::Game_State_Combat_Active))
+		{
+			// 아군 중 랜덤으로 적용하는 시너지일 경우 전투 시작 타이밍에 부여
+			if (IsRandomAmongPolicy(Tier))
+				return;
+		}
+	}
 	
 	if (!SynergyData->GetApplyEffects().IsEmpty())
 	{
