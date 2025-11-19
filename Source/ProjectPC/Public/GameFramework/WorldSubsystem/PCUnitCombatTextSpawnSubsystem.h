@@ -28,11 +28,9 @@ public:
 	UFUNCTION()
 	void SpawnCombatText(
 		const USceneComponent* AttachToComp,
-		const FCombatTextInitParams& InitParams,
-		AActor* Owner = nullptr,
-		AActor* Instigator = nullptr);
+		const FCombatTextInitParams& InitParams);
 
-	void ReturnToPool(APCUnitCombatTextActor* DamageTextActor);
+	void ReturnToPool(APCUnitCombatTextActor* CombatTextActor);
 	
 private:
 	TQueue<APCUnitCombatTextActor*> CombatTextPool;

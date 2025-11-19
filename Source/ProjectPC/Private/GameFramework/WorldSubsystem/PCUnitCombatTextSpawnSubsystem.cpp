@@ -14,8 +14,8 @@ void UPCUnitCombatTextSpawnSubsystem::InitCombatTextSpawnSubsystem(
 		// 지정한 갯수만큼 미리 생성
 		for (int8 i=0; i<PrewarmCount; ++i)
 		{
-			if (APCUnitCombatTextActor* DamageTextActor = SpawnNewCombatTextActor())
-				DamageTextActor->ReturnToPool();
+			if (APCUnitCombatTextActor* CombatTextActor = SpawnNewCombatTextActor())
+				CombatTextActor->ReturnToPool();
 		}
 	}
 	else
@@ -23,7 +23,7 @@ void UPCUnitCombatTextSpawnSubsystem::InitCombatTextSpawnSubsystem(
 }
 
 void UPCUnitCombatTextSpawnSubsystem::SpawnCombatText(const USceneComponent* AttachToComp,
-	const FCombatTextInitParams& InitParams, AActor* Owner, AActor* Instigator)
+	const FCombatTextInitParams& InitParams)
 {
 	if (!CombatTextActorClass)
 		return;
@@ -34,25 +34,25 @@ void UPCUnitCombatTextSpawnSubsystem::SpawnCombatText(const USceneComponent* Att
 	}
 }
 
-void UPCUnitCombatTextSpawnSubsystem::ReturnToPool(APCUnitCombatTextActor* DamageTextActor)
+void UPCUnitCombatTextSpawnSubsystem::ReturnToPool(APCUnitCombatTextActor* CombatTextActor)
 {
-	if (!DamageTextActor)
+	if (!CombatTextActor)
 		return;
 	
-	CombatTextPool.Enqueue(DamageTextActor);
+	CombatTextPool.Enqueue(CombatTextActor);
 }
 
 APCUnitCombatTextActor* UPCUnitCombatTextSpawnSubsystem::GetCombatTextActor()
 {
-	APCUnitCombatTextActor* DamageText = nullptr;
+	APCUnitCombatTextActor* CombatText = nullptr;
 	// 큐에서 꺼내는데 큐가 비어있을 경우 액터 새로 생성
-	if (!CombatTextPool.Dequeue(DamageText))
+	if (!CombatTextPool.Dequeue(CombatText))
 	{
-		DamageText = SpawnNewCombatTextActor();
+		CombatText = SpawnNewCombatTextActor();
 	}
 
-	DamageText->SetActorHiddenInGame(true);
-	return DamageText;
+	CombatText->SetActorHiddenInGame(true);
+	return CombatText;
 }
 
 APCUnitCombatTextActor* UPCUnitCombatTextSpawnSubsystem::SpawnNewCombatTextActor() const
@@ -66,10 +66,10 @@ APCUnitCombatTextActor* UPCUnitCombatTextSpawnSubsystem::SpawnNewCombatTextActor
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.bNoFail = true;
 
-	APCUnitCombatTextActor* DamageTextActor = World->SpawnActor<APCUnitCombatTextActor>(
+	APCUnitCombatTextActor* CombatTextActor = World->SpawnActor<APCUnitCombatTextActor>(
 		CombatTextActorClass,
 		FTransform::Identity,
 		Params);
 	
-	return DamageTextActor;
+	return CombatTextActor;
 }
