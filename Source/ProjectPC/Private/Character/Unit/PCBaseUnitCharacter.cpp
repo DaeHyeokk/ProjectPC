@@ -212,6 +212,7 @@ void APCBaseUnitCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProp
 	DOREPLIFETIME(APCBaseUnitCharacter, TeamIndex);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsOnField);
 	DOREPLIFETIME(APCBaseUnitCharacter, bIsCombatWin);
+	DOREPLIFETIME(APCBaseUnitCharacter, bIsDead);
 }
 
 void APCBaseUnitCharacter::ReAttachStatusBarToSocket() const

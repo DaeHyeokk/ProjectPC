@@ -108,13 +108,17 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Def, EvalParams, OutVal);
 	};
 
-	float Evasion = 0.f;
-	GetMagnitude(Captures.Evasion, Evasion);
-	Evasion *= 0.01f;
-	if (Evasion > 0.f && FMath::FRand() < Evasion)
+	// 기본 공격일 경우 회피율 계산
+	if (bIsBasic)
 	{
-		// 데미지 입는 대상 회피 성공, 바로 리턴 
-		return;
+		float Evasion = 0.f;
+		GetMagnitude(Captures.Evasion, Evasion);
+		Evasion *= 0.01f;
+		if (Evasion > 0.f && FMath::FRand() < Evasion)
+		{
+			// 데미지 입는 대상 회피 성공, 바로 리턴 
+			return;
+		}
 	}
 	
 	// 공격 적중에 성공할 경우 이벤트 발생 (데미지 적용 전에 호출하는 이벤트)
@@ -150,7 +154,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		TargetASC->HandleGameplayEvent(OnHitEventTag, &OnHitData);
 	}
 	
-	// 타입 데미지 배율 (영웅 전용)
+	// 타입 데미지 배율
 	float TypeMul = 0.f;
 	if (bIsPhysical)
 		GetMagnitude(Captures.PhysDamageMultiplier, TypeMul);
@@ -162,7 +166,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	bool bIsCritical = false;
 	if (!bNoCrit)
 	{
-		// 치명타 (영웅 전용)
+		// 치명타
 		float CritChance = 0.f, CritMul = 30.f;
 		GetMagnitude(Captures.CritChance, CritChance);
 		CritChance *= 0.01f;
