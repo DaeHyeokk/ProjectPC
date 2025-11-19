@@ -116,7 +116,8 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		Evasion *= 0.01f;
 		if (Evasion > 0.f && FMath::FRand() < Evasion)
 		{
-			// 데미지 입는 대상 회피 성공, 바로 리턴
+			// 데미지 입는 대상 회피 성공
+			// 빗나감 텍스트 UI 띄우고 return
 			FGameplayCueParameters CueParams;
 			CueParams.EffectContext = Spec.GetEffectContext();
 			CueParams.Instigator = SourceASC->GetAvatarActor();
