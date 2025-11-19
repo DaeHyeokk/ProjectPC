@@ -88,10 +88,13 @@ namespace UnitGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_DamageFlag_NoSendHitEvent, "Unit.DamageFlag.NoSendHitEvent")
 
 	// ==== Unit Combat Text Type Tags ====
-	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Damage_Physical, "Unit.CombatText.Damage.Physical")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Damage_Magic, "Unit.CombatText.Damage.Magic")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Damage_TrueDamage, "Unit.CombatText.Damage.TrueDamage")
-	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Heal, "Unit.CombatText.Heal")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type, "Unit.CombatText.Type")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type_Damage_Physical, "Unit.CombatText.Type.Damage.Physical")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type_Damage_Magic, "Unit.CombatText.Type.Damage.Magic")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type_Damage_TrueDamage, "Unit.CombatText.Type.Damage.TrueDamage")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type_Heal, "Unit.CombatText.Type.Heal")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Type_Miss, "Unit.CombatText.Type.Miss")
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CombatText_Flag_Critical, "Unit.CombatText.Flag.Critical")
 	
 	// ==== Unit Action Ability Tags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Ability, "Unit.Ability")

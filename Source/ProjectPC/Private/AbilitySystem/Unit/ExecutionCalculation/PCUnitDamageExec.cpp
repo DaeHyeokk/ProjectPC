@@ -116,7 +116,14 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		Evasion *= 0.01f;
 		if (Evasion > 0.f && FMath::FRand() < Evasion)
 		{
-			// 데미지 입는 대상 회피 성공, 바로 리턴 
+			// 데미지 입는 대상 회피 성공, 바로 리턴
+			FGameplayCueParameters CueParams;
+			CueParams.EffectContext = Spec.GetEffectContext();
+			CueParams.Instigator = SourceASC->GetAvatarActor();
+			CueParams.AggregatedSourceTags.AddTag(UnitGameplayTags::Unit_CombatText_Type_Miss);
+	
+			TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_CombatText, CueParams);
+			
 			return;
 		}
 	}
@@ -274,28 +281,27 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 	}
 	
 	// 최종 데미지 Combat Text UI GameplayCue 실행
-	EDamageType DamageType;
+	FGameplayTag CombatTextTypeTag;
 	if (bIsTrueDamage)
-		DamageType = TrueDamage;
+		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Type_Damage_TrueDamage;
 	else if (bIsMagic)
-		DamageType = Magic;
+		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Type_Damage_Magic;
 	else
-		DamageType = Physical;
+		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Type_Damage_Physical;
+
+	if (CombatTextTypeTag.IsValid())
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.EffectContext = Spec.GetEffectContext();
+		CueParams.RawMagnitude = FinalDamage;
+		CueParams.Instigator = SourceASC->GetAvatarActor();
+		CueParams.AggregatedSourceTags.AddTag(CombatTextTypeTag);
+
+		if (bIsCritical)
+			CueParams.AggregatedSourceTags.AddTag(UnitGameplayTags::Unit_CombatText_Flag_Critical);
 	
-	FGameplayTag CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Damage_Physical;
-	if (DamageType == Magic)
-		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Damage_Magic;
-	else if (DamageType == TrueDamage)
-		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Damage_TrueDamage;
-	
-	FGameplayCueParameters CueParams;
-	CueParams.EffectContext = Spec.GetEffectContext();
-	CueParams.RawMagnitude = FinalDamage;
-	CueParams.NormalizedMagnitude = bIsCritical ? 1.f : 0.f;
-	CueParams.Instigator = SourceASC->GetAvatarActor();
-	CueParams.AggregatedSourceTags.AddTag(CombatTextTypeTag);
-	
-	TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_CombatText, CueParams);
+		TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_CombatText, CueParams);
+	}
 }
 
 const UGameplayEffect* UPCUnitDamageExec::ResolveHealGE(const UWorld* World) const

@@ -7,14 +7,6 @@
 #include "GameplayEffectExecutionCalculation.h"
 #include "PCUnitDamageExec.generated.h"
 
-UENUM()
-enum EDamageType
-{
-	Physical,
-	Magic,
-	TrueDamage
-};
-
 /**
  * 
  */

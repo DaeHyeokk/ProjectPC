@@ -29,6 +29,9 @@ public:
 
 	UFUNCTION(Category="Combat|Heal")
 	void InitializeHealText(const float HealValue);
+
+	UFUNCTION(Category="Combat|Miss")
+	void InitializeMissText();
 	
 	UFUNCTION(BlueprintCallable, Category="DamageText")
 	void NotifyFinished() const { OnFinished.Broadcast(); }
@@ -52,6 +55,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="TextStyle")
 	FLinearColor HealColor = FLinearColor::Green;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="TextStyle")
+	FLinearColor MissColor = FLinearColor::Gray;
+	
 	UPROPERTY(Transient, meta=(BindWidgetAnimOptional))
 	TObjectPtr<UWidgetAnimation> DamageAnim;
 

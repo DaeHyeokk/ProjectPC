@@ -71,9 +71,13 @@ void APCUnitCombatTextActor::InitCombatTextActor(const USceneComponent* InAttach
 	// 초기화 호출
 	if (CachedWidget)
 	{
-		if (InParams.CombatTextTypeTag.MatchesTag(UnitGameplayTags::Unit_CombatText_Heal))
+		if (InParams.CombatTextTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Heal))
 		{
 			CachedWidget->InitializeHealText(InParams.Value);	
+		}
+		else if (InParams.CombatTextTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Miss))
+		{
+			CachedWidget->InitializeMissText();
 		}
 		else
 		{

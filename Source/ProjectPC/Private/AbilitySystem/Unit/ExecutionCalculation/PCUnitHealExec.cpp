@@ -38,7 +38,7 @@ void UPCUnitHealExec::Execute_Implementation(const FGameplayEffectCustomExecutio
 	CueParams.RawMagnitude = BaseHeal;
 	CueParams.NormalizedMagnitude = 0.f;
 	CueParams.Instigator = SourceASC->GetAvatarActor();
-	CueParams.AggregatedSourceTags.AddTag(UnitGameplayTags::Unit_CombatText_Heal);
+	CueParams.AggregatedSourceTags.AddTag(UnitGameplayTags::Unit_CombatText_Type_Heal);
 	
 	SourceASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_CombatText, CueParams);
 }

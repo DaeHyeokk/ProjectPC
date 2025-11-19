@@ -27,15 +27,23 @@ bool UPCGameplayCue_UnitCombatText::OnExecute_Implementation(AActor* MyTarget,
 		AttachComp = MyTarget->GetRootComponent();
 	if (!AttachComp)
 		return false;
-
-	const float Value = Parameters.RawMagnitude;
-	const bool bCrit = Parameters.NormalizedMagnitude >= 0.5f;
-	const FGameplayTag CombatTextTypeTag = Parameters.AggregatedSourceTags.First();
+	
+	FGameplayTag CombatTextTypeTag;
+	bool bCrit = false;
+	for (const FGameplayTag& SourceTag : Parameters.AggregatedSourceTags)
+	{
+		if (SourceTag.MatchesTag(UnitGameplayTags::Unit_CombatText_Type))
+			CombatTextTypeTag = SourceTag;
+		else if (SourceTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Flag_Critical))
+			bCrit = true;
+	}
 	
 	if (UWorld* World = MyTarget->GetWorld())
 	{
 		if (auto* Subsystem = World->GetSubsystem<UPCUnitCombatTextSpawnSubsystem>())
 		{
+			const float Value = Parameters.RawMagnitude;
+			
 			FCombatTextInitParams InitParams;
 			InitParams.Value = Value;
 			InitParams.bCritical = bCrit;

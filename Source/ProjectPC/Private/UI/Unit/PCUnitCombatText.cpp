@@ -18,15 +18,15 @@ void UPCUnitCombatText::InitializeDamageText(const float DamageValue, const bool
 		
 		ValueText->SetText(FText::AsNumber(FMath::RoundToInt(DamageValue)));
 		
-		if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_Physical))
+		if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_Physical))
 		{
 			ValueText->SetColorAndOpacity(FSlateColor(PhysicalDamageColor));	
 		}
-		else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_Magic))
+		else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_Magic))
 		{
 			ValueText->SetColorAndOpacity(FSlateColor(MagicDamageColor));
 		}
-		else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_TrueDamage))
+		else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_TrueDamage))
 		{
 			ValueText->SetColorAndOpacity(FSlateColor(TrueDamageColor));
 		}
@@ -36,20 +36,17 @@ void UPCUnitCombatText::InitializeDamageText(const float DamageValue, const bool
 	{
 		if (bIsCritical)
 		{
-			if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_Physical))
+			if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_Physical))
 			{
 				CriticalImage->SetColorAndOpacity(PhysicalDamageColor);
-				//CriticalImage->SetBrushTintColor(PhysicalDamageColor);
 			}
-			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_Magic))
+			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_Magic))
 			{
 				CriticalImage->SetColorAndOpacity(MagicDamageColor);
-				//CriticalImage->SetBrushTintColor(MagicDamageColor);
 			}
-			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Damage_TrueDamage))
+			else if (DamageTypeTag.MatchesTagExact(UnitGameplayTags::Unit_CombatText_Type_Damage_TrueDamage))
 			{
 				CriticalImage->SetColorAndOpacity(TrueDamageColor);
-				//CriticalImage->SetBrushTintColor(TrueDamageColor);
 			}
 		}
 		CriticalImage->SetVisibility(bIsCritical ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
@@ -77,4 +74,23 @@ void UPCUnitCombatText::InitializeHealText(const float HealValue)
 
 	if (HealAnim)
 		PlayAnimation(HealAnim);
+}
+
+void UPCUnitCombatText::InitializeMissText()
+{
+	if (ValueText)
+	{
+		FSlateFontInfo FontInfo = ValueText->GetFont();
+		FontInfo.Size = 15.f;
+		ValueText->SetFont(FontInfo);
+
+		ValueText->SetText(FText::FromString(TEXT("빗나감!")));
+		ValueText->SetColorAndOpacity(FSlateColor(MissColor));
+	}
+
+	if (CriticalImage)
+		CriticalImage->SetVisibility(ESlateVisibility::Collapsed);
+
+	if (DamageAnim)
+		PlayAnimation(DamageAnim);
 }
