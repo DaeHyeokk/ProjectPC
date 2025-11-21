@@ -55,7 +55,7 @@ void UPCHeroUnitAbilitySystemComponent::UpdateBaseStatForLevel()
 	
 	TMap<FGameplayAttribute, float> StatMap;
 	UnitData->FillInitStatMap(HeroCharacter->GetUnitLevel(), StatMap);
-	if (StatMap.Num() == 0)
+	if (StatMap.IsEmpty())
 		return;
 	
 	for (const auto& KV : StatMap)
