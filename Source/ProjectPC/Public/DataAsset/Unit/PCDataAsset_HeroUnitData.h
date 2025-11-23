@@ -15,7 +15,7 @@ struct FHeroScalableStatConfig
 	FHeroScalableStatConfig() : StatValue(0.f) {}
 	FHeroScalableStatConfig(const FGameplayAttribute& InStatAttribute) : StatAttribute(InStatAttribute), StatValue(0.f) {}
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Unit.Stat"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayAttribute StatAttribute;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

@@ -19,11 +19,8 @@ struct FSynergyData
 	GENERATED_BODY()
 	
 	FGameplayTag SynergyTag;
-	
 	int32 Count;
-	
 	TArray<int32> Thresholds;
-	
 	int32 TierIndex;
 };
 

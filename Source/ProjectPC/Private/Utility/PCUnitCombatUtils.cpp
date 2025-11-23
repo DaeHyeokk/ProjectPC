@@ -1,12 +1,12 @@
 #include "Utility/PCUnitCombatUtils.h"
 
-const FIntPoint PCUnitCombatUtils::EvenRowDirections[6] = {
+const TArray<FIntPoint> PCUnitCombatUtils::EvenRowDirectionArray = {
 	{0, 1},  {1, 1},
 	{-1, 0}, {1, 0},
 	{0, -1}, {1, -1}
 };
 
-const FIntPoint PCUnitCombatUtils::OddRowDirections[6] = {
+const TArray<FIntPoint> PCUnitCombatUtils::OddRowDirectionArray = {
 	{-1, 1}, {0, 1},
 	{-1, 0}, {1, 0},
 	{-1, -1},{0, -1}

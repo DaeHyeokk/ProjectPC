@@ -70,17 +70,6 @@ void APCUnitAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 {
 	Super::OnMoveCompleted(RequestID, Result);
 	
-	// if (Result.Code == EPathFollowingResult::Success)
-	// {
-	// 	if (OwnerUnit.IsValid())
-	// 	{
-	// 		if (APCCombatBoard* OwnerBoard = OwnerUnit->GetOnCombatBoard())
-	// 		{
-	// 			OwnerBoard->SetTileState(CachedLastPoint.Y, CachedLastPoint.X, OwnerUnit.Get(), ETileAction::Release);
-	// 			OwnerBoard->SetTileState(CachedMovePoint.Y, CachedMovePoint.X, OwnerUnit.Get(), ETileAction::Occupy);
-	// 		}
-	// 	}
-	// }
 	if (Result.Code != EPathFollowingResult::Success)
 	{
 		if (OwnerUnit.IsValid())

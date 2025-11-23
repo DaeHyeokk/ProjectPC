@@ -94,7 +94,7 @@ void UPCSynergyGuardianGameplayAbility::FindNearlyAllies(TArray<APCBaseUnitChara
 			if (OwnerPoint == FIntPoint::NoneValue)
 				return;
 
-			for (const FIntPoint& Dir : PCUnitCombatUtils::GetRandomDirections(OwnerPoint.Y % 2 == 0))
+			for (const FIntPoint& Dir : PCUnitCombatUtils::GetDirections(OwnerPoint.Y % 2 == 0))
 			{
 				FIntPoint NearlyPoint = OwnerPoint + Dir;
 

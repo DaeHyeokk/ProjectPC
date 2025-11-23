@@ -402,7 +402,7 @@ void APCCombatPlayerController::Server_ShopRefresh_Implementation(float GoldCost
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_TearofGoddess);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_Spatula);
 	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Base_FryingPan);
-	//GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Symbol_Bruiser);
+	// GetPlayerState<APCPlayerState>()->GetPlayerInventory()->AddItemToInventory(ItemTags::Item_Type_Symbol_Bruiser);
 	
 	// 라운드 상점 초기화이고, 상점이 잠겨있으면 return
 	if (GoldCost == 0 && bIsShopLocked)

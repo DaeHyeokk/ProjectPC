@@ -354,6 +354,11 @@ void APCBaseUnitCharacter::CombatWin(APCPlayerState* TargetPS)
 	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
 
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->StopMovement();
+	}
+	
 	SetActorRotation(FRotator(0.f,180.f,0.f));
 	bIsCombatWin = true;
 	
@@ -378,6 +383,11 @@ void APCBaseUnitCharacter::CombatDraw(APCPlayerState* TargetPS)
 {
 	if (!HasAuthority() || !bIsOnField || bIsDead)
 		return;
+
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->StopMovement();
+	}
 	
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -413,6 +423,12 @@ void APCBaseUnitCharacter::OnGameStateChanged(const FGameplayTag& NewStateTag)
 			ASC->CancelAbilities(&CancelTags);
 		}
 	}
+}
+
+void APCBaseUnitCharacter::OnRep_IsCombatWin()
+{
+	if (bIsCombatWin)
+		SetActorRotation(FRotator(0.f,180.f,0.f));
 }
 
 void APCBaseUnitCharacter::OnRep_IsDead()
