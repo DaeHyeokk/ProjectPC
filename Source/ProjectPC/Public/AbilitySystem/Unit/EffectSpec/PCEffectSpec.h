@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActiveGameplayEffectHandle.h"
+#include "BaseGameplayTags.h"
 #include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "PCEffectSpec.generated.h"
@@ -37,7 +38,7 @@ public:
 	bool bUseDurationSetByCaller = false;
 
 	UPROPERTY(EditDefaultsOnly, Category="Effect|Duration", meta=(EditCondition="bUseDurationSetByCaller", Categories="GE.Caller"))
-	FGameplayTag DurationCallerTag;
+	FGameplayTag DurationCallerTag = GameplayEffectTags::GE_Caller_Duration;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Effect|Duration", meta=(EditCondition="bUseDurationSetByCaller", ClampMin="0.0"))
 	float DurationByCallerSeconds = 0.f;

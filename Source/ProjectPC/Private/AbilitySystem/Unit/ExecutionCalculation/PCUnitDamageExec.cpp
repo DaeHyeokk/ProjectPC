@@ -289,7 +289,7 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Type_Damage_Magic;
 	else
 		CombatTextTypeTag = UnitGameplayTags::Unit_CombatText_Type_Damage_Physical;
-
+	
 	if (CombatTextTypeTag.IsValid())
 	{
 		FGameplayCueParameters CueParams;
@@ -297,12 +297,13 @@ void UPCUnitDamageExec::Execute_Implementation(const FGameplayEffectCustomExecut
 		CueParams.RawMagnitude = FinalDamage;
 		CueParams.Instigator = SourceASC->GetAvatarActor();
 		CueParams.AggregatedSourceTags.AddTag(CombatTextTypeTag);
-
+	
 		if (bIsCritical)
 			CueParams.AggregatedSourceTags.AddTag(UnitGameplayTags::Unit_CombatText_Flag_Critical);
 	
 		TargetASC->ExecuteGameplayCue(GameplayCueTags::GameplayCue_UI_Unit_CombatText, CueParams);
 	}
+ 
 }
 
 const UGameplayEffect* UPCUnitDamageExec::ResolveHealGE(const UWorld* World) const

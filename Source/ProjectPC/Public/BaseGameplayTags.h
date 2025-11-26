@@ -122,7 +122,7 @@ namespace UnitGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Attacking)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Stun)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_State_Combat_Jumping)
-
+	
 	// ==== Unit Cooldown Tags ====
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Cooldown_BasicAttack)
 	

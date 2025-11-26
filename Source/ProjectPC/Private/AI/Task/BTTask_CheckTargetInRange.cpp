@@ -123,7 +123,7 @@ EBTNodeResult::Type UBTTask_CheckTargetInRange::ExecuteTask(UBehaviorTreeCompone
 		}
 	}
 	
-	// 설정한 타겟이 사거리 내에 존재하지 않을 경우 false
+	// 설정한 타겟이 사거리 내에 존재하지 않을 경우 Failed
 	ClearTargetActorKey(BB);
 	return EBTNodeResult::Failed;
 }

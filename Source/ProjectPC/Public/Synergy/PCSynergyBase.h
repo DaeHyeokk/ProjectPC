@@ -32,7 +32,7 @@ struct FSynergyApplyParams
 	AActor* Instigator = nullptr;
 };
 
-UCLASS(BlueprintType, EditInlineNew, DefaultToInstanced)
+UCLASS(EditInlineNew, DefaultToInstanced)
 class PROJECTPC_API UPCSynergyBase : public UObject
 {
 	GENERATED_BODY()

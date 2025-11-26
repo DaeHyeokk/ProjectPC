@@ -8,6 +8,7 @@
 #include "DataAsset/Unit/PCDataAsset_UnitAnimSet.h"
 #include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionJumpForce.h"
+#include "AbilitySystem/Unit/EffectSpec/PCEffectSpec_GrantTag.h"
 
 
 UPCUnitBasicAttackGameplayAbility::UPCUnitBasicAttackGameplayAbility()
@@ -47,9 +48,19 @@ void UPCUnitBasicAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySp
 		EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
 		return;
 	}
+	bAttackSucceed = false;
 	
 	SetMontage();
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	if (!bAttackSucceed && !AbilityConfig.bSpawnProjectile && GetMontagePlayRate() >= 2.f)
+	{
+		FGameplayEventData Payload;
+		Payload.EventTag = UnitGameplayTags::Unit_Event_AttackSucceed;
+		OnAttackSucceed(Payload);
+
+		bAttackSucceed = true;
+	}
 }
 
 void UPCUnitBasicAttackGameplayAbility::SetMontage()
@@ -61,7 +72,6 @@ void UPCUnitBasicAttackGameplayAbility::SetMontage()
 	else
 	{
 		Montage = nullptr;
-		
 	}
 }
 
@@ -77,7 +87,8 @@ float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate()
 		const float CooldownDuration = 1.f / FMath::Max(AttackSpeed, 0.0001f);
 		const float MontageLength = Montage->GetPlayLength();
 
-		constexpr float Safety = 0.9f; // 안전 여유(쿨다운의 90% 시점에서 끝나도록)
+		// 쿨다운의 90% 시점에서 끝나도록 설정
+		constexpr float Safety = 0.9f;
 		
 		const float DesiredEnd = CooldownDuration * Safety;
 
@@ -86,9 +97,19 @@ float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate()
 			// 몽타주가 쿨다운보다 길다면
 			if (MontageLength > DesiredEnd)
 			{
-				PlayRate = FMath::Clamp(MontageLength / DesiredEnd, 1.f, 3.0f);
+				//PlayRate = FMath::Clamp(MontageLength / DesiredEnd, 1.f, 2.5f);
+				PlayRate = FMath::Max(1.f, MontageLength / DesiredEnd);
 			}
 		}
 	}
 	return PlayRate;
+}
+
+void UPCUnitBasicAttackGameplayAbility::OnAttackSucceed(FGameplayEventData Payload)
+{
+	if (!bAttackSucceed)
+	{
+		Super::OnAttackSucceed(Payload);
+		bAttackSucceed = true;
+	}
 }

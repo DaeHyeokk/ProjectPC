@@ -32,4 +32,7 @@ protected:
 	virtual void SetMontage() override;
 	virtual FGameplayTag GetMontageTag() override { return UnitGameplayTags::Unit_Montage_Attack_Basic; }
 	virtual float GetMontagePlayRate() override;
+
+	virtual void OnAttackSucceed(FGameplayEventData Payload) override;
+	bool bAttackSucceed = false;
 };

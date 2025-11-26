@@ -67,7 +67,7 @@ void APCCombatBoard::BeginPlay()
 	if (TileManager)
 	{
 		TileManager->QuickSetUp();
-		// TileManager->DebugDrawTiles(1e6f, true);
+		//TileManager->DebugDrawTiles(1e6f, true);
 	}
 }
 

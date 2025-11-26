@@ -7,19 +7,19 @@
 namespace PCUnitCombatUtils
 {
 	// 짝수행 6방향 (좌우 + 대각선)
-	extern const TArray<FIntPoint> EvenRowDirectionArray;
+	extern const TArray<FIntPoint> EvenRowDirections;
 	// 홀수행 6방향
-	extern const TArray<FIntPoint> OddRowDirectionArray;
+	extern const TArray<FIntPoint> OddRowDirections;
 
 	inline const TArray<FIntPoint>& GetDirections(bool bEvenRow)
 	{
-		return bEvenRow ? EvenRowDirectionArray : OddRowDirectionArray;
+		return bEvenRow ? EvenRowDirections : OddRowDirections;
 	}
 	
 	inline TArray<FIntPoint, TInlineAllocator<6>> GetRandomDirections(bool bEvenRow)
 	{
 		TArray<FIntPoint, TInlineAllocator<6>> Out;
-		Out = bEvenRow ? EvenRowDirectionArray : OddRowDirectionArray;
+		Out = bEvenRow ? EvenRowDirections : OddRowDirections;
 		Algo::RandomShuffle(Out);
 		return Out;
 	}

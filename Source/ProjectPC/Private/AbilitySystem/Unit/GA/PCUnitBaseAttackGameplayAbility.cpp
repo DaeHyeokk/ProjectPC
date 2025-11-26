@@ -45,8 +45,6 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 			return;
 		}
 		
-		StartPlayMontageAndWaitTask();
-		
 		if (AbilityConfig.bSpawnProjectile)
 		{
 			StartProjectileSpawnSucceedWaitTask();
@@ -56,6 +54,8 @@ void UPCUnitBaseAttackGameplayAbility::ActivateAbility(const FGameplayAbilitySpe
 			StartAttackSucceedWaitTask();
 		}
 
+		StartPlayMontageAndWaitTask();
+		
 		// 공격 완료 즉시 적용하는 GE Apply
 		if (UAbilitySystemComponent* ASC = Unit->GetAbilitySystemComponent())
 		{
@@ -86,10 +86,10 @@ void UPCUnitBaseAttackGameplayAbility::SetCurrentTarget(const AActor* Avatar)
 void UPCUnitBaseAttackGameplayAbility::StartAttackSucceedWaitTask()
 {
 	UAbilityTask_WaitGameplayEvent* WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-	this,
-	AttackSucceedTag,
-	nullptr,
-	false
+		this,
+		AttackSucceedTag,
+		nullptr,
+		false
 	);
 	if (WaitEventTask)
 	{

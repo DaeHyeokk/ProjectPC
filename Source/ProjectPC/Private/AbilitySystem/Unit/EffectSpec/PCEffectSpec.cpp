@@ -5,7 +5,6 @@
 
 #include "AbilitySystemComponent.h"
 #include "GenericTeamAgentInterface.h"
-#include "GameFramework/WorldSubsystem/PCUnitGERegistrySubsystem.h"
 
 FActiveGameplayEffectHandle UPCEffectSpec::ApplyEffect(UAbilitySystemComponent* SourceASC, const AActor* Target, int32 EffectLevel)
 {
@@ -32,7 +31,7 @@ bool UPCEffectSpec::IsTargetEligibleByGroup(const AActor* Source, const AActor* 
 
 void UPCEffectSpec::ApplyDurationOptions(FGameplayEffectSpec& Spec) const
 {
-	if (bUseDurationSetByCaller && DurationCallerTag.IsValid() && Spec.Def->DurationPolicy == EGameplayEffectDurationType::HasDuration)
+	if (bUseDurationSetByCaller && Spec.Def->DurationPolicy == EGameplayEffectDurationType::HasDuration)
 	{
 		Spec.SetSetByCallerMagnitude(DurationCallerTag, DurationByCallerSeconds);
 	}

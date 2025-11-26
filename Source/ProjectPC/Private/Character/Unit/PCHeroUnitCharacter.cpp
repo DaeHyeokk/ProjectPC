@@ -168,7 +168,7 @@ void APCHeroUnitCharacter::RestoreFromCombatEnd()
 		
 		if (!HeroUnitAbilitySystemComponent || !HeroUnitAttributeSet)
 			return;
-
+		
 		// Max Health 값으로 Current Health 초기화
 		HeroUnitAbilitySystemComponent->ApplyModToAttribute(
 			UPCUnitAttributeSet::GetCurrentHealthAttribute(),

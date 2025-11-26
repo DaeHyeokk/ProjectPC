@@ -517,7 +517,7 @@ void UPCTileManager::DebugDrawTiles(float Duration, bool bPersistent, bool bShow
 
 		// 스피어/텍스트
 		DrawDebugSphere(World, P, 12.f, 12, FColor::Green, bPersistent, Life, 0, 0.8f);
-		DrawDebugString(World, P + FVector(0,-140,40.f), Label, nullptr, FColor::Black, Life, false, 1.0f);
+		//DrawDebugString(World, P + FVector(0,-140,40.f), Label, nullptr, FColor::Black, Life, false, 1.0f);
 	}
 }
 
