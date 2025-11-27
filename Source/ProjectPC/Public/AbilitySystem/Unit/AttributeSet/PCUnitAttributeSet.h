@@ -40,7 +40,6 @@ public:
 	// 시너지로 증감되는 속성들 //
 	ATTRIBUTE_ACCESSORS(ThisClass, FlatDamageBlock);
 	ATTRIBUTE_ACCESSORS(ThisClass, EvasionChance);
-	//ATTRIBUTE_ACCESSORS(ThisClass, Shield);
 	
 	float GetEffectiveAttackSpeed() const;
 	
@@ -76,9 +75,6 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="Synergy|Defense")
 	FGameplayAttributeData EvasionChance;
-
-	// UPROPERTY(BlueprintReadOnly, Category="Synergy|Defense")
-	// FGameplayAttributeData Shield;
 	
 	UFUNCTION()
 	void AdjustAttributeForMaxChange(

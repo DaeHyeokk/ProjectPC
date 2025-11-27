@@ -73,11 +73,6 @@ void UPCUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 			OwnerUnit->Die();
 		}
 	}
-	// else if (Data.EvaluatedData.Attribute == GetShieldAttribute())
-	// {
-	// 	// 음수 방지
-	// 	SetShield(FMath::Max(0.f, GetShield()));
-	// }
 }
 
 void UPCUnitAttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeData& AffectedAttribute,

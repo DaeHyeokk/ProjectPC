@@ -97,7 +97,6 @@ float UPCUnitBasicAttackGameplayAbility::GetMontagePlayRate()
 			// 몽타주가 쿨다운보다 길다면
 			if (MontageLength > DesiredEnd)
 			{
-				//PlayRate = FMath::Clamp(MontageLength / DesiredEnd, 1.f, 2.5f);
 				PlayRate = FMath::Max(1.f, MontageLength / DesiredEnd);
 			}
 		}
