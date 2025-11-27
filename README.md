@@ -28,7 +28,7 @@ Paragon Character Asset을 활용해 44종의 유닛, 16개의 시너지, 64종�
 
 ### 협업 도구
 - Notion  
-  - Team Notion: https://www.notion.so/4-5-2541f50237ec80e698e7fdd128df643a?pvs=21
+  - [Team Notion](https://www.notion.so/4-5-2541f50237ec80e698e7fdd128df643a?pvs=21)
 - SourceTree
 
 ---
