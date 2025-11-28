@@ -1,6 +1,6 @@
 # ProjectPC – Paragon Chess
 
-[![ProjectPC Gameplay Video](https://img.youtube.com/vi/LkPnvVMvwCo/0.jpg)](https://youtu.be/LkPnvVMvwCo)
+[![ProjectPC Gameplay Video](https://img.youtube.com/vi/LkPnvVMvwCo/0.jpg)](https://youtu.be/My3fQt4-K18?si=f64fHowLWSeP9PM3)
 
 [이미지 클릭 시 유튜브로 이동합니다]
 
@@ -36,7 +36,7 @@ Paragon Character Asset을 활용해 44종의 유닛, 16개의 시너지, 64종�
 ## 2. 프로젝트 목표
 
 - 다양한 Paragon Character를 활용하여 많은 종류의 유닛을 구현
-- 44종 유닛, 16개 시너지, 64종 아이템 능력치를 데이터 기반 구조로 설계
+- 45종 유닛, 16개 시너지, 64종 아이템 능력치를 데이터 기반 구조로 설계
 - Template AnimBP 기반 구조를 통해 유닛 개발 속도 향상
 
 ---
@@ -45,4 +45,4 @@ Paragon Character Asset을 활용해 44종의 유닛, 16개의 시너지, 64종�
 
 - 팀원들이 직관적으로 사용할 수 있는 유닛 시스템 설계
 - 내부 로직 이해 없이도 명확한 함수 호출만으로 기능 동작
-- 재사용 가능한 데이터 중심 설계로 협업 효율 극대화
+- 재사용 가능한 데이터 중심 설계로 개발 효율 극대화
