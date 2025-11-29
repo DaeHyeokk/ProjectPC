@@ -1,7 +1,6 @@
 # ProjectPC – Paragon Chess
 
-[![ProjectPC Gameplay Video](https://img.youtube.com/vi/LkPnvVMvwCo/0.jpg)](https://youtu.be/My3fQt4-K18?si=f64fHowLWSeP9PM3)
-
+[![Paragon Chess Gameplay](https://img.youtube.com/vi/My3fQt4-K18/hqdefault.jpg)](https://youtu.be/My3fQt4-K18)
 [이미지 클릭 시 유튜브로 이동합니다]
 
 언리얼 엔진 5.4 기반으로 개발한 TFT 장르 오토 배틀러 게임 프로젝트입니다.  
